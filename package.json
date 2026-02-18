@@ -9,9 +9,16 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@eigenpal/docx-js-editor": "^0.0.8",
+    "@prisma/adapter-better-sqlite3": "^7.4.0",
+    "@prisma/client": "^7.4.0",
+    "better-sqlite3": "^12.6.2",
+    "jszip": "^3.10.1",
     "next": "16.1.6",
+    "prisma": "^7.4.0",
     "react": "19.2.3",
-    "react-dom": "19.2.3"
+    "react-dom": "19.2.3",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

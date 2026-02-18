@@ -1,0 +1,34 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Customer {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  customer_code  String   @unique
+  customer_name  String
+  address        String?
+  main_business  String?
+  charter_capital Float?
+  legal_representative_name  String?
+  legal_representative_title String?
+  organization_type          String?
+
+  /// JSON object: extra attributes (report field_key -> value) for mapping/export
+  data_json String? @default("{}")
+
+  @@map("customers")
+}

@@ -1,0 +1,54 @@
+# Placeholder seed cho Mau 02A (ban thu nghiem)
+
+## A. Thong tin chung
+{{A.general.customer_name}}
+{{A.general.customer_code}}
+{{A.general.address}}
+{{A.general.main_business}}
+{{A.general.charter_capital}}
+{{A.general.legal_representative_name}}
+{{A.general.legal_representative_title}}
+{{A.general.organization_type}}
+{{A.general.total_assets_latest}}
+{{A.general.owner_equity_latest}}
+
+## A. Quan he tin dung
+{{A.credit.current_credit_relationship}}
+{{A.credit.outstanding_agri}}
+{{A.credit.outstanding_other_banks}}
+{{A.credit.debt_group_latest}}
+{{A.credit.rating_agribank}}
+{{A.credit.rating_cic}}
+
+## A. De xuat cap tin dung
+{{A.proposal.loan_purpose}}
+{{A.proposal.loan_tenor_or_limit_term}}
+{{A.proposal.loan_amount_agribank}}
+{{A.proposal.total_credit_demand}}
+
+## A. Ho so kinh te / giao dich
+{{A.economic_docs.invoice_total_for_disbursement}}
+
+## A. Bao dam tien vay
+{{A.collateral.total_collateral_value}}
+{{A.collateral.secured_obligation_total}}
+{{A.collateral.insurance_status}}
+
+## B. Tham dinh tai chinh
+{{B.financial.balance_sheet.short_term_assets}}
+{{B.financial.balance_sheet.long_term_assets}}
+{{B.financial.balance_sheet.short_term_liabilities}}
+{{B.financial.income_statement.revenue}}
+{{B.financial.income_statement.gross_profit}}
+{{B.financial.income_statement.profit_before_tax}}
+{{B.financial.ratios.current_ratio}}
+{{B.financial.ratios.quick_ratio}}
+{{B.financial.ratios.debt_to_equity}}
+{{B.financial.ratios.roe}}
+
+## B. HMTD
+{{B.plan.hmtd.working_capital_plan}}
+{{B.plan.hmtd.counterpart_capital}}
+{{B.plan.hmtd.other_bank_loans}}
+{{B.plan.hmtd.recommended_limit}}
+

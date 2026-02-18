@@ -1,0 +1,254 @@
+{
+  "Tên khách hàng": "A.general.customer_name",
+  "Mã khách hàng": "A.general.customer_code",
+  "Địa chỉ": "A.general.address",
+  "Ngành nghề SXKD": "A.general.main_business",
+  "Vốn điều lệ": "A.general.charter_capital",
+  "Người đại diện theo pháp luật": "A.general.legal_representative_name",
+  "Loại hình tổ chức": "A.general.organization_type",
+  "Người đại diện": "A.general.legal_representative_name",
+  "CMND": {
+    "literal": "068069003550"
+  },
+  "Loại giấy tờ tùy thân": {
+    "literal": "CCCD"
+  },
+  "Loại giấy tờ pháp lý": {
+    "literal": "Giấy chứng nhận ĐKKD"
+  },
+  "Số ĐKKD": {
+    "literal": "5801224681"
+  },
+  "Ngày cấp ĐKKD": {
+    "literal": "10/01/2014"
+  },
+  "Nơi cấp ĐKKD": {
+    "literal": "Sở Kế hoạch và Đầu tư tỉnh Lâm Đồng"
+  },
+  "Thay đổi ngày cấp ĐKKD": {
+    "literal": "thay đổi lần 1 ngày 14/03/2016"
+  },
+  "Giấy tờ ủy quyền": {
+    "literal": "Giấy ủy quyền số ... ngày ... của ..."
+  },
+  "Tên gọi Hội đồng": {
+    "literal": "Hội đồng thành viên"
+  },
+  "Tên gọi in hoa": {
+    "literal": "CHI NHÁNH LÂM ĐỒNG - PHÒNG GIAO DỊCH HÒA BÌNH"
+  },
+  "Tên chi nhánh/PGD": {
+    "literal": "Chi nhánh Lâm Đồng - Phòng giao dịch Hòa Bình"
+  },
+  "Tên người dùng": {
+    "literal": "Cán bộ quan hệ khách hàng"
+  },
+  "Ngày": {
+    "literal": "$TODAY_DD"
+  },
+  "Tháng": {
+    "literal": "$TODAY_MM"
+  },
+  "Năm": {
+    "literal": "$TODAY_YYYY"
+  },
+  "CS.Năm liền kề": {
+    "literal": "2024"
+  },
+  "CS.Năm liền kề -1": {
+    "literal": "2023"
+  },
+  "CS.Ngày báo cáo": {
+    "literal": "$TODAY_DDMMYYYY"
+  },
+  "CS.Tổng tài sản": "A.general.total_assets_latest",
+  "CS.Vốn chủ sở hữu": "A.general.owner_equity_latest",
+  "CS.Tài sản ngắn hạn": "B.financial.balance_sheet.short_term_assets",
+  "CS.Tài sản ngắn hạn:": "B.financial.balance_sheet.short_term_assets",
+  "CS.Tài sản ngắn hạn::": "B.financial.balance_sheet.short_term_assets",
+  "CS.Tài sản dài hạn": "B.financial.balance_sheet.long_term_assets",
+  "CS.Tài sản dài hạn:": "B.financial.balance_sheet.long_term_assets",
+  "CS.Tài sản dài hạn::": "B.financial.balance_sheet.long_term_assets",
+  "CS.Nợ ngắn hạn": "B.financial.balance_sheet.short_term_liabilities",
+  "CS.Doanh thu thuần": "B.financial.income_statement.revenue",
+  "CS.Doanh thu thuần:": "B.financial.income_statement.revenue",
+  "CS.Doanh thu bán hàng và cung cấp dịch vụ": "B.financial.income_statement.revenue",
+  "CS.Doanh thu bán hàng và cung cấp dịch vụ:": "B.financial.income_statement.revenue",
+  "CS.Giá vốn hàng bán": "B.financial.income_statement.gross_profit",
+  "CS.Giá vốn hàng bán:": "B.financial.income_statement.gross_profit",
+  "CS.Lợi nhuận trước thuế": "B.financial.income_statement.profit_before_tax",
+  "CS.KNTT ngắn hạn": "B.financial.ratios.current_ratio",
+  "CS.KNTT ngắn hạn:": "B.financial.ratios.current_ratio",
+  "CS.KNTT nhanh": "B.financial.ratios.quick_ratio",
+  "CS.KNTT nhanh:": "B.financial.ratios.quick_ratio",
+  "CS.Hệ số nợ": "B.financial.ratios.debt_to_equity",
+  "CS.Hệ số nợ:": "B.financial.ratios.debt_to_equity",
+  "CS.ROE": "B.financial.ratios.roe",
+  "CS.ROE:": "B.financial.ratios.roe",
+  "HĐTD.Đang QH t.dụng tại TCTD": "A.credit.current_credit_relationship",
+  "HĐTD.Dư nợ tại Agribank": "A.credit.outstanding_agri",
+  "HĐTD.Dư nợ tại TCTD khác": "A.credit.outstanding_other_banks",
+  "HĐTD.Nhóm nợ": "A.credit.debt_group_latest",
+  "HĐTD.Xếp hạng KH theo Agribank": "A.credit.rating_agribank",
+  "HĐTD.Xếp hạng KH theo CIC": "A.credit.rating_cic",
+  "HĐTD.Kỳ chấm điểm": {
+    "literal": "10/2024"
+  },
+  "HĐTD.Mục đích vay": "A.proposal.loan_purpose",
+  "HĐTD.Số tiền vay": "A.proposal.loan_amount_agribank",
+  "HĐTD.Tổng nhu cầu cấp TD": "A.proposal.total_credit_demand",
+  "HĐTD.Tổng nhu cầu vốn": "B.plan.hmtd.working_capital_plan",
+  "HĐTD.Vốn đối ứng": "B.plan.hmtd.counterpart_capital",
+  "HĐTD.Vốn vay TCTD khác": "B.plan.hmtd.other_bank_loans",
+  "HĐTD.Vốn chủ sở hữu": "A.general.owner_equity_latest",
+  "HĐTD.Vốn lưu động ròng": "B.plan.hmtd.counterpart_capital",
+  "HĐTD.Tổng giá trị TSBĐ": "A.collateral.total_collateral_value",
+  "HĐTD.Tổng nghĩa vụ bảo đảm": "A.collateral.secured_obligation_total",
+  "HĐTD.Tỷ lệ % bảo đảm": {
+    "literal": "100"
+  },
+  "HĐTD.Phương thức cho vay": {
+    "literal": "Hạn mức tín dụng"
+  },
+  "HĐTD.Đồng tiền cho vay": {
+    "literal": "Việt Nam Đồng"
+  },
+  "HĐTD.Thời hạn vay": "A.proposal.loan_tenor_or_limit_term",
+  "HĐTD.Định kỳ trả gốc": {
+    "literal": "Theo từng Báo cáo đề xuất giải ngân kiêm giấy nhận nợ"
+  },
+  "HĐTD.Định kỳ trả lãi": {
+    "literal": "Một tháng 01 lần vào ngày 28"
+  },
+  "HĐTD.Tổng doanh thu dự kiến": "B.financial.income_statement.revenue",
+  "HĐTD.Tổng chi phí dự kiến": {
+    "literal": "41818000000"
+  },
+  "HĐTD.Lợi nhuận dự kiến": "B.financial.income_statement.profit_before_tax",
+  "HĐTD.Tài chính minh bạch, LM": {
+    "literal": "Không đáp ứng"
+  },
+  "HĐTD.Lý do đáp ứng/không đáp ứng TCMBLM": {
+    "literal": "Khách hàng không thuộc lĩnh vực áp dụng"
+  },
+  "HĐTD.Bổ sung BCĐX cho vay": {
+    "literal": "Giao PGD Hòa Bình giải ngân và quản lý khoản vay theo quy định."
+  },
+  "BLĐ.STT": {
+    "literal": "1"
+  },
+  "BLĐ.Chức danh": {
+    "literal": "CT HĐQT kiêm Giám đốc"
+  },
+  "BLĐ.Họ và tên": "A.general.legal_representative_name",
+  "BLĐ.Lĩnh vực quản lý": {
+    "literal": "Chung"
+  },
+  "BLĐ.Năm sinh": {
+    "literal": "1969"
+  },
+  "BLĐ.Trình độ": {
+    "literal": "Đại học"
+  },
+  "BLĐ.Số năm công tác": {
+    "literal": "8"
+  },
+  "BLĐ.Thời gian bổ nhiệm": {
+    "literal": "03/2017"
+  },
+  "CĐTV.STT": {
+    "literal": "1"
+  },
+  "CĐTV.Tên cổ đông/Thành viên": {
+    "literal": "Trần Công Ý"
+  },
+  "CĐTV.CMND/Mã số DN": {
+    "literal": "068069003550"
+  },
+  "CĐTV.Địa chỉ": {
+    "literal": "22 Pasteur, phường 4, Đà Lạt"
+  },
+  "CĐTV.Giá trị cổ phần, vốn góp": {
+    "literal": "1.400.000.000"
+  },
+  "CĐTV.Tỷ lệ cổ phần, vốn góp": {
+    "literal": "50"
+  },
+  "CĐTV.Tổng Giá trị cổ phần, vốn góp": {
+    "literal": "2.800.000.000"
+  },
+  "NLQ.STT": {
+    "literal": "1"
+  },
+  "NLQ.Tên tổ chức/Cá nhân": {
+    "literal": "Nguyễn Đức Thanh"
+  },
+  "NLQ.Số ĐKKD/CMND": {
+    "literal": "250231128"
+  },
+  "NLQ.Mối liên quan": {
+    "literal": "Kế toán trưởng"
+  },
+  "NLQ.Tổng số dư cấp tín dụng": {
+    "literal": "0"
+  },
+  "VV.Doanh số cho vay NH": {
+    "literal": "23.888.704.599"
+  },
+  "VV.Doanh số cho vay NH:": {
+    "literal": "34.270.805.432"
+  },
+  "VV.Doanh số thu nợ NH": {
+    "literal": "27.250.204.675"
+  },
+  "VV.Doanh số thu nợ NH:": {
+    "literal": "32.998.948.721"
+  },
+  "VV.Dư nợ cuối kỳ NH": {
+    "literal": "12.612.167.727"
+  },
+  "VV.Dư nợ cuối kỳ NH:": {
+    "literal": "15.973.667.803"
+  },
+  "VV.Doanh số thu lãi NH": {
+    "literal": "1.024.904.726"
+  },
+  "VV.Doanh số thu lãi NH:": {
+    "literal": "769.413.307"
+  },
+  "VV.Doanh số chuyển tiền đi": {
+    "literal": "34.714.842.775"
+  },
+  "VV.Doanh số chuyển tiền đi:": {
+    "literal": "39.093.221.273"
+  },
+  "VV.Doanh số chuyển tiền đến": {
+    "literal": "34.351.033.046"
+  },
+  "VV.Doanh số chuyển tiền đến:": {
+    "literal": "39.282.168.413"
+  },
+  "VV.Doanh số bảo lãnh": {
+    "literal": "0"
+  },
+  "VV.Phí bảo lãnh đã thu": {
+    "literal": "0"
+  },
+  "VV.Số dư bảo lãnh cuối kỳ": {
+    "literal": "0"
+  },
+  "SĐ.STT": {
+    "literal": "1"
+  },
+  "SĐ.Tên TSBĐ": {
+    "literal": "Quyền sử dụng đất và tài sản gắn liền với đất"
+  },
+  "SĐ.Số seri": {
+    "literal": "AP 658400"
+  },
+  "SĐ.Tổng giá trị TS": "A.collateral.total_collateral_value",
+  "SĐ.Nghĩa vụ bảo đảm": "A.collateral.secured_obligation_total",
+  "Địa chỉ đất": {
+    "literal": "Lô B6 KQH Hải Thượng - Ba Tháng Hai, phường 1, Đà Lạt"
+  }
+}
