@@ -2,6 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { X, Save, Copy } from "lucide-react";
 
 import { useLanguage } from "@/components/language-provider";
 
@@ -31,11 +32,13 @@ const EigenpalDocxEditor = dynamic(
 type DocxEditorRef = {
   save: () => Promise<ArrayBuffer | undefined>;
   focus: () => void;
+  getEditorElement?: () => HTMLElement | null;
 };
 
 export function DocxTemplateEditorModal({ docxPath, documentBuffer, fieldCatalog, onClose, onSaveDocx }: Props) {
   const { t } = useLanguage();
   const editorRef = useRef<DocxEditorRef | null>(null);
+  const editorElementRef = useRef<HTMLElement | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
@@ -55,6 +58,13 @@ export function DocxTemplateEditorModal({ docxPath, documentBuffer, fieldCatalog
   const [selectedGroup, setSelectedGroup] = useState("");
   const [selectedFieldKey, setSelectedFieldKey] = useState("");
   const fieldsInSelectedGroup = selectedGroup ? fieldsByGroup[selectedGroup] ?? [] : [];
+  
+  // Get Vietnamese label for selected field
+  const selectedFieldLabel = useMemo(() => {
+    if (!selectedFieldKey) return "";
+    const field = fieldCatalog.find((f) => f.field_key === selectedFieldKey);
+    return field?.label_vi || selectedFieldKey;
+  }, [selectedFieldKey, fieldCatalog]);
 
   useEffect(() => {
     if (!selectedGroup && groups.length > 0) {
@@ -72,11 +82,95 @@ export function DocxTemplateEditorModal({ docxPath, documentBuffer, fieldCatalog
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedGroup]);
 
-  async function copyPlaceholder() {
-    if (!selectedFieldKey) return;
-    const placeholder = `[${selectedFieldKey}]`;
-    await navigator.clipboard.writeText(placeholder);
+  // Find editor element after mount
+  useEffect(() => {
+    const findEditorElement = () => {
+      const editorElement = document.querySelector('[contenteditable="true"]') as HTMLElement;
+      if (editorElement) {
+        editorElementRef.current = editorElement;
+      }
+    };
+    
+    // Try immediately and also after delays to catch async mounting
+    findEditorElement();
+    const timeout1 = setTimeout(findEditorElement, 300);
+    const timeout2 = setTimeout(findEditorElement, 1000);
+    
+    return () => {
+      clearTimeout(timeout1);
+      clearTimeout(timeout2);
+    };
+  }, []);
+
+  async function insertPlaceholder() {
+    if (!selectedFieldKey || !selectedFieldLabel) return;
+    
+    const placeholder = `[${selectedFieldLabel}]`;
+    
+    // Focus editor first
     editorRef.current?.focus();
+    
+    // Wait a bit for focus to take effect
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    
+    // Try multiple approaches to insert text
+    let inserted = false;
+    
+    // Approach 1: Use Selection API if there's an active selection
+    const selection = window.getSelection();
+    if (selection && selection.rangeCount > 0) {
+      try {
+        const range = selection.getRangeAt(0);
+        range.deleteContents();
+        const textNode = document.createTextNode(placeholder);
+        range.insertNode(textNode);
+        // Move cursor after inserted text
+        range.setStartAfter(textNode);
+        range.collapse(true);
+        selection.removeAllRanges();
+        selection.addRange(range);
+        inserted = true;
+      } catch (e) {
+        console.warn("Failed to insert via Selection API:", e);
+      }
+    }
+    
+    // Approach 2: Try execCommand (works in most browsers)
+    if (!inserted) {
+      try {
+        const success = document.execCommand('insertText', false, placeholder);
+        if (success) {
+          inserted = true;
+        }
+      } catch (e) {
+        console.warn("execCommand failed:", e);
+      }
+    }
+    
+    // Approach 3: Find contenteditable element and insert
+    if (!inserted) {
+      const editorElement = editorElementRef.current || 
+        (document.querySelector('[contenteditable="true"]') as HTMLElement);
+      
+      if (editorElement) {
+        editorElement.focus();
+        try {
+          const success = document.execCommand('insertText', false, placeholder);
+          if (success) {
+            inserted = true;
+          }
+        } catch (e) {
+          console.warn("Failed to insert via execCommand on element:", e);
+        }
+      }
+    }
+    
+    // Fallback: copy to clipboard if all else fails
+    if (!inserted) {
+      await navigator.clipboard.writeText(placeholder);
+      setError("Không thể chèn trực tiếp. Đã copy vào clipboard. Vui lòng paste (Ctrl+V).");
+      setTimeout(() => setError(""), 3000);
+    }
   }
 
   async function handleSave() {
@@ -108,16 +202,18 @@ export function DocxTemplateEditorModal({ docxPath, documentBuffer, fieldCatalog
             <button
               type="button"
               onClick={onClose}
-              className="rounded-md border border-zinc-300 px-3 py-1.5 text-sm hover:bg-zinc-50"
+              className="flex items-center gap-1.5 rounded-md border border-zinc-300 px-3 py-1.5 text-sm hover:bg-zinc-50"
             >
+              <X className="h-4 w-4" />
               {t("template.editor.modal.close")}
             </button>
             <button
               type="button"
               onClick={handleSave}
               disabled={saving}
-              className="rounded-md bg-emerald-600 px-3 py-1.5 text-sm text-white disabled:opacity-50 hover:bg-emerald-700"
+              className="flex items-center gap-1.5 rounded-md bg-emerald-600 px-3 py-1.5 text-sm text-white disabled:opacity-50 hover:bg-emerald-700"
             >
+              <Save className="h-4 w-4" />
               {saving ? t("template.editor.modal.saving") : t("template.editor.modal.save")}
             </button>
           </div>
@@ -157,11 +253,12 @@ export function DocxTemplateEditorModal({ docxPath, documentBuffer, fieldCatalog
 
             <button
               type="button"
-              onClick={() => void copyPlaceholder()}
+              onClick={() => void insertPlaceholder()}
               disabled={!selectedFieldKey}
-              className="rounded-md bg-indigo-600 px-4 py-2 text-sm text-white disabled:opacity-50 hover:bg-indigo-700"
-              title={selectedFieldKey ? `[${selectedFieldKey}]` : ""}
+              className="flex items-center gap-2 rounded-md bg-indigo-600 px-4 py-2 text-sm text-white disabled:opacity-50 hover:bg-indigo-700"
+              title={selectedFieldKey ? `Chèn [${selectedFieldLabel}] vào vị trí con trỏ` : ""}
             >
+              <Copy className="h-4 w-4" />
               {t("template.editor.injectButton")}
             </button>
 

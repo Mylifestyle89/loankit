@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "extract:placeholders": "node scripts/extract_placeholders_to_csv.js \"Placeholder Prototype.docx\""
   },
   "dependencies": {
     "@eigenpal/docx-js-editor": "^0.0.8",
@@ -14,10 +15,12 @@
     "@prisma/client": "^7.4.0",
     "better-sqlite3": "^12.6.2",
     "jszip": "^3.10.1",
+    "lucide-react": "^0.574.0",
     "next": "16.1.6",
     "prisma": "^7.4.0",
     "react": "19.2.3",
     "react-dom": "19.2.3",
+    "xlsx": "^0.18.5",
     "zod": "^4.3.6"
   },
   "devDependencies": {

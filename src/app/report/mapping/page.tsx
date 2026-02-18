@@ -1,10 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import * as XLSX from "xlsx";
+import { Plus, Pencil, X, RotateCcw, Upload, Download, Save, Send, CheckCircle, FileText, Users } from "lucide-react";
 
 import { useLanguage } from "@/components/language-provider";
 import type { FieldCatalogItem } from "@/lib/report/config-schema";
-import { translateFieldLabelVi } from "@/lib/report/field-labels";
 
 type MappingApiResponse = {
   ok: boolean;
@@ -35,21 +36,6 @@ type ValuesResponse = {
   values?: Record<string, unknown>;
   manual_values?: Record<string, string | number | boolean | null>;
 };
-
-type BusinessFieldPreset = {
-  label_vi: string;
-  group: string;
-  type: "string" | "number" | "percent" | "date" | "table";
-};
-
-const BUSINESS_FIELD_PRESETS: BusinessFieldPreset[] = [
-  { label_vi: "Tên người có liên quan", group: "Người có liên quan", type: "string" },
-  { label_vi: "Số CCCD người có liên quan", group: "Người có liên quan", type: "string" },
-  { label_vi: "Ngày cấp CCCD", group: "Người có liên quan", type: "date" },
-  { label_vi: "Thu nhập bình quân tháng", group: "Thu nhập", type: "number" },
-  { label_vi: "Tổng giá trị tài sản bảo đảm", group: "Tài sản bảo đảm", type: "number" },
-  { label_vi: "Ghi chú thẩm định", group: "Thẩm định", type: "table" },
-];
 
 function removeVietnameseTones(text: string): string {
   return text
@@ -193,14 +179,12 @@ export default function MappingPage() {
   const [autoValues, setAutoValues] = useState<Record<string, unknown>>({});
   const [values, setValues] = useState<Record<string, unknown>>({});
   const [manualValues, setManualValues] = useState<Record<string, string | number | boolean | null>>({});
-  const [savingValues, setSavingValues] = useState(false);
   const [exportingDocx, setExportingDocx] = useState(false);
-  const [savingCatalog, setSavingCatalog] = useState(false);
   const [activeTab, setActiveTab] = useState<"visual" | "advanced">("visual");
   const [searchTerm, setSearchTerm] = useState("");
   const [showTechnicalKeys, setShowTechnicalKeys] = useState(false);
   const [lastExportedDocxPath, setLastExportedDocxPath] = useState<string>("");
-  const [selectedGroup, setSelectedGroup] = useState<string>("__new__");
+  const [selectedGroup, setSelectedGroup] = useState<string>("");
   const [newField, setNewField] = useState<{
     label_vi: string;
     group: string;
@@ -210,6 +194,15 @@ export default function MappingPage() {
     group: "Nhóm mới",
     type: "string",
   });
+  const importInputRef = useRef<HTMLInputElement | null>(null);
+  const [importingCatalog, setImportingCatalog] = useState(false);
+  const [editingGroup, setEditingGroup] = useState<string | null>(null);
+  const [editingGroupValue, setEditingGroupValue] = useState("");
+  const [editingGroupError, setEditingGroupError] = useState("");
+  const [customGroups, setCustomGroups] = useState<string[]>([]);
+  const [customers, setCustomers] = useState<Array<{ id: string; customer_name: string; customer_code: string }>>([]);
+  const [loadingCustomers, setLoadingCustomers] = useState(false);
+  const [selectedCustomerId, setSelectedCustomerId] = useState<string>("");
 
   const loadFieldValues = useCallback(async () => {
     const res = await fetch("/api/report/values", { cache: "no-store" });
@@ -246,6 +239,58 @@ export default function MappingPage() {
     void loadData();
   }, [loadData]);
 
+  useEffect(() => {
+    void loadCustomers();
+  }, []);
+
+  async function loadCustomers() {
+    setLoadingCustomers(true);
+    try {
+      const res = await fetch("/api/customers", { cache: "no-store" });
+      const data = (await res.json()) as {
+        ok: boolean;
+        error?: string;
+        customers?: Array<{ id: string; customer_name: string; customer_code: string }>;
+      };
+      if (data.ok && data.customers) {
+        setCustomers(data.customers);
+      }
+    } catch (e) {
+      console.error("Failed to load customers:", e);
+    } finally {
+      setLoadingCustomers(false);
+    }
+  }
+
+  async function loadCustomerData(customerId: string) {
+    if (!customerId) return;
+    setLoading(true);
+    setError("");
+    try {
+      const res = await fetch("/api/customers/to-draft", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ customer_id: customerId }),
+      });
+      const data = (await res.json()) as {
+        ok: boolean;
+        error?: string;
+        values?: Record<string, unknown>;
+      };
+      if (!data.ok || !data.values) {
+        throw new Error(data.error ?? "Failed to load customer data.");
+      }
+      // Update values and manualValues
+      setValues(data.values);
+      setManualValues(data.values as Record<string, string | number | boolean | null>);
+      setMessage(t("mapping.msg.customerLoaded"));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : t("mapping.err.loadCustomer"));
+    } finally {
+      setLoading(false);
+    }
+  }
+
   const activeVersion = useMemo(
     () => versions?.find((item) => item.id === activeVersionId),
     [activeVersionId, versions],
@@ -271,9 +316,9 @@ export default function MappingPage() {
   }, [fieldCatalog, searchTerm]);
 
   const existingGroups = useMemo(() => {
-    const groups = new Set(fieldCatalog.map((item) => item.group));
+    const groups = new Set([...fieldCatalog.map((item) => item.group), ...customGroups]);
     return Array.from(groups).sort((a, b) => a.localeCompare(b, "vi"));
-  }, [fieldCatalog]);
+  }, [fieldCatalog, customGroups]);
 
   async function saveDraft() {
     setSaving(true);
@@ -366,26 +411,6 @@ export default function MappingPage() {
     setValidating(false);
   }
 
-  async function saveManualValues() {
-    setSavingValues(true);
-    setError("");
-    setMessage("");
-    const res = await fetch("/api/report/values", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ manual_values: manualValues }),
-    });
-    const data = (await res.json()) as ValuesResponse;
-    if (!data.ok) {
-      setError(data.error ?? t("mapping.err.saveFieldValues"));
-      setSavingValues(false);
-      return;
-    }
-    setMessage(t("mapping.msg.savedFieldValues"));
-    await loadFieldValues();
-    setSavingValues(false);
-  }
-
   async function exportAndOpenDocx() {
     setExportingDocx(true);
     setError("");
@@ -415,25 +440,6 @@ export default function MappingPage() {
     setExportingDocx(false);
   }
 
-  async function saveFieldCatalog() {
-    setSavingCatalog(true);
-    setError("");
-    setMessage("");
-    const res = await fetch("/api/report/catalog", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ field_catalog: fieldCatalog }),
-    });
-    const data = (await res.json()) as { ok: boolean; error?: string };
-    if (!data.ok) {
-      setError(data.error ?? t("mapping.err.saveFieldNames"));
-      setSavingCatalog(false);
-      return;
-    }
-    setMessage(t("mapping.msg.savedFieldNames"));
-    setSavingCatalog(false);
-  }
-
   function onManualChange(field: FieldCatalogItem, rawValue: string) {
     const normalized = normalizeInputByType(rawValue, field.type);
     setManualValues((prev) => ({ ...prev, [field.field_key]: normalized }));
@@ -449,9 +455,211 @@ export default function MappingPage() {
     setValues((prev) => ({ ...prev, [fieldKey]: autoValues[fieldKey] ?? "" }));
   }
 
-  function resetAllManualValues() {
-    setManualValues({});
-    setValues(autoValues);
+  function normalizeImportedType(raw: string): FieldCatalogItem["type"] | null {
+    const v = raw.trim().toLowerCase();
+    if (!v) return null;
+    if (["string", "chuỗi", "chuoi", "text", "chuoi ky tu"].includes(v)) return "text";
+    if (["number", "số", "so", "numeric", "int", "float"].includes(v)) return "number";
+    if (["percent", "phần trăm", "phan tram", "%", "ty le"].includes(v)) return "percent";
+    if (["date", "ngày", "ngay", "ngay thang", "datetime"].includes(v)) return "date";
+    if (["table", "bảng", "bang", "noi dung dai"].includes(v)) return "table";
+    return null;
+  }
+
+  async function importFromCsv(file: File) {
+    setImportingCatalog(true);
+    setError("");
+    try {
+      const text = await file.text();
+      const lines = text
+        .split(/\r?\n/)
+        .map((l) => l.trim())
+        .filter((l) => l.length > 0);
+      if (lines.length < 2) {
+        setError(t("mapping.import.err.noData"));
+        return;
+      }
+      const header = lines[0].split(",").map((h) => h.trim().toLowerCase());
+      const idxName = header.findIndex((h) => h === "tên field" || h === "ten field" || h === "label" || h === "label_vi");
+      const idxGroup = header.findIndex((h) => h === "nhóm" || h === "nhom" || h === "group");
+      const idxType = header.findIndex((h) => h === "loại" || h === "loai" || h === "type");
+      if (idxName === -1 || idxGroup === -1 || idxType === -1) {
+        setError(t("mapping.import.err.header"));
+        return;
+      }
+
+      const existingKeys = fieldCatalog.map((f) => f.field_key);
+      const imported: FieldCatalogItem[] = [];
+
+      for (let i = 1; i < lines.length; i += 1) {
+        const cols = lines[i].split(",").map((c) => c.trim());
+        const label_vi = cols[idxName] ?? "";
+        const group = cols[idxGroup] ?? "";
+        const rawType = cols[idxType] ?? "";
+        if (!label_vi || !group || !rawType) continue;
+
+        const type = normalizeImportedType(rawType);
+        if (!type) continue;
+
+        if (fieldCatalog.some((f) => f.group === group && f.label_vi === label_vi)) {
+          // skip duplicates by label+group
+          continue;
+        }
+
+        const field_key = buildInternalFieldKey({
+          group,
+          labelVi: label_vi,
+          existingKeys,
+        });
+        existingKeys.push(field_key);
+
+        imported.push({
+          field_key,
+          label_vi,
+          group,
+          type,
+          required: false,
+          normalizer: "",
+          examples: [],
+        });
+      }
+
+      if (imported.length === 0) {
+        setError(t("mapping.import.err.noRows"));
+        return;
+      }
+
+      setFieldCatalog((prev) => [...prev, ...imported]);
+      setMessage(t("mapping.import.ok", { count: imported.length }));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : t("mapping.import.err.generic"));
+    } finally {
+      setImportingCatalog(false);
+    }
+  }
+
+  async function importFromXlsx(file: File) {
+    setImportingCatalog(true);
+    setError("");
+    try {
+      const buffer = await file.arrayBuffer();
+      const workbook = XLSX.read(buffer, { type: "array" });
+      const sheetName = workbook.SheetNames[0];
+      const sheet = workbook.Sheets[sheetName];
+      const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, { defval: "" });
+      if (rows.length === 0) {
+        setError(t("mapping.import.err.noData"));
+        return;
+      }
+
+      const existingKeys = fieldCatalog.map((f) => f.field_key);
+      const imported: FieldCatalogItem[] = [];
+
+      for (const row of rows) {
+        const label_vi =
+          (row["Tên field"] as string) ||
+          (row["ten field"] as string) ||
+          (row["Label"] as string) ||
+          (row["label_vi"] as string) ||
+          "";
+        const group = (row["Nhóm"] as string) || (row["nhom"] as string) || (row["group"] as string) || "";
+        const rawType = (row["Loại"] as string) || (row["loai"] as string) || (row["type"] as string) || "";
+        if (!label_vi || !group || !rawType) continue;
+
+        const type = normalizeImportedType(String(rawType));
+        if (!type) continue;
+
+        if (fieldCatalog.some((f) => f.group === group && f.label_vi === label_vi)) {
+          continue;
+        }
+
+        const field_key = buildInternalFieldKey({
+          group,
+          labelVi: label_vi,
+          existingKeys,
+        });
+        existingKeys.push(field_key);
+
+        imported.push({
+          field_key,
+          label_vi,
+          group,
+          type,
+          required: false,
+          normalizer: "",
+          examples: [],
+        });
+      }
+
+      if (imported.length === 0) {
+        setError(t("mapping.import.err.noRows"));
+        return;
+      }
+
+      setFieldCatalog((prev) => [...prev, ...imported]);
+      setMessage(t("mapping.import.ok", { count: imported.length }));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : t("mapping.import.err.generic"));
+    } finally {
+      setImportingCatalog(false);
+    }
+  }
+
+  function handleImportFieldFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.target.value = "";
+    const name = file.name.toLowerCase();
+    if (name.endsWith(".csv")) {
+      void importFromCsv(file);
+    } else if (name.endsWith(".xlsx") || name.endsWith(".xls")) {
+      void importFromXlsx(file);
+    } else {
+      setError(t("mapping.import.err.unsupported"));
+    }
+  }
+
+  function openEditGroupModal(group: string) {
+    setEditingGroup(group);
+    setEditingGroupValue(group);
+    setEditingGroupError("");
+  }
+
+  function closeEditGroupModal() {
+    setEditingGroup(null);
+    setEditingGroupValue("");
+    setEditingGroupError("");
+  }
+
+  function applyEditGroup() {
+    const target = editingGroup ?? "";
+    const next = editingGroupValue.trim();
+    if (!next) {
+      setEditingGroupError(t("mapping.editGroup.errEmpty"));
+      return;
+    }
+
+    if (!target) {
+      // create new group
+      setCustomGroups((prev) => (prev.includes(next) ? prev : [...prev, next]));
+      setSelectedGroup(next);
+      setNewField((prev) => ({ ...prev, group: next }));
+      closeEditGroupModal();
+      return;
+    }
+
+    // rename existing group in catalog
+    setFieldCatalog((prev) =>
+      prev.map((item) => (item.group === target ? { ...item, group: next } : item)),
+    );
+    setCustomGroups((prev) => prev.map((g) => (g === target ? next : g)));
+    if (selectedGroup === target) {
+      setSelectedGroup(next);
+    }
+    if (newField.group === target) {
+      setNewField((prev) => ({ ...prev, group: next }));
+    }
+    closeEditGroupModal();
   }
 
   function onFieldLabelChange(fieldKey: string, labelVi: string) {
@@ -466,27 +674,23 @@ export default function MappingPage() {
     );
   }
 
-  function autoTranslateAllLabels() {
-    setFieldCatalog((prev) =>
-      prev.map((item) => ({
-        ...item,
-        label_vi: translateFieldLabelVi(item.field_key),
-      })),
-    );
-    setMessage(t("mapping.msg.translateDone"));
-  }
-
   function resolveGroupSelection(overrideGroup?: string): string {
     if (overrideGroup) {
       return overrideGroup.trim();
     }
-    if (selectedGroup === "__new__") {
-      return newField.group.trim();
+    if (selectedGroup.trim()) {
+      return selectedGroup.trim();
     }
-    return selectedGroup.trim();
+    return newField.group.trim();
   }
 
-  function addNewField(override?: Partial<BusinessFieldPreset>) {
+  function addNewField(
+    override?: Partial<{
+      label_vi: string;
+      group: string;
+      type: "string" | "number" | "percent" | "date" | "table";
+    }>,
+  ) {
     const group = resolveGroupSelection(override?.group);
     const label = (override?.label_vi ?? newField.label_vi).trim();
     const type = override?.type ?? newField.type;
@@ -520,11 +724,7 @@ export default function MappingPage() {
       group,
       type: "string",
     });
-    if (existingGroups.includes(group)) {
-      setSelectedGroup(group);
-    } else {
-      setSelectedGroup("__new__");
-    }
+    setSelectedGroup(group);
     setMessage(t("mapping.msg.addedField"));
   }
 
@@ -631,6 +831,28 @@ export default function MappingPage() {
       {activeTab === "visual" ? (
         <section className="space-y-3">
           <div className="flex flex-wrap gap-3">
+            <div className="flex items-center gap-2">
+              <Users className="h-4 w-4 text-zinc-500" />
+              <select
+                value={selectedCustomerId}
+                onChange={(e) => {
+                  const customerId = e.target.value;
+                  setSelectedCustomerId(customerId);
+                  if (customerId) {
+                    void loadCustomerData(customerId);
+                  }
+                }}
+                disabled={loadingCustomers || loading}
+                className="min-w-64 rounded-md border border-zinc-300 px-3 py-2 text-sm disabled:opacity-50"
+              >
+                <option value="">{t("mapping.selectCustomer")}</option>
+                {customers.map((customer) => (
+                  <option key={customer.id} value={customer.id}>
+                    {customer.customer_name} ({customer.customer_code})
+                  </option>
+                ))}
+              </select>
+            </div>
             <input
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -638,44 +860,22 @@ export default function MappingPage() {
               placeholder={t("mapping.searchPlaceholder")}
             />
             <button
-              type="button"
-              onClick={autoTranslateAllLabels}
-              className="rounded-md border border-zinc-300 px-4 py-2 text-sm"
-            >
-              {t("mapping.translateAllFields")}
-            </button>
-            <button
-              onClick={saveFieldCatalog}
-              disabled={savingCatalog}
-              className="rounded-md border border-zinc-300 px-4 py-2 text-sm disabled:opacity-60"
-            >
-              {savingCatalog ? t("mapping.savingFieldNames") : t("mapping.saveFieldNames")}
-            </button>
-            <button
-              onClick={saveManualValues}
-              disabled={savingValues}
-              className="rounded-md bg-zinc-900 px-4 py-2 text-sm text-white disabled:opacity-60"
-            >
-              {savingValues ? t("mapping.savingFieldValues") : t("mapping.saveFieldValues")}
-            </button>
-            <button
               onClick={exportAndOpenDocx}
               disabled={exportingDocx}
-              className="rounded-md bg-indigo-600 px-4 py-2 text-sm text-white disabled:opacity-60"
+              className="flex items-center gap-2 rounded-md bg-indigo-600 px-4 py-2 text-sm text-white disabled:opacity-60"
             >
+              <FileText className="h-4 w-4" />
               {exportingDocx ? t("mapping.exportingDocx") : t("mapping.exportOpenDocx")}
             </button>
             {lastExportedDocxPath ? (
               <a
                 href={`/api/report/file?path=${encodeURIComponent(lastExportedDocxPath)}&download=1&ts=${Date.now()}`}
-                className="rounded-md border border-zinc-300 px-4 py-2 text-sm hover:bg-zinc-50"
+                className="flex items-center gap-2 rounded-md border border-zinc-300 px-4 py-2 text-sm hover:bg-zinc-50"
               >
+                <Download className="h-4 w-4" />
                 {t("mapping.downloadDocx")}
               </a>
             ) : null}
-            <button onClick={resetAllManualValues} className="rounded-md border border-zinc-300 px-4 py-2 text-sm">
-              {t("mapping.resetUnsaved")}
-            </button>
             <label className="inline-flex items-center gap-2 rounded-md border border-zinc-300 px-3 py-2 text-sm">
               <input
                 type="checkbox"
@@ -684,38 +884,83 @@ export default function MappingPage() {
               />
               {t("mapping.showTechnicalKeys")}
             </label>
+            <button
+              type="button"
+              onClick={() => importInputRef.current?.click()}
+              disabled={importingCatalog}
+              className="flex items-center gap-2 rounded-md border border-zinc-300 px-4 py-2 text-sm disabled:opacity-60"
+            >
+              <Upload className="h-4 w-4" />
+              {importingCatalog ? t("mapping.import.loading") : t("mapping.import.button")}
+            </button>
+            <input
+              ref={importInputRef}
+              type="file"
+              accept=".csv,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+              className="hidden"
+              onChange={handleImportFieldFile}
+            />
           </div>
 
           <div className="rounded-xl border border-zinc-200 bg-white p-3">
             <p className="mb-2 text-sm font-semibold">{t("mapping.newFieldTitle")}</p>
-            <div className="grid gap-2 md:grid-cols-[minmax(220px,1.8fr)_minmax(200px,1.2fr)_140px]">
+            <div className="grid gap-2 md:grid-cols-[minmax(220px,1.6fr)_minmax(220px,1.6fr)_140px]">
               <input
                 value={newField.label_vi}
                 onChange={(e) => setNewField((prev) => ({ ...prev, label_vi: e.target.value }))}
                 placeholder={t("mapping.newFieldLabelPlaceholder")}
                 className="rounded-md border border-zinc-300 px-2 py-1.5 text-sm"
               />
-              <div className="space-y-2">
+              <div className="flex gap-1">
                 <select
                   value={selectedGroup}
-                  onChange={(e) => setSelectedGroup(e.target.value)}
-                  className="w-full rounded-md border border-zinc-300 px-2 py-1.5 text-sm"
+                  onChange={(e) => {
+                    const group = e.target.value;
+                    if (group === "__create_new__") {
+                      // Open modal to create new group
+                      setEditingGroup("");
+                      setEditingGroupValue("");
+                      setEditingGroupError("");
+                      setSelectedGroup(""); // Reset to avoid stuck state
+                    } else {
+                      setSelectedGroup(group);
+                      if (group) {
+                        setNewField((prev) => ({ ...prev, group }));
+                      }
+                    }
+                  }}
+                  className="flex-1 rounded-md border border-zinc-300 px-2 py-1.5 text-sm"
                 >
-                  <option value="__new__">{t("mapping.newGroupOption")}</option>
+                  <option value="" disabled>
+                    {t("mapping.selectGroup")}
+                  </option>
                   {existingGroups.map((group) => (
                     <option key={group} value={group}>
                       {group}
                     </option>
                   ))}
+                  <option value="__create_new__" className="text-emerald-600 font-medium">
+                    {t("mapping.newGroupOption")}
+                  </option>
                 </select>
-                {selectedGroup === "__new__" ? (
-                  <input
-                    value={newField.group}
-                    onChange={(e) => setNewField((prev) => ({ ...prev, group: e.target.value }))}
-                    placeholder={t("mapping.newGroupPlaceholder")}
-                    className="w-full rounded-md border border-zinc-300 px-2 py-1.5 text-sm"
-                  />
-                ) : null}
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (selectedGroup) {
+                      // Edit existing group
+                      openEditGroupModal(selectedGroup);
+                    } else {
+                      // Create new group
+                      setEditingGroup("");
+                      setEditingGroupValue("");
+                      setEditingGroupError("");
+                    }
+                  }}
+                  className="flex-shrink-0 flex items-center justify-center rounded-md border border-zinc-300 bg-white px-2.5 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-50"
+                  title={selectedGroup ? t("mapping.editGroup") : t("mapping.newGroupOption")}
+                >
+                  {selectedGroup ? <Pencil className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />}
+                </button>
               </div>
               <select
                 value={newField.type}
@@ -751,37 +996,11 @@ export default function MappingPage() {
             <button
               type="button"
               onClick={() => addNewField()}
-              className="mt-2 rounded-md bg-zinc-900 px-4 py-2 text-sm text-white"
+              className="mt-2 flex items-center gap-2 rounded-md bg-zinc-900 px-4 py-2 text-sm text-white"
             >
+              <Plus className="h-4 w-4" />
               {t("mapping.addField")}
             </button>
-            <div className="mt-3 border-t border-zinc-200 pt-3">
-              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-600">{t("mapping.presetsTitle")}</p>
-              <div className="flex flex-wrap gap-2">
-                {BUSINESS_FIELD_PRESETS.map((preset) => (
-                  <button
-                    key={`${preset.group}-${preset.label_vi}`}
-                    type="button"
-                    onClick={() => applyPreset(preset)}
-                    className="rounded-md border border-zinc-300 px-3 py-1.5 text-xs hover:bg-zinc-50"
-                  >
-                    {preset.label_vi} ({t(typeLabelKey(preset.type))})
-                  </button>
-                ))}
-              </div>
-              <div className="mt-2 flex flex-wrap gap-2">
-                {BUSINESS_FIELD_PRESETS.map((preset) => (
-                  <button
-                    key={`add-${preset.group}-${preset.label_vi}`}
-                    type="button"
-                    onClick={() => addNewField(preset)}
-                    className="rounded-md bg-zinc-900 px-3 py-1.5 text-xs text-white"
-                  >
-                    {t("mapping.quickAddPrefix")} {preset.label_vi}
-                  </button>
-                ))}
-              </div>
-            </div>
           </div>
           <div className="max-h-[70vh] overflow-auto rounded-xl border border-zinc-200 bg-white">
             <div className="sticky top-0 z-10 grid grid-cols-[minmax(260px,1fr)_minmax(360px,2fr)_160px] border-b border-zinc-200 bg-zinc-100 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-zinc-600">
@@ -791,7 +1010,17 @@ export default function MappingPage() {
             </div>
             {groupedFields.map(([group, fields]) => (
               <div key={group}>
-                <div className="sticky top-9 z-[5] bg-emerald-50 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-emerald-700">{group}</div>
+                <div className="sticky top-9 z-[5] flex items-center justify-between bg-emerald-50 px-4 py-2 text-xs uppercase tracking-wide text-emerald-700">
+                  <span className="font-semibold">{group}</span>
+                  <button
+                    type="button"
+                    onClick={() => openEditGroupModal(group)}
+                    className="flex items-center gap-1 rounded border border-emerald-300 bg-white px-2 py-0.5 text-[11px] font-normal text-emerald-700 hover:bg-emerald-50"
+                  >
+                    <Pencil className="h-3 w-3" />
+                    {t("mapping.editGroup")}
+                  </button>
+                </div>
                 {fields.map((field) => {
                   const value = values[field.field_key];
                   const textValue = value === null || value === undefined ? "" : String(value);
@@ -814,9 +1043,10 @@ export default function MappingPage() {
                         {hasManual ? (
                           <button
                             onClick={() => resetField(field.field_key)}
-                            className="text-xs text-zinc-600 underline underline-offset-2"
+                            className="flex items-center gap-1 text-xs text-zinc-600 underline underline-offset-2"
                             type="button"
                           >
+                            <RotateCcw className="h-3 w-3" />
                             {t("mapping.resetField")}
                           </button>
                         ) : null}
@@ -868,26 +1098,73 @@ export default function MappingPage() {
         </div>
       )}
 
+      {editingGroup !== null ? (
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-4">
+          <div className="w-full max-w-sm space-y-3 rounded-lg bg-white p-4 shadow-xl">
+            <h3 className="text-sm font-semibold">{t("mapping.editGroup.modalTitle")}</h3>
+            {editingGroup ? (
+              <p className="text-xs text-zinc-600">
+                {t("mapping.editGroup.current")}: <span className="font-medium">{editingGroup}</span>
+              </p>
+            ) : null}
+            <div className="space-y-1">
+              <label className="text-xs text-zinc-600" htmlFor="edit-group-input">
+                {t("mapping.editGroup.label")}
+              </label>
+              <input
+                id="edit-group-input"
+                value={editingGroupValue}
+                onChange={(e) => setEditingGroupValue(e.target.value)}
+                className="w-full rounded-md border border-zinc-300 px-2 py-1.5 text-sm"
+                autoFocus
+              />
+              {editingGroupError ? <p className="text-xs text-red-600">{editingGroupError}</p> : null}
+            </div>
+            <div className="mt-2 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={closeEditGroupModal}
+                className="flex items-center gap-1.5 rounded-md border border-zinc-300 px-3 py-1.5 text-xs hover:bg-zinc-50"
+              >
+                <X className="h-3.5 w-3.5" />
+                {t("mapping.editGroup.cancel")}
+              </button>
+              <button
+                type="button"
+                onClick={applyEditGroup}
+                className="flex items-center gap-1.5 rounded-md bg-zinc-900 px-3 py-1.5 text-xs text-white"
+              >
+                <Save className="h-3.5 w-3.5" />
+                {t("mapping.editGroup.save")}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
       <div className="flex flex-wrap gap-3">
         <button
           onClick={saveDraft}
           disabled={saving}
-          className="rounded-md bg-zinc-900 px-4 py-2 text-sm text-white disabled:opacity-60"
+          className="flex items-center gap-2 rounded-md bg-zinc-900 px-4 py-2 text-sm text-white disabled:opacity-60"
         >
+          <Save className="h-4 w-4" />
           {saving ? t("mapping.saving") : t("mapping.saveDraft")}
         </button>
         <button
           onClick={publishActive}
           disabled={publishing || !activeVersionId}
-          className="rounded-md border border-zinc-300 px-4 py-2 text-sm disabled:opacity-60"
+          className="flex items-center gap-2 rounded-md border border-zinc-300 px-4 py-2 text-sm disabled:opacity-60"
         >
+          <Send className="h-4 w-4" />
           {publishing ? t("mapping.publishing") : t("mapping.publish")}
         </button>
         <button
           onClick={runValidate}
           disabled={validating}
-          className="rounded-md border border-zinc-300 px-4 py-2 text-sm disabled:opacity-60"
+          className="flex items-center gap-2 rounded-md border border-zinc-300 px-4 py-2 text-sm disabled:opacity-60"
         >
+          <CheckCircle className="h-4 w-4" />
           {validating ? t("mapping.validating") : t("mapping.buildValidate")}
         </button>
       </div>

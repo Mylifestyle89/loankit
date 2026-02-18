@@ -176,8 +176,6 @@ export default function TemplatePage() {
       throw new Error(data.error ?? "Failed to save DOCX.");
     }
     setMessage(t("template.editor.modal.saved"));
-    setShowEditor(false);
-    setEditorBuffer(null);
     // Optional: refresh templates/inventory metadata
     await loadTemplates();
   }
