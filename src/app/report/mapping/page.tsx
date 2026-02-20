@@ -1,8 +1,25 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as XLSX from "xlsx";
-import { Plus, Pencil, X, RotateCcw, Upload, Download, Save, Send, CheckCircle, FileText, Users, Trash2, ChevronUp, ChevronDown } from "lucide-react";
+import {
+  Plus,
+  Pencil,
+  X,
+  Upload,
+  Download,
+  Save,
+  Send,
+  CheckCircle,
+  FileText,
+  Users,
+  Trash2,
+  ChevronUp,
+  ChevronDown,
+  ChevronsUp,
+  ChevronsDown,
+  Layers,
+} from "lucide-react";
 
 import { useLanguage } from "@/components/language-provider";
 import type { FieldCatalogItem } from "@/lib/report/config-schema";
@@ -37,130 +54,32 @@ type ValuesResponse = {
   manual_values?: Record<string, string | number | boolean | null>;
 };
 
-function removeVietnameseTones(text: string): string {
-  return text
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/đ/g, "d")
-    .replace(/Đ/g, "D");
-}
+type FieldTemplateItem = {
+  id: string;
+  name: string;
+  created_at: string;
+  field_catalog: FieldCatalogItem[];
+};
 
-function slugifyBusinessText(text: string): string {
-  return removeVietnameseTones(text)
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, "_")
-    .replace(/^_+|_+$/g, "")
-    .replace(/__+/g, "_");
-}
+type FieldTemplatesResponse = {
+  ok: boolean;
+  error?: string;
+  field_templates?: FieldTemplateItem[];
+  field_template?: FieldTemplateItem;
+};
 
-function toInternalType(type: "string" | "number" | "percent" | "date" | "table"): FieldCatalogItem["type"] {
-  if (type === "string") {
-    return "text";
-  }
-  return type;
-}
-
-function toBusinessType(type: FieldCatalogItem["type"]): "string" | "number" | "percent" | "date" | "table" {
-  if (type === "text") {
-    return "string";
-  }
-  return type;
-}
-
-function typeLabelKey(type: "string" | "number" | "percent" | "date" | "table"): string {
-  return `mapping.typeLabel.${type}`;
-}
-
-function buildInternalFieldKey(params: {
-  group: string;
-  labelVi: string;
-  existingKeys: string[];
-}): string {
-  const groupSlug = slugifyBusinessText(params.group) || "nhom";
-  const fieldSlug = slugifyBusinessText(params.labelVi) || "truong";
-  const base = `custom.${groupSlug}.${fieldSlug}`;
-  if (!params.existingKeys.includes(base)) {
-    return base;
-  }
-  let i = 2;
-  while (params.existingKeys.includes(`${base}_${i}`)) {
-    i += 1;
-  }
-  return `${base}_${i}`;
-}
-
-function normalizeInputByType(input: string, type: FieldCatalogItem["type"]): string | number {
-  if (type !== "number" && type !== "percent") {
-    return input;
-  }
-  const cleaned = input.replaceAll("%", "").replaceAll(".", "").replaceAll(",", ".").trim();
-  if (cleaned === "") {
-    return "";
-  }
-  const parsed = Number(cleaned);
-  return Number.isNaN(parsed) ? input : parsed;
-}
-
-function parseNumericLikeValue(raw: unknown): number | null {
-  if (raw === null || raw === undefined) {
-    return null;
-  }
-  if (typeof raw === "number" && Number.isFinite(raw)) {
-    return raw;
-  }
-  if (typeof raw !== "string") {
-    return null;
-  }
-  const cleaned = raw.replaceAll(".", "").replaceAll(",", ".").trim();
-  if (cleaned === "") {
-    return null;
-  }
-  const parsed = Number(cleaned);
-  return Number.isFinite(parsed) ? parsed : null;
-}
-
-function formatNumberVnDisplay(raw: unknown): string {
-  const parsed = parseNumericLikeValue(raw);
-  if (parsed === null) {
-    return raw === null || raw === undefined ? "" : String(raw);
-  }
-  const isInteger = Number.isInteger(parsed);
-  return parsed.toLocaleString("vi-VN", {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: isInteger ? 0 : 6,
-  });
-}
-
-function formatPercentVnDisplay(raw: unknown): string {
-  const parsed = parseNumericLikeValue(raw);
-  if (parsed === null) {
-    return raw === null || raw === undefined ? "" : String(raw);
-  }
-  const fixed = Number(parsed.toFixed(2));
-  return `${fixed.toLocaleString("vi-VN", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })}%`;
-}
-
-function toDateInputValue(raw: unknown): string {
-  if (raw === null || raw === undefined) {
-    return "";
-  }
-  const text = String(raw).trim();
-  if (/^\d{4}-\d{2}-\d{2}$/.test(text)) {
-    return text;
-  }
-  const parts = text.split("/");
-  if (parts.length === 3) {
-    const [dd, mm, yyyy] = parts;
-    if (yyyy && mm && dd) {
-      return `${yyyy.padStart(4, "0")}-${mm.padStart(2, "0")}-${dd.padStart(2, "0")}`;
-    }
-  }
-  return "";
-}
+import { FieldRow } from "./components/FieldRow";
+import { MappingSidebar } from "./components/MappingSidebar";
+import {
+  buildInternalFieldKey,
+  removeVietnameseTones,
+  slugifyBusinessText,
+  toBusinessType,
+  toInternalType,
+  normalizeInputByType,
+  typeLabelKey,
+  TypeLabelMap,
+} from "./helpers";
 
 export default function MappingPage() {
   const { t } = useLanguage();
@@ -194,6 +113,8 @@ export default function MappingPage() {
     group: "Nhóm mới",
     type: "string",
   });
+  const [addingFieldModal, setAddingFieldModal] = useState(false);
+  const newFieldSectionRef = useRef<HTMLDivElement | null>(null);
   const importInputRef = useRef<HTMLInputElement | null>(null);
   const [importingCatalog, setImportingCatalog] = useState(false);
   const [editingGroup, setEditingGroup] = useState<string | null>(null);
@@ -203,9 +124,30 @@ export default function MappingPage() {
   const [changingFieldGroup, setChangingFieldGroup] = useState<string | null>(null);
   const [changingFieldGroupValue, setChangingFieldGroupValue] = useState("");
   const [changingFieldGroupNewName, setChangingFieldGroupNewName] = useState("");
+  const [mergingGroups, setMergingGroups] = useState(false);
+  const [mergeSourceGroups, setMergeSourceGroups] = useState<string[]>([]);
+  const [mergeTargetGroup, setMergeTargetGroup] = useState("");
+  const [mergeOrderMode, setMergeOrderMode] = useState<"keep" | "alpha">("keep");
+  const [mergeGroupsError, setMergeGroupsError] = useState("");
+  const [collapsedParentGroups, setCollapsedParentGroups] = useState<string[]>([]);
   const [customers, setCustomers] = useState<Array<{ id: string; customer_name: string; customer_code: string }>>([]);
   const [loadingCustomers, setLoadingCustomers] = useState(false);
   const [selectedCustomerId, setSelectedCustomerId] = useState<string>("");
+  const [fieldTemplates, setFieldTemplates] = useState<FieldTemplateItem[]>([]);
+  const [allFieldTemplates, setAllFieldTemplates] = useState<FieldTemplateItem[]>([]);
+  const [loadingFieldTemplates, setLoadingFieldTemplates] = useState(false);
+  const [selectedFieldTemplateId, setSelectedFieldTemplateId] = useState("");
+  const [creatingFieldTemplate, setCreatingFieldTemplate] = useState(false);
+  const [newFieldTemplateName, setNewFieldTemplateName] = useState("");
+  const [savingFieldTemplate, setSavingFieldTemplate] = useState(false);
+  const [attachingFieldTemplate, setAttachingFieldTemplate] = useState(false);
+  const [attachFieldTemplateId, setAttachFieldTemplateId] = useState("");
+  const [savingAttachedTemplate, setSavingAttachedTemplate] = useState(false);
+  const [editingFieldTemplatePicker, setEditingFieldTemplatePicker] = useState(false);
+  const [editPickerTemplateId, setEditPickerTemplateId] = useState("");
+  const [editingFieldTemplateId, setEditingFieldTemplateId] = useState("");
+  const [editingFieldTemplateName, setEditingFieldTemplateName] = useState("");
+  const [savingEditedTemplate, setSavingEditedTemplate] = useState(false);
 
   const loadFieldValues = useCallback(async () => {
     const res = await fetch("/api/report/values", { cache: "no-store" });
@@ -246,6 +188,25 @@ export default function MappingPage() {
     void loadCustomers();
   }, []);
 
+  useEffect(() => {
+    if (editingFieldTemplateId) {
+      return;
+    }
+    if (!selectedCustomerId) {
+      setFieldTemplates([]);
+      setSelectedFieldTemplateId("");
+      setFieldCatalog([]);
+      setValues({});
+      setManualValues({});
+      return;
+    }
+    setSelectedFieldTemplateId("");
+    setFieldCatalog([]);
+    setValues({});
+    setManualValues({});
+    void loadFieldTemplates(selectedCustomerId);
+  }, [editingFieldTemplateId, selectedCustomerId]);
+
   async function loadCustomers() {
     setLoadingCustomers(true);
     try {
@@ -265,32 +226,235 @@ export default function MappingPage() {
     }
   }
 
-  async function loadCustomerData(customerId: string) {
-    if (!customerId) return;
-    setLoading(true);
+  async function loadFieldTemplates(customerId?: string) {
+    setLoadingFieldTemplates(true);
+    try {
+      const query = customerId ? `?customer_id=${encodeURIComponent(customerId)}` : "";
+      const res = await fetch(`/api/report/field-templates${query}`, { cache: "no-store" });
+      const data = (await res.json()) as FieldTemplatesResponse;
+      if (data.ok && Array.isArray(data.field_templates)) {
+        setFieldTemplates(data.field_templates);
+      }
+    } catch (e) {
+      console.error("Failed to load field templates:", e);
+    } finally {
+      setLoadingFieldTemplates(false);
+    }
+  }
+
+  async function loadAllFieldTemplates() {
+    try {
+      const res = await fetch("/api/report/field-templates", { cache: "no-store" });
+      const data = (await res.json()) as FieldTemplatesResponse;
+      if (data.ok && Array.isArray(data.field_templates)) {
+        setAllFieldTemplates(data.field_templates);
+      }
+    } catch (e) {
+      console.error("Failed to load all field templates:", e);
+    }
+  }
+
+  function applySelectedFieldTemplate(templateId: string) {
+    if (!templateId) return;
+    const template = fieldTemplates.find((item) => item.id === templateId);
+    if (!template) return;
+    setEditingFieldTemplateId("");
+    setEditingFieldTemplateName("");
+    setFieldCatalog(template.field_catalog ?? []);
+    const emptyValues = Object.fromEntries((template.field_catalog ?? []).map((field) => [field.field_key, ""]));
+    setManualValues({});
+    setValues(emptyValues);
+    setSelectedFieldTemplateId(templateId);
+    setMessage(t("mapping.msg.templateApplied").replace("{name}", template.name));
+  }
+
+  function openCreateFieldTemplateModal() {
+    setCreatingFieldTemplate(true);
+    setNewFieldTemplateName("");
+  }
+
+  async function openEditFieldTemplatePicker() {
+    await loadAllFieldTemplates();
+    setEditPickerTemplateId("");
+    setEditingFieldTemplatePicker(true);
+  }
+
+  function closeEditFieldTemplatePicker() {
+    setEditingFieldTemplatePicker(false);
+    setEditPickerTemplateId("");
+  }
+
+  function startEditingExistingTemplate(templateId: string) {
+    if (!templateId) {
+      setError(t("mapping.fieldTemplate.errSelectEdit"));
+      return;
+    }
+    const template = allFieldTemplates.find((item) => item.id === templateId);
+    if (!template) {
+      setError(t("mapping.fieldTemplate.errTemplateNotFound"));
+      return;
+    }
+
+    setSelectedCustomerId("");
+    setSelectedFieldTemplateId("");
+    setFieldTemplates([]);
+    setFieldCatalog(template.field_catalog ?? []);
+    const emptyValues = Object.fromEntries((template.field_catalog ?? []).map((field) => [field.field_key, ""]));
+    setManualValues({});
+    setValues(emptyValues);
+    setEditingFieldTemplateId(template.id);
+    setEditingFieldTemplateName(template.name);
+    setMessage(t("mapping.msg.templateEditing").replace("{name}", template.name));
+    closeEditFieldTemplatePicker();
+  }
+
+  function stopEditingFieldTemplate() {
+    setEditingFieldTemplateId("");
+    setEditingFieldTemplateName("");
+    if (!selectedCustomerId) {
+      setFieldCatalog([]);
+      setValues({});
+      setManualValues({});
+    }
+  }
+
+  function closeCreateFieldTemplateModal() {
+    setCreatingFieldTemplate(false);
+    setNewFieldTemplateName("");
+  }
+
+  async function openAttachFieldTemplateModal() {
+    if (!selectedCustomerId) {
+      setError(t("mapping.fieldTemplate.errSelectCustomer"));
+      return;
+    }
+    setAttachFieldTemplateId("");
+    await loadAllFieldTemplates();
+    setAttachingFieldTemplate(true);
+  }
+
+  function closeAttachFieldTemplateModal() {
+    setAttachingFieldTemplate(false);
+    setAttachFieldTemplateId("");
+  }
+
+  async function saveFieldTemplate() {
+    const name = newFieldTemplateName.trim();
+    if (!name) {
+      setError(t("mapping.fieldTemplate.errName"));
+      return;
+    }
+    setSavingFieldTemplate(true);
     setError("");
     try {
-      const res = await fetch("/api/customers/to-draft", {
+      const res = await fetch("/api/report/field-templates", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ customer_id: customerId }),
+        body: JSON.stringify({
+          name,
+          field_catalog: [], // START WITH EMPTY CATALOG
+          customer_id: selectedCustomerId,
+        }),
       });
-      const data = (await res.json()) as {
-        ok: boolean;
-        error?: string;
-        values?: Record<string, unknown>;
-      };
-      if (!data.ok || !data.values) {
-        throw new Error(data.error ?? "Failed to load customer data.");
+      const data = (await res.json()) as FieldTemplatesResponse;
+      if (!data.ok) {
+        throw new Error(data.error ?? t("mapping.fieldTemplate.errSave"));
       }
-      // Update values and manualValues
-      setValues(data.values);
-      setManualValues(data.values as Record<string, string | number | boolean | null>);
-      setMessage(t("mapping.msg.customerLoaded"));
+      if (selectedCustomerId) {
+        await loadFieldTemplates(selectedCustomerId);
+      } else {
+        await loadAllFieldTemplates();
+      }
+      if (data.field_template) {
+        setFieldCatalog([]);
+        setValues({});
+        setManualValues({});
+        setSelectedFieldTemplateId(data.field_template.id);
+        setEditingFieldTemplateId(data.field_template.id);
+        setEditingFieldTemplateName(data.field_template.name);
+      }
+      setMessage(t("mapping.msg.templateSaved").replace("{name}", name));
+      closeCreateFieldTemplateModal();
     } catch (e) {
-      setError(e instanceof Error ? e.message : t("mapping.err.loadCustomer"));
+      setError(e instanceof Error ? e.message : t("mapping.fieldTemplate.errSave"));
     } finally {
-      setLoading(false);
+      setSavingFieldTemplate(false);
+    }
+  }
+
+  async function attachExistingFieldTemplate() {
+    if (!selectedCustomerId) {
+      setError(t("mapping.fieldTemplate.errSelectCustomer"));
+      return;
+    }
+    if (!attachFieldTemplateId) {
+      setError(t("mapping.fieldTemplate.errSelectAttach"));
+      return;
+    }
+    setSavingAttachedTemplate(true);
+    setError("");
+    try {
+      const res = await fetch("/api/report/field-templates", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          customer_id: selectedCustomerId,
+          template_id: attachFieldTemplateId,
+        }),
+      });
+      const data = (await res.json()) as { ok: boolean; error?: string };
+      if (!data.ok) {
+        throw new Error(data.error ?? t("mapping.fieldTemplate.errAttach"));
+      }
+      await loadFieldTemplates(selectedCustomerId);
+      const attached = allFieldTemplates.find((item) => item.id === attachFieldTemplateId);
+      if (attached) {
+        setMessage(t("mapping.msg.templateAttached").replace("{name}", attached.name));
+      }
+      closeAttachFieldTemplateModal();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : t("mapping.fieldTemplate.errAttach"));
+    } finally {
+      setSavingAttachedTemplate(false);
+    }
+  }
+
+  async function saveEditedFieldTemplate() {
+    if (!editingFieldTemplateId) {
+      setError(t("mapping.fieldTemplate.errSelectEdit"));
+      return;
+    }
+    const nextName = editingFieldTemplateName.trim();
+    if (!nextName) {
+      setError(t("mapping.fieldTemplate.errName"));
+      return;
+    }
+
+    setSavingEditedTemplate(true);
+    setError("");
+    try {
+      const res = await fetch("/api/report/field-templates", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          template_id: editingFieldTemplateId,
+          name: nextName,
+          field_catalog: fieldCatalog,
+        }),
+      });
+      const data = (await res.json()) as FieldTemplatesResponse;
+      if (!data.ok) {
+        throw new Error(data.error ?? t("mapping.fieldTemplate.errSave"));
+      }
+      await loadAllFieldTemplates();
+      if (selectedCustomerId) {
+        await loadFieldTemplates(selectedCustomerId);
+      }
+      setMessage(t("mapping.msg.templateUpdated").replace("{name}", nextName));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : t("mapping.fieldTemplate.errSave"));
+    } finally {
+      setSavingEditedTemplate(false);
     }
   }
 
@@ -299,10 +463,15 @@ export default function MappingPage() {
     [activeVersionId, versions],
   );
 
+  const visibleFieldCatalog = useMemo(
+    () => (editingFieldTemplateId || (selectedCustomerId && selectedFieldTemplateId) ? fieldCatalog : []),
+    [editingFieldTemplateId, fieldCatalog, selectedCustomerId, selectedFieldTemplateId],
+  );
+
   const groupedFields = useMemo(() => {
     const normalizedQuery = searchTerm.trim().toLowerCase();
     const groups = new Map<string, FieldCatalogItem[]>();
-    for (const item of fieldCatalog) {
+    for (const item of visibleFieldCatalog) {
       if (normalizedQuery) {
         const inLabel = item.label_vi.toLowerCase().includes(normalizedQuery);
         const inKey = item.field_key.toLowerCase().includes(normalizedQuery);
@@ -316,12 +485,65 @@ export default function MappingPage() {
       groups.set(item.group, list);
     }
     return Array.from(groups.entries()).sort((a, b) => a[0].localeCompare(b[0]));
-  }, [fieldCatalog, searchTerm]);
+  }, [searchTerm, visibleFieldCatalog]);
+
+  const hasContext = !!selectedCustomerId || !!editingFieldTemplateId;
+
+  const groupedFieldTree = useMemo(() => {
+    const tree = new Map<string, Array<{ fullPath: string; subgroup: string; fields: FieldCatalogItem[] }>>();
+    const groupedFieldMap = new Map(groupedFields);
+
+    // Keep empty custom groups/subgroups visible even when they have no fields yet.
+    const baseGroupPaths = new Set<string>([...groupedFieldMap.keys(), ...customGroups.map((group) => group.trim()).filter(Boolean)]);
+    const normalizedQuery = searchTerm.trim().toLowerCase();
+
+    for (const groupPath of baseGroupPaths) {
+      if (normalizedQuery && !groupPath.toLowerCase().includes(normalizedQuery)) {
+        // When searching, keep behavior intuitive for empty subgroups by matching path text.
+        if (!groupedFieldMap.has(groupPath)) {
+          continue;
+        }
+      }
+      const fields = groupedFieldMap.get(groupPath) ?? [];
+      const parts = groupPath
+        .split("/")
+        .map((part) => part.trim())
+        .filter((part) => part.length > 0);
+      const parent = parts[0] ?? groupPath;
+      const subgroup = parts.slice(1).join("/");
+      const siblings = tree.get(parent) ?? [];
+      siblings.push({ fullPath: groupPath, subgroup, fields });
+      tree.set(parent, siblings);
+    }
+
+    return Array.from(tree.entries())
+      .map(([parent, children]) => ({
+        parent,
+        children: children.sort((a, b) => {
+          if (!a.subgroup && b.subgroup) return -1;
+          if (a.subgroup && !b.subgroup) return 1;
+          return a.subgroup.localeCompare(b.subgroup, "vi");
+        }),
+      }))
+      .sort((a, b) => a.parent.localeCompare(b.parent, "vi"));
+  }, [customGroups, groupedFields, searchTerm]);
+
+  const parentGroups = useMemo(() => groupedFieldTree.map((node) => node.parent), [groupedFieldTree]);
 
   const existingGroups = useMemo(() => {
     const groups = new Set([...fieldCatalog.map((item) => item.group), ...customGroups]);
     return Array.from(groups).sort((a, b) => a.localeCompare(b, "vi"));
   }, [fieldCatalog, customGroups]);
+
+  const mergePreview = useMemo(() => {
+    const selected = new Set(mergeSourceGroups);
+    const fieldCount = fieldCatalog.reduce((count, item) => (selected.has(item.group) ? count + 1 : count), 0);
+    return {
+      groupCount: mergeSourceGroups.length,
+      fieldCount,
+      targetGroup: mergeTargetGroup.trim(),
+    };
+  }, [fieldCatalog, mergeSourceGroups, mergeTargetGroup]);
 
   async function saveDraft() {
     setSaving(true);
@@ -338,6 +560,7 @@ export default function MappingPage() {
           notes: "Saved from mapping editor",
           mapping,
           alias_map,
+          field_catalog: fieldCatalog,
         }),
       });
       const data = (await res.json()) as MappingApiResponse;
@@ -443,22 +666,13 @@ export default function MappingPage() {
     setExportingDocx(false);
   }
 
-  function onManualChange(field: FieldCatalogItem, rawValue: string) {
+  const onManualChange = useCallback((field: FieldCatalogItem, rawValue: string) => {
     const normalized = normalizeInputByType(rawValue, field.type);
     setManualValues((prev) => ({ ...prev, [field.field_key]: normalized }));
     setValues((prev) => ({ ...prev, [field.field_key]: normalized }));
-  }
+  }, []);
 
-  function resetField(fieldKey: string) {
-    setManualValues((prev) => {
-      const clone = { ...prev };
-      delete clone[fieldKey];
-      return clone;
-    });
-    setValues((prev) => ({ ...prev, [fieldKey]: autoValues[fieldKey] ?? "" }));
-  }
-
-  function moveField(fieldKey: string, direction: "up" | "down") {
+  const moveField = useCallback((fieldKey: string, direction: "up" | "down") => {
     setFieldCatalog((prev) => {
       const index = prev.findIndex((f) => f.field_key === fieldKey);
       if (index === -1) return prev;
@@ -489,9 +703,9 @@ export default function MappingPage() {
       next[swapIndex] = tmp;
       return next;
     });
-  }
+  }, []);
 
-  function deleteField(fieldKey: string) {
+  const deleteField = useCallback((fieldKey: string) => {
     if (!window.confirm(t("mapping.deleteFieldConfirm"))) return;
     setFieldCatalog((prev) => prev.filter((f) => f.field_key !== fieldKey));
     setValues((prev) => {
@@ -505,15 +719,15 @@ export default function MappingPage() {
       return next;
     });
     setMessage(t("mapping.msg.fieldDeleted"));
-  }
+  }, [t]);
 
-  function openChangeGroupModal(fieldKey: string) {
+  const openChangeGroupModal = useCallback((fieldKey: string) => {
     const field = fieldCatalog.find((f) => f.field_key === fieldKey);
     if (!field) return;
     setChangingFieldGroup(fieldKey);
     setChangingFieldGroupValue("");
     setChangingFieldGroupNewName("");
-  }
+  }, [fieldCatalog]);
 
   function closeChangeGroupModal() {
     setChangingFieldGroup(null);
@@ -527,7 +741,7 @@ export default function MappingPage() {
     }
     const field = fieldCatalog.find((f) => f.field_key === changingFieldGroup);
     if (!field) return;
-    
+
     let targetGroup = changingFieldGroupValue.trim();
     if (targetGroup === "__create_new__") {
       targetGroup = changingFieldGroupNewName.trim();
@@ -539,14 +753,58 @@ export default function MappingPage() {
         setCustomGroups((prev) => (prev.includes(targetGroup) ? prev : [...prev, targetGroup]));
       }
     }
-    
+
     setFieldCatalog((prev) =>
       prev.map((item) =>
-        item.field_key === changingFieldGroup ? { ...item, group: targetGroup } : item,
+        item.field_key === changingFieldGroup ? { ...item, group: targetGroup, is_repeater: false } : item,
       ),
     );
     setMessage(t("mapping.msg.groupChanged"));
     closeChangeGroupModal();
+  }
+
+  function toggleRepeaterGroup(groupPath: string) {
+    const isRepeater = groupedFieldTree
+      .flatMap((p) => p.children)
+      .find((c) => c.fullPath === groupPath)
+      ?.fields.some((f) => f.is_repeater);
+
+    setFieldCatalog((prev) =>
+      prev.map((f) => (f.group === groupPath ? { ...f, is_repeater: !isRepeater } : f))
+    );
+  }
+
+  function addRepeaterItem(groupPath: string) {
+    setValues((prev) => {
+      const currentList = Array.isArray(prev[groupPath]) ? prev[groupPath] : [];
+      return { ...prev, [groupPath]: [...currentList, {}] };
+    });
+  }
+
+  function removeRepeaterItem(groupPath: string, index: number) {
+    setValues((prev) => {
+      const currentList = (Array.isArray(prev[groupPath]) ? prev[groupPath] : []) as any[];
+      const newList = [...currentList];
+      newList.splice(index, 1);
+      return { ...prev, [groupPath]: newList };
+    });
+  }
+
+  function onRepeaterItemChange(groupPath: string, index: number, field: FieldCatalogItem, rawVal: string) {
+    setValues((prev) => {
+      const currentList = (Array.isArray(prev[groupPath]) ? prev[groupPath] : []) as any[];
+      const newList = [...currentList];
+      if (!newList[index]) newList[index] = {};
+
+      let parsedVal: unknown = rawVal;
+      if (field.type === "number" || field.type === "percent") {
+        const num = parseFloat(rawVal.replace(/,/g, ""));
+        parsedVal = isNaN(num) ? rawVal : num;
+      }
+
+      newList[index] = { ...newList[index], [field.field_key]: parsedVal };
+      return { ...prev, [groupPath]: newList };
+    });
   }
 
   function normalizeImportedType(raw: string): FieldCatalogItem["type"] | null {
@@ -573,7 +831,11 @@ export default function MappingPage() {
         setError(t("mapping.import.err.noData"));
         return;
       }
-      const header = lines[0].split(",").map((h) => h.trim().toLowerCase());
+      const headerLine = lines[0];
+      const commaParts = headerLine.split(",").length;
+      const semicolonParts = headerLine.split(";").length;
+      const delimiter = semicolonParts > 1 && semicolonParts >= commaParts ? ";" : ",";
+      const header = headerLine.split(delimiter).map((h) => h.trim().toLowerCase());
       const idxName = header.findIndex((h) => h === "tên field" || h === "ten field" || h === "label" || h === "label_vi");
       const idxGroup = header.findIndex((h) => h === "nhóm" || h === "nhom" || h === "group");
       const idxType = header.findIndex((h) => h === "loại" || h === "loai" || h === "type");
@@ -586,7 +848,7 @@ export default function MappingPage() {
       const imported: FieldCatalogItem[] = [];
 
       for (let i = 1; i < lines.length; i += 1) {
-        const cols = lines[i].split(",").map((c) => c.trim());
+        const cols = lines[i].split(delimiter).map((c) => c.trim());
         const label_vi = cols[idxName] ?? "";
         const group = cols[idxGroup] ?? "";
         const rawType = cols[idxType] ?? "";
@@ -719,10 +981,30 @@ export default function MappingPage() {
     setEditingGroupError("");
   }
 
+  function openCreateSubgroupModal(parentGroup: string) {
+    setEditingGroup("");
+    setEditingGroupValue(`${parentGroup}/`);
+    setEditingGroupError("");
+  }
+
   function closeEditGroupModal() {
     setEditingGroup(null);
     setEditingGroupValue("");
     setEditingGroupError("");
+  }
+
+  function toggleParentCollapse(parent: string) {
+    setCollapsedParentGroups((prev) =>
+      prev.includes(parent) ? prev.filter((item) => item !== parent) : [...prev, parent],
+    );
+  }
+
+  function collapseAllGroups() {
+    setCollapsedParentGroups(parentGroups);
+  }
+
+  function expandAllGroups() {
+    setCollapsedParentGroups([]);
   }
 
   function applyEditGroup() {
@@ -756,17 +1038,80 @@ export default function MappingPage() {
     closeEditGroupModal();
   }
 
-  function onFieldLabelChange(fieldKey: string, labelVi: string) {
+  function openMergeGroupsModal() {
+    setMergingGroups(true);
+    setMergeSourceGroups([]);
+    setMergeTargetGroup("");
+    setMergeOrderMode("keep");
+    setMergeGroupsError("");
+  }
+
+  function closeMergeGroupsModal() {
+    setMergingGroups(false);
+    setMergeSourceGroups([]);
+    setMergeTargetGroup("");
+    setMergeOrderMode("keep");
+    setMergeGroupsError("");
+  }
+
+  function toggleMergeSourceGroup(group: string) {
+    setMergeSourceGroups((prev) => (prev.includes(group) ? prev.filter((g) => g !== group) : [...prev, group]));
+  }
+
+  function applyMergeGroups() {
+    const target = mergeTargetGroup.trim();
+    if (mergeSourceGroups.length < 2) {
+      setMergeGroupsError(t("mapping.merge.errMinGroups"));
+      return;
+    }
+    if (!target) {
+      setMergeGroupsError(t("mapping.merge.errTarget"));
+      return;
+    }
+
+    setFieldCatalog((prev) => {
+      const renamed = prev.map((item) => (mergeSourceGroups.includes(item.group) ? { ...item, group: target } : item));
+      if (mergeOrderMode === "keep") {
+        return renamed;
+      }
+
+      // Sort all fields in target group alphabetically by label.
+      const sortedTargetItems = renamed
+        .filter((item) => item.group === target)
+        .sort((a, b) => a.label_vi.localeCompare(b.label_vi, "vi"));
+      let cursor = 0;
+      return renamed.map((item) => {
+        if (item.group !== target) return item;
+        const nextItem = sortedTargetItems[cursor];
+        cursor += 1;
+        return nextItem;
+      });
+    });
+    setCustomGroups((prev) => {
+      const next = prev.filter((g) => !mergeSourceGroups.includes(g));
+      return next.includes(target) ? next : [...next, target];
+    });
+    if (mergeSourceGroups.includes(selectedGroup)) {
+      setSelectedGroup(target);
+    }
+    if (mergeSourceGroups.includes(newField.group)) {
+      setNewField((prev) => ({ ...prev, group: target }));
+    }
+    setMessage(t("mapping.msg.groupsMerged").replace("{count}", String(mergeSourceGroups.length)));
+    closeMergeGroupsModal();
+  }
+
+  const onFieldLabelChange = useCallback((fieldKey: string, labelVi: string) => {
     setFieldCatalog((prev) =>
       prev.map((item) => (item.field_key === fieldKey ? { ...item, label_vi: labelVi } : item)),
     );
-  }
+  }, []);
 
-  function onFieldTypeChange(fieldKey: string, type: FieldCatalogItem["type"]) {
+  const onFieldTypeChange = useCallback((fieldKey: string, type: FieldCatalogItem["type"]) => {
     setFieldCatalog((prev) =>
       prev.map((item) => (item.field_key === fieldKey ? { ...item, type } : item)),
     );
-  }
+  }, []);
 
   function resolveGroupSelection(overrideGroup?: string): string {
     if (overrideGroup) {
@@ -819,66 +1164,26 @@ export default function MappingPage() {
       type: "string",
     });
     setSelectedGroup(group);
+    setAddingFieldModal(false);
     setMessage(t("mapping.msg.addedField"));
   }
 
-
-  function renderValueInput(field: FieldCatalogItem, textValue: string, rawValue: unknown) {
-    if (field.type === "date") {
-      return (
-        <input
-          type="date"
-          value={toDateInputValue(textValue)}
-          onChange={(e) => onManualChange(field, e.target.value)}
-          className="h-9 w-full rounded-md border border-zinc-300 px-2 py-1.5 text-sm"
-        />
-      );
-    }
-    if (field.type === "number") {
-      return (
-        <input
-          value={formatNumberVnDisplay(rawValue)}
-          onChange={(e) => onManualChange(field, e.target.value)}
-          inputMode="decimal"
-          className="h-9 w-full rounded-md border border-zinc-300 px-2 py-1.5 text-sm"
-          placeholder={t("mapping.typeHintNumber")}
-        />
-      );
-    }
-    if (field.type === "percent") {
-      return (
-        <input
-          value={formatPercentVnDisplay(rawValue)}
-          onChange={(e) => onManualChange(field, e.target.value)}
-          inputMode="decimal"
-          className="h-9 w-full rounded-md border border-zinc-300 px-2 py-1.5 text-sm"
-          placeholder={t("mapping.typeHintPercent")}
-        />
-      );
-    }
-    if (field.type === "table") {
-      return (
-        <div className="space-y-1">
-          <textarea
-            value={textValue}
-            onChange={(e) => onManualChange(field, e.target.value)}
-            className="min-h-32 w-full rounded-md border border-zinc-300 px-2 py-1.5 font-mono text-sm whitespace-pre"
-            placeholder={t("mapping.typeHintTable")}
-            spellCheck={false}
-          />
-          <p className="text-xs text-zinc-500">{t("mapping.tablePasteHint")}</p>
-        </div>
-      );
-    }
-    return (
-      <input
-        value={textValue}
-        onChange={(e) => onManualChange(field, e.target.value)}
-        className="h-9 w-full rounded-md border border-zinc-300 px-2 py-1.5 text-sm"
-        placeholder={t("mapping.column.value")}
-      />
-    );
+  function prepareAddFieldForGroup(groupPath: string) {
+    setSelectedGroup(groupPath);
+    setNewField((prev) => ({ ...prev, group: groupPath }));
+    setAddingFieldModal(true);
   }
+
+  const typeLabels = useMemo<TypeLabelMap>(
+    () => ({
+      string: t(typeLabelKey("string")),
+      number: t(typeLabelKey("number")),
+      percent: t(typeLabelKey("percent")),
+      date: t(typeLabelKey("date")),
+      table: t(typeLabelKey("table")),
+    }),
+    [t],
+  );
 
   if (loading) {
     return <p className="text-sm text-zinc-600">{t("mapping.loading")}</p>;
@@ -886,325 +1191,355 @@ export default function MappingPage() {
 
   return (
     <section className="space-y-4">
-      <div className="rounded-xl border border-zinc-200 bg-white p-4">
-        <h2 className="text-lg font-semibold">{t("mapping.title")}</h2>
-        <p className="mt-1 text-sm text-zinc-600">
-          {t("mapping.activeVersion")}: <span className="font-medium">{activeVersionId || t("mapping.na")}</span> (
-          {activeVersion?.status ?? t("mapping.unknown")})
-        </p>
-        {message ? <p className="mt-2 text-sm text-emerald-700">{message}</p> : null}
-        {error ? <p className="mt-2 text-sm text-red-700">{error}</p> : null}
+      <div className="flex flex-col gap-4 rounded-xl border border-zinc-200 bg-white p-4 md:flex-row md:items-center md:justify-between">
+        <div>
+          <h2 className="text-lg font-semibold">{t("mapping.title")}</h2>
+          <p className="mt-1 text-sm text-zinc-600">
+            {t("mapping.activeVersion")}: <span className="font-medium">{activeVersionId || t("mapping.na")}</span> (
+            {activeVersion?.status ?? t("mapping.unknown")})
+          </p>
+          {message && <p className="mt-2 text-sm text-emerald-700">{message}</p>}
+          {error && <p className="mt-2 text-sm text-red-700">{error}</p>}
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            onClick={saveDraft}
+            disabled={saving}
+            className="flex items-center gap-2 rounded-md bg-zinc-900 px-4 py-2 text-sm text-white hover:bg-zinc-800 disabled:opacity-60"
+          >
+            <Save className="h-4 w-4" />
+            {saving ? t("mapping.saving") : t("mapping.saveDraft")}
+          </button>
+          <button
+            onClick={publishActive}
+            disabled={publishing || !activeVersionId}
+            className="flex items-center gap-2 rounded-md border border-zinc-300 px-4 py-2 text-sm hover:bg-zinc-50 disabled:opacity-60"
+          >
+            <Send className="h-4 w-4" />
+            {publishing ? t("mapping.publishing") : t("mapping.publish")}
+          </button>
+          <button
+            onClick={runValidate}
+            disabled={validating}
+            className="flex items-center gap-2 rounded-md border border-zinc-300 px-4 py-2 text-sm hover:bg-zinc-50 disabled:opacity-60"
+          >
+            <CheckCircle className="h-4 w-4" />
+            {validating ? t("mapping.validating") : t("mapping.buildValidate")}
+          </button>
+        </div>
       </div>
 
       <div className="flex gap-2">
         <button
           type="button"
           onClick={() => setActiveTab("visual")}
-          className={`rounded-md px-3 py-1.5 text-sm ${activeTab === "visual" ? "bg-zinc-900 text-white" : "border border-zinc-300"}`}
+          className={`rounded-md px-3 py-1.5 text-sm ${activeTab === "visual" ? "bg-zinc-900 text-white" : "border border-zinc-300 hover:bg-zinc-50"}`}
         >
           {t("mapping.tab.visual")}
         </button>
         <button
           type="button"
           onClick={() => setActiveTab("advanced")}
-          className={`rounded-md px-3 py-1.5 text-sm ${activeTab === "advanced" ? "bg-zinc-900 text-white" : "border border-zinc-300"}`}
+          className={`rounded-md px-3 py-1.5 text-sm ${activeTab === "advanced" ? "bg-zinc-900 text-white" : "border border-zinc-300 hover:bg-zinc-50"}`}
         >
           {t("mapping.tab.advanced")}
         </button>
       </div>
 
       {activeTab === "visual" ? (
-        <section className="space-y-3">
-          <div className="flex flex-wrap gap-3">
-            <div className="flex items-center gap-2">
-              <Users className="h-4 w-4 text-zinc-500" />
-              <select
-                value={selectedCustomerId}
-                onChange={(e) => {
-                  const customerId = e.target.value;
-                  setSelectedCustomerId(customerId);
-                  if (customerId) {
-                    void loadCustomerData(customerId);
-                  }
-                }}
-                disabled={loadingCustomers || loading}
-                className="min-w-64 rounded-md border border-zinc-300 px-3 py-2 text-sm disabled:opacity-50"
-              >
-                <option value="">{t("mapping.selectCustomer")}</option>
-                {customers.map((customer) => (
-                  <option key={customer.id} value={customer.id}>
-                    {customer.customer_name} ({customer.customer_code})
-                  </option>
-                ))}
-              </select>
-            </div>
-            <input
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="min-w-72 rounded-md border border-zinc-300 px-3 py-2 text-sm"
-              placeholder={t("mapping.searchPlaceholder")}
-            />
-            <button
-              onClick={exportAndOpenDocx}
-              disabled={exportingDocx}
-              className="flex items-center gap-2 rounded-md bg-indigo-600 px-4 py-2 text-sm text-white disabled:opacity-60"
-            >
-              <FileText className="h-4 w-4" />
-              {exportingDocx ? t("mapping.exportingDocx") : t("mapping.exportOpenDocx")}
-            </button>
-            {lastExportedDocxPath ? (
-              <a
-                href={`/api/report/file?path=${encodeURIComponent(lastExportedDocxPath)}&download=1&ts=${Date.now()}`}
-                className="flex items-center gap-2 rounded-md border border-zinc-300 px-4 py-2 text-sm hover:bg-zinc-50"
-              >
-                <Download className="h-4 w-4" />
-                {t("mapping.downloadDocx")}
-              </a>
-            ) : null}
-            <label className="inline-flex items-center gap-2 rounded-md border border-zinc-300 px-3 py-2 text-sm">
+        <section className="space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-zinc-200 bg-white p-2">
+            <div className={`flex items-center gap-2 w-full md:w-auto transition-opacity duration-300 ${!hasContext ? "opacity-0 pointer-events-none" : "opacity-100"}`}>
               <input
-                type="checkbox"
-                checked={showTechnicalKeys}
-                onChange={(e) => setShowTechnicalKeys(e.target.checked)}
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full md:w-72 rounded-md border border-zinc-300 px-3 py-1.5 text-sm"
+                placeholder={t("mapping.searchPlaceholder")}
               />
-              {t("mapping.showTechnicalKeys")}
-            </label>
-            <button
-              type="button"
-              onClick={() => importInputRef.current?.click()}
-              disabled={importingCatalog}
-              className="flex items-center gap-2 rounded-md border border-zinc-300 px-4 py-2 text-sm disabled:opacity-60"
-            >
-              <Upload className="h-4 w-4" />
-              {importingCatalog ? t("mapping.import.loading") : t("mapping.import.button")}
-            </button>
-            <input
-              ref={importInputRef}
-              type="file"
-              accept=".csv,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-              className="hidden"
-              onChange={handleImportFieldFile}
-            />
+              <button
+                type="button"
+                onClick={() => setAddingFieldModal(true)}
+                className="flex flex-shrink-0 items-center gap-1.5 rounded-md bg-zinc-900 px-3 py-1.5 text-sm text-white hover:bg-zinc-800"
+              >
+                <Plus className="h-4 w-4" />
+                {t("mapping.newFieldTitle")}
+              </button>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                onClick={exportAndOpenDocx}
+                disabled={exportingDocx}
+                className="flex items-center gap-1.5 rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-sm font-medium text-indigo-700 hover:bg-indigo-50 hover:text-indigo-800 disabled:opacity-60"
+                title={t("mapping.exportOpenDocx")}
+              >
+                <FileText className="h-4 w-4" />
+                {exportingDocx ? "..." : "Xem Docx"}
+              </button>
+
+              {lastExportedDocxPath ? (
+                <a
+                  href={`/api/report/file?path=${encodeURIComponent(lastExportedDocxPath)}&download=1&ts=${Date.now()}`}
+                  className="flex items-center gap-1.5 rounded-md border border-zinc-300 bg-white px-2 py-1.5 text-sm hover:bg-zinc-50"
+                  title={t("mapping.downloadDocx")}
+                >
+                  <Download className="h-4 w-4 text-zinc-600" />
+                </a>
+              ) : null}
+
+              <div className="h-6 w-px bg-zinc-200 mx-1"></div>
+
+              <MappingSidebar
+                t={t}
+                customers={customers}
+                selectedCustomerId={selectedCustomerId}
+                setSelectedCustomerId={setSelectedCustomerId}
+                loadingCustomers={loadingCustomers}
+                loading={loading}
+                fieldTemplates={fieldTemplates}
+                selectedFieldTemplateId={selectedFieldTemplateId}
+                applySelectedFieldTemplate={applySelectedFieldTemplate}
+                loadingFieldTemplates={loadingFieldTemplates}
+                openCreateFieldTemplateModal={openCreateFieldTemplateModal}
+                openAttachFieldTemplateModal={() => void openAttachFieldTemplateModal()}
+                openEditFieldTemplatePicker={() => void openEditFieldTemplatePicker()}
+                showTechnicalKeys={showTechnicalKeys}
+                setShowTechnicalKeys={setShowTechnicalKeys}
+                importingCatalog={importingCatalog}
+                handleImportFieldFile={handleImportFieldFile}
+                openMergeGroupsModal={openMergeGroupsModal}
+                setEditingFieldTemplateId={setEditingFieldTemplateId}
+                setEditingFieldTemplateName={setEditingFieldTemplateName}
+              />
+            </div>
           </div>
 
-          <div className="rounded-xl border border-zinc-200 bg-white p-3">
-            <p className="mb-2 text-sm font-semibold">{t("mapping.newFieldTitle")}</p>
-            <div className="grid gap-2 md:grid-cols-[minmax(220px,1.6fr)_minmax(220px,1.6fr)_140px]">
+          {editingFieldTemplateId ? (
+            <div className="flex flex-wrap items-center gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2">
+              <span className="text-sm font-medium text-amber-900">{t("mapping.fieldTemplate.editing")}</span>
               <input
-                value={newField.label_vi}
-                onChange={(e) => setNewField((prev) => ({ ...prev, label_vi: e.target.value }))}
-                placeholder={t("mapping.newFieldLabelPlaceholder")}
-                className="rounded-md border border-zinc-300 px-2 py-1.5 text-sm"
+                value={editingFieldTemplateName}
+                onChange={(e) => setEditingFieldTemplateName(e.target.value)}
+                className="min-w-64 rounded-md border border-amber-300 px-2 py-1.5 text-sm"
               />
-              <div className="flex gap-1">
-                <select
-                  value={selectedGroup}
-                  onChange={(e) => {
-                    const group = e.target.value;
-                    if (group === "__create_new__") {
-                      // Open modal to create new group
-                      setEditingGroup("");
-                      setEditingGroupValue("");
-                      setEditingGroupError("");
-                      setSelectedGroup(""); // Reset to avoid stuck state
-                    } else {
-                      setSelectedGroup(group);
-                      if (group) {
-                        setNewField((prev) => ({ ...prev, group }));
-                      }
-                    }
-                  }}
-                  className="flex-1 rounded-md border border-zinc-300 px-2 py-1.5 text-sm"
-                >
-                  <option value="" disabled>
-                    {t("mapping.selectGroup")}
-                  </option>
-                  {existingGroups.map((group) => (
-                    <option key={group} value={group}>
-                      {group}
-                    </option>
-                  ))}
-                  <option value="__create_new__" className="text-emerald-600 font-medium">
-                    {t("mapping.newGroupOption")}
-                  </option>
-                </select>
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (selectedGroup) {
-                      // Edit existing group
-                      openEditGroupModal(selectedGroup);
-                    } else {
-                      // Create new group
-                      setEditingGroup("");
-                      setEditingGroupValue("");
-                      setEditingGroupError("");
-                    }
-                  }}
-                  className="flex-shrink-0 flex items-center justify-center rounded-md border border-zinc-300 bg-white px-2.5 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-50"
-                  title={selectedGroup ? t("mapping.editGroup") : t("mapping.newGroupOption")}
-                >
-                  {selectedGroup ? <Pencil className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />}
-                </button>
-              </div>
-              <select
-                value={newField.type}
-                onChange={(e) =>
-                  setNewField((prev) => ({ ...prev, type: e.target.value as "string" | "number" | "percent" | "date" | "table" }))
-                }
-                className="rounded-md border border-zinc-300 px-2 py-1.5 text-sm"
+              <button
+                type="button"
+                onClick={() => void saveEditedFieldTemplate()}
+                disabled={savingEditedTemplate}
+                className="rounded-md bg-zinc-900 px-3 py-1.5 text-sm text-white disabled:opacity-50"
               >
-                <option value="string">{t(typeLabelKey("string"))}</option>
-                <option value="number">{t(typeLabelKey("number"))}</option>
-                <option value="percent">{t(typeLabelKey("percent"))}</option>
-                <option value="date">{t(typeLabelKey("date"))}</option>
-                <option value="table">{t(typeLabelKey("table"))}</option>
-              </select>
+                {savingEditedTemplate ? t("mapping.fieldTemplate.saving") : t("mapping.fieldTemplate.update")}
+              </button>
+              <button
+                type="button"
+                onClick={stopEditingFieldTemplate}
+                className="rounded-md border border-zinc-300 px-3 py-1.5 text-sm hover:bg-zinc-50"
+              >
+                {t("mapping.fieldTemplate.stopEditing")}
+              </button>
             </div>
-            <p className="mt-1 text-xs text-zinc-500">
-              {t("mapping.typeHintPrefix")} <span className="font-medium">{t("mapping.typeHintString")}</span>,{" "}
-              <span className="font-medium">{t("mapping.typeHintNumber")}</span>,{" "}
-              <span className="font-medium">{t("mapping.typeHintPercent")}</span>,{" "}
-              <span className="font-medium">{t("mapping.typeHintDate")}</span>,{" "}
-              <span className="font-medium">{t("mapping.typeHintTable")}</span>.
-            </p>
-            <p className="mt-2 text-xs text-zinc-500">
-              {t("mapping.autoTechnicalKey")}{" "}
-              <span className="font-mono">
-                {buildInternalFieldKey({
-                  group: resolveGroupSelection() || "Nhóm mới",
-                  labelVi: newField.label_vi || "Tên field",
-                  existingKeys: fieldCatalog.map((item) => item.field_key),
-                })}
-              </span>
-            </p>
-            <button
-              type="button"
-              onClick={() => addNewField()}
-              className="mt-2 flex items-center gap-2 rounded-md bg-zinc-900 px-4 py-2 text-sm text-white"
-            >
-              <Plus className="h-4 w-4" />
-              {t("mapping.addField")}
-            </button>
-          </div>
+          ) : null}
+
+
           <div className="max-h-[70vh] overflow-auto rounded-xl border border-zinc-200 bg-white">
             <div className="sticky top-0 z-10 grid grid-cols-[minmax(260px,1fr)_minmax(360px,2fr)_160px_64px] border-b border-zinc-200 bg-zinc-100 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-zinc-600">
-              <div>{t("mapping.column.field")}</div>
+              <div className="flex items-center gap-2">
+                <span>{t("mapping.column.field")}</span>
+                <button
+                  type="button"
+                  onClick={collapseAllGroups}
+                  disabled={parentGroups.length === 0 || collapsedParentGroups.length === parentGroups.length}
+                  className="rounded border border-zinc-300 bg-white p-0.5 text-zinc-600 hover:bg-zinc-50 disabled:opacity-40"
+                  title={t("mapping.collapseAllGroups")}
+                >
+                  <ChevronsUp className="h-3 w-3" />
+                </button>
+                <button
+                  type="button"
+                  onClick={expandAllGroups}
+                  disabled={collapsedParentGroups.length === 0}
+                  className="rounded border border-zinc-300 bg-white p-0.5 text-zinc-600 hover:bg-zinc-50 disabled:opacity-40"
+                  title={t("mapping.expandAllGroups")}
+                >
+                  <ChevronsDown className="h-3 w-3" />
+                </button>
+              </div>
               <div>{t("mapping.column.value")}</div>
               <div>{t("mapping.column.typeSource")}</div>
               <div className="flex items-center justify-center" />
             </div>
-            {groupedFields.map(([group, fields]) => (
-              <div key={group}>
-                <div className="sticky top-9 z-[5] flex items-center justify-between bg-emerald-50 px-4 py-2 text-xs uppercase tracking-wide text-emerald-700">
-                  <span className="font-semibold">{group}</span>
-                  <button
-                    type="button"
-                    onClick={() => openEditGroupModal(group)}
-                    className="flex items-center gap-1 rounded border border-emerald-300 bg-white px-2 py-0.5 text-[11px] font-normal text-emerald-700 hover:bg-emerald-50"
-                  >
-                    <Pencil className="h-3 w-3" />
-                    {t("mapping.editGroup")}
-                  </button>
-                </div>
-                {fields.map((field, indexInGroup) => {
-                  const value = values[field.field_key];
-                  const textValue = value === null || value === undefined ? "" : String(value);
-                  const hasManual = Object.prototype.hasOwnProperty.call(manualValues, field.field_key);
-                  const canMoveUp = indexInGroup > 0;
-                  const canMoveDown = indexInGroup < fields.length - 1;
-                  return (
-                    <div
-                      key={field.field_key}
-                      className={`grid grid-cols-[minmax(260px,1fr)_minmax(360px,2fr)_160px_64px] items-center gap-2 border-t border-zinc-200 px-4 py-2 text-sm ${hasManual ? "bg-amber-50" : ""}`}
+            {groupedFieldTree.length === 0 && (
+              <div className="py-24 flex flex-col items-center justify-center text-center">
+                {!hasContext ? (
+                  <>
+                    <h3 className="text-base font-semibold text-zinc-800 mb-1">Chưa chọn ngữ cảnh làm việc</h3>
+                    <p className="text-sm text-zinc-500 mb-4 max-w-sm">
+                      Vui lòng bấm nút "Lựa chọn khách hàng" ở góc trên bên phải để bắt đầu làm việc, hoặc tạo một mẫu dữ liệu mới.
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <h3 className="text-base font-semibold text-zinc-800 mb-1">Mẫu dữ liệu này đang trống</h3>
+                    <p className="text-sm text-zinc-500 mb-4 max-w-sm">
+                      Bạn có thể bắt đầu xây dựng mẫu bằng cách thêm Group hoặc Custom Field đầu tiên.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setAddingFieldModal(true)}
+                      className="flex flex-shrink-0 items-center gap-1.5 rounded-md bg-zinc-900 px-4 py-2 text-sm text-white shadow-sm hover:bg-zinc-800"
                     >
-                      <div className="flex items-center gap-2">
-                        <div className="flex flex-col gap-0.5">
+                      <Plus className="h-4 w-4" />
+                      Thêm trường dữ liệu (Field)
+                    </button>
+                  </>
+                )}
+              </div>
+            )}
+            {groupedFieldTree.map((node) => (
+              <div key={node.parent} className="border-b border-zinc-200 last:border-0">
+                <div className="sticky top-9 z-[5] flex items-center justify-between border-t border-zinc-200 bg-zinc-100 px-4 py-2 text-xs uppercase tracking-wider text-zinc-700">
+                  <span className="font-semibold">{node.parent}</span>
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => openCreateSubgroupModal(node.parent)}
+                      className="flex items-center gap-1 rounded bg-white px-2 py-1 text-[11px] font-medium text-zinc-600 shadow-sm border border-zinc-200 hover:bg-zinc-50 hover:text-zinc-900"
+                      title={t("mapping.addSubgroup")}
+                    >
+                      <Plus className="h-3 w-3" />
+                      {t("mapping.addSubgroup")}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => toggleParentCollapse(node.parent)}
+                      className="flex items-center gap-1 rounded bg-white px-2 py-1 text-[11px] font-medium text-zinc-600 shadow-sm border border-zinc-200 hover:bg-zinc-50 hover:text-zinc-900"
+                      title={collapsedParentGroups.includes(node.parent) ? t("mapping.expandGroup") : t("mapping.collapseGroup")}
+                    >
+                      {collapsedParentGroups.includes(node.parent) ? (
+                        <ChevronDown className="h-3 w-3" />
+                      ) : (
+                        <ChevronUp className="h-3 w-3" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+                {!collapsedParentGroups.includes(node.parent) &&
+                  node.children.map((child, childIndex) => (
+                    <div key={child.fullPath} className={childIndex > 0 ? "border-t border-zinc-200" : ""}>
+                      <div className="group/group-header flex items-center justify-between bg-zinc-50/80 px-4 py-1.5 text-[11px] uppercase tracking-wide text-zinc-500 border-t border-b border-zinc-100 border-t-transparent">
+                        <span className="font-semibold text-zinc-600 pl-6">{child.subgroup || t("mapping.groupPathRoot")}</span>
+                        <div className="flex items-center gap-1 opacity-0 group-hover/group-header:opacity-100 transition-opacity">
                           <button
                             type="button"
-                            onClick={() => moveField(field.field_key, "up")}
-                            disabled={!canMoveUp}
-                            className="flex h-5 w-5 items-center justify-center rounded border border-zinc-200 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 disabled:cursor-default disabled:opacity-30"
-                            title={t("mapping.moveUp")}
+                            onClick={() => toggleRepeaterGroup(child.fullPath)}
+                            className={`flex items-center gap-1.5 rounded px-2 py-1 text-[11px] font-medium transition-colors ${child.fields.some((f) => f.is_repeater) ? "bg-amber-100 text-amber-800 hover:bg-amber-200" : "text-zinc-500 hover:bg-amber-100 hover:text-amber-800"}`}
+                            title="Chuyển đổi thành nhóm lặp (Repeater)"
                           >
-                            <ChevronUp className="h-3.5 w-3.5" />
+                            <Layers className="h-3 w-3" />
+                            {child.fields.some((f) => f.is_repeater) ? "Tắt Nhóm Lặp" : "Nhóm Lặp (Repeater)"}
                           </button>
                           <button
                             type="button"
-                            onClick={() => moveField(field.field_key, "down")}
-                            disabled={!canMoveDown}
-                            className="flex h-5 w-5 items-center justify-center rounded border border-zinc-200 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 disabled:cursor-default disabled:opacity-30"
-                            title={t("mapping.moveDown")}
+                            onClick={() => prepareAddFieldForGroup(child.fullPath)}
+                            className="flex items-center gap-1 rounded px-1.5 py-0.5 text-[11px] font-medium text-zinc-500 hover:bg-zinc-200 hover:text-zinc-800"
                           >
-                            <ChevronDown className="h-3.5 w-3.5" />
+                            <Plus className="h-3 w-3" />
+                            {t("mapping.addField")}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => openEditGroupModal(child.fullPath)}
+                            className="flex items-center gap-1 rounded px-1.5 py-0.5 text-[11px] font-medium text-zinc-500 hover:bg-zinc-200 hover:text-zinc-800"
+                          >
+                            <Pencil className="h-3 w-3" />
+                            {t("mapping.editGroup")}
                           </button>
                         </div>
-                        <div className="flex-1">
-                          <input
-                            value={field.label_vi}
-                            onChange={(e) => onFieldLabelChange(field.field_key, e.target.value)}
-                            className="w-full rounded border border-zinc-300 px-2 py-1.5 text-sm font-medium"
+                      </div>
+                      {child.fields.length === 0 ? (
+                        <div className="border-t border-zinc-200 px-6 py-2 text-xs text-zinc-500">
+                          {t("mapping.emptySubgroupHint")}
+                        </div>
+                      ) : null}
+                      {child.fields.some((f) => f.is_repeater) ? (
+                        <div className="bg-amber-50/30 p-4 border-t border-zinc-200">
+                          {((Array.isArray(values[child.fullPath]) ? values[child.fullPath] : []) as Record<string, unknown>[]).map((item, index) => (
+                            <div key={index} className="mb-4 rounded-xl border border-amber-200/60 bg-white p-0 shadow-sm relative overflow-hidden">
+                              <div className="bg-amber-50 px-4 py-2 border-b border-amber-100 flex items-center justify-between">
+                                <span className="text-xs font-semibold text-amber-800">Bản ghi #{index + 1}</span>
+                                <button onClick={() => removeRepeaterItem(child.fullPath, index)} className="p-1 text-red-400 hover:bg-red-50 hover:text-red-600 rounded transition-colors" title="Xóa bản ghi">
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </button>
+                              </div>
+                              <div className="flex flex-col">
+                                {child.fields.map((field) => (
+                                  <FieldRow
+                                    key={field.field_key}
+                                    field={field}
+                                    value={item[field.field_key]}
+                                    showTechnicalKeys={showTechnicalKeys}
+                                    canMoveUp={fieldCatalog.findIndex((f) => f.field_key === field.field_key) > 0}
+                                    canMoveDown={fieldCatalog.findIndex((f) => f.field_key === field.field_key) < fieldCatalog.length - 1}
+                                    typeLabels={typeLabels}
+                                    columnValuePlaceholder={t("mapping.column.value")}
+                                    typeHintNumber={t("mapping.typeHintNumber")}
+                                    typeHintPercent={t("mapping.typeHintPercent")}
+                                    typeHintTable={t("mapping.typeHintTable")}
+                                    tablePasteHint={t("mapping.tablePasteHint")}
+                                    moveUpTitle={t("mapping.moveUp")}
+                                    moveDownTitle={t("mapping.moveDown")}
+                                    changeGroupTitle={t("mapping.changeGroup")}
+                                    deleteFieldTitle={t("mapping.deleteField")}
+                                    onManualChange={(f, raw) => onRepeaterItemChange(child.fullPath, index, f, raw)}
+                                    onFieldLabelChange={onFieldLabelChange}
+                                    onFieldTypeChange={onFieldTypeChange}
+                                    onMoveField={moveField}
+                                    onOpenChangeGroupModal={openChangeGroupModal}
+                                    onDeleteField={deleteField}
+                                  />
+                                ))}
+                              </div>
+                            </div>
+                          ))}
+                          <button
+                            type="button"
+                            onClick={() => addRepeaterItem(child.fullPath)}
+                            className="flex items-center gap-1.5 ml-0 rounded border border-dashed border-amber-300 bg-amber-50/50 px-4 py-2 text-sm font-medium text-amber-700 hover:bg-amber-100 hover:border-amber-400 transition-colors"
+                          >
+                            <Plus className="h-4 w-4" />
+                            Thêm bản ghi {child.subgroup || t("mapping.groupPathRoot")}
+                          </button>
+                        </div>
+                      ) : (
+                        child.fields.map((field, indexInGroup) => (
+                          <FieldRow
+                            key={field.field_key}
+                            field={field}
+                            value={values[field.field_key]}
+                            showTechnicalKeys={showTechnicalKeys}
+                            canMoveUp={indexInGroup > 0}
+                            canMoveDown={indexInGroup < child.fields.length - 1}
+                            typeLabels={typeLabels}
+                            columnValuePlaceholder={t("mapping.column.value")}
+                            typeHintNumber={t("mapping.typeHintNumber")}
+                            typeHintPercent={t("mapping.typeHintPercent")}
+                            typeHintTable={t("mapping.typeHintTable")}
+                            tablePasteHint={t("mapping.tablePasteHint")}
+                            moveUpTitle={t("mapping.moveUp")}
+                            moveDownTitle={t("mapping.moveDown")}
+                            changeGroupTitle={t("mapping.changeGroup")}
+                            deleteFieldTitle={t("mapping.deleteField")}
+                            onManualChange={onManualChange}
+                            onFieldLabelChange={onFieldLabelChange}
+                            onFieldTypeChange={onFieldTypeChange}
+                            onMoveField={moveField}
+                            onOpenChangeGroupModal={openChangeGroupModal}
+                            onDeleteField={deleteField}
                           />
-                          {showTechnicalKeys ? <p className="mt-1 text-xs text-zinc-500">{field.field_key}</p> : null}
-                        </div>
-                      </div>
-                      <div className="flex items-center">
-                        <div className="w-full">
-                          {renderValueInput(field, textValue, value)}
-                          {hasManual ? (
-                            <button
-                              onClick={() => resetField(field.field_key)}
-                              className="mt-1 flex items-center gap-1 text-xs text-zinc-600 underline underline-offset-2"
-                              type="button"
-                            >
-                              <RotateCcw className="h-3 w-3" />
-                              {t("mapping.resetField")}
-                            </button>
-                          ) : null}
-                        </div>
-                      </div>
-                      <div className="flex items-center text-sm text-zinc-600">
-                        <div className="w-full">
-                          <select
-                            value={toBusinessType(field.type)}
-                            onChange={(e) =>
-                              onFieldTypeChange(
-                                field.field_key,
-                                toInternalType(e.target.value as "string" | "number" | "percent" | "date" | "table"),
-                              )
-                            }
-                            className="h-9 w-full rounded border border-zinc-300 px-1.5 py-1.5 text-sm"
-                          >
-                            <option value="string">{t(typeLabelKey("string"))}</option>
-                            <option value="number">{t(typeLabelKey("number"))}</option>
-                            <option value="percent">{t(typeLabelKey("percent"))}</option>
-                            <option value="date">{t(typeLabelKey("date"))}</option>
-                            <option value="table">{t(typeLabelKey("table"))}</option>
-                          </select>
-                          {hasManual ? <p className="mt-1 text-xs">{t("mapping.sourceManual")}</p> : null}
-                        </div>
-                      </div>
-                      <div className="flex items-center justify-center gap-1">
-                        <button
-                          type="button"
-                          onClick={() => openChangeGroupModal(field.field_key)}
-                          className="rounded p-1.5 text-zinc-400 hover:bg-blue-50 hover:text-blue-600"
-                          title={t("mapping.changeGroup")}
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => deleteField(field.field_key)}
-                          className="rounded p-1.5 text-zinc-400 hover:bg-red-50 hover:text-red-600"
-                          title={t("mapping.deleteField")}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </div>
+                        ))
+                      )}
                     </div>
-                  );
-                })}
+                  ))}
               </div>
             ))}
           </div>
@@ -1229,6 +1564,140 @@ export default function MappingPage() {
           </label>
         </div>
       )}
+
+      {creatingFieldTemplate ? (
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-4">
+          <div className="w-full max-w-sm space-y-3 rounded-lg bg-white p-4 shadow-xl">
+            <h3 className="text-sm font-semibold">{t("mapping.fieldTemplate.modalTitle")}</h3>
+            <div className="space-y-1">
+              <label className="text-xs text-zinc-600" htmlFor="field-template-name-input">
+                {t("mapping.fieldTemplate.name")}
+              </label>
+              <input
+                id="field-template-name-input"
+                value={newFieldTemplateName}
+                onChange={(e) => setNewFieldTemplateName(e.target.value)}
+                className="w-full rounded-md border border-zinc-300 px-2 py-1.5 text-sm"
+                placeholder={t("mapping.fieldTemplate.namePlaceholder")}
+                autoFocus
+              />
+            </div>
+            <p className="text-xs text-zinc-600">{t("mapping.fieldTemplate.emptyValueHint")}</p>
+            <div className="mt-2 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={closeCreateFieldTemplateModal}
+                className="flex items-center gap-1.5 rounded-md border border-zinc-300 px-3 py-1.5 text-xs hover:bg-zinc-50"
+              >
+                <X className="h-3.5 w-3.5" />
+                {t("mapping.fieldTemplate.cancel")}
+              </button>
+              <button
+                type="button"
+                onClick={saveFieldTemplate}
+                disabled={savingFieldTemplate}
+                className="flex items-center gap-1.5 rounded-md bg-zinc-900 px-3 py-1.5 text-xs text-white disabled:opacity-50"
+              >
+                <Save className="h-3.5 w-3.5" />
+                {savingFieldTemplate ? t("mapping.fieldTemplate.saving") : t("mapping.fieldTemplate.save")}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {editingFieldTemplatePicker ? (
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-4">
+          <div className="w-full max-w-sm space-y-3 rounded-lg bg-white p-4 shadow-xl">
+            <h3 className="text-sm font-semibold">{t("mapping.fieldTemplate.editModalTitle")}</h3>
+            <div className="space-y-1">
+              <label className="text-xs text-zinc-600" htmlFor="edit-field-template-select">
+                {t("mapping.selectFieldTemplate")}
+              </label>
+              <select
+                id="edit-field-template-select"
+                value={editPickerTemplateId}
+                onChange={(e) => setEditPickerTemplateId(e.target.value)}
+                className="w-full rounded-md border border-zinc-300 px-2 py-1.5 text-sm"
+                autoFocus
+              >
+                <option value="">{t("mapping.fieldTemplate.editPlaceholder")}</option>
+                {allFieldTemplates.map((template) => (
+                  <option key={template.id} value={template.id}>
+                    {template.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="mt-2 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={closeEditFieldTemplatePicker}
+                className="flex items-center gap-1.5 rounded-md border border-zinc-300 px-3 py-1.5 text-xs hover:bg-zinc-50"
+              >
+                <X className="h-3.5 w-3.5" />
+                {t("mapping.fieldTemplate.cancel")}
+              </button>
+              <button
+                type="button"
+                onClick={() => startEditingExistingTemplate(editPickerTemplateId)}
+                className="flex items-center gap-1.5 rounded-md bg-zinc-900 px-3 py-1.5 text-xs text-white"
+              >
+                <Pencil className="h-3.5 w-3.5" />
+                {t("mapping.fieldTemplate.startEditing")}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {attachingFieldTemplate ? (
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-4">
+          <div className="w-full max-w-sm space-y-3 rounded-lg bg-white p-4 shadow-xl">
+            <h3 className="text-sm font-semibold">{t("mapping.fieldTemplate.attachModalTitle")}</h3>
+            <div className="space-y-1">
+              <label className="text-xs text-zinc-600" htmlFor="attach-field-template-select">
+                {t("mapping.selectFieldTemplate")}
+              </label>
+              <select
+                id="attach-field-template-select"
+                value={attachFieldTemplateId}
+                onChange={(e) => setAttachFieldTemplateId(e.target.value)}
+                className="w-full rounded-md border border-zinc-300 px-2 py-1.5 text-sm"
+                autoFocus
+              >
+                <option value="">{t("mapping.fieldTemplate.attachPlaceholder")}</option>
+                {allFieldTemplates
+                  .filter((template) => !fieldTemplates.some((assigned) => assigned.id === template.id))
+                  .map((template) => (
+                    <option key={template.id} value={template.id}>
+                      {template.name}
+                    </option>
+                  ))}
+              </select>
+            </div>
+            <div className="mt-2 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={closeAttachFieldTemplateModal}
+                className="flex items-center gap-1.5 rounded-md border border-zinc-300 px-3 py-1.5 text-xs hover:bg-zinc-50"
+              >
+                <X className="h-3.5 w-3.5" />
+                {t("mapping.fieldTemplate.cancel")}
+              </button>
+              <button
+                type="button"
+                onClick={() => void attachExistingFieldTemplate()}
+                disabled={savingAttachedTemplate}
+                className="flex items-center gap-1.5 rounded-md bg-zinc-900 px-3 py-1.5 text-xs text-white disabled:opacity-50"
+              >
+                <Save className="h-3.5 w-3.5" />
+                {savingAttachedTemplate ? t("mapping.fieldTemplate.attaching") : t("mapping.fieldTemplate.attach")}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {editingGroup !== null ? (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-4">
@@ -1349,32 +1818,194 @@ export default function MappingPage() {
         </div>
       ) : null}
 
-      <div className="flex flex-wrap gap-3">
-        <button
-          onClick={saveDraft}
-          disabled={saving}
-          className="flex items-center gap-2 rounded-md bg-zinc-900 px-4 py-2 text-sm text-white disabled:opacity-60"
-        >
-          <Save className="h-4 w-4" />
-          {saving ? t("mapping.saving") : t("mapping.saveDraft")}
-        </button>
-        <button
-          onClick={publishActive}
-          disabled={publishing || !activeVersionId}
-          className="flex items-center gap-2 rounded-md border border-zinc-300 px-4 py-2 text-sm disabled:opacity-60"
-        >
-          <Send className="h-4 w-4" />
-          {publishing ? t("mapping.publishing") : t("mapping.publish")}
-        </button>
-        <button
-          onClick={runValidate}
-          disabled={validating}
-          className="flex items-center gap-2 rounded-md border border-zinc-300 px-4 py-2 text-sm disabled:opacity-60"
-        >
-          <CheckCircle className="h-4 w-4" />
-          {validating ? t("mapping.validating") : t("mapping.buildValidate")}
-        </button>
-      </div>
+      {mergingGroups ? (
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-4">
+          <div className="w-full max-w-md space-y-3 rounded-lg bg-white p-4 shadow-xl">
+            <h3 className="text-sm font-semibold">{t("mapping.merge.modalTitle")}</h3>
+            <div className="space-y-2">
+              <p className="text-xs text-zinc-600">{t("mapping.merge.selectLabel")}</p>
+              <div className="max-h-56 space-y-1 overflow-auto rounded border border-zinc-200 p-2">
+                {existingGroups.map((group) => (
+                  <label key={group} className="flex items-center gap-2 text-sm">
+                    <input
+                      type="checkbox"
+                      checked={mergeSourceGroups.includes(group)}
+                      onChange={() => toggleMergeSourceGroup(group)}
+                    />
+                    <span>{group}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs text-zinc-600" htmlFor="merge-target-group-input">
+                {t("mapping.merge.targetLabel")}
+              </label>
+              <input
+                id="merge-target-group-input"
+                value={mergeTargetGroup}
+                onChange={(e) => {
+                  setMergeTargetGroup(e.target.value);
+                  if (mergeGroupsError) setMergeGroupsError("");
+                }}
+                className="w-full rounded-md border border-zinc-300 px-2 py-1.5 text-sm"
+                placeholder={t("mapping.newGroupPlaceholder")}
+                autoFocus
+              />
+              {mergeGroupsError ? <p className="text-xs text-red-600">{mergeGroupsError}</p> : null}
+            </div>
+            <div className="space-y-1">
+              <p className="text-xs text-zinc-600">{t("mapping.merge.orderLabel")}</p>
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="radio"
+                  name="merge-order-mode"
+                  checked={mergeOrderMode === "keep"}
+                  onChange={() => setMergeOrderMode("keep")}
+                />
+                <span>{t("mapping.merge.order.keep")}</span>
+              </label>
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="radio"
+                  name="merge-order-mode"
+                  checked={mergeOrderMode === "alpha"}
+                  onChange={() => setMergeOrderMode("alpha")}
+                />
+                <span>{t("mapping.merge.order.alpha")}</span>
+              </label>
+            </div>
+            <div className="rounded-md border border-zinc-200 bg-zinc-50 p-2 text-xs text-zinc-700">
+              <p>
+                {t("mapping.merge.preview.groups").replace("{count}", String(mergePreview.groupCount))}
+              </p>
+              <p>
+                {t("mapping.merge.preview.fields").replace("{count}", String(mergePreview.fieldCount))}
+              </p>
+              <p>
+                {t("mapping.merge.preview.target").replace("{name}", mergePreview.targetGroup || "—")}
+              </p>
+            </div>
+            <div className="mt-2 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={closeMergeGroupsModal}
+                className="flex items-center gap-1.5 rounded-md border border-zinc-300 px-3 py-1.5 text-xs hover:bg-zinc-50"
+              >
+                <X className="h-3.5 w-3.5" />
+                {t("mapping.merge.cancel")}
+              </button>
+              <button
+                type="button"
+                onClick={applyMergeGroups}
+                className="flex items-center gap-1.5 rounded-md bg-zinc-900 px-3 py-1.5 text-xs text-white"
+              >
+                <Save className="h-3.5 w-3.5" />
+                {t("mapping.merge.save")}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {addingFieldModal ? (
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-4">
+          <div className="w-full max-w-xl space-y-4 rounded-xl bg-white p-5 shadow-2xl">
+            <h3 className="text-base font-semibold">{t("mapping.newFieldTitle")}</h3>
+
+            <div className="grid gap-3">
+              <div>
+                <label className="mb-1 block text-sm font-medium text-zinc-700">Tên hiển thị</label>
+                <input
+                  value={newField.label_vi}
+                  onChange={(e) => setNewField((prev) => ({ ...prev, label_vi: e.target.value }))}
+                  placeholder={t("mapping.newFieldLabelPlaceholder")}
+                  className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm"
+                  autoFocus
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-zinc-700">Thuộc Nhóm</label>
+                  <div className="flex gap-1">
+                    <select
+                      value={selectedGroup}
+                      onChange={(e) => {
+                        const group = e.target.value;
+                        if (group === "__create_new__") {
+                          setAddingFieldModal(false);
+                          setEditingGroup("");
+                          setEditingGroupValue("");
+                          setEditingGroupError("");
+                          setSelectedGroup("");
+                        } else {
+                          setSelectedGroup(group);
+                          if (group) {
+                            setNewField((prev) => ({ ...prev, group }));
+                          }
+                        }
+                      }}
+                      className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm"
+                    >
+                      <option value="" disabled>{t("mapping.selectGroup")}</option>
+                      {existingGroups.map((group) => (
+                        <option key={group} value={group}>{group}</option>
+                      ))}
+                      <option value="__create_new__" className="font-medium text-emerald-600">{t("mapping.newGroupOption")}</option>
+                    </select>
+                  </div>
+                  <p className="mt-1 text-xs text-zinc-500">{t("mapping.groupPathHint")}</p>
+                </div>
+
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-zinc-700">Kiểu dữ liệu</label>
+                  <select
+                    value={newField.type}
+                    onChange={(e) => setNewField((prev) => ({ ...prev, type: e.target.value as "string" | "number" | "percent" | "date" | "table" }))}
+                    className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm"
+                  >
+                    <option value="string">{t(typeLabelKey("string"))}</option>
+                    <option value="number">{t(typeLabelKey("number"))}</option>
+                    <option value="percent">{t(typeLabelKey("percent"))}</option>
+                    <option value="date">{t(typeLabelKey("date"))}</option>
+                    <option value="table">{t(typeLabelKey("table"))}</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
+              <span className="font-medium">Technical Key sinh tự động: </span>
+              <span className="font-mono text-xs">
+                {buildInternalFieldKey({
+                  group: resolveGroupSelection() || "Nhóm mới",
+                  labelVi: newField.label_vi || "Tên field",
+                  existingKeys: fieldCatalog.map((item) => item.field_key),
+                })}
+              </span>
+            </div>
+
+            <div className="mt-4 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setAddingFieldModal(false)}
+                className="rounded-md border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50"
+              >
+                Hủy
+              </button>
+              <button
+                type="button"
+                onClick={() => addNewField()}
+                className="flex items-center gap-2 rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800"
+              >
+                <Plus className="h-4 w-4" />
+                {t("mapping.addField")}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       <div className="rounded-xl border border-zinc-200 bg-white p-4">
         <h3 className="text-sm font-semibold">{t("mapping.validationResult")}</h3>
@@ -1387,19 +2018,6 @@ export default function MappingPage() {
         )}
       </div>
 
-      <div className="rounded-xl border border-zinc-200 bg-white p-4">
-        <h3 className="text-sm font-semibold">{t("mapping.versionHistory")}</h3>
-        <ul className="mt-2 space-y-1 text-sm">
-          {(versions ?? []).map((version) => (
-            <li key={version.id} className="flex items-center justify-between rounded border border-zinc-200 px-3 py-2">
-              <span>
-                {version.id} - {version.status}
-              </span>
-              <span className="text-xs text-zinc-500">{new Date(version.created_at).toLocaleString()}</span>
-            </li>
-          ))}
-        </ul>
-      </div>
     </section>
   );
 }

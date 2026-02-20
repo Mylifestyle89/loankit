@@ -132,6 +132,7 @@ async function bootstrapState(): Promise<FrameworkState> {
 
   const state: FrameworkState = {
     field_catalog: buildCatalog(mapping),
+    field_templates: [],
     mapping_versions: [mappingVersion],
     template_profiles: bootstrapTemplateProfiles(),
     run_logs: [],
@@ -170,6 +171,7 @@ export async function createMappingDraft(params: {
   notes?: string;
   mapping: MappingMaster;
   aliasMap: AliasMap;
+  fieldCatalog?: FieldCatalogItem[];
 }): Promise<{ state: FrameworkState; version: MappingVersion }> {
   const state = await loadState();
   const id = `draft-${Date.now()}`;
@@ -191,7 +193,7 @@ export async function createMappingDraft(params: {
 
   state.mapping_versions = [version, ...state.mapping_versions];
   state.active_mapping_version_id = id;
-  state.field_catalog = buildCatalog(params.mapping);
+  state.field_catalog = params.fieldCatalog ?? buildCatalog(params.mapping);
   await saveState(state);
   return { state, version };
 }

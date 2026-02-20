@@ -10,7 +10,7 @@
     "extract:placeholders": "node scripts/extract_placeholders_to_csv.js \"Placeholder Prototype.docx\""
   },
   "dependencies": {
-    "@eigenpal/docx-js-editor": "^0.0.8",
+    "@eigenpal/docx-js-editor": "^0.0.12",
     "@prisma/adapter-better-sqlite3": "^7.4.0",
     "@prisma/client": "^7.4.0",
     "better-sqlite3": "^12.6.2",

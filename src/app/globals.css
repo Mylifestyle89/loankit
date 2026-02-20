@@ -1,5 +1,5 @@
 @import "tailwindcss";
-@import "@eigenpal/docx-js-editor/styles.css";
+@import "../../node_modules/@eigenpal/docx-js-editor/dist/styles.css";
 
 :root {
   --background: #ffffff;

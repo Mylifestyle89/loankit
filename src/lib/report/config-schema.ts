@@ -40,6 +40,7 @@ export const fieldCatalogItemSchema = z.object({
   group: z.string().min(1),
   type: z.enum(["text", "number", "percent", "date", "table"]).default("text"),
   required: z.boolean().default(false),
+  is_repeater: z.boolean().optional(),
   normalizer: z.string().optional(),
   examples: z.array(z.string()).default([]),
 });
@@ -72,8 +73,16 @@ export const runLogSchema = z.object({
   created_at: z.string().min(1),
 });
 
+export const fieldTemplateSchema = z.object({
+  id: z.string().min(1),
+  name: z.string().min(1),
+  created_at: z.string().min(1),
+  field_catalog: z.array(fieldCatalogItemSchema).default([]),
+});
+
 export const frameworkStateSchema = z.object({
   field_catalog: z.array(fieldCatalogItemSchema).default([]),
+  field_templates: z.array(fieldTemplateSchema).default([]),
   mapping_versions: z.array(mappingVersionSchema).default([]),
   template_profiles: z.array(templateProfileSchema).default([]),
   run_logs: z.array(runLogSchema).default([]),
@@ -87,4 +96,5 @@ export type FieldCatalogItem = z.infer<typeof fieldCatalogItemSchema>;
 export type MappingVersion = z.infer<typeof mappingVersionSchema>;
 export type TemplateProfile = z.infer<typeof templateProfileSchema>;
 export type RunLog = z.infer<typeof runLogSchema>;
+export type FieldTemplate = z.infer<typeof fieldTemplateSchema>;
 export type FrameworkState = z.infer<typeof frameworkStateSchema>;

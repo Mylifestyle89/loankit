@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { aliasMapSchema, mappingMasterSchema } from "@/lib/report/config-schema";
+import { aliasMapSchema, fieldCatalogItemSchema, mappingMasterSchema } from "@/lib/report/config-schema";
 import {
   createMappingDraft,
   getActiveMappingVersion,
@@ -40,14 +40,19 @@ export async function PUT(req: NextRequest) {
       notes?: string;
       mapping?: unknown;
       alias_map?: unknown;
+      field_catalog?: unknown[];
     };
     const mapping = mappingMasterSchema.parse(body.mapping);
     const aliasMap = aliasMapSchema.parse(body.alias_map);
+    const fieldCatalog = Array.isArray(body.field_catalog)
+      ? body.field_catalog.map((item) => fieldCatalogItemSchema.parse(item))
+      : undefined;
     const { state, version } = await createMappingDraft({
       createdBy: body.created_by ?? "web-user",
       notes: body.notes,
       mapping,
       aliasMap,
+      fieldCatalog,
     });
     return NextResponse.json({
       ok: true,

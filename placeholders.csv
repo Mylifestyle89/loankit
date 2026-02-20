@@ -1,4 +1,4 @@
-﻿placeholder;group;type
+﻿Tên field;Nhóm;Loại
 BLĐ.Chức danh;Ban lãnh đạo;Chuỗi
 BLĐ.Họ và tên;Ban lãnh đạo;Chuỗi
 BLĐ.Lĩnh vực quản lý;Ban lãnh đạo;Chuỗi
@@ -24,93 +24,88 @@ HĐTD.Nhu cầu phát hành bảo lãnh;Khoản vay;Số
 HĐTD.Phương thức cho vay;Khoản vay;Chuỗi
 HĐTD.Số tiền vay;Khoản vay;Số
 HĐTD.Tài chính minh bạch, LM;Khoản vay;Bảng/Nội dung dài
-HĐTD.Tổng chi phí dự kiến;Khoản vay;
-HĐTD.Tổng doanh thu dự kiến;Khoản vay;
-HĐTD.Tổng nghĩa vụ bảo đảm;Tài sản bảo đảm;
-HĐTD.Tổng nghĩa vụ bảo đảm bằng chữ;Khoản vay;
-HĐTD.Tổng nhu cầu cấp TD;Khoản vay;
-HĐTD.Tổng nhu cầu vốn;Khoản vay;
-HĐTD.Tỷ lệ % bảo đảm;Khoản vay;
-HĐTD.Thời hạn vay;Khoản vay;
-HĐTD.Vốn chủ sở hữu;Khoản vay;
-HĐTD.Vốn đối ứng;Khoản vay;
-HĐTD.Vốn khác;Khoản vay;
-HĐTD.Vốn lưu động ròng;Khoản vay;
-HĐTD.Vốn vay TCTD khác;Khoản vay;
-HĐTD.Xếp hạng KH theo Agribank;Khoản vay;
-HĐTD.Xếp hạng KH theo CIC;Khoản vay;
-HĐTV.CMND/Mã số DN;Thành viên HĐTV;
-HĐTV.Địa chỉ;Thành viên HĐTV;
-HĐTV.Giá trị cổ phần, vốn góp;Thành viên HĐTV;
-HĐTV.STT;Thành viên HĐTV;
-HĐTV.Tên cổ đông/Thành viên;Thành viên HĐTV;
-HĐTV.Tổng Giá trị cổ phần, vốn góp;Thành viên HĐTV;
-HĐTV.Tỷ lệ cổ phần, vốn góp;Thành viên HĐTV;
-Loại giấy tờ pháp lý;Thông tin chung;
-Loại giấy tờ tùy thân;Thông tin chung;
-Loại hình tổ chức;Thông tin chung;
-Mã khách hàng;Thông tin chung;
-NLQ.Dư nợ ngắn hạn;Người có liên quan;
-NLQ.Dư nợ trung dài hạn;Người có liên quan;
-NLQ.Mối liên quan;Người có liên quan;
-NLQ.Số ĐKKD/CMND;Người có liên quan;
-NLQ.STT;Người có liên quan;
-NLQ.Tên tổ chức/Cá nhân;Người có liên quan;
-NLQ.Tổng số dư cấp tín dụng;Người có liên quan;
-NLQ.Tổng Tổng số dư cấp tín dụng;Người có liên quan;
-NLQ.Xếp hạng tín dụng;Người có liên quan;
-Nơi cấp CCCD/CC;Thông tin chung;
-Nơi cấp ĐKKD;Thông tin chung;
-Ngành nghề SXKD;Thông tin chung;
-Ngày cấp CCCD/CC;Thông tin chung;
-Ngày cấp ĐKKD;Thông tin chung;
-Người đại diện;Thông tin chung;
-Người đại diện theo pháp luật;Thông tin chung;
-SĐ.Nghĩa vụ bảo đảm;Bất động sản;
-SĐ.Số seri;Bất động sản;
-SĐ.STT;Bất động sản;
-SĐ.Tên TSBĐ;Bất động sản;
-SĐ.Tổng giá trị TS;Bất động sản;
-Số ĐKKD;Thông tin chung;
-Tên chi nhánh/PGD;Thông tin người dùng;
-Tên gọi Hội đồng;Thông tin chung;
-Tên gọi in hoa;Thông tin chung;
-Tên khách hàng;Thông tin chung;
-Tên người dùng;Thông tin người dùng;
-TSBĐ.Giá trị động sản;Tài sản bảo đảm;
-TSBĐ.Loại động sản;Tài sản bảo đảm;
-TSBĐ.Nghĩa vụ bảo đảm của động sản;Tài sản bảo đảm;
-TSBĐ.Nhãn hiệu động sản;Tài sản bảo đảm;
-TSBĐ.Tổng giá trị tài sản bằng chữ;Tài sản bảo đảm;
-TSBĐ.Tổng giá trị TSBĐ;Tài sản bảo đảm;
-TTC.CCCD/CC người đại diện;Thông tin chung;
-TTC.Địa chỉ trụ sở;Thông tin chung;
-TTC.Giấy tờ ủy quyền;Thông tin chung;
-Thay đổi ngày cấp ĐKKD;Thông tin chung;
-Vốn điều lệ;Thông tin chung;
-VV.Doanh số bảo lãnh;Thông tin tài chính;
-VV.Doanh số bảo lãnh:;Thông tin tài chính;
-VV.Doanh số cho vay NH;Thông tin tài chính;
-VV.Doanh số cho vay NH:;Thông tin tài chính;
-VV.Doanh số cho vay TDH;Thông tin tài chính;
-VV.Doanh số cho vay TDH:;Thông tin tài chính;
-VV.Doanh số chuyển tiền đến;Thông tin tài chính;
-VV.Doanh số chuyển tiền đến:;Thông tin tài chính;
-VV.Doanh số chuyển tiền đi;Thông tin tài chính;
-VV.Doanh số chuyển tiền đi:;Thông tin tài chính;
-VV.Doanh số thu lãi NH;Thông tin tài chính;
-VV.Doanh số thu lãi NH:;Thông tin tài chính;
-VV.Doanh số thu lãi TDH;Thông tin tài chính;
-VV.Doanh số thu lãi TDH:;Thông tin tài chính;
-VV.Doanh số thu nợ NH;Thông tin tài chính;
-VV.Doanh số thu nợ NH:;Thông tin tài chính;
-VV.Doanh số thu nợ TDH;Thông tin tài chính;
-VV.Doanh số thu nợ TDH:;Thông tin tài chính;
-VV.Dư nợ cuối kỳ NH;Thông tin tài chính;
-VV.Dư nợ cuối kỳ NH:;Thông tin tài chính;
-VV.Dư nợ cuối kỳ TDH;Thông tin tài chính;
-VV.Dư nợ cuối kỳ TDH:;Thông tin tài chính;
-VV.Phí bảo lãnh đã thu;Thông tin tài chính;
-VV.Phí bảo lãnh đã thu:;Thông tin tài chính;
-VV.Số dư bảo lãnh cuối kỳ;Thông tin tài chính;
-VV.Số dư bảo lãnh cuối kỳ:;Thông tin tài chính;
+HĐTD.Tổng chi phí dự kiến;Khoản vay;Số
+HĐTD.Tổng doanh thu dự kiến;Khoản vay;Số
+HĐTD.Tổng nghĩa vụ bảo đảm;Tài sản bảo đảm;Số
+HĐTD.Tổng nghĩa vụ bảo đảm bằng chữ;Khoản vay;Chuỗi
+HĐTD.Tổng nhu cầu cấp TD;Khoản vay;Số
+HĐTD.Tổng nhu cầu vốn;Khoản vay;Số
+HĐTD.Tỷ lệ % bảo đảm;Khoản vay;Phần trăm (%)
+HĐTD.Thời hạn vay;Khoản vay;Số
+HĐTD.Vốn chủ sở hữu;Khoản vay;Số
+HĐTD.Vốn đối ứng;Khoản vay;Số
+HĐTD.Vốn khác;Khoản vay;Số
+HĐTD.Vốn lưu động ròng;Khoản vay;Số
+HĐTD.Vốn vay TCTD khác;Khoản vay;Số
+HĐTD.Xếp hạng KH theo Agribank;Khoản vay;Chuỗi
+HĐTD.Xếp hạng KH theo CIC;Khoản vay;Chuỗi
+HĐTV.CMND/Mã số DN;Thành viên HĐTV;Chuỗi
+HĐTV.Địa chỉ;Thành viên HĐTV;Số
+HĐTV.Giá trị cổ phần, vốn góp;Thành viên HĐTV;Số
+HĐTV.Tên cổ đông/Thành viên;Thành viên HĐTV;Chuỗi
+HĐTV.Tổng Giá trị cổ phần, vốn góp;Thành viên HĐTV;Số
+HĐTV.Tỷ lệ cổ phần, vốn góp;Thành viên HĐTV;Phần trăm (%)
+TTC.Loại giấy tờ pháp lý;Thông tin chung;Chuỗi
+TTC.Loại giấy tờ tùy thân;Thông tin chung;Chuỗi
+TTC.Loại hình tổ chức;Thông tin chung;Chuỗi
+TTC.Mã khách hàng;Thông tin chung;Chuỗi
+NLQ.Dư nợ ngắn hạn;Người có liên quan;Số
+NLQ.Dư nợ trung dài hạn;Người có liên quan;Số
+NLQ.Mối liên quan;Người có liên quan;Chuỗi
+NLQ.Số ĐKKD/CMND;Người có liên quan;Chuỗi
+NLQ.Tên tổ chức/Cá nhân;Người có liên quan;Chuỗi
+NLQ.Tổng số dư cấp tín dụng;Người có liên quan;Số
+NLQ.Xếp hạng tín dụng;Người có liên quan;Chuỗi
+TTC.Nơi cấp CCCD/CC;Thông tin chung;Chuỗi
+TTC.Nơi cấp ĐKKD;Thông tin chung;Chuỗi
+TTC.Ngành nghề SXKD;Thông tin chung;Chuỗi
+TTC.Ngày cấp CCCD/CC;Thông tin chung;Chuỗi
+TTC.Ngày cấp ĐKKD;Thông tin chung;Chuỗi
+TTC.Người đại diện;Thông tin chung;Chuỗi
+TTC.Người đại diện theo pháp luật;Thông tin chung;Chuỗi
+SĐ.Nghĩa vụ bảo đảm;Bất động sản;Số
+SĐ.Số seri;Bất động sản;Chuỗi
+SĐ.Tên TSBĐ;Bất động sản;Chuỗi
+SĐ.Tổng giá trị TS;Bất động sản;Số
+TTC.Số ĐKKD;Thông tin chung;Chuỗi
+ND.Tên chi nhánh/PGD;Thông tin người dùng;Chuỗi
+ND.Tên gọi Hội đồng;Thông tin chung;Chuỗi
+ND.Tên gọi in hoa;Thông tin chung;Chuỗi
+ND.Tên khách hàng;Thông tin chung;Chuỗi
+ND.Tên người dùng;Thông tin người dùng;Chuỗi
+TSBĐ.Giá trị động sản;Tài sản bảo đảm;Số
+TSBĐ.Loại động sản;Tài sản bảo đảm;Chuỗi
+TSBĐ.Nghĩa vụ bảo đảm của động sản;Tài sản bảo đảm;Số
+TSBĐ.Nhãn hiệu động sản;Tài sản bảo đảm;Chuỗi
+TSBĐ.Tổng giá trị tài sản bằng chữ;Tài sản bảo đảm;Chuỗi
+TSBĐ.Tổng giá trị TSBĐ;Tài sản bảo đảm;Số
+TTC.CCCD/CC người đại diện;Thông tin chung;Chuỗi
+TTC.Địa chỉ trụ sở;Thông tin chung;Chuỗi
+TTC.Giấy tờ ủy quyền;Thông tin chung;Chuỗi
+Vốn điều lệ;Thông tin chung;Số
+TC.Doanh số bảo lãnh;Thông tin tài chính;Số
+TC.Doanh số bảo lãnh:;Thông tin tài chính;Số
+TC.Doanh số cho vay NH;Thông tin tài chính;Số
+TC.Doanh số cho vay NH:;Thông tin tài chính;Số
+TC.Doanh số cho vay TDH;Thông tin tài chính;Số
+TC.Doanh số cho vay TDH:;Thông tin tài chính;Số
+TC.Doanh số chuyển tiền đến;Thông tin tài chính;Số
+TC.Doanh số chuyển tiền đến:;Thông tin tài chính;Số
+TC.Doanh số chuyển tiền đi;Thông tin tài chính;Số
+TC.Doanh số chuyển tiền đi:;Thông tin tài chính;Số
+TC.Doanh số thu lãi NH;Thông tin tài chính;Số
+TC.Doanh số thu lãi NH:;Thông tin tài chính;Số
+TC.Doanh số thu lãi TDH;Thông tin tài chính;Số
+TC.Doanh số thu lãi TDH:;Thông tin tài chính;Số
+TC.Doanh số thu nợ NH;Thông tin tài chính;Số
+TC.Doanh số thu nợ NH:;Thông tin tài chính;Số
+TC.Doanh số thu nợ TDH;Thông tin tài chính;Số
+TC.Doanh số thu nợ TDH:;Thông tin tài chính;Số
+TC.Dư nợ cuối kỳ NH;Thông tin tài chính;Số
+TC.Dư nợ cuối kỳ NH:;Thông tin tài chính;Số
+TC.Dư nợ cuối kỳ TDH;Thông tin tài chính;Số
+TC.Dư nợ cuối kỳ TDH:;Thông tin tài chính;Số
+TC.Phí bảo lãnh đã thu;Thông tin tài chính;Số
+TC.Phí bảo lãnh đã thu:;Thông tin tài chính;Số
+TC.Số dư bảo lãnh cuối kỳ;Thông tin tài chính;Số
+TC.Số dư bảo lãnh cuối kỳ:;Thông tin tài chính;Số
