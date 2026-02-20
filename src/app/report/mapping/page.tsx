@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as XLSX from "xlsx";
-import { Plus, Pencil, X, RotateCcw, Upload, Download, Save, Send, CheckCircle, FileText, Users } from "lucide-react";
+import { Plus, Pencil, X, RotateCcw, Upload, Download, Save, Send, CheckCircle, FileText, Users, Trash2, ChevronUp, ChevronDown } from "lucide-react";
 
 import { useLanguage } from "@/components/language-provider";
 import type { FieldCatalogItem } from "@/lib/report/config-schema";
@@ -200,6 +200,9 @@ export default function MappingPage() {
   const [editingGroupValue, setEditingGroupValue] = useState("");
   const [editingGroupError, setEditingGroupError] = useState("");
   const [customGroups, setCustomGroups] = useState<string[]>([]);
+  const [changingFieldGroup, setChangingFieldGroup] = useState<string | null>(null);
+  const [changingFieldGroupValue, setChangingFieldGroupValue] = useState("");
+  const [changingFieldGroupNewName, setChangingFieldGroupNewName] = useState("");
   const [customers, setCustomers] = useState<Array<{ id: string; customer_name: string; customer_code: string }>>([]);
   const [loadingCustomers, setLoadingCustomers] = useState(false);
   const [selectedCustomerId, setSelectedCustomerId] = useState<string>("");
@@ -455,6 +458,97 @@ export default function MappingPage() {
     setValues((prev) => ({ ...prev, [fieldKey]: autoValues[fieldKey] ?? "" }));
   }
 
+  function moveField(fieldKey: string, direction: "up" | "down") {
+    setFieldCatalog((prev) => {
+      const index = prev.findIndex((f) => f.field_key === fieldKey);
+      if (index === -1) return prev;
+      const group = prev[index].group;
+
+      let swapIndex = index;
+      if (direction === "up") {
+        for (let i = index - 1; i >= 0; i -= 1) {
+          if (prev[i].group === group) {
+            swapIndex = i;
+            break;
+          }
+        }
+      } else {
+        for (let i = index + 1; i < prev.length; i += 1) {
+          if (prev[i].group === group) {
+            swapIndex = i;
+            break;
+          }
+        }
+      }
+
+      if (swapIndex === index) return prev;
+
+      const next = [...prev];
+      const tmp = next[index];
+      next[index] = next[swapIndex];
+      next[swapIndex] = tmp;
+      return next;
+    });
+  }
+
+  function deleteField(fieldKey: string) {
+    if (!window.confirm(t("mapping.deleteFieldConfirm"))) return;
+    setFieldCatalog((prev) => prev.filter((f) => f.field_key !== fieldKey));
+    setValues((prev) => {
+      const next = { ...prev };
+      delete next[fieldKey];
+      return next;
+    });
+    setManualValues((prev) => {
+      const next = { ...prev };
+      delete next[fieldKey];
+      return next;
+    });
+    setMessage(t("mapping.msg.fieldDeleted"));
+  }
+
+  function openChangeGroupModal(fieldKey: string) {
+    const field = fieldCatalog.find((f) => f.field_key === fieldKey);
+    if (!field) return;
+    setChangingFieldGroup(fieldKey);
+    setChangingFieldGroupValue("");
+    setChangingFieldGroupNewName("");
+  }
+
+  function closeChangeGroupModal() {
+    setChangingFieldGroup(null);
+    setChangingFieldGroupValue("");
+    setChangingFieldGroupNewName("");
+  }
+
+  function applyChangeGroup() {
+    if (!changingFieldGroup) {
+      return;
+    }
+    const field = fieldCatalog.find((f) => f.field_key === changingFieldGroup);
+    if (!field) return;
+    
+    let targetGroup = changingFieldGroupValue.trim();
+    if (targetGroup === "__create_new__") {
+      targetGroup = changingFieldGroupNewName.trim();
+      if (!targetGroup) {
+        return;
+      }
+      // Add to custom groups if not exists
+      if (!existingGroups.includes(targetGroup)) {
+        setCustomGroups((prev) => (prev.includes(targetGroup) ? prev : [...prev, targetGroup]));
+      }
+    }
+    
+    setFieldCatalog((prev) =>
+      prev.map((item) =>
+        item.field_key === changingFieldGroup ? { ...item, group: targetGroup } : item,
+      ),
+    );
+    setMessage(t("mapping.msg.groupChanged"));
+    closeChangeGroupModal();
+  }
+
   function normalizeImportedType(raw: string): FieldCatalogItem["type"] | null {
     const v = raw.trim().toLowerCase();
     if (!v) return null;
@@ -530,7 +624,7 @@ export default function MappingPage() {
       }
 
       setFieldCatalog((prev) => [...prev, ...imported]);
-      setMessage(t("mapping.import.ok", { count: imported.length }));
+      setMessage(t("mapping.import.ok").replace("{count}", String(imported.length)));
     } catch (e) {
       setError(e instanceof Error ? e.message : t("mapping.import.err.generic"));
     } finally {
@@ -597,7 +691,7 @@ export default function MappingPage() {
       }
 
       setFieldCatalog((prev) => [...prev, ...imported]);
-      setMessage(t("mapping.import.ok", { count: imported.length }));
+      setMessage(t("mapping.import.ok").replace("{count}", String(imported.length)));
     } catch (e) {
       setError(e instanceof Error ? e.message : t("mapping.import.err.generic"));
     } finally {
@@ -728,15 +822,6 @@ export default function MappingPage() {
     setMessage(t("mapping.msg.addedField"));
   }
 
-  function applyPreset(preset: BusinessFieldPreset) {
-    const matchedGroup = existingGroups.find((group) => group.toLowerCase() === preset.group.toLowerCase());
-    setSelectedGroup(matchedGroup ?? "__new__");
-    setNewField({
-      label_vi: preset.label_vi,
-      group: preset.group,
-      type: preset.type,
-    });
-  }
 
   function renderValueInput(field: FieldCatalogItem, textValue: string, rawValue: unknown) {
     if (field.type === "date") {
@@ -745,7 +830,7 @@ export default function MappingPage() {
           type="date"
           value={toDateInputValue(textValue)}
           onChange={(e) => onManualChange(field, e.target.value)}
-          className="w-full rounded-md border border-zinc-300 px-2 py-1.5"
+          className="h-9 w-full rounded-md border border-zinc-300 px-2 py-1.5 text-sm"
         />
       );
     }
@@ -755,7 +840,7 @@ export default function MappingPage() {
           value={formatNumberVnDisplay(rawValue)}
           onChange={(e) => onManualChange(field, e.target.value)}
           inputMode="decimal"
-          className="w-full rounded-md border border-zinc-300 px-2 py-1.5"
+          className="h-9 w-full rounded-md border border-zinc-300 px-2 py-1.5 text-sm"
           placeholder={t("mapping.typeHintNumber")}
         />
       );
@@ -766,7 +851,7 @@ export default function MappingPage() {
           value={formatPercentVnDisplay(rawValue)}
           onChange={(e) => onManualChange(field, e.target.value)}
           inputMode="decimal"
-          className="w-full rounded-md border border-zinc-300 px-2 py-1.5"
+          className="h-9 w-full rounded-md border border-zinc-300 px-2 py-1.5 text-sm"
           placeholder={t("mapping.typeHintPercent")}
         />
       );
@@ -789,7 +874,7 @@ export default function MappingPage() {
       <input
         value={textValue}
         onChange={(e) => onManualChange(field, e.target.value)}
-        className="w-full rounded-md border border-zinc-300 px-2 py-1.5"
+        className="h-9 w-full rounded-md border border-zinc-300 px-2 py-1.5 text-sm"
         placeholder={t("mapping.column.value")}
       />
     );
@@ -1003,10 +1088,11 @@ export default function MappingPage() {
             </button>
           </div>
           <div className="max-h-[70vh] overflow-auto rounded-xl border border-zinc-200 bg-white">
-            <div className="sticky top-0 z-10 grid grid-cols-[minmax(260px,1fr)_minmax(360px,2fr)_160px] border-b border-zinc-200 bg-zinc-100 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-zinc-600">
+            <div className="sticky top-0 z-10 grid grid-cols-[minmax(260px,1fr)_minmax(360px,2fr)_160px_64px] border-b border-zinc-200 bg-zinc-100 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-zinc-600">
               <div>{t("mapping.column.field")}</div>
               <div>{t("mapping.column.value")}</div>
               <div>{t("mapping.column.typeSource")}</div>
+              <div className="flex items-center justify-center" />
             </div>
             {groupedFields.map(([group, fields]) => (
               <div key={group}>
@@ -1021,54 +1107,100 @@ export default function MappingPage() {
                     {t("mapping.editGroup")}
                   </button>
                 </div>
-                {fields.map((field) => {
+                {fields.map((field, indexInGroup) => {
                   const value = values[field.field_key];
                   const textValue = value === null || value === undefined ? "" : String(value);
                   const hasManual = Object.prototype.hasOwnProperty.call(manualValues, field.field_key);
+                  const canMoveUp = indexInGroup > 0;
+                  const canMoveDown = indexInGroup < fields.length - 1;
                   return (
                     <div
                       key={field.field_key}
-                      className={`grid grid-cols-[minmax(260px,1fr)_minmax(360px,2fr)_160px] items-start gap-3 border-t border-zinc-200 px-4 py-2 text-sm ${hasManual ? "bg-amber-50" : ""}`}
+                      className={`grid grid-cols-[minmax(260px,1fr)_minmax(360px,2fr)_160px_64px] items-center gap-2 border-t border-zinc-200 px-4 py-2 text-sm ${hasManual ? "bg-amber-50" : ""}`}
                     >
-                      <div>
-                        <input
-                          value={field.label_vi}
-                          onChange={(e) => onFieldLabelChange(field.field_key, e.target.value)}
-                          className="w-full rounded border border-zinc-300 px-2 py-1 font-medium"
-                        />
-                        {showTechnicalKeys ? <p className="text-xs text-zinc-500">{field.field_key}</p> : null}
-                      </div>
-                      <div className="space-y-2">
-                        {renderValueInput(field, textValue, value)}
-                        {hasManual ? (
+                      <div className="flex items-center gap-2">
+                        <div className="flex flex-col gap-0.5">
                           <button
-                            onClick={() => resetField(field.field_key)}
-                            className="flex items-center gap-1 text-xs text-zinc-600 underline underline-offset-2"
                             type="button"
+                            onClick={() => moveField(field.field_key, "up")}
+                            disabled={!canMoveUp}
+                            className="flex h-5 w-5 items-center justify-center rounded border border-zinc-200 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 disabled:cursor-default disabled:opacity-30"
+                            title={t("mapping.moveUp")}
                           >
-                            <RotateCcw className="h-3 w-3" />
-                            {t("mapping.resetField")}
+                            <ChevronUp className="h-3.5 w-3.5" />
                           </button>
-                        ) : null}
+                          <button
+                            type="button"
+                            onClick={() => moveField(field.field_key, "down")}
+                            disabled={!canMoveDown}
+                            className="flex h-5 w-5 items-center justify-center rounded border border-zinc-200 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 disabled:cursor-default disabled:opacity-30"
+                            title={t("mapping.moveDown")}
+                          >
+                            <ChevronDown className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                        <div className="flex-1">
+                          <input
+                            value={field.label_vi}
+                            onChange={(e) => onFieldLabelChange(field.field_key, e.target.value)}
+                            className="w-full rounded border border-zinc-300 px-2 py-1.5 text-sm font-medium"
+                          />
+                          {showTechnicalKeys ? <p className="mt-1 text-xs text-zinc-500">{field.field_key}</p> : null}
+                        </div>
                       </div>
-                      <div className="text-xs text-zinc-600">
-                        <select
-                          value={toBusinessType(field.type)}
-                          onChange={(e) =>
-                            onFieldTypeChange(
-                              field.field_key,
-                              toInternalType(e.target.value as "string" | "number" | "percent" | "date" | "table"),
-                            )
-                          }
-                          className="rounded border border-zinc-300 px-1 py-0.5 text-xs"
+                      <div className="flex items-center">
+                        <div className="w-full">
+                          {renderValueInput(field, textValue, value)}
+                          {hasManual ? (
+                            <button
+                              onClick={() => resetField(field.field_key)}
+                              className="mt-1 flex items-center gap-1 text-xs text-zinc-600 underline underline-offset-2"
+                              type="button"
+                            >
+                              <RotateCcw className="h-3 w-3" />
+                              {t("mapping.resetField")}
+                            </button>
+                          ) : null}
+                        </div>
+                      </div>
+                      <div className="flex items-center text-sm text-zinc-600">
+                        <div className="w-full">
+                          <select
+                            value={toBusinessType(field.type)}
+                            onChange={(e) =>
+                              onFieldTypeChange(
+                                field.field_key,
+                                toInternalType(e.target.value as "string" | "number" | "percent" | "date" | "table"),
+                              )
+                            }
+                            className="h-9 w-full rounded border border-zinc-300 px-1.5 py-1.5 text-sm"
+                          >
+                            <option value="string">{t(typeLabelKey("string"))}</option>
+                            <option value="number">{t(typeLabelKey("number"))}</option>
+                            <option value="percent">{t(typeLabelKey("percent"))}</option>
+                            <option value="date">{t(typeLabelKey("date"))}</option>
+                            <option value="table">{t(typeLabelKey("table"))}</option>
+                          </select>
+                          {hasManual ? <p className="mt-1 text-xs">{t("mapping.sourceManual")}</p> : null}
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() => openChangeGroupModal(field.field_key)}
+                          className="rounded p-1.5 text-zinc-400 hover:bg-blue-50 hover:text-blue-600"
+                          title={t("mapping.changeGroup")}
                         >
-                          <option value="string">{t(typeLabelKey("string"))}</option>
-                          <option value="number">{t(typeLabelKey("number"))}</option>
-                          <option value="percent">{t(typeLabelKey("percent"))}</option>
-                          <option value="date">{t(typeLabelKey("date"))}</option>
-                          <option value="table">{t(typeLabelKey("table"))}</option>
-                        </select>
-                        <p>{hasManual ? t("mapping.sourceManual") : t("mapping.sourceAuto")}</p>
+                          <Pencil className="h-4 w-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => deleteField(field.field_key)}
+                          className="rounded p-1.5 text-zinc-400 hover:bg-red-50 hover:text-red-600"
+                          title={t("mapping.deleteField")}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
                       </div>
                     </div>
                   );
@@ -1136,6 +1268,81 @@ export default function MappingPage() {
               >
                 <Save className="h-3.5 w-3.5" />
                 {t("mapping.editGroup.save")}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {changingFieldGroup !== null ? (
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-4">
+          <div className="w-full max-w-sm space-y-3 rounded-lg bg-white p-4 shadow-xl">
+            <h3 className="text-sm font-semibold">{t("mapping.changeGroup.modalTitle")}</h3>
+            {(() => {
+              const field = fieldCatalog.find((f) => f.field_key === changingFieldGroup);
+              return field ? (
+                <p className="text-xs text-zinc-600">
+                  {t("mapping.changeGroup.current")}: <span className="font-medium">{field.group}</span>
+                </p>
+              ) : null;
+            })()}
+            <div className="space-y-1">
+              <label className="text-xs text-zinc-600" htmlFor="change-group-select">
+                {t("mapping.changeGroup.select")}
+              </label>
+              <select
+                id="change-group-select"
+                value={changingFieldGroupValue}
+                onChange={(e) => setChangingFieldGroupValue(e.target.value)}
+                className="w-full rounded-md border border-zinc-300 px-2 py-1.5 text-sm"
+                autoFocus
+              >
+                <option value="" disabled>
+                  {t("mapping.changeGroup.select")}
+                </option>
+                {existingGroups
+                  .filter((group) => {
+                    const field = fieldCatalog.find((f) => f.field_key === changingFieldGroup);
+                    return field && group !== field.group;
+                  })
+                  .map((group) => (
+                    <option key={group} value={group}>
+                      {group}
+                    </option>
+                  ))}
+                <option value="__create_new__" className="text-emerald-600 font-medium">
+                  {t("mapping.newGroupOption")}
+                </option>
+              </select>
+              {changingFieldGroupValue === "__create_new__" ? (
+                <input
+                  value={changingFieldGroupNewName}
+                  onChange={(e) => setChangingFieldGroupNewName(e.target.value)}
+                  placeholder={t("mapping.newGroupPlaceholder")}
+                  className="mt-2 w-full rounded-md border border-zinc-300 px-2 py-1.5 text-sm"
+                />
+              ) : null}
+            </div>
+            <div className="mt-2 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={closeChangeGroupModal}
+                className="flex items-center gap-1.5 rounded-md border border-zinc-300 px-3 py-1.5 text-xs hover:bg-zinc-50"
+              >
+                <X className="h-3.5 w-3.5" />
+                {t("mapping.changeGroup.cancel")}
+              </button>
+              <button
+                type="button"
+                onClick={applyChangeGroup}
+                disabled={
+                  !changingFieldGroupValue ||
+                  (changingFieldGroupValue === "__create_new__" && !changingFieldGroupNewName.trim())
+                }
+                className="flex items-center gap-1.5 rounded-md bg-zinc-900 px-3 py-1.5 text-xs text-white disabled:opacity-50"
+              >
+                <Save className="h-3.5 w-3.5" />
+                {t("mapping.changeGroup.save")}
               </button>
             </div>
           </div>
