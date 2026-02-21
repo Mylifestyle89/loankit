@@ -1,5 +1,7 @@
 import { memo, useEffect, useRef, useState } from "react";
-import { ChevronUp, ChevronDown, Pencil, Trash2 } from "lucide-react";
+import { ChevronUp, ChevronDown, Pencil, Trash2, GripVertical } from "lucide-react";
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import type { FieldCatalogItem } from "@/lib/report/config-schema";
 import {
     formatNumberVnDisplay,
@@ -32,6 +34,7 @@ export type FieldRowProps = {
     onMoveField: (fieldKey: string, direction: "up" | "down") => void;
     onOpenChangeGroupModal: (fieldKey: string) => void;
     onDeleteField: (fieldKey: string) => void;
+    dndId?: string;
 };
 
 export const FieldRow = memo(function FieldRow({
@@ -56,7 +59,25 @@ export const FieldRow = memo(function FieldRow({
     onMoveField,
     onOpenChangeGroupModal,
     onDeleteField,
+    dndId,
 }: FieldRowProps) {
+    const sortableId = dndId || field.field_key;
+    const {
+        attributes,
+        listeners,
+        setNodeRef,
+        transform,
+        transition,
+        isDragging,
+    } = useSortable({ id: sortableId });
+
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+        zIndex: isDragging ? 2 : 1,
+        position: (isDragging ? "relative" : "static") as any,
+    };
+
     const [localText, setLocalText] = useState("");
     const [isFocused, setIsFocused] = useState(false);
 
@@ -148,26 +169,17 @@ export const FieldRow = memo(function FieldRow({
         );
 
     return (
-        <div className="group grid grid-cols-[minmax(260px,1fr)_minmax(360px,2fr)_160px_64px] items-start gap-2 border-t border-coral-tree-100 bg-white px-4 py-1.5 text-sm transition-colors hover:bg-coral-tree-50">
+        <div ref={setNodeRef} style={style} className={`group grid grid-cols-[minmax(260px,1fr)_minmax(360px,2fr)_160px_64px] items-start gap-2 border-t border-coral-tree-100 px-4 py-1.5 text-sm transition-colors ${isDragging ? "bg-coral-tree-50 opacity-80 shadow-md ring-1 ring-coral-tree-300" : "bg-white hover:bg-coral-tree-50"}`}>
             <div className="flex items-start gap-2 pt-0.5">
                 <div className="mt-1 flex flex-col gap-0 opacity-0 transition-opacity group-hover:opacity-100">
                     <button
                         type="button"
-                        onClick={() => onMoveField(field.field_key, "up")}
-                        disabled={!canMoveUp}
-                        className="flex h-4 w-4 items-center justify-center rounded text-coral-tree-400 hover:bg-coral-tree-200 hover:text-coral-tree-700 disabled:opacity-30"
-                        title={moveUpTitle}
+                        {...attributes}
+                        {...listeners}
+                        className="flex h-5 w-5 cursor-grab items-center justify-center rounded text-coral-tree-400 hover:bg-coral-tree-200 hover:text-coral-tree-700 active:cursor-grabbing"
+                        title="Kéo để di chuyển"
                     >
-                        <ChevronUp className="h-3.5 w-3.5" />
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => onMoveField(field.field_key, "down")}
-                        disabled={!canMoveDown}
-                        className="flex h-4 w-4 items-center justify-center rounded text-coral-tree-400 hover:bg-coral-tree-200 hover:text-coral-tree-700 disabled:opacity-30"
-                        title={moveDownTitle}
-                    >
-                        <ChevronDown className="h-3.5 w-3.5" />
+                        <GripVertical className="h-4 w-4" />
                     </button>
                 </div>
                 <div className="flex-1">
