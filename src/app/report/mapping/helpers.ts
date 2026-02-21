@@ -24,6 +24,23 @@ export function toInternalType(type: "string" | "number" | "percent" | "date" | 
     return type;
 }
 
+export function normalizeFieldType(type: unknown): FieldCatalogItem["type"] {
+    if (type === "string" || type === "text") {
+        return "text";
+    }
+    if (type === "number" || type === "percent" || type === "date" || type === "table") {
+        return type;
+    }
+    return "text";
+}
+
+export function normalizeFieldCatalogForSchema(catalog: FieldCatalogItem[]): FieldCatalogItem[] {
+    return catalog.map((item) => ({
+        ...item,
+        type: normalizeFieldType((item as { type?: unknown }).type),
+    }));
+}
+
 export function toBusinessType(type: FieldCatalogItem["type"]): "string" | "number" | "percent" | "date" | "table" {
     if (type === "text") {
         return "string";

@@ -2,6 +2,7 @@ import { useCallback } from "react";
 import type { Dispatch, SetStateAction } from "react";
 import type { FieldCatalogItem } from "@/lib/report/config-schema";
 import type { MappingApiResponse, ValidationResponse, ValuesResponse } from "../types";
+import { normalizeFieldCatalogForSchema } from "../helpers";
 
 type UseMappingApiParams = {
   t: (key: string) => string;
@@ -63,7 +64,7 @@ export function useMappingApi({
       setError(data.error ?? t("mapping.err.loadData"));
       return;
     }
-    setFieldCatalog(data.field_catalog ?? []);
+    setFieldCatalog(normalizeFieldCatalogForSchema(data.field_catalog ?? []));
     setAutoValues(data.auto_values ?? {});
     setValues(data.values ?? {});
     setManualValues(data.manual_values ?? {});
@@ -94,6 +95,7 @@ export function useMappingApi({
     try {
       const mapping = JSON.parse(mappingText);
       const alias_map = JSON.parse(aliasText);
+      const normalizedCatalog = normalizeFieldCatalogForSchema(fieldCatalog);
       const res = await fetch("/api/report/mapping", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -102,7 +104,7 @@ export function useMappingApi({
           notes: "Saved from mapping editor",
           mapping,
           alias_map,
-          field_catalog: fieldCatalog,
+          field_catalog: normalizedCatalog,
         }),
       });
       const data = (await res.json()) as MappingApiResponse;
@@ -116,7 +118,7 @@ export function useMappingApi({
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             template_id: selectedFieldTemplateId,
-            field_catalog: fieldCatalog,
+            field_catalog: normalizedCatalog,
           }),
         });
       }

@@ -1,6 +1,7 @@
 import type { Dispatch, SetStateAction } from "react";
 import type { FieldCatalogItem } from "@/lib/report/config-schema";
 import type { FieldTemplateItem, FieldTemplatesResponse } from "../types";
+import { normalizeFieldCatalogForSchema } from "../helpers";
 
 type UseFieldTemplatesParams = {
   t: (key: string) => string;
@@ -94,8 +95,9 @@ export function useFieldTemplates({
     if (!template) return;
     setEditingFieldTemplateId("");
     setEditingFieldTemplateName("");
-    setFieldCatalog(template.field_catalog ?? []);
-    const emptyValues = Object.fromEntries((template.field_catalog ?? []).map((field) => [field.field_key, ""]));
+    const normalizedCatalog = normalizeFieldCatalogForSchema(template.field_catalog ?? []);
+    setFieldCatalog(normalizedCatalog);
+    const emptyValues = Object.fromEntries(normalizedCatalog.map((field) => [field.field_key, ""]));
     setManualValues({});
     setValues(emptyValues);
     setSelectedFieldTemplateId(templateId);
@@ -130,8 +132,9 @@ export function useFieldTemplates({
 
     setSelectedFieldTemplateId("");
     setFieldTemplates([]);
-    setFieldCatalog(template.field_catalog ?? []);
-    const emptyValues = Object.fromEntries((template.field_catalog ?? []).map((field) => [field.field_key, ""]));
+    const normalizedCatalog = normalizeFieldCatalogForSchema(template.field_catalog ?? []);
+    setFieldCatalog(normalizedCatalog);
+    const emptyValues = Object.fromEntries(normalizedCatalog.map((field) => [field.field_key, ""]));
     setManualValues({});
     setValues(emptyValues);
     setEditingFieldTemplateId(template.id);
@@ -246,13 +249,14 @@ export function useFieldTemplates({
     setSavingEditedTemplate(true);
     setError("");
     try {
+      const normalizedCatalog = normalizeFieldCatalogForSchema(fieldCatalog);
       const res = await fetch("/api/report/field-templates", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           template_id: editingFieldTemplateId,
           name: nextName,
-          field_catalog: fieldCatalog,
+          field_catalog: normalizedCatalog,
         }),
       });
       const data = (await res.json()) as FieldTemplatesResponse;
