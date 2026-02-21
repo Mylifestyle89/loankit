@@ -8,7 +8,6 @@ from openpyxl import load_workbook
 
 ROOT = Path(__file__).resolve().parent
 MAPPING_FILE = ROOT / "mapping_master.json"
-DATA_FILE = ROOT / "data.bk"
 
 
 def is_empty(value: Any) -> bool:
@@ -139,6 +138,8 @@ def extract_numeric_from_row(row_values: List[Any]) -> List[float]:
 
 
 def resolve_xlsm_path(wb, path: str) -> Any:
+    if wb is None:
+        return None
     m = re.fullmatch(r"([^\[]+)\['([^']+)'\](?:\[year=latest\])?", path)
     if not m:
         return None
@@ -175,11 +176,13 @@ def resolve_xlsm_path(wb, path: str) -> Any:
 
 def main() -> None:
     mapping = json.loads(MAPPING_FILE.read_text(encoding="utf-8"))
-    data = json.loads(DATA_FILE.read_text(encoding="utf-8"))
-    client = data["Clients"][0]
+    
+    client = {} # No longer reading from data.bk
 
     xlsm_file = ROOT / mapping["sources"]["xlsm_hmtd"]["file"]
-    wb = load_workbook(xlsm_file, data_only=True, read_only=True)
+    wb = None
+    if xlsm_file.exists():
+        wb = load_workbook(xlsm_file, data_only=True, read_only=True)
 
     total = 0
     ok = 0

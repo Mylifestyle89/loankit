@@ -10,7 +10,6 @@ from test_mapping import is_empty, resolve_data_path, resolve_xlsm_path
 
 ROOT = Path(__file__).resolve().parent
 MAPPING_FILE = ROOT / "mapping_master.json"
-DATA_FILE = ROOT / "data.bk"
 OUTPUT_FILE = ROOT / "report_draft.json"
 
 
@@ -66,11 +65,13 @@ def resolve_field(client: Dict[str, Any], wb, mapping_item: Dict[str, Any]) -> D
 
 def main() -> None:
     mapping = json.loads(MAPPING_FILE.read_text(encoding="utf-8"))
-    data = json.loads(DATA_FILE.read_text(encoding="utf-8"))
-    client = data["Clients"][0]
+    
+    client = {} # No longer reading from data.bk
 
     xlsm_path = ROOT / mapping["sources"]["xlsm_hmtd"]["file"]
-    wb = load_workbook(xlsm_path, data_only=True, read_only=True)
+    wb = None
+    if xlsm_path.exists():
+        wb = load_workbook(xlsm_path, data_only=True, read_only=True)
 
     report: Dict[str, Any] = {}
     resolution_logs: List[Dict[str, Any]] = []
@@ -96,7 +97,6 @@ def main() -> None:
             "generated_at_utc": datetime.now(timezone.utc).isoformat(),
             "mapping_file": MAPPING_FILE.name,
             "input_sources": {
-                "data_bk": DATA_FILE.name,
                 "xlsm_hmtd": mapping["sources"]["xlsm_hmtd"]["file"],
             },
             "summary": {

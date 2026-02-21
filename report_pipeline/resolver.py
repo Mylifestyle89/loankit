@@ -132,6 +132,8 @@ def extract_numeric_from_row(row_values: List[Any]) -> List[float]:
 
 
 def resolve_xlsm_path(wb, path: str) -> Any:
+    if wb is None:
+        return None
     m = re.fullmatch(r"([^\[]+)\['([^']+)'\](?:\[year=latest\])?", path)
     if not m:
         return None
@@ -167,11 +169,19 @@ def resolve_xlsm_path(wb, path: str) -> Any:
 
 
 def load_sources(root: Path, mapping: Dict[str, Any]) -> Dict[str, Any]:
-    data_file = root / mapping["sources"]["data_bk"]["file"]
-    xlsm_file = root / mapping["sources"]["xlsm_hmtd"]["file"]
+    client = {}
+    if "data_bk" in mapping.get("sources", {}):
+        data_file = root / mapping["sources"]["data_bk"]["file"]
+        if data_file.exists():
+            data = json.loads(data_file.read_text(encoding="utf-8"))
+            if "Clients" in data and len(data["Clients"]) > 0:
+                client = data["Clients"][0]
 
-    data = json.loads(data_file.read_text(encoding="utf-8"))
-    client = data["Clients"][0]
-    wb = load_workbook(xlsm_file, data_only=True, read_only=True)
+    wb = None
+    if "xlsm_hmtd" in mapping.get("sources", {}):
+        xlsm_file = root / mapping["sources"]["xlsm_hmtd"]["file"]
+        if xlsm_file.exists():
+            wb = load_workbook(xlsm_file, data_only=True, read_only=True)
+
     return {"client": client, "workbook": wb}
 

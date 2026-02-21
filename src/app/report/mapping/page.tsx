@@ -140,9 +140,7 @@ export default function MappingPage() {
   const [creatingFieldTemplate, setCreatingFieldTemplate] = useState(false);
   const [newFieldTemplateName, setNewFieldTemplateName] = useState("");
   const [savingFieldTemplate, setSavingFieldTemplate] = useState(false);
-  const [attachingFieldTemplate, setAttachingFieldTemplate] = useState(false);
-  const [attachFieldTemplateId, setAttachFieldTemplateId] = useState("");
-  const [savingAttachedTemplate, setSavingAttachedTemplate] = useState(false);
+
   const [editingFieldTemplatePicker, setEditingFieldTemplatePicker] = useState(false);
   const [editPickerTemplateId, setEditPickerTemplateId] = useState("");
   const [editingFieldTemplateId, setEditingFieldTemplateId] = useState("");
@@ -186,6 +184,7 @@ export default function MappingPage() {
 
   useEffect(() => {
     void loadCustomers();
+    void loadAllFieldTemplates();
   }, []);
 
   useEffect(() => {
@@ -255,8 +254,11 @@ export default function MappingPage() {
   }
 
   function applySelectedFieldTemplate(templateId: string) {
-    if (!templateId) return;
-    const template = fieldTemplates.find((item) => item.id === templateId);
+    if (!templateId) {
+      setSelectedFieldTemplateId("");
+      return;
+    }
+    const template = allFieldTemplates.find((item) => item.id === templateId);
     if (!template) return;
     setEditingFieldTemplateId("");
     setEditingFieldTemplateName("");
@@ -265,7 +267,6 @@ export default function MappingPage() {
     setManualValues({});
     setValues(emptyValues);
     setSelectedFieldTemplateId(templateId);
-    setMessage(t("mapping.msg.templateApplied").replace("{name}", template.name));
   }
 
   function openCreateFieldTemplateModal() {
@@ -323,19 +324,37 @@ export default function MappingPage() {
     setNewFieldTemplateName("");
   }
 
-  async function openAttachFieldTemplateModal() {
+  async function assignSelectedFieldTemplate() {
     if (!selectedCustomerId) {
       setError(t("mapping.fieldTemplate.errSelectCustomer"));
       return;
     }
-    setAttachFieldTemplateId("");
-    await loadAllFieldTemplates();
-    setAttachingFieldTemplate(true);
-  }
-
-  function closeAttachFieldTemplateModal() {
-    setAttachingFieldTemplate(false);
-    setAttachFieldTemplateId("");
+    if (!selectedFieldTemplateId) {
+      setError(t("mapping.fieldTemplate.errSelectAttach"));
+      return;
+    }
+    setError("");
+    try {
+      const res = await fetch("/api/report/field-templates", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          customer_id: selectedCustomerId,
+          template_id: selectedFieldTemplateId,
+        }),
+      });
+      const data = (await res.json()) as { ok: boolean; error?: string };
+      if (!data.ok) {
+        throw new Error(data.error ?? t("mapping.fieldTemplate.errAttach"));
+      }
+      const attached = allFieldTemplates.find((item) => item.id === selectedFieldTemplateId);
+      if (attached) {
+        setMessage(`Đã áp dụng mẫu "${attached.name}" cho khách hàng này.`);
+      }
+      await loadFieldTemplates(selectedCustomerId);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : t("mapping.fieldTemplate.errAttach"));
+    }
   }
 
   async function saveFieldTemplate() {
@@ -382,42 +401,7 @@ export default function MappingPage() {
     }
   }
 
-  async function attachExistingFieldTemplate() {
-    if (!selectedCustomerId) {
-      setError(t("mapping.fieldTemplate.errSelectCustomer"));
-      return;
-    }
-    if (!attachFieldTemplateId) {
-      setError(t("mapping.fieldTemplate.errSelectAttach"));
-      return;
-    }
-    setSavingAttachedTemplate(true);
-    setError("");
-    try {
-      const res = await fetch("/api/report/field-templates", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          customer_id: selectedCustomerId,
-          template_id: attachFieldTemplateId,
-        }),
-      });
-      const data = (await res.json()) as { ok: boolean; error?: string };
-      if (!data.ok) {
-        throw new Error(data.error ?? t("mapping.fieldTemplate.errAttach"));
-      }
-      await loadFieldTemplates(selectedCustomerId);
-      const attached = allFieldTemplates.find((item) => item.id === attachFieldTemplateId);
-      if (attached) {
-        setMessage(t("mapping.msg.templateAttached").replace("{name}", attached.name));
-      }
-      closeAttachFieldTemplateModal();
-    } catch (e) {
-      setError(e instanceof Error ? e.message : t("mapping.fieldTemplate.errAttach"));
-    } finally {
-      setSavingAttachedTemplate(false);
-    }
-  }
+
 
   async function saveEditedFieldTemplate() {
     if (!editingFieldTemplateId) {
@@ -717,6 +701,18 @@ export default function MappingPage() {
       const next = { ...prev };
       delete next[fieldKey];
       return next;
+    });
+    setMappingText((prevTxt) => {
+      try {
+        const mappingObj = JSON.parse(prevTxt);
+        if (mappingObj && Array.isArray(mappingObj.mappings)) {
+          mappingObj.mappings = mappingObj.mappings.filter((m: any) => m.template_field !== fieldKey);
+          return JSON.stringify(mappingObj, null, 2);
+        }
+      } catch (e) {
+        console.error("Failed to update mappingText on field delete", e);
+      }
+      return prevTxt;
     });
     setMessage(t("mapping.msg.fieldDeleted"));
   }, [t]);
@@ -1296,12 +1292,12 @@ export default function MappingPage() {
                 setSelectedCustomerId={setSelectedCustomerId}
                 loadingCustomers={loadingCustomers}
                 loading={loading}
-                fieldTemplates={fieldTemplates}
+                fieldTemplates={allFieldTemplates}
                 selectedFieldTemplateId={selectedFieldTemplateId}
                 applySelectedFieldTemplate={applySelectedFieldTemplate}
                 loadingFieldTemplates={loadingFieldTemplates}
                 openCreateFieldTemplateModal={openCreateFieldTemplateModal}
-                openAttachFieldTemplateModal={() => void openAttachFieldTemplateModal()}
+                openAttachFieldTemplateModal={() => void assignSelectedFieldTemplate()}
                 openEditFieldTemplatePicker={() => void openEditFieldTemplatePicker()}
                 showTechnicalKeys={showTechnicalKeys}
                 setShowTechnicalKeys={setShowTechnicalKeys}
@@ -1651,53 +1647,7 @@ export default function MappingPage() {
         </div>
       ) : null}
 
-      {attachingFieldTemplate ? (
-        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-sm space-y-3 rounded-lg bg-white p-4 shadow-xl">
-            <h3 className="text-sm font-semibold">{t("mapping.fieldTemplate.attachModalTitle")}</h3>
-            <div className="space-y-1">
-              <label className="text-xs text-coral-tree-600" htmlFor="attach-field-template-select">
-                {t("mapping.selectFieldTemplate")}
-              </label>
-              <select
-                id="attach-field-template-select"
-                value={attachFieldTemplateId}
-                onChange={(e) => setAttachFieldTemplateId(e.target.value)}
-                className="w-full rounded-md border border-coral-tree-300 px-2 py-1.5 text-sm"
-                autoFocus
-              >
-                <option value="">{t("mapping.fieldTemplate.attachPlaceholder")}</option>
-                {allFieldTemplates
-                  .filter((template) => !fieldTemplates.some((assigned) => assigned.id === template.id))
-                  .map((template) => (
-                    <option key={template.id} value={template.id}>
-                      {template.name}
-                    </option>
-                  ))}
-              </select>
-            </div>
-            <div className="mt-2 flex justify-end gap-2">
-              <button
-                type="button"
-                onClick={closeAttachFieldTemplateModal}
-                className="flex items-center gap-1.5 rounded-md border border-coral-tree-300 px-3 py-1.5 text-xs hover:bg-coral-tree-50"
-              >
-                <X className="h-3.5 w-3.5" />
-                {t("mapping.fieldTemplate.cancel")}
-              </button>
-              <button
-                type="button"
-                onClick={() => void attachExistingFieldTemplate()}
-                disabled={savingAttachedTemplate}
-                className="flex items-center gap-1.5 rounded-md bg-coral-tree-700 px-3 py-1.5 text-xs text-white disabled:opacity-50"
-              >
-                <Save className="h-3.5 w-3.5" />
-                {savingAttachedTemplate ? t("mapping.fieldTemplate.attaching") : t("mapping.fieldTemplate.attach")}
-              </button>
-            </div>
-          </div>
-        </div>
-      ) : null}
+
 
       {editingGroup !== null ? (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-4">

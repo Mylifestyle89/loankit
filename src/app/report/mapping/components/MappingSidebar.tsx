@@ -154,9 +154,10 @@ export function MappingSidebar({
                                         openAttachFieldTemplateModal();
                                         setIsOpen(false);
                                     }}
-                                    className="rounded border border-coral-tree-200 bg-coral-tree-50 px-2 py-1 text-xs font-medium text-coral-tree-700 hover:bg-coral-tree-100 hover:text-coral-tree-800"
+                                    disabled={!selectedFieldTemplateId}
+                                    className={`rounded border px-2 py-1 text-xs font-medium ${!selectedFieldTemplateId ? "border-gray-200 bg-gray-50 text-gray-400 cursor-not-allowed" : "border-coral-tree-200 bg-coral-tree-50 text-coral-tree-700 hover:bg-coral-tree-100 hover:text-coral-tree-800"}`}
                                 >
-                                    Áp dụng mẫu có sẵn
+                                    Áp dụng mẫu
                                 </button>
                                 <button
                                     type="button"
