@@ -6,18 +6,18 @@ export default function LanguageToggle() {
   const { locale, setLocale, t } = useLanguage();
 
   return (
-    <div className="inline-flex rounded-md border border-zinc-300 bg-white p-1 text-xs">
+    <div className="inline-flex rounded-md border border-coral-tree-300 bg-white p-1 text-xs">
       <button
         type="button"
         onClick={() => setLocale("vi")}
-        className={`rounded px-2 py-1 ${locale === "vi" ? "bg-zinc-900 text-white" : "text-zinc-700 hover:bg-zinc-100"}`}
+        className={`rounded px-2 py-1 ${locale === "vi" ? "bg-coral-tree-700 text-white" : "text-coral-tree-700 hover:bg-coral-tree-100"}`}
       >
         {t("lang.vi")}
       </button>
       <button
         type="button"
         onClick={() => setLocale("en")}
-        className={`rounded px-2 py-1 ${locale === "en" ? "bg-zinc-900 text-white" : "text-zinc-700 hover:bg-zinc-100"}`}
+        className={`rounded px-2 py-1 ${locale === "en" ? "bg-coral-tree-700 text-white" : "text-coral-tree-700 hover:bg-coral-tree-100"}`}
       >
         {t("lang.en")}
       </button>

@@ -1186,15 +1186,15 @@ export default function MappingPage() {
   );
 
   if (loading) {
-    return <p className="text-sm text-zinc-600">{t("mapping.loading")}</p>;
+    return <p className="text-sm text-coral-tree-600">{t("mapping.loading")}</p>;
   }
 
   return (
     <section className="space-y-4">
-      <div className="flex flex-col gap-4 rounded-xl border border-zinc-200 bg-white p-4 md:flex-row md:items-center md:justify-between">
+      <div className="flex flex-col gap-4 rounded-xl border border-coral-tree-200 bg-white p-4 md:flex-row md:items-center md:justify-between">
         <div>
           <h2 className="text-lg font-semibold">{t("mapping.title")}</h2>
-          <p className="mt-1 text-sm text-zinc-600">
+          <p className="mt-1 text-sm text-coral-tree-600">
             {t("mapping.activeVersion")}: <span className="font-medium">{activeVersionId || t("mapping.na")}</span> (
             {activeVersion?.status ?? t("mapping.unknown")})
           </p>
@@ -1205,7 +1205,7 @@ export default function MappingPage() {
           <button
             onClick={saveDraft}
             disabled={saving}
-            className="flex items-center gap-2 rounded-md bg-zinc-900 px-4 py-2 text-sm text-white hover:bg-zinc-800 disabled:opacity-60"
+            className="flex items-center gap-2 rounded-md bg-coral-tree-700 px-4 py-2 text-sm text-white hover:bg-coral-tree-800 disabled:opacity-60"
           >
             <Save className="h-4 w-4" />
             {saving ? t("mapping.saving") : t("mapping.saveDraft")}
@@ -1213,7 +1213,7 @@ export default function MappingPage() {
           <button
             onClick={publishActive}
             disabled={publishing || !activeVersionId}
-            className="flex items-center gap-2 rounded-md border border-zinc-300 px-4 py-2 text-sm hover:bg-zinc-50 disabled:opacity-60"
+            className="flex items-center gap-2 rounded-md border border-coral-tree-300 px-4 py-2 text-sm hover:bg-coral-tree-50 disabled:opacity-60"
           >
             <Send className="h-4 w-4" />
             {publishing ? t("mapping.publishing") : t("mapping.publish")}
@@ -1221,7 +1221,7 @@ export default function MappingPage() {
           <button
             onClick={runValidate}
             disabled={validating}
-            className="flex items-center gap-2 rounded-md border border-zinc-300 px-4 py-2 text-sm hover:bg-zinc-50 disabled:opacity-60"
+            className="flex items-center gap-2 rounded-md border border-coral-tree-300 px-4 py-2 text-sm hover:bg-coral-tree-50 disabled:opacity-60"
           >
             <CheckCircle className="h-4 w-4" />
             {validating ? t("mapping.validating") : t("mapping.buildValidate")}
@@ -1233,14 +1233,14 @@ export default function MappingPage() {
         <button
           type="button"
           onClick={() => setActiveTab("visual")}
-          className={`rounded-md px-3 py-1.5 text-sm ${activeTab === "visual" ? "bg-zinc-900 text-white" : "border border-zinc-300 hover:bg-zinc-50"}`}
+          className={`rounded-md px-3 py-1.5 text-sm ${activeTab === "visual" ? "bg-coral-tree-700 text-white" : "border border-coral-tree-300 hover:bg-coral-tree-50"}`}
         >
           {t("mapping.tab.visual")}
         </button>
         <button
           type="button"
           onClick={() => setActiveTab("advanced")}
-          className={`rounded-md px-3 py-1.5 text-sm ${activeTab === "advanced" ? "bg-zinc-900 text-white" : "border border-zinc-300 hover:bg-zinc-50"}`}
+          className={`rounded-md px-3 py-1.5 text-sm ${activeTab === "advanced" ? "bg-coral-tree-700 text-white" : "border border-coral-tree-300 hover:bg-coral-tree-50"}`}
         >
           {t("mapping.tab.advanced")}
         </button>
@@ -1248,18 +1248,18 @@ export default function MappingPage() {
 
       {activeTab === "visual" ? (
         <section className="space-y-4">
-          <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-zinc-200 bg-white p-2">
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-coral-tree-200 bg-white p-2">
             <div className={`flex items-center gap-2 w-full md:w-auto transition-opacity duration-300 ${!hasContext ? "opacity-0 pointer-events-none" : "opacity-100"}`}>
               <input
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full md:w-72 rounded-md border border-zinc-300 px-3 py-1.5 text-sm"
+                className="w-full md:w-72 rounded-md border border-coral-tree-300 px-3 py-1.5 text-sm"
                 placeholder={t("mapping.searchPlaceholder")}
               />
               <button
                 type="button"
                 onClick={() => setAddingFieldModal(true)}
-                className="flex flex-shrink-0 items-center gap-1.5 rounded-md bg-zinc-900 px-3 py-1.5 text-sm text-white hover:bg-zinc-800"
+                className="flex flex-shrink-0 items-center gap-1.5 rounded-md bg-coral-tree-700 px-3 py-1.5 text-sm text-white hover:bg-coral-tree-800"
               >
                 <Plus className="h-4 w-4" />
                 {t("mapping.newFieldTitle")}
@@ -1270,7 +1270,7 @@ export default function MappingPage() {
               <button
                 onClick={exportAndOpenDocx}
                 disabled={exportingDocx}
-                className="flex items-center gap-1.5 rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-sm font-medium text-indigo-700 hover:bg-indigo-50 hover:text-indigo-800 disabled:opacity-60"
+                className="flex items-center gap-1.5 rounded-md border border-coral-tree-300 bg-white px-3 py-1.5 text-sm font-medium text-coral-tree-700 hover:bg-coral-tree-50 hover:text-coral-tree-800 disabled:opacity-60"
                 title={t("mapping.exportOpenDocx")}
               >
                 <FileText className="h-4 w-4" />
@@ -1280,14 +1280,14 @@ export default function MappingPage() {
               {lastExportedDocxPath ? (
                 <a
                   href={`/api/report/file?path=${encodeURIComponent(lastExportedDocxPath)}&download=1&ts=${Date.now()}`}
-                  className="flex items-center gap-1.5 rounded-md border border-zinc-300 bg-white px-2 py-1.5 text-sm hover:bg-zinc-50"
+                  className="flex items-center gap-1.5 rounded-md border border-coral-tree-300 bg-white px-2 py-1.5 text-sm hover:bg-coral-tree-50"
                   title={t("mapping.downloadDocx")}
                 >
-                  <Download className="h-4 w-4 text-zinc-600" />
+                  <Download className="h-4 w-4 text-coral-tree-600" />
                 </a>
               ) : null}
 
-              <div className="h-6 w-px bg-zinc-200 mx-1"></div>
+              <div className="h-6 w-px bg-coral-tree-200 mx-1"></div>
 
               <MappingSidebar
                 t={t}
@@ -1326,14 +1326,14 @@ export default function MappingPage() {
                 type="button"
                 onClick={() => void saveEditedFieldTemplate()}
                 disabled={savingEditedTemplate}
-                className="rounded-md bg-zinc-900 px-3 py-1.5 text-sm text-white disabled:opacity-50"
+                className="rounded-md bg-coral-tree-700 px-3 py-1.5 text-sm text-white disabled:opacity-50"
               >
                 {savingEditedTemplate ? t("mapping.fieldTemplate.saving") : t("mapping.fieldTemplate.update")}
               </button>
               <button
                 type="button"
                 onClick={stopEditingFieldTemplate}
-                className="rounded-md border border-zinc-300 px-3 py-1.5 text-sm hover:bg-zinc-50"
+                className="rounded-md border border-coral-tree-300 px-3 py-1.5 text-sm hover:bg-coral-tree-50"
               >
                 {t("mapping.fieldTemplate.stopEditing")}
               </button>
@@ -1341,15 +1341,15 @@ export default function MappingPage() {
           ) : null}
 
 
-          <div className="max-h-[70vh] overflow-auto rounded-xl border border-zinc-200 bg-white">
-            <div className="sticky top-0 z-10 grid grid-cols-[minmax(260px,1fr)_minmax(360px,2fr)_160px_64px] border-b border-zinc-200 bg-zinc-100 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-zinc-600">
+          <div className="max-h-[70vh] overflow-auto rounded-xl border border-coral-tree-200 bg-white">
+            <div className="sticky top-0 z-10 grid grid-cols-[minmax(260px,1fr)_minmax(360px,2fr)_160px_64px] border-b border-coral-tree-200 bg-coral-tree-100 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-coral-tree-600">
               <div className="flex items-center gap-2">
                 <span>{t("mapping.column.field")}</span>
                 <button
                   type="button"
                   onClick={collapseAllGroups}
                   disabled={parentGroups.length === 0 || collapsedParentGroups.length === parentGroups.length}
-                  className="rounded border border-zinc-300 bg-white p-0.5 text-zinc-600 hover:bg-zinc-50 disabled:opacity-40"
+                  className="rounded border border-coral-tree-300 bg-white p-0.5 text-coral-tree-600 hover:bg-coral-tree-50 disabled:opacity-40"
                   title={t("mapping.collapseAllGroups")}
                 >
                   <ChevronsUp className="h-3 w-3" />
@@ -1358,7 +1358,7 @@ export default function MappingPage() {
                   type="button"
                   onClick={expandAllGroups}
                   disabled={collapsedParentGroups.length === 0}
-                  className="rounded border border-zinc-300 bg-white p-0.5 text-zinc-600 hover:bg-zinc-50 disabled:opacity-40"
+                  className="rounded border border-coral-tree-300 bg-white p-0.5 text-coral-tree-600 hover:bg-coral-tree-50 disabled:opacity-40"
                   title={t("mapping.expandAllGroups")}
                 >
                   <ChevronsDown className="h-3 w-3" />
@@ -1372,21 +1372,21 @@ export default function MappingPage() {
               <div className="py-24 flex flex-col items-center justify-center text-center">
                 {!hasContext ? (
                   <>
-                    <h3 className="text-base font-semibold text-zinc-800 mb-1">Chưa chọn ngữ cảnh làm việc</h3>
-                    <p className="text-sm text-zinc-500 mb-4 max-w-sm">
+                    <h3 className="text-base font-semibold text-coral-tree-800 mb-1">Chưa chọn ngữ cảnh làm việc</h3>
+                    <p className="text-sm text-coral-tree-500 mb-4 max-w-sm">
                       Vui lòng bấm nút "Lựa chọn khách hàng" ở góc trên bên phải để bắt đầu làm việc, hoặc tạo một mẫu dữ liệu mới.
                     </p>
                   </>
                 ) : (
                   <>
-                    <h3 className="text-base font-semibold text-zinc-800 mb-1">Mẫu dữ liệu này đang trống</h3>
-                    <p className="text-sm text-zinc-500 mb-4 max-w-sm">
+                    <h3 className="text-base font-semibold text-coral-tree-800 mb-1">Mẫu dữ liệu này đang trống</h3>
+                    <p className="text-sm text-coral-tree-500 mb-4 max-w-sm">
                       Bạn có thể bắt đầu xây dựng mẫu bằng cách thêm Group hoặc Custom Field đầu tiên.
                     </p>
                     <button
                       type="button"
                       onClick={() => setAddingFieldModal(true)}
-                      className="flex flex-shrink-0 items-center gap-1.5 rounded-md bg-zinc-900 px-4 py-2 text-sm text-white shadow-sm hover:bg-zinc-800"
+                      className="flex flex-shrink-0 items-center gap-1.5 rounded-md bg-coral-tree-700 px-4 py-2 text-sm text-white shadow-sm hover:bg-coral-tree-800"
                     >
                       <Plus className="h-4 w-4" />
                       Thêm trường dữ liệu (Field)
@@ -1396,14 +1396,14 @@ export default function MappingPage() {
               </div>
             )}
             {groupedFieldTree.map((node) => (
-              <div key={node.parent} className="border-b border-zinc-200 last:border-0">
-                <div className="sticky top-9 z-[5] flex items-center justify-between border-t border-zinc-200 bg-zinc-100 px-4 py-2 text-xs uppercase tracking-wider text-zinc-700">
+              <div key={node.parent} className="border-b border-coral-tree-200 last:border-0">
+                <div className="sticky top-9 z-[5] flex items-center justify-between border-t border-coral-tree-200 bg-coral-tree-100 px-4 py-2 text-xs uppercase tracking-wider text-coral-tree-700">
                   <span className="font-semibold">{node.parent}</span>
                   <div className="flex items-center gap-1.5">
                     <button
                       type="button"
                       onClick={() => openCreateSubgroupModal(node.parent)}
-                      className="flex items-center gap-1 rounded bg-white px-2 py-1 text-[11px] font-medium text-zinc-600 shadow-sm border border-zinc-200 hover:bg-zinc-50 hover:text-zinc-900"
+                      className="flex items-center gap-1 rounded bg-white px-2 py-1 text-[11px] font-medium text-coral-tree-600 shadow-sm border border-coral-tree-200 hover:bg-coral-tree-50 hover:text-coral-tree-900"
                       title={t("mapping.addSubgroup")}
                     >
                       <Plus className="h-3 w-3" />
@@ -1412,7 +1412,7 @@ export default function MappingPage() {
                     <button
                       type="button"
                       onClick={() => toggleParentCollapse(node.parent)}
-                      className="flex items-center gap-1 rounded bg-white px-2 py-1 text-[11px] font-medium text-zinc-600 shadow-sm border border-zinc-200 hover:bg-zinc-50 hover:text-zinc-900"
+                      className="flex items-center gap-1 rounded bg-white px-2 py-1 text-[11px] font-medium text-coral-tree-600 shadow-sm border border-coral-tree-200 hover:bg-coral-tree-50 hover:text-coral-tree-900"
                       title={collapsedParentGroups.includes(node.parent) ? t("mapping.expandGroup") : t("mapping.collapseGroup")}
                     >
                       {collapsedParentGroups.includes(node.parent) ? (
@@ -1425,14 +1425,14 @@ export default function MappingPage() {
                 </div>
                 {!collapsedParentGroups.includes(node.parent) &&
                   node.children.map((child, childIndex) => (
-                    <div key={child.fullPath} className={childIndex > 0 ? "border-t border-zinc-200" : ""}>
-                      <div className="group/group-header flex items-center justify-between bg-zinc-50/80 px-4 py-1.5 text-[11px] uppercase tracking-wide text-zinc-500 border-t border-b border-zinc-100 border-t-transparent">
-                        <span className="font-semibold text-zinc-600 pl-6">{child.subgroup || t("mapping.groupPathRoot")}</span>
+                    <div key={child.fullPath} className={childIndex > 0 ? "border-t border-coral-tree-200" : ""}>
+                      <div className="group/group-header flex items-center justify-between bg-coral-tree-50/80 px-4 py-1.5 text-[11px] uppercase tracking-wide text-coral-tree-500 border-t border-b border-coral-tree-100 border-t-transparent">
+                        <span className="font-semibold text-coral-tree-600 pl-6">{child.subgroup || t("mapping.groupPathRoot")}</span>
                         <div className="flex items-center gap-1 opacity-0 group-hover/group-header:opacity-100 transition-opacity">
                           <button
                             type="button"
                             onClick={() => toggleRepeaterGroup(child.fullPath)}
-                            className={`flex items-center gap-1.5 rounded px-2 py-1 text-[11px] font-medium transition-colors ${child.fields.some((f) => f.is_repeater) ? "bg-amber-100 text-amber-800 hover:bg-amber-200" : "text-zinc-500 hover:bg-amber-100 hover:text-amber-800"}`}
+                            className={`flex items-center gap-1.5 rounded px-2 py-1 text-[11px] font-medium transition-colors ${child.fields.some((f) => f.is_repeater) ? "bg-amber-100 text-amber-800 hover:bg-amber-200" : "text-coral-tree-500 hover:bg-amber-100 hover:text-amber-800"}`}
                             title="Chuyển đổi thành nhóm lặp (Repeater)"
                           >
                             <Layers className="h-3 w-3" />
@@ -1441,7 +1441,7 @@ export default function MappingPage() {
                           <button
                             type="button"
                             onClick={() => prepareAddFieldForGroup(child.fullPath)}
-                            className="flex items-center gap-1 rounded px-1.5 py-0.5 text-[11px] font-medium text-zinc-500 hover:bg-zinc-200 hover:text-zinc-800"
+                            className="flex items-center gap-1 rounded px-1.5 py-0.5 text-[11px] font-medium text-coral-tree-500 hover:bg-coral-tree-200 hover:text-coral-tree-800"
                           >
                             <Plus className="h-3 w-3" />
                             {t("mapping.addField")}
@@ -1449,7 +1449,7 @@ export default function MappingPage() {
                           <button
                             type="button"
                             onClick={() => openEditGroupModal(child.fullPath)}
-                            className="flex items-center gap-1 rounded px-1.5 py-0.5 text-[11px] font-medium text-zinc-500 hover:bg-zinc-200 hover:text-zinc-800"
+                            className="flex items-center gap-1 rounded px-1.5 py-0.5 text-[11px] font-medium text-coral-tree-500 hover:bg-coral-tree-200 hover:text-coral-tree-800"
                           >
                             <Pencil className="h-3 w-3" />
                             {t("mapping.editGroup")}
@@ -1457,12 +1457,12 @@ export default function MappingPage() {
                         </div>
                       </div>
                       {child.fields.length === 0 ? (
-                        <div className="border-t border-zinc-200 px-6 py-2 text-xs text-zinc-500">
+                        <div className="border-t border-coral-tree-200 px-6 py-2 text-xs text-coral-tree-500">
                           {t("mapping.emptySubgroupHint")}
                         </div>
                       ) : null}
                       {child.fields.some((f) => f.is_repeater) ? (
-                        <div className="bg-amber-50/30 p-4 border-t border-zinc-200">
+                        <div className="bg-amber-50/30 p-4 border-t border-coral-tree-200">
                           {((Array.isArray(values[child.fullPath]) ? values[child.fullPath] : []) as Record<string, unknown>[]).map((item, index) => (
                             <div key={index} className="mb-4 rounded-xl border border-amber-200/60 bg-white p-0 shadow-sm relative overflow-hidden">
                               <div className="bg-amber-50 px-4 py-2 border-b border-amber-100 flex items-center justify-between">
@@ -1546,20 +1546,20 @@ export default function MappingPage() {
         </section>
       ) : (
         <div className="grid gap-4 md:grid-cols-2">
-          <label className="rounded-xl border border-zinc-200 bg-white p-4">
+          <label className="rounded-xl border border-coral-tree-200 bg-white p-4">
             <div className="mb-2 text-sm font-medium">{t("mapping.file.mapping")} (`mapping_master.json`)</div>
             <textarea
               value={mappingText}
               onChange={(e) => setMappingText(e.target.value)}
-              className="h-96 w-full rounded-md border border-zinc-300 p-2 font-mono text-xs"
+              className="h-96 w-full rounded-md border border-coral-tree-300 p-2 font-mono text-xs"
             />
           </label>
-          <label className="rounded-xl border border-zinc-200 bg-white p-4">
+          <label className="rounded-xl border border-coral-tree-200 bg-white p-4">
             <div className="mb-2 text-sm font-medium">{t("mapping.file.alias")} (`placeholder_alias_2268.json`)</div>
             <textarea
               value={aliasText}
               onChange={(e) => setAliasText(e.target.value)}
-              className="h-96 w-full rounded-md border border-zinc-300 p-2 font-mono text-xs"
+              className="h-96 w-full rounded-md border border-coral-tree-300 p-2 font-mono text-xs"
             />
           </label>
         </div>
@@ -1570,24 +1570,24 @@ export default function MappingPage() {
           <div className="w-full max-w-sm space-y-3 rounded-lg bg-white p-4 shadow-xl">
             <h3 className="text-sm font-semibold">{t("mapping.fieldTemplate.modalTitle")}</h3>
             <div className="space-y-1">
-              <label className="text-xs text-zinc-600" htmlFor="field-template-name-input">
+              <label className="text-xs text-coral-tree-600" htmlFor="field-template-name-input">
                 {t("mapping.fieldTemplate.name")}
               </label>
               <input
                 id="field-template-name-input"
                 value={newFieldTemplateName}
                 onChange={(e) => setNewFieldTemplateName(e.target.value)}
-                className="w-full rounded-md border border-zinc-300 px-2 py-1.5 text-sm"
+                className="w-full rounded-md border border-coral-tree-300 px-2 py-1.5 text-sm"
                 placeholder={t("mapping.fieldTemplate.namePlaceholder")}
                 autoFocus
               />
             </div>
-            <p className="text-xs text-zinc-600">{t("mapping.fieldTemplate.emptyValueHint")}</p>
+            <p className="text-xs text-coral-tree-600">{t("mapping.fieldTemplate.emptyValueHint")}</p>
             <div className="mt-2 flex justify-end gap-2">
               <button
                 type="button"
                 onClick={closeCreateFieldTemplateModal}
-                className="flex items-center gap-1.5 rounded-md border border-zinc-300 px-3 py-1.5 text-xs hover:bg-zinc-50"
+                className="flex items-center gap-1.5 rounded-md border border-coral-tree-300 px-3 py-1.5 text-xs hover:bg-coral-tree-50"
               >
                 <X className="h-3.5 w-3.5" />
                 {t("mapping.fieldTemplate.cancel")}
@@ -1596,7 +1596,7 @@ export default function MappingPage() {
                 type="button"
                 onClick={saveFieldTemplate}
                 disabled={savingFieldTemplate}
-                className="flex items-center gap-1.5 rounded-md bg-zinc-900 px-3 py-1.5 text-xs text-white disabled:opacity-50"
+                className="flex items-center gap-1.5 rounded-md bg-coral-tree-700 px-3 py-1.5 text-xs text-white disabled:opacity-50"
               >
                 <Save className="h-3.5 w-3.5" />
                 {savingFieldTemplate ? t("mapping.fieldTemplate.saving") : t("mapping.fieldTemplate.save")}
@@ -1611,14 +1611,14 @@ export default function MappingPage() {
           <div className="w-full max-w-sm space-y-3 rounded-lg bg-white p-4 shadow-xl">
             <h3 className="text-sm font-semibold">{t("mapping.fieldTemplate.editModalTitle")}</h3>
             <div className="space-y-1">
-              <label className="text-xs text-zinc-600" htmlFor="edit-field-template-select">
+              <label className="text-xs text-coral-tree-600" htmlFor="edit-field-template-select">
                 {t("mapping.selectFieldTemplate")}
               </label>
               <select
                 id="edit-field-template-select"
                 value={editPickerTemplateId}
                 onChange={(e) => setEditPickerTemplateId(e.target.value)}
-                className="w-full rounded-md border border-zinc-300 px-2 py-1.5 text-sm"
+                className="w-full rounded-md border border-coral-tree-300 px-2 py-1.5 text-sm"
                 autoFocus
               >
                 <option value="">{t("mapping.fieldTemplate.editPlaceholder")}</option>
@@ -1633,7 +1633,7 @@ export default function MappingPage() {
               <button
                 type="button"
                 onClick={closeEditFieldTemplatePicker}
-                className="flex items-center gap-1.5 rounded-md border border-zinc-300 px-3 py-1.5 text-xs hover:bg-zinc-50"
+                className="flex items-center gap-1.5 rounded-md border border-coral-tree-300 px-3 py-1.5 text-xs hover:bg-coral-tree-50"
               >
                 <X className="h-3.5 w-3.5" />
                 {t("mapping.fieldTemplate.cancel")}
@@ -1641,7 +1641,7 @@ export default function MappingPage() {
               <button
                 type="button"
                 onClick={() => startEditingExistingTemplate(editPickerTemplateId)}
-                className="flex items-center gap-1.5 rounded-md bg-zinc-900 px-3 py-1.5 text-xs text-white"
+                className="flex items-center gap-1.5 rounded-md bg-coral-tree-700 px-3 py-1.5 text-xs text-white"
               >
                 <Pencil className="h-3.5 w-3.5" />
                 {t("mapping.fieldTemplate.startEditing")}
@@ -1656,14 +1656,14 @@ export default function MappingPage() {
           <div className="w-full max-w-sm space-y-3 rounded-lg bg-white p-4 shadow-xl">
             <h3 className="text-sm font-semibold">{t("mapping.fieldTemplate.attachModalTitle")}</h3>
             <div className="space-y-1">
-              <label className="text-xs text-zinc-600" htmlFor="attach-field-template-select">
+              <label className="text-xs text-coral-tree-600" htmlFor="attach-field-template-select">
                 {t("mapping.selectFieldTemplate")}
               </label>
               <select
                 id="attach-field-template-select"
                 value={attachFieldTemplateId}
                 onChange={(e) => setAttachFieldTemplateId(e.target.value)}
-                className="w-full rounded-md border border-zinc-300 px-2 py-1.5 text-sm"
+                className="w-full rounded-md border border-coral-tree-300 px-2 py-1.5 text-sm"
                 autoFocus
               >
                 <option value="">{t("mapping.fieldTemplate.attachPlaceholder")}</option>
@@ -1680,7 +1680,7 @@ export default function MappingPage() {
               <button
                 type="button"
                 onClick={closeAttachFieldTemplateModal}
-                className="flex items-center gap-1.5 rounded-md border border-zinc-300 px-3 py-1.5 text-xs hover:bg-zinc-50"
+                className="flex items-center gap-1.5 rounded-md border border-coral-tree-300 px-3 py-1.5 text-xs hover:bg-coral-tree-50"
               >
                 <X className="h-3.5 w-3.5" />
                 {t("mapping.fieldTemplate.cancel")}
@@ -1689,7 +1689,7 @@ export default function MappingPage() {
                 type="button"
                 onClick={() => void attachExistingFieldTemplate()}
                 disabled={savingAttachedTemplate}
-                className="flex items-center gap-1.5 rounded-md bg-zinc-900 px-3 py-1.5 text-xs text-white disabled:opacity-50"
+                className="flex items-center gap-1.5 rounded-md bg-coral-tree-700 px-3 py-1.5 text-xs text-white disabled:opacity-50"
               >
                 <Save className="h-3.5 w-3.5" />
                 {savingAttachedTemplate ? t("mapping.fieldTemplate.attaching") : t("mapping.fieldTemplate.attach")}
@@ -1704,19 +1704,19 @@ export default function MappingPage() {
           <div className="w-full max-w-sm space-y-3 rounded-lg bg-white p-4 shadow-xl">
             <h3 className="text-sm font-semibold">{t("mapping.editGroup.modalTitle")}</h3>
             {editingGroup ? (
-              <p className="text-xs text-zinc-600">
+              <p className="text-xs text-coral-tree-600">
                 {t("mapping.editGroup.current")}: <span className="font-medium">{editingGroup}</span>
               </p>
             ) : null}
             <div className="space-y-1">
-              <label className="text-xs text-zinc-600" htmlFor="edit-group-input">
+              <label className="text-xs text-coral-tree-600" htmlFor="edit-group-input">
                 {t("mapping.editGroup.label")}
               </label>
               <input
                 id="edit-group-input"
                 value={editingGroupValue}
                 onChange={(e) => setEditingGroupValue(e.target.value)}
-                className="w-full rounded-md border border-zinc-300 px-2 py-1.5 text-sm"
+                className="w-full rounded-md border border-coral-tree-300 px-2 py-1.5 text-sm"
                 autoFocus
               />
               {editingGroupError ? <p className="text-xs text-red-600">{editingGroupError}</p> : null}
@@ -1725,7 +1725,7 @@ export default function MappingPage() {
               <button
                 type="button"
                 onClick={closeEditGroupModal}
-                className="flex items-center gap-1.5 rounded-md border border-zinc-300 px-3 py-1.5 text-xs hover:bg-zinc-50"
+                className="flex items-center gap-1.5 rounded-md border border-coral-tree-300 px-3 py-1.5 text-xs hover:bg-coral-tree-50"
               >
                 <X className="h-3.5 w-3.5" />
                 {t("mapping.editGroup.cancel")}
@@ -1733,7 +1733,7 @@ export default function MappingPage() {
               <button
                 type="button"
                 onClick={applyEditGroup}
-                className="flex items-center gap-1.5 rounded-md bg-zinc-900 px-3 py-1.5 text-xs text-white"
+                className="flex items-center gap-1.5 rounded-md bg-coral-tree-700 px-3 py-1.5 text-xs text-white"
               >
                 <Save className="h-3.5 w-3.5" />
                 {t("mapping.editGroup.save")}
@@ -1750,20 +1750,20 @@ export default function MappingPage() {
             {(() => {
               const field = fieldCatalog.find((f) => f.field_key === changingFieldGroup);
               return field ? (
-                <p className="text-xs text-zinc-600">
+                <p className="text-xs text-coral-tree-600">
                   {t("mapping.changeGroup.current")}: <span className="font-medium">{field.group}</span>
                 </p>
               ) : null;
             })()}
             <div className="space-y-1">
-              <label className="text-xs text-zinc-600" htmlFor="change-group-select">
+              <label className="text-xs text-coral-tree-600" htmlFor="change-group-select">
                 {t("mapping.changeGroup.select")}
               </label>
               <select
                 id="change-group-select"
                 value={changingFieldGroupValue}
                 onChange={(e) => setChangingFieldGroupValue(e.target.value)}
-                className="w-full rounded-md border border-zinc-300 px-2 py-1.5 text-sm"
+                className="w-full rounded-md border border-coral-tree-300 px-2 py-1.5 text-sm"
                 autoFocus
               >
                 <option value="" disabled>
@@ -1788,7 +1788,7 @@ export default function MappingPage() {
                   value={changingFieldGroupNewName}
                   onChange={(e) => setChangingFieldGroupNewName(e.target.value)}
                   placeholder={t("mapping.newGroupPlaceholder")}
-                  className="mt-2 w-full rounded-md border border-zinc-300 px-2 py-1.5 text-sm"
+                  className="mt-2 w-full rounded-md border border-coral-tree-300 px-2 py-1.5 text-sm"
                 />
               ) : null}
             </div>
@@ -1796,7 +1796,7 @@ export default function MappingPage() {
               <button
                 type="button"
                 onClick={closeChangeGroupModal}
-                className="flex items-center gap-1.5 rounded-md border border-zinc-300 px-3 py-1.5 text-xs hover:bg-zinc-50"
+                className="flex items-center gap-1.5 rounded-md border border-coral-tree-300 px-3 py-1.5 text-xs hover:bg-coral-tree-50"
               >
                 <X className="h-3.5 w-3.5" />
                 {t("mapping.changeGroup.cancel")}
@@ -1808,7 +1808,7 @@ export default function MappingPage() {
                   !changingFieldGroupValue ||
                   (changingFieldGroupValue === "__create_new__" && !changingFieldGroupNewName.trim())
                 }
-                className="flex items-center gap-1.5 rounded-md bg-zinc-900 px-3 py-1.5 text-xs text-white disabled:opacity-50"
+                className="flex items-center gap-1.5 rounded-md bg-coral-tree-700 px-3 py-1.5 text-xs text-white disabled:opacity-50"
               >
                 <Save className="h-3.5 w-3.5" />
                 {t("mapping.changeGroup.save")}
@@ -1823,8 +1823,8 @@ export default function MappingPage() {
           <div className="w-full max-w-md space-y-3 rounded-lg bg-white p-4 shadow-xl">
             <h3 className="text-sm font-semibold">{t("mapping.merge.modalTitle")}</h3>
             <div className="space-y-2">
-              <p className="text-xs text-zinc-600">{t("mapping.merge.selectLabel")}</p>
-              <div className="max-h-56 space-y-1 overflow-auto rounded border border-zinc-200 p-2">
+              <p className="text-xs text-coral-tree-600">{t("mapping.merge.selectLabel")}</p>
+              <div className="max-h-56 space-y-1 overflow-auto rounded border border-coral-tree-200 p-2">
                 {existingGroups.map((group) => (
                   <label key={group} className="flex items-center gap-2 text-sm">
                     <input
@@ -1838,7 +1838,7 @@ export default function MappingPage() {
               </div>
             </div>
             <div className="space-y-1">
-              <label className="text-xs text-zinc-600" htmlFor="merge-target-group-input">
+              <label className="text-xs text-coral-tree-600" htmlFor="merge-target-group-input">
                 {t("mapping.merge.targetLabel")}
               </label>
               <input
@@ -1848,14 +1848,14 @@ export default function MappingPage() {
                   setMergeTargetGroup(e.target.value);
                   if (mergeGroupsError) setMergeGroupsError("");
                 }}
-                className="w-full rounded-md border border-zinc-300 px-2 py-1.5 text-sm"
+                className="w-full rounded-md border border-coral-tree-300 px-2 py-1.5 text-sm"
                 placeholder={t("mapping.newGroupPlaceholder")}
                 autoFocus
               />
               {mergeGroupsError ? <p className="text-xs text-red-600">{mergeGroupsError}</p> : null}
             </div>
             <div className="space-y-1">
-              <p className="text-xs text-zinc-600">{t("mapping.merge.orderLabel")}</p>
+              <p className="text-xs text-coral-tree-600">{t("mapping.merge.orderLabel")}</p>
               <label className="flex items-center gap-2 text-sm">
                 <input
                   type="radio"
@@ -1875,7 +1875,7 @@ export default function MappingPage() {
                 <span>{t("mapping.merge.order.alpha")}</span>
               </label>
             </div>
-            <div className="rounded-md border border-zinc-200 bg-zinc-50 p-2 text-xs text-zinc-700">
+            <div className="rounded-md border border-coral-tree-200 bg-coral-tree-50 p-2 text-xs text-coral-tree-700">
               <p>
                 {t("mapping.merge.preview.groups").replace("{count}", String(mergePreview.groupCount))}
               </p>
@@ -1890,7 +1890,7 @@ export default function MappingPage() {
               <button
                 type="button"
                 onClick={closeMergeGroupsModal}
-                className="flex items-center gap-1.5 rounded-md border border-zinc-300 px-3 py-1.5 text-xs hover:bg-zinc-50"
+                className="flex items-center gap-1.5 rounded-md border border-coral-tree-300 px-3 py-1.5 text-xs hover:bg-coral-tree-50"
               >
                 <X className="h-3.5 w-3.5" />
                 {t("mapping.merge.cancel")}
@@ -1898,7 +1898,7 @@ export default function MappingPage() {
               <button
                 type="button"
                 onClick={applyMergeGroups}
-                className="flex items-center gap-1.5 rounded-md bg-zinc-900 px-3 py-1.5 text-xs text-white"
+                className="flex items-center gap-1.5 rounded-md bg-coral-tree-700 px-3 py-1.5 text-xs text-white"
               >
                 <Save className="h-3.5 w-3.5" />
                 {t("mapping.merge.save")}
@@ -1915,19 +1915,19 @@ export default function MappingPage() {
 
             <div className="grid gap-3">
               <div>
-                <label className="mb-1 block text-sm font-medium text-zinc-700">Tên hiển thị</label>
+                <label className="mb-1 block text-sm font-medium text-coral-tree-700">Tên hiển thị</label>
                 <input
                   value={newField.label_vi}
                   onChange={(e) => setNewField((prev) => ({ ...prev, label_vi: e.target.value }))}
                   placeholder={t("mapping.newFieldLabelPlaceholder")}
-                  className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm"
+                  className="w-full rounded-md border border-coral-tree-300 px-3 py-2 text-sm"
                   autoFocus
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-zinc-700">Thuộc Nhóm</label>
+                  <label className="mb-1 block text-sm font-medium text-coral-tree-700">Thuộc Nhóm</label>
                   <div className="flex gap-1">
                     <select
                       value={selectedGroup}
@@ -1946,7 +1946,7 @@ export default function MappingPage() {
                           }
                         }
                       }}
-                      className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm"
+                      className="w-full rounded-md border border-coral-tree-300 px-3 py-2 text-sm"
                     >
                       <option value="" disabled>{t("mapping.selectGroup")}</option>
                       {existingGroups.map((group) => (
@@ -1955,15 +1955,15 @@ export default function MappingPage() {
                       <option value="__create_new__" className="font-medium text-emerald-600">{t("mapping.newGroupOption")}</option>
                     </select>
                   </div>
-                  <p className="mt-1 text-xs text-zinc-500">{t("mapping.groupPathHint")}</p>
+                  <p className="mt-1 text-xs text-coral-tree-500">{t("mapping.groupPathHint")}</p>
                 </div>
 
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-zinc-700">Kiểu dữ liệu</label>
+                  <label className="mb-1 block text-sm font-medium text-coral-tree-700">Kiểu dữ liệu</label>
                   <select
                     value={newField.type}
                     onChange={(e) => setNewField((prev) => ({ ...prev, type: e.target.value as "string" | "number" | "percent" | "date" | "table" }))}
-                    className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm"
+                    className="w-full rounded-md border border-coral-tree-300 px-3 py-2 text-sm"
                   >
                     <option value="string">{t(typeLabelKey("string"))}</option>
                     <option value="number">{t(typeLabelKey("number"))}</option>
@@ -1990,14 +1990,14 @@ export default function MappingPage() {
               <button
                 type="button"
                 onClick={() => setAddingFieldModal(false)}
-                className="rounded-md border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50"
+                className="rounded-md border border-coral-tree-300 px-4 py-2 text-sm font-medium text-coral-tree-700 hover:bg-coral-tree-50"
               >
                 Hủy
               </button>
               <button
                 type="button"
                 onClick={() => addNewField()}
-                className="flex items-center gap-2 rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800"
+                className="flex items-center gap-2 rounded-md bg-coral-tree-700 px-4 py-2 text-sm font-medium text-white hover:bg-coral-tree-800"
               >
                 <Plus className="h-4 w-4" />
                 {t("mapping.addField")}
@@ -2007,14 +2007,14 @@ export default function MappingPage() {
         </div>
       ) : null}
 
-      <div className="rounded-xl border border-zinc-200 bg-white p-4">
+      <div className="rounded-xl border border-coral-tree-200 bg-white p-4">
         <h3 className="text-sm font-semibold">{t("mapping.validationResult")}</h3>
         {validation ? (
-          <pre className="mt-2 overflow-auto rounded-md bg-zinc-950 p-3 text-xs text-zinc-50">
+          <pre className="mt-2 overflow-auto rounded-md bg-coral-tree-950 p-3 text-xs text-coral-tree-50">
             {JSON.stringify(validation, null, 2)}
           </pre>
         ) : (
-          <p className="mt-1 text-sm text-zinc-600">{t("mapping.noValidation")}</p>
+          <p className="mt-1 text-sm text-coral-tree-600">{t("mapping.noValidation")}</p>
         )}
       </div>
 

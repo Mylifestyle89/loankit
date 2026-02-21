@@ -193,16 +193,16 @@ export function DocxTemplateEditorModal({ docxPath, documentBuffer, fieldCatalog
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-3">
       <div className="flex h-full max-h-[95vh] w-full max-w-7xl flex-col overflow-hidden rounded-xl bg-white shadow-xl">
-        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-zinc-200 px-4 py-3">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-coral-tree-200 px-4 py-3">
           <div className="min-w-0">
             <p className="text-sm font-semibold">{t("template.editor.modal.title")}</p>
-            <p className="text-xs text-zinc-500 truncate">{docxPath}</p>
+            <p className="text-xs text-coral-tree-500 truncate">{docxPath}</p>
           </div>
           <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={onClose}
-              className="flex items-center gap-1.5 rounded-md border border-zinc-300 px-3 py-1.5 text-sm hover:bg-zinc-50"
+              className="flex items-center gap-1.5 rounded-md border border-coral-tree-300 px-3 py-1.5 text-sm hover:bg-coral-tree-50"
             >
               <X className="h-4 w-4" />
               {t("template.editor.modal.close")}
@@ -219,14 +219,14 @@ export function DocxTemplateEditorModal({ docxPath, documentBuffer, fieldCatalog
           </div>
         </div>
 
-        <div className="border-b border-zinc-200 bg-zinc-50 px-4 py-3">
+        <div className="border-b border-coral-tree-200 bg-coral-tree-50 px-4 py-3">
           <div className="flex flex-wrap items-end gap-3">
             <div className="flex flex-col gap-1">
-              <label className="text-xs text-zinc-600">{t("template.editor.selectGroup")}</label>
+              <label className="text-xs text-coral-tree-600">{t("template.editor.selectGroup")}</label>
               <select
                 value={selectedGroup}
                 onChange={(e) => setSelectedGroup(e.target.value)}
-                className="min-w-48 rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm"
+                className="min-w-48 rounded-md border border-coral-tree-300 bg-white px-3 py-2 text-sm"
               >
                 {groups.map((group) => (
                   <option key={group} value={group}>
@@ -236,11 +236,11 @@ export function DocxTemplateEditorModal({ docxPath, documentBuffer, fieldCatalog
               </select>
             </div>
             <div className="flex flex-col gap-1">
-              <label className="text-xs text-zinc-600">{t("template.editor.selectField")}</label>
+              <label className="text-xs text-coral-tree-600">{t("template.editor.selectField")}</label>
               <select
                 value={selectedFieldKey}
                 onChange={(e) => setSelectedFieldKey(e.target.value)}
-                className="min-w-72 rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm"
+                className="min-w-72 rounded-md border border-coral-tree-300 bg-white px-3 py-2 text-sm"
                 disabled={fieldsInSelectedGroup.length === 0}
               >
                 {fieldsInSelectedGroup.map((field) => (
@@ -255,14 +255,14 @@ export function DocxTemplateEditorModal({ docxPath, documentBuffer, fieldCatalog
               type="button"
               onClick={() => void insertPlaceholder()}
               disabled={!selectedFieldKey}
-              className="flex items-center gap-2 rounded-md bg-indigo-600 px-4 py-2 text-sm text-white disabled:opacity-50 hover:bg-indigo-700"
+              className="flex items-center gap-2 rounded-md bg-coral-tree-600 px-4 py-2 text-sm text-white disabled:opacity-50 hover:bg-coral-tree-700"
               title={selectedFieldKey ? `Chèn [${selectedFieldLabel}] vào vị trí con trỏ` : ""}
             >
               <Copy className="h-4 w-4" />
               {t("template.editor.injectButton")}
             </button>
 
-            <p className="text-xs text-zinc-500">
+            <p className="text-xs text-coral-tree-500">
               {t("template.editor.desc")}
             </p>
           </div>

@@ -59,7 +59,7 @@ export function MappingSidebar({
             <button
                 type="button"
                 onClick={() => setIsOpen(true)}
-                className="flex items-center gap-2 rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-indigo-700 transition-colors"
+                className="flex items-center gap-2 rounded-md bg-coral-tree-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-coral-tree-700 transition-colors"
             >
                 <Users className="h-4 w-4" />
                 Lựa chọn khách hàng
@@ -77,11 +77,11 @@ export function MappingSidebar({
             <div
                 className={`fixed right-0 top-0 z-50 flex h-full w-[400px] flex-col overflow-auto bg-white shadow-2xl transition-transform duration-300 ${isOpen ? "translate-x-0" : "translate-x-full"}`}
             >
-                <div className="flex items-center justify-between border-b border-zinc-200 px-5 py-4">
-                    <h2 className="text-lg font-semibold text-zinc-800">Cài đặt nâng cao</h2>
+                <div className="flex items-center justify-between border-b border-coral-tree-200 px-5 py-4">
+                    <h2 className="text-lg font-semibold text-coral-tree-800">Cài đặt nâng cao</h2>
                     <button
                         onClick={() => setIsOpen(false)}
-                        className="rounded p-1.5 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800"
+                        className="rounded p-1.5 text-coral-tree-500 hover:bg-coral-tree-100 hover:text-coral-tree-800"
                     >
                         <X className="h-5 w-5" />
                     </button>
@@ -89,13 +89,13 @@ export function MappingSidebar({
 
                 <div className="flex-1 space-y-6 px-5 py-6">
                     <div className="space-y-4">
-                        <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
+                        <h3 className="text-xs font-semibold uppercase tracking-wider text-coral-tree-500">
                             1. Ngữ cảnh làm việc
                         </h3>
 
                         <div className="space-y-2">
-                            <label className="flex items-center gap-2 text-sm font-medium text-zinc-700">
-                                <Users className="h-4 w-4 text-zinc-500" />
+                            <label className="flex items-center gap-2 text-sm font-medium text-coral-tree-700">
+                                <Users className="h-4 w-4 text-coral-tree-500" />
                                 Dữ liệu khách hàng
                             </label>
                             <select
@@ -107,7 +107,7 @@ export function MappingSidebar({
                                     setSelectedCustomerId(customerId);
                                 }}
                                 disabled={loadingCustomers || loading}
-                                className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm disabled:opacity-50"
+                                className="w-full rounded-md border border-coral-tree-300 px-3 py-2 text-sm disabled:opacity-50"
                             >
                                 <option value="">{t("mapping.selectCustomer")}</option>
                                 {customers.map((customer) => (
@@ -119,15 +119,15 @@ export function MappingSidebar({
                         </div>
 
                         <div className="space-y-2">
-                            <label className="flex items-center gap-2 text-sm font-medium text-zinc-700">
-                                <FileText className="h-4 w-4 text-zinc-500" />
+                            <label className="flex items-center gap-2 text-sm font-medium text-coral-tree-700">
+                                <FileText className="h-4 w-4 text-coral-tree-500" />
                                 Mẫu dữ liệu
                             </label>
                             <select
                                 value={selectedFieldTemplateId}
                                 onChange={(e) => applySelectedFieldTemplate(e.target.value)}
                                 disabled={!selectedCustomerId || loadingFieldTemplates || fieldTemplates.length === 0}
-                                className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm disabled:opacity-50"
+                                className="w-full rounded-md border border-coral-tree-300 px-3 py-2 text-sm disabled:opacity-50"
                             >
                                 <option value="">{t("mapping.selectFieldTemplate")}</option>
                                 {fieldTemplates.map((template) => (
@@ -144,7 +144,7 @@ export function MappingSidebar({
                                         openCreateFieldTemplateModal();
                                         setIsOpen(false);
                                     }}
-                                    className="rounded border border-zinc-300 bg-white px-2 py-1 text-xs font-medium text-zinc-700 hover:bg-zinc-50 hover:text-zinc-900"
+                                    className="rounded border border-coral-tree-300 bg-white px-2 py-1 text-xs font-medium text-coral-tree-700 hover:bg-coral-tree-50 hover:text-coral-tree-900"
                                 >
                                     Tạo mẫu mới
                                 </button>
@@ -154,7 +154,7 @@ export function MappingSidebar({
                                         openAttachFieldTemplateModal();
                                         setIsOpen(false);
                                     }}
-                                    className="rounded border border-emerald-200 bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-700 hover:bg-emerald-100 hover:text-emerald-800"
+                                    className="rounded border border-coral-tree-200 bg-coral-tree-50 px-2 py-1 text-xs font-medium text-coral-tree-700 hover:bg-coral-tree-100 hover:text-coral-tree-800"
                                 >
                                     Áp dụng mẫu có sẵn
                                 </button>
@@ -164,7 +164,7 @@ export function MappingSidebar({
                                         openEditFieldTemplatePicker();
                                         setIsOpen(false);
                                     }}
-                                    className="text-xs font-medium text-indigo-600 hover:underline"
+                                    className="text-xs font-medium text-coral-tree-600 hover:underline"
                                 >
                                     Chỉnh sửa tên mẫu
                                 </button>
@@ -172,25 +172,25 @@ export function MappingSidebar({
                         </div>
                     </div>
 
-                    <hr className="border-zinc-200" />
+                    <hr className="border-coral-tree-200" />
 
                     <div className="space-y-4">
-                        <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
+                        <h3 className="text-xs font-semibold uppercase tracking-wider text-coral-tree-500">
                             2. Tiện ích bảng dữ liệu
                         </h3>
 
-                        <label className="flex cursor-pointer items-start gap-3 rounded-md border border-zinc-200 p-3 hover:bg-zinc-50">
+                        <label className="flex cursor-pointer items-start gap-3 rounded-md border border-coral-tree-200 p-3 hover:bg-coral-tree-50">
                             <input
                                 type="checkbox"
                                 checked={showTechnicalKeys}
                                 onChange={(e) => setShowTechnicalKeys(e.target.checked)}
-                                className="mt-0.5 rounded border-zinc-300 text-indigo-600 focus:ring-indigo-600"
+                                className="mt-0.5 rounded border-coral-tree-300 text-coral-tree-600 focus:ring-coral-tree-600"
                             />
                             <div>
-                                <span className="block text-sm font-medium text-zinc-800">
+                                <span className="block text-sm font-medium text-coral-tree-800">
                                     {t("mapping.showTechnicalKeys")}
                                 </span>
-                                <span className="text-xs text-zinc-500">
+                                <span className="text-xs text-coral-tree-500">
                                     Phục vụ coder gán mapping vào mẫu Docx, cho phép thay đổi Label mà không sợ vỡ layout.
                                 </span>
                             </div>
@@ -202,19 +202,19 @@ export function MappingSidebar({
                                 setIsOpen(false);
                                 openMergeGroupsModal();
                             }}
-                            className="flex w-full items-center justify-between rounded-md border border-zinc-200 bg-white p-3 text-sm font-medium hover:bg-zinc-50"
+                            className="flex w-full items-center justify-between rounded-md border border-coral-tree-200 bg-white p-3 text-sm font-medium hover:bg-coral-tree-50"
                         >
                             <div className="flex items-center gap-2">
-                                <ChevronsDown className="h-4 w-4 text-zinc-500" />
+                                <ChevronsDown className="h-4 w-4 text-coral-tree-500" />
                                 {t("mapping.mergeGroups")}
                             </div>
                         </button>
                     </div>
 
-                    <hr className="border-zinc-200" />
+                    <hr className="border-coral-tree-200" />
 
                     <div className="space-y-4">
-                        <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
+                        <h3 className="text-xs font-semibold uppercase tracking-wider text-coral-tree-500">
                             3. Thao tác hệ thống
                         </h3>
 
@@ -229,9 +229,9 @@ export function MappingSidebar({
                             type="button"
                             onClick={() => importInputRef.current?.click()}
                             disabled={importingCatalog}
-                            className="flex w-full items-center justify-center gap-2 rounded-md border border-zinc-300 bg-white px-4 py-2 text-sm font-medium hover:bg-zinc-50 disabled:opacity-60"
+                            className="flex w-full items-center justify-center gap-2 rounded-md border border-coral-tree-300 bg-white px-4 py-2 text-sm font-medium hover:bg-coral-tree-50 disabled:opacity-60"
                         >
-                            <Upload className="h-4 w-4 text-zinc-500" />
+                            <Upload className="h-4 w-4 text-coral-tree-500" />
                             {importingCatalog ? t("mapping.import.loading") : t("mapping.import.button")}
                         </button>
                     </div>

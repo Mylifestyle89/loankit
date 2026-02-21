@@ -11,6 +11,17 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-inter);
   --font-mono: var(--font-geist-mono);
+  --color-coral-tree-50: #fbf5f5;
+  --color-coral-tree-100: #f7ecec;
+  --color-coral-tree-200: #efdcdc;
+  --color-coral-tree-300: #e2bfc0;
+  --color-coral-tree-400: #d09c9e;
+  --color-coral-tree-500: #bc777c;
+  --color-coral-tree-600: #ad6870;
+  --color-coral-tree-700: #894750;
+  --color-coral-tree-800: #743d46;
+  --color-coral-tree-900: #643740;
+  --color-coral-tree-950: #361b20;
 }
 
 @media (prefers-color-scheme: dark) {

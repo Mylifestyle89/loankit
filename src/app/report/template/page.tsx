@@ -226,26 +226,26 @@ export default function TemplatePage() {
   }, [selectedGroup]);
 
   if (loading) {
-    return <p className="text-sm text-zinc-600">{t("template.loading")}</p>;
+    return <p className="text-sm text-coral-tree-600">{t("template.loading")}</p>;
   }
 
   return (
     <section className="space-y-4">
-      <div className="rounded-xl border border-zinc-200 bg-white p-4">
+      <div className="rounded-xl border border-coral-tree-200 bg-white p-4">
         <h2 className="text-lg font-semibold">{t("nav.template")}</h2>
-        <p className="mt-1 text-sm text-zinc-600">{t("template.desc")}</p>
+        <p className="mt-1 text-sm text-coral-tree-600">{t("template.desc")}</p>
         {message ? <p className="mt-2 text-sm text-emerald-700">{message}</p> : null}
         {error ? <p className="mt-2 text-sm text-red-700">{error}</p> : null}
       </div>
 
       <div className="space-y-2">
         {templates.map((template) => (
-          <div key={template.id} className="rounded-xl border border-zinc-200 bg-white p-4">
+          <div key={template.id} className="rounded-xl border border-coral-tree-200 bg-white p-4">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <h3 className="font-medium">{template.template_name}</h3>
-                <p className="text-sm text-zinc-600">{template.docx_path}</p>
-                <p className="text-xs text-zinc-500">
+                <p className="text-sm text-coral-tree-600">{template.docx_path}</p>
+                <p className="text-xs text-coral-tree-500">
                   {t("template.inventory")}: {template.placeholder_inventory_path || t("template.notBuilt")}
                 </p>
                 {template.active ? (
@@ -256,14 +256,14 @@ export default function TemplatePage() {
                 <button
                   onClick={() => setActive(template.id)}
                   disabled={busyId === template.id}
-                  className="rounded-md border border-zinc-300 px-3 py-1.5 text-sm disabled:opacity-60"
+                  className="rounded-md border border-coral-tree-300 px-3 py-1.5 text-sm disabled:opacity-60"
                 >
                   {t("template.setActive")}
                 </button>
                 <button
                   onClick={() => buildInventory(template.id)}
                   disabled={busyId === template.id}
-                  className="rounded-md bg-zinc-900 px-3 py-1.5 text-sm text-white disabled:opacity-60"
+                  className="rounded-md bg-coral-tree-700 px-3 py-1.5 text-sm text-white disabled:opacity-60"
                 >
                   {t("template.buildInventory")}
                 </button>
@@ -275,14 +275,14 @@ export default function TemplatePage() {
 
       {/* Template editor: open DOCX + inject field toolbar */}
       {templates.length > 0 ? (
-        <div className="rounded-xl border border-zinc-200 bg-white p-4">
+        <div className="rounded-xl border border-coral-tree-200 bg-white p-4">
           <h3 className="text-base font-semibold">{t("template.editor.title")}</h3>
-          <p className="mt-1 text-sm text-zinc-600">{t("template.editor.desc")}</p>
+          <p className="mt-1 text-sm text-coral-tree-600">{t("template.editor.desc")}</p>
           <div className="mt-3 flex flex-wrap items-center gap-3">
             <select
               value={activeTemplateId}
               onChange={(e) => setActiveTemplateId(e.target.value)}
-              className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm"
+              className="rounded-md border border-coral-tree-300 bg-white px-3 py-2 text-sm"
             >
               {templates.map((tpl) => (
                 <option key={tpl.id} value={tpl.id}>
@@ -294,7 +294,7 @@ export default function TemplatePage() {
               type="button"
               onClick={openDocx}
               disabled={!docxPath}
-              className="rounded-md border border-zinc-300 px-4 py-2 text-sm disabled:opacity-50"
+              className="rounded-md border border-coral-tree-300 px-4 py-2 text-sm disabled:opacity-50"
             >
               {t("template.editor.openDocx")}
             </button>
@@ -302,23 +302,23 @@ export default function TemplatePage() {
               type="button"
               onClick={openEditor}
               disabled={!docxPath || fieldCatalog.length === 0 || openingEditor}
-              className="rounded-md bg-indigo-600 px-4 py-2 text-sm text-white disabled:opacity-50 hover:bg-indigo-700"
+              className="rounded-md bg-coral-tree-600 px-4 py-2 text-sm text-white disabled:opacity-50 hover:bg-coral-tree-700"
             >
               {openingEditor ? t("template.editor.modal.loading") : t("template.editor.openEditor")}
             </button>
           </div>
           <div className="mt-4">
-            <p className="mb-2 text-sm font-medium text-zinc-700">{t("template.editor.injectHint")}</p>
+            <p className="mb-2 text-sm font-medium text-coral-tree-700">{t("template.editor.injectHint")}</p>
             {fieldCatalog.length === 0 ? (
-              <p className="text-xs text-zinc-500">{t("template.editor.noFields")}</p>
+              <p className="text-xs text-coral-tree-500">{t("template.editor.noFields")}</p>
             ) : (
               <div className="flex flex-wrap items-end gap-3">
                 <div className="flex flex-col gap-1">
-                  <label className="text-xs text-zinc-600">{t("template.editor.selectGroup")}</label>
+                  <label className="text-xs text-coral-tree-600">{t("template.editor.selectGroup")}</label>
                   <select
                     value={selectedGroup}
                     onChange={(e) => setSelectedGroup(e.target.value)}
-                    className="min-w-48 rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm"
+                    className="min-w-48 rounded-md border border-coral-tree-300 bg-white px-3 py-2 text-sm"
                   >
                     {groups.map((group) => (
                       <option key={group} value={group}>
@@ -328,11 +328,11 @@ export default function TemplatePage() {
                   </select>
                 </div>
                 <div className="flex flex-col gap-1">
-                  <label className="text-xs text-zinc-600">{t("template.editor.selectField")}</label>
+                  <label className="text-xs text-coral-tree-600">{t("template.editor.selectField")}</label>
                   <select
                     value={selectedFieldKey}
                     onChange={(e) => setSelectedFieldKey(e.target.value)}
-                    className="min-w-64 rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm"
+                    className="min-w-64 rounded-md border border-coral-tree-300 bg-white px-3 py-2 text-sm"
                     disabled={fieldsInSelectedGroup.length === 0}
                   >
                     {fieldsInSelectedGroup.map((field) => (
@@ -346,7 +346,7 @@ export default function TemplatePage() {
                   type="button"
                   onClick={() => injectField()}
                   disabled={!selectedFieldKey}
-                  className="rounded-md bg-indigo-600 px-4 py-2 text-sm text-white disabled:opacity-50 hover:bg-indigo-700"
+                  className="rounded-md bg-coral-tree-600 px-4 py-2 text-sm text-white disabled:opacity-50 hover:bg-coral-tree-700"
                 >
                   {t("template.editor.injectButton")}
                 </button>
@@ -361,10 +361,10 @@ export default function TemplatePage() {
 
       {inventory ? (
         <div className="grid gap-4 md:grid-cols-2">
-          <div className="rounded-xl border border-zinc-200 bg-white p-4">
+          <div className="rounded-xl border border-coral-tree-200 bg-white p-4">
             <h3 className="text-sm font-semibold">{t("template.placeholders")}</h3>
-            <p className="mt-1 text-xs text-zinc-500">{t("template.total")}: {inventory.inventory?.placeholders?.length ?? 0}</p>
-            <div className="mt-2 h-96 overflow-auto rounded border border-zinc-200 p-2 text-xs">
+            <p className="mt-1 text-xs text-coral-tree-500">{t("template.total")}: {inventory.inventory?.placeholders?.length ?? 0}</p>
+            <div className="mt-2 h-96 overflow-auto rounded border border-coral-tree-200 p-2 text-xs">
               <ul className="space-y-1">
                 {(inventory.inventory?.placeholders ?? []).map((item) => (
                   <li key={item}>{item}</li>
@@ -372,15 +372,15 @@ export default function TemplatePage() {
               </ul>
             </div>
           </div>
-          <div className="rounded-xl border border-zinc-200 bg-white p-4">
+          <div className="rounded-xl border border-coral-tree-200 bg-white p-4">
             <h3 className="text-sm font-semibold">{t("template.aliasSuggestions")}</h3>
-            <div className="mt-2 h-96 overflow-auto rounded border border-zinc-200 p-2 text-xs">
+            <div className="mt-2 h-96 overflow-auto rounded border border-coral-tree-200 p-2 text-xs">
               <ul className="space-y-2">
                 {(inventory.suggestions ?? []).map((item) => (
-                  <li key={item.placeholder} className="rounded border border-zinc-200 p-2">
+                  <li key={item.placeholder} className="rounded border border-coral-tree-200 p-2">
                     <p className="font-medium">{item.placeholder}</p>
-                    <p className="text-zinc-500">{t("template.current")}: {String(item.current_alias ?? t("template.none"))}</p>
-                    <p className="text-zinc-600">{t("template.suggest")}: {item.suggestions.join(", ") || t("template.none")}</p>
+                    <p className="text-coral-tree-500">{t("template.current")}: {String(item.current_alias ?? t("template.none"))}</p>
+                    <p className="text-coral-tree-600">{t("template.suggest")}: {item.suggestions.join(", ") || t("template.none")}</p>
                   </li>
                 ))}
               </ul>

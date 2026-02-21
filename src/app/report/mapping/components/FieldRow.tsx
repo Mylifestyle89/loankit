@@ -88,10 +88,10 @@ export const FieldRow = memo(function FieldRow({
     };
 
     const inputClassName =
-        "h-8 w-full rounded border border-transparent bg-transparent px-2 py-1 text-sm transition-colors placeholder:text-zinc-400 hover:border-zinc-300 focus:border-indigo-500 focus:bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500";
+        "h-8 w-full rounded border border-transparent bg-transparent px-2 py-1 text-sm transition-colors placeholder:text-coral-tree-400 hover:border-coral-tree-300 focus:border-coral-tree-500 focus:bg-white focus:outline-none focus:ring-1 focus:ring-coral-tree-500";
 
     const textareaClassName =
-        "min-h-[80px] w-full rounded border border-transparent bg-transparent px-2 py-1.5 font-mono text-sm transition-colors whitespace-pre placeholder:text-zinc-400 hover:border-zinc-300 focus:border-indigo-500 focus:bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500";
+        "min-h-[80px] w-full rounded border border-transparent bg-transparent px-2 py-1.5 font-mono text-sm transition-colors whitespace-pre placeholder:text-coral-tree-400 hover:border-coral-tree-300 focus:border-coral-tree-500 focus:bg-white focus:outline-none focus:ring-1 focus:ring-coral-tree-500";
 
     const valueInput =
         field.type === "date" ? (
@@ -134,7 +134,7 @@ export const FieldRow = memo(function FieldRow({
                     placeholder={typeHintTable}
                     spellCheck={false}
                 />
-                <p className="text-[10px] font-medium text-zinc-400 px-2">{tablePasteHint}</p>
+                <p className="text-[10px] font-medium text-coral-tree-400 px-2">{tablePasteHint}</p>
             </div>
         ) : (
             <input
@@ -148,14 +148,14 @@ export const FieldRow = memo(function FieldRow({
         );
 
     return (
-        <div className="group grid grid-cols-[minmax(260px,1fr)_minmax(360px,2fr)_160px_64px] items-start gap-2 border-t border-zinc-100 bg-white px-4 py-1.5 text-sm transition-colors hover:bg-zinc-50">
+        <div className="group grid grid-cols-[minmax(260px,1fr)_minmax(360px,2fr)_160px_64px] items-start gap-2 border-t border-coral-tree-100 bg-white px-4 py-1.5 text-sm transition-colors hover:bg-coral-tree-50">
             <div className="flex items-start gap-2 pt-0.5">
                 <div className="mt-1 flex flex-col gap-0 opacity-0 transition-opacity group-hover:opacity-100">
                     <button
                         type="button"
                         onClick={() => onMoveField(field.field_key, "up")}
                         disabled={!canMoveUp}
-                        className="flex h-4 w-4 items-center justify-center rounded text-zinc-400 hover:bg-zinc-200 hover:text-zinc-700 disabled:opacity-30"
+                        className="flex h-4 w-4 items-center justify-center rounded text-coral-tree-400 hover:bg-coral-tree-200 hover:text-coral-tree-700 disabled:opacity-30"
                         title={moveUpTitle}
                     >
                         <ChevronUp className="h-3.5 w-3.5" />
@@ -164,7 +164,7 @@ export const FieldRow = memo(function FieldRow({
                         type="button"
                         onClick={() => onMoveField(field.field_key, "down")}
                         disabled={!canMoveDown}
-                        className="flex h-4 w-4 items-center justify-center rounded text-zinc-400 hover:bg-zinc-200 hover:text-zinc-700 disabled:opacity-30"
+                        className="flex h-4 w-4 items-center justify-center rounded text-coral-tree-400 hover:bg-coral-tree-200 hover:text-coral-tree-700 disabled:opacity-30"
                         title={moveDownTitle}
                     >
                         <ChevronDown className="h-3.5 w-3.5" />
@@ -174,10 +174,10 @@ export const FieldRow = memo(function FieldRow({
                     <input
                         value={field.label_vi}
                         onChange={(e) => onFieldLabelChange(field.field_key, e.target.value)}
-                        className="w-full rounded border border-transparent bg-transparent px-2 py-1 text-sm font-medium text-zinc-800 transition-colors hover:border-zinc-300 focus:border-indigo-500 focus:bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                        className="w-full rounded border border-transparent bg-transparent px-2 py-1 text-sm font-medium text-coral-tree-800 transition-colors hover:border-coral-tree-300 focus:border-coral-tree-500 focus:bg-white focus:outline-none focus:ring-1 focus:ring-coral-tree-500"
                     />
                     {showTechnicalKeys ? (
-                        <p className="mt-0.5 px-2 font-mono text-[10px] text-zinc-400">{field.field_key}</p>
+                        <p className="mt-0.5 px-2 font-mono text-[10px] text-coral-tree-400">{field.field_key}</p>
                     ) : null}
                 </div>
             </div>
@@ -191,7 +191,7 @@ export const FieldRow = memo(function FieldRow({
                             toInternalType(e.target.value as "string" | "number" | "percent" | "date" | "table")
                         )
                     }
-                    className="cursor-pointer h-8 w-full rounded border border-transparent bg-transparent px-1.5 py-1 text-sm text-zinc-600 transition-colors hover:border-zinc-300 focus:border-indigo-500 focus:bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                    className="cursor-pointer h-8 w-full rounded border border-transparent bg-transparent px-1.5 py-1 text-sm text-coral-tree-600 transition-colors hover:border-coral-tree-300 focus:border-coral-tree-500 focus:bg-white focus:outline-none focus:ring-1 focus:ring-coral-tree-500"
                 >
                     <option value="string">{typeLabels.string}</option>
                     <option value="number">{typeLabels.number}</option>
@@ -204,7 +204,7 @@ export const FieldRow = memo(function FieldRow({
                 <button
                     type="button"
                     onClick={() => onOpenChangeGroupModal(field.field_key)}
-                    className="rounded p-1 text-zinc-400 hover:bg-zinc-200 hover:text-zinc-800"
+                    className="rounded p-1 text-coral-tree-400 hover:bg-coral-tree-200 hover:text-coral-tree-800"
                     title={changeGroupTitle}
                 >
                     <Pencil className="h-3.5 w-3.5" />
@@ -212,7 +212,7 @@ export const FieldRow = memo(function FieldRow({
                 <button
                     type="button"
                     onClick={() => onDeleteField(field.field_key)}
-                    className="rounded p-1 text-zinc-400 hover:bg-red-50 hover:text-red-600"
+                    className="rounded p-1 text-coral-tree-400 hover:bg-red-50 hover:text-red-600"
                     title={deleteFieldTitle}
                 >
                     <Trash2 className="h-3.5 w-3.5" />
