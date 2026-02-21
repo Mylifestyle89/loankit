@@ -109,10 +109,10 @@ export const FieldRow = memo(function FieldRow({
     };
 
     const inputClassName =
-        "h-8 w-full rounded border border-transparent bg-transparent px-2 py-1 text-sm transition-colors placeholder:text-coral-tree-400 hover:border-coral-tree-300 focus:border-coral-tree-500 focus:bg-white focus:outline-none focus:ring-1 focus:ring-coral-tree-500";
+        "h-8 w-full rounded border border-transparent bg-transparent px-2 py-1 text-sm transition-colors placeholder:text-coral-tree-700 hover:border-coral-tree-300 focus:border-coral-tree-500 focus:bg-white focus:outline-none focus:ring-1 focus:ring-coral-tree-500";
 
     const textareaClassName =
-        "min-h-[80px] w-full rounded border border-transparent bg-transparent px-2 py-1.5 font-mono text-sm transition-colors whitespace-pre placeholder:text-coral-tree-400 hover:border-coral-tree-300 focus:border-coral-tree-500 focus:bg-white focus:outline-none focus:ring-1 focus:ring-coral-tree-500";
+        "min-h-[80px] w-full rounded border border-transparent bg-transparent px-2 py-1.5 font-mono text-sm transition-colors whitespace-pre placeholder:text-coral-tree-700 hover:border-coral-tree-300 focus:border-coral-tree-500 focus:bg-white focus:outline-none focus:ring-1 focus:ring-coral-tree-500";
 
     const valueInput =
         field.type === "date" ? (
@@ -122,6 +122,7 @@ export const FieldRow = memo(function FieldRow({
                 onChange={handleChange}
                 onBlur={handleBlur}
                 onFocus={() => setIsFocused(true)}
+                aria-label={field.label_vi}
                 className={inputClassName}
             />
         ) : field.type === "number" ? (
@@ -155,7 +156,7 @@ export const FieldRow = memo(function FieldRow({
                     placeholder={typeHintTable}
                     spellCheck={false}
                 />
-                <p className="text-[10px] font-medium text-coral-tree-400 px-2">{tablePasteHint}</p>
+                <p className="text-[10px] font-medium text-coral-tree-700 px-2">{tablePasteHint}</p>
             </div>
         ) : (
             <input
@@ -176,7 +177,7 @@ export const FieldRow = memo(function FieldRow({
                         type="button"
                         {...attributes}
                         {...listeners}
-                        className="flex h-5 w-5 cursor-grab items-center justify-center rounded text-coral-tree-400 hover:bg-coral-tree-200 hover:text-coral-tree-700 active:cursor-grabbing"
+                        className="flex h-5 w-5 cursor-grab items-center justify-center rounded text-coral-tree-700 hover:bg-coral-tree-200 hover:text-coral-tree-900 active:cursor-grabbing"
                         title="Kéo để di chuyển"
                     >
                         <GripVertical className="h-4 w-4" />
@@ -186,10 +187,11 @@ export const FieldRow = memo(function FieldRow({
                     <input
                         value={field.label_vi}
                         onChange={(e) => onFieldLabelChange(field.field_key, e.target.value)}
+                        aria-label="Tên hiển thị field"
                         className="w-full rounded border border-transparent bg-transparent px-2 py-1 text-sm font-medium text-coral-tree-800 transition-colors hover:border-coral-tree-300 focus:border-coral-tree-500 focus:bg-white focus:outline-none focus:ring-1 focus:ring-coral-tree-500"
                     />
                     {showTechnicalKeys ? (
-                        <p className="mt-0.5 px-2 font-mono text-[10px] text-coral-tree-400">{field.field_key}</p>
+                        <p className="mt-0.5 px-2 font-mono text-[10px] text-coral-tree-700">{field.field_key}</p>
                     ) : null}
                 </div>
             </div>
@@ -203,7 +205,8 @@ export const FieldRow = memo(function FieldRow({
                             toInternalType(e.target.value as "string" | "number" | "percent" | "date" | "table")
                         )
                     }
-                    className="cursor-pointer h-8 w-full rounded border border-transparent bg-transparent px-1.5 py-1 text-sm text-coral-tree-600 transition-colors hover:border-coral-tree-300 focus:border-coral-tree-500 focus:bg-white focus:outline-none focus:ring-1 focus:ring-coral-tree-500"
+                    aria-label={`Kiểu dữ liệu cho ${field.label_vi}`}
+                    className="cursor-pointer h-8 w-full rounded border border-transparent bg-transparent px-1.5 py-1 text-sm text-coral-tree-800 transition-colors hover:border-coral-tree-300 focus:border-coral-tree-500 focus:bg-white focus:outline-none focus:ring-1 focus:ring-coral-tree-500"
                 >
                     <option value="string">{typeLabels.string}</option>
                     <option value="number">{typeLabels.number}</option>
@@ -216,7 +219,7 @@ export const FieldRow = memo(function FieldRow({
                 <button
                     type="button"
                     onClick={() => onOpenChangeGroupModal(field.field_key)}
-                    className="rounded p-1 text-coral-tree-400 hover:bg-coral-tree-200 hover:text-coral-tree-800"
+                    className="rounded p-1 text-coral-tree-700 hover:bg-coral-tree-200 hover:text-coral-tree-900"
                     title={changeGroupTitle}
                 >
                     <Pencil className="h-3.5 w-3.5" />
@@ -224,7 +227,7 @@ export const FieldRow = memo(function FieldRow({
                 <button
                     type="button"
                     onClick={() => onDeleteField(field.field_key)}
-                    className="rounded p-1 text-coral-tree-400 hover:bg-red-50 hover:text-red-600"
+                    className="rounded p-1 text-coral-tree-700 hover:bg-red-50 hover:text-red-700"
                     title={deleteFieldTitle}
                 >
                     <Trash2 className="h-3.5 w-3.5" />

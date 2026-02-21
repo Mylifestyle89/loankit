@@ -11,17 +11,35 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-inter);
   --font-mono: var(--font-geist-mono);
-  --color-coral-tree-50: #fbf5f5;
-  --color-coral-tree-100: #f7ecec;
-  --color-coral-tree-200: #efdcdc;
-  --color-coral-tree-300: #e2bfc0;
-  --color-coral-tree-400: #d09c9e;
-  --color-coral-tree-500: #bc777c;
-  --color-coral-tree-600: #ad6870;
-  --color-coral-tree-700: #894750;
-  --color-coral-tree-800: #743d46;
-  --color-coral-tree-900: #643740;
-  --color-coral-tree-950: #361b20;
+  /* Key Lime Pie palette */
+  --color-key-lime-pie-50: #fafbea;
+  --color-key-lime-pie-100: #f4f6d1;
+  --color-key-lime-pie-200: #e8eea8;
+  --color-key-lime-pie-300: #d5e175;
+  --color-key-lime-pie-400: #c0d047;
+  --color-key-lime-pie-500: #a3b62c;
+  --color-key-lime-pie-600: #80911f;
+  --color-key-lime-pie-700: #616f1c;
+  --color-key-lime-pie-800: #4e581c;
+  --color-key-lime-pie-900: #414b1c;
+  --color-key-lime-pie-950: #22290a;
+
+  /*
+    Backward-compatible token mapping:
+    Existing `coral-tree-*` utility classes now render with Key Lime Pie shades.
+    Use direct HEX to avoid any runtime var-chain mismatch.
+  */
+  --color-coral-tree-50: #fafbea;   /* soft backgrounds */
+  --color-coral-tree-100: #f4f6d1;  /* soft backgrounds */
+  --color-coral-tree-200: #e8eea8;  /* borders/dividers */
+  --color-coral-tree-300: #d5e175;
+  --color-coral-tree-400: #c0d047;
+  --color-coral-tree-500: #a3b62c;
+  --color-coral-tree-600: #80911f;
+  --color-coral-tree-700: #80911f;  /* primary action */
+  --color-coral-tree-800: #616f1c;  /* hover state */
+  --color-coral-tree-900: #414b1c;  /* high contrast text */
+  --color-coral-tree-950: #22290a;  /* highest contrast text */
 }
 
 @media (prefers-color-scheme: dark) {
