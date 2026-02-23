@@ -1,5 +1,0 @@
-﻿feat: enhance UI and report preview workflow
-
-- Added active tab highlighting with smooth transitions using blue-chill palette.
-- Created DocxPreviewModal for real-time document preview inside the app.
-- Upgraded the "Runs & Preview" tab workflow: Users can now generate the report, preview it rendered directly in the UI, and download the DOCX file directly from the preview modal.

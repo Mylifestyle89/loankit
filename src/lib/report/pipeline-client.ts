@@ -1,6 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { spawn } from "node:child_process";
+import { runExportNative } from "./docxtemplater-export";
 
 import { loadState, appendRunLog } from "@/lib/report/fs-store";
 
@@ -57,24 +58,19 @@ export async function runExport(params: {
   outputPath?: string;
   reportPath?: string;
 }): Promise<{ command: CommandResult; exportReport: unknown }> {
-  const args = [
-    "--template",
-    params.templatePath ?? "report_assets/2268_no_prefix_placeholders.docx",
-    "--flat-json",
-    params.flatJsonPath ?? "report_assets/report_draft_flat.json",
-    "--alias-map",
-    params.aliasPath ?? "report_assets/placeholder_alias_2268.json",
-    "--output",
-    params.outputPath ?? "report_assets/report_preview.docx",
-    "--report",
-    params.reportPath ?? "report_assets/template_export_report.json",
-  ];
-  const command = await runPythonScript("export_template_stub.py", args);
-  if (command.exitCode !== 0) {
-    throw new Error(command.stderr || command.stdout || "export_template_stub.py failed");
-  }
-  const exportReport = await readJson(params.reportPath ?? "report_assets/template_export_report.json");
-  return { command, exportReport };
+  // Use native docxtemplater instead of python export script
+  const result = await runExportNative({
+    templatePath: params.templatePath ?? "report_assets/2268_no_prefix_placeholders.docx",
+    flatJsonPath: params.flatJsonPath ?? "report_assets/report_draft_flat.json",
+    aliasPath: params.aliasPath ?? "report_assets/placeholder_alias_2268.json",
+    outputPath: params.outputPath ?? "report_assets/report_preview.docx",
+    reportPath: params.reportPath ?? "report_assets/template_export_report.json",
+  });
+  
+  return { 
+    command: { stdout: "Rendered via native docxtemplater.", stderr: "", exitCode: 0 }, 
+    exportReport: result.exportReport 
+  };
 }
 
 export async function logRun(params: {

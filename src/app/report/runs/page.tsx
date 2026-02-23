@@ -160,14 +160,14 @@ export default function RunsPage() {
         </button>
       </div>
 
-      {buildResult && (
+      {buildResult ? (
         <div className="rounded-xl border border-blue-chill-200 bg-white p-4">
           <h3 className="text-sm font-semibold">{t("runs.buildResult")}</h3>
           <pre className="mt-2 h-56 overflow-auto rounded bg-blue-chill-950 p-3 text-xs text-blue-chill-50">
             {JSON.stringify(buildResult, null, 2)}
           </pre>
         </div>
-      )}
+      ) : null}
 
       <div className="rounded-xl border border-blue-chill-200 bg-white p-4">
         <h3 className="text-sm font-semibold">{t("runs.logs")}</h3>
