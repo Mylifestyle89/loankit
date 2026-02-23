@@ -14,8 +14,6 @@ type UseMappingApiParams = {
   selectedFieldTemplateId: string;
   setLoading: Dispatch<SetStateAction<boolean>>;
   setSaving: Dispatch<SetStateAction<boolean>>;
-  setPublishing: Dispatch<SetStateAction<boolean>>;
-  setValidating: Dispatch<SetStateAction<boolean>>;
   setExportingDocx: Dispatch<SetStateAction<boolean>>;
   setError: Dispatch<SetStateAction<string>>;
   setMessage: Dispatch<SetStateAction<string>>;
@@ -41,8 +39,6 @@ export function useMappingApi({
   selectedFieldTemplateId,
   setLoading,
   setSaving,
-  setPublishing,
-  setValidating,
   setExportingDocx,
   setError,
   setMessage,
@@ -123,7 +119,7 @@ export function useMappingApi({
         });
       }
 
-      let msg = `${t("mapping.msg.savedDraft")} ${data.active_version_id}`;
+      let msg = `${t("mapping.msg.savedDraft")}`;
       const customerRes = await fetch("/api/customers/from-draft", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -142,6 +138,22 @@ export function useMappingApi({
       } else if (!customerData.ok) {
         msg += `. ${t("mapping.msg.customerSaveFailed")}: ${customerData.error ?? ""}`;
       }
+      
+      try {
+        const validateRes = await fetch("/api/report/validate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ run_build: true }),
+        });
+        const validateData = (await validateRes.json()) as ValidationResponse;
+        if (validateData.ok) {
+          setValidation(validateData.validation);
+          msg += ` - Đã tự động cập nhật & kiểm tra dữ liệu.`;
+        }
+      } catch (err) {
+        console.error("Auto validate failed", err);
+      }
+
       setMessage(msg);
       await loadData();
     } catch (e) {
@@ -159,54 +171,10 @@ export function useMappingApi({
     setError,
     setMessage,
     setSaving,
+    setValidation,
     t,
     values,
   ]);
-
-  const publishActive = useCallback(
-    async (activeVersionId: string) => {
-      if (!activeVersionId) {
-        return;
-      }
-      setPublishing(true);
-      setError("");
-      setMessage("");
-      const res = await fetch("/api/report/mapping", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "publish", version_id: activeVersionId }),
-      });
-      const data = (await res.json()) as MappingApiResponse;
-      if (!data.ok) {
-        setError(data.error ?? t("mapping.err.publish"));
-        setPublishing(false);
-        return;
-      }
-      setMessage(`${t("mapping.msg.published")} ${activeVersionId}`);
-      await loadData();
-      setPublishing(false);
-    },
-    [loadData, setError, setMessage, setPublishing, t],
-  );
-
-  const runValidate = useCallback(async () => {
-    setValidating(true);
-    setError("");
-    const res = await fetch("/api/report/validate", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ run_build: true }),
-    });
-    const data = (await res.json()) as ValidationResponse;
-    if (!data.ok) {
-      setError(data.error ?? t("mapping.err.validate"));
-    } else {
-      setValidation(data.validation);
-      setMessage(t("mapping.msg.validated"));
-    }
-    await loadFieldValues();
-    setValidating(false);
-  }, [loadFieldValues, setError, setMessage, setValidation, setValidating, t]);
 
   const exportAndOpenDocx = useCallback(async () => {
     setExportingDocx(true);
@@ -241,8 +209,6 @@ export function useMappingApi({
     loadData,
     loadFieldValues,
     saveDraft,
-    publishActive,
-    runValidate,
     exportAndOpenDocx,
   };
 }

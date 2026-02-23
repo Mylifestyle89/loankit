@@ -37,8 +37,6 @@ export default function MappingPage() {
   const { t } = useLanguage();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [publishing, setPublishing] = useState(false);
-  const [validating, setValidating] = useState(false);
   const [message, setMessage] = useState<string>("");
   const [error, setError] = useState<string>("");
   const [activeVersionId, setActiveVersionId] = useState<string>("");
@@ -132,8 +130,6 @@ export default function MappingPage() {
   const {
     loadData,
     saveDraft,
-    publishActive,
-    runValidate,
     exportAndOpenDocx,
   } = useMappingApi({
     t,
@@ -145,8 +141,6 @@ export default function MappingPage() {
     selectedFieldTemplateId,
     setLoading,
     setSaving,
-    setPublishing,
-    setValidating,
     setExportingDocx,
     setError,
     setMessage,
@@ -559,11 +553,7 @@ export default function MappingPage() {
         message={message}
         error={error}
         saving={saving}
-        publishing={publishing}
-        validating={validating}
         onSaveDraft={() => void saveDraft()}
-        onPublishActive={() => void publishActive(activeVersionId)}
-        onRunValidate={() => void runValidate()}
       />
 
       <MappingTabSwitch t={t} activeTab={activeTab} setActiveTab={setActiveTab} />
