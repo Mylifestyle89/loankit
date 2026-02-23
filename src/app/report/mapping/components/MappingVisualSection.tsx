@@ -28,6 +28,7 @@ type MappingVisualSectionProps = {
   loadingCustomers: boolean;
   loading: boolean;
   fieldTemplates: FieldTemplateItem[];
+  allFieldTemplates: FieldTemplateItem[];
   selectedFieldTemplateId: string;
   applySelectedFieldTemplate: (id: string) => void;
   loadingFieldTemplates: boolean;
@@ -37,7 +38,10 @@ type MappingVisualSectionProps = {
   showTechnicalKeys: boolean;
   setShowTechnicalKeys: Dispatch<SetStateAction<boolean>>;
   importingCatalog: boolean;
-  handleImportFieldFile: (e: ChangeEvent<HTMLInputElement>) => void;
+  handleImportFieldFile: (
+    e: ChangeEvent<HTMLInputElement>,
+    options?: { mode?: "append" | "overwrite"; templateName?: string | null },
+  ) => void;
   openMergeGroupsModal: () => void;
   setEditingFieldTemplateId: Dispatch<SetStateAction<string>>;
   setEditingFieldTemplateName: Dispatch<SetStateAction<string>>;
@@ -46,6 +50,7 @@ type MappingVisualSectionProps = {
   savingEditedTemplate: boolean;
   saveEditedFieldTemplate: () => void;
   stopEditingFieldTemplate: () => void;
+  openBackupFolder: () => void;
   sensors: any;
   handleDragEnd: (event: DragEndEvent) => void;
   groupedFieldTree: GroupedTreeNode[];
@@ -58,6 +63,7 @@ type MappingVisualSectionProps = {
   toggleRepeaterGroup: (groupPath: string) => void;
   prepareAddFieldForGroup: (groupPath: string) => void;
   openEditGroupModal: (group: string) => void;
+  onDeleteGroup: (groupPath: string) => void;
   values: Record<string, unknown>;
   fieldCatalog: FieldCatalogItem[];
   typeLabels: TypeLabelMap;
@@ -70,6 +76,8 @@ type MappingVisualSectionProps = {
   moveField: (fieldKey: string, direction: "up" | "down") => void;
   openChangeGroupModal: (fieldKey: string) => void;
   deleteField: (fieldKey: string) => void;
+  formulas: Record<string, string>;
+  onOpenFormulaModal: (fieldKey: string) => void;
 };
 
 export function MappingVisualSection({
@@ -87,6 +95,7 @@ export function MappingVisualSection({
   loadingCustomers,
   loading,
   fieldTemplates,
+  allFieldTemplates,
   selectedFieldTemplateId,
   applySelectedFieldTemplate,
   loadingFieldTemplates,
@@ -105,6 +114,7 @@ export function MappingVisualSection({
   savingEditedTemplate,
   saveEditedFieldTemplate,
   stopEditingFieldTemplate,
+  openBackupFolder,
   sensors,
   handleDragEnd,
   groupedFieldTree,
@@ -117,6 +127,7 @@ export function MappingVisualSection({
   toggleRepeaterGroup,
   prepareAddFieldForGroup,
   openEditGroupModal,
+  onDeleteGroup,
   values,
   fieldCatalog,
   typeLabels,
@@ -129,6 +140,8 @@ export function MappingVisualSection({
   moveField,
   openChangeGroupModal,
   deleteField,
+  formulas,
+  onOpenFormulaModal,
 }: MappingVisualSectionProps) {
   return (
     <section className="space-y-4">
@@ -149,8 +162,11 @@ export function MappingVisualSection({
             setSelectedCustomerId={setSelectedCustomerId}
             loadingCustomers={loadingCustomers}
             loading={loading}
+            fieldCatalog={fieldCatalog}
             fieldTemplates={fieldTemplates}
+            allFieldTemplates={allFieldTemplates}
             selectedFieldTemplateId={selectedFieldTemplateId}
+            editingFieldTemplateId={editingFieldTemplateId}
             applySelectedFieldTemplate={applySelectedFieldTemplate}
             loadingFieldTemplates={loadingFieldTemplates}
             openCreateFieldTemplateModal={openCreateFieldTemplateModal}
@@ -175,6 +191,7 @@ export function MappingVisualSection({
         saveEditedFieldTemplate={saveEditedFieldTemplate}
         savingEditedTemplate={savingEditedTemplate}
         stopEditingFieldTemplate={stopEditingFieldTemplate}
+        openBackupFolder={openBackupFolder}
       />
 
       <FieldCatalogBoard
@@ -193,6 +210,7 @@ export function MappingVisualSection({
         toggleRepeaterGroup={toggleRepeaterGroup}
         prepareAddFieldForGroup={prepareAddFieldForGroup}
         openEditGroupModal={openEditGroupModal}
+        onDeleteGroup={onDeleteGroup}
         values={values}
         fieldCatalog={fieldCatalog}
         showTechnicalKeys={showTechnicalKeys}
@@ -206,6 +224,8 @@ export function MappingVisualSection({
         onMoveField={moveField}
         onOpenChangeGroupModal={openChangeGroupModal}
         onDeleteField={deleteField}
+        formulas={formulas}
+        onOpenFormulaModal={onOpenFormulaModal}
       />
     </section>
   );

@@ -1,6 +1,8 @@
 import { useCallback } from "react";
 import type { Dispatch, SetStateAction } from "react";
 import type { FieldCatalogItem } from "@/lib/report/config-schema";
+import { getDuplicateAliasGroups } from "@/lib/report/alias-utils";
+import { evaluateFieldFormula } from "@/lib/report/field-calc";
 import type { MappingApiResponse, ValidationResponse, ValuesResponse } from "../types";
 import { normalizeFieldCatalogForSchema } from "../helpers";
 
@@ -10,6 +12,8 @@ type UseMappingApiParams = {
   aliasText: string;
   fieldCatalog: FieldCatalogItem[];
   values: Record<string, unknown>;
+  manualValues: Record<string, string | number | boolean | null>;
+  formulas: Record<string, string>;
   selectedCustomerId: string;
   selectedFieldTemplateId: string;
   setLoading: Dispatch<SetStateAction<boolean>>;
@@ -27,6 +31,7 @@ type UseMappingApiParams = {
   setValues: Dispatch<SetStateAction<Record<string, unknown>>>;
   setManualValues: Dispatch<SetStateAction<Record<string, string | number | boolean | null>>>;
   setLastExportedDocxPath: Dispatch<SetStateAction<string>>;
+  setFormulas: Dispatch<SetStateAction<Record<string, string>>>;
 };
 
 export function useMappingApi({
@@ -35,6 +40,8 @@ export function useMappingApi({
   aliasText,
   fieldCatalog,
   values,
+  manualValues,
+  formulas,
   selectedCustomerId,
   selectedFieldTemplateId,
   setLoading,
@@ -52,6 +59,7 @@ export function useMappingApi({
   setValues,
   setManualValues,
   setLastExportedDocxPath,
+  setFormulas,
 }: UseMappingApiParams) {
   const loadFieldValues = useCallback(async () => {
     const res = await fetch("/api/report/values", { cache: "no-store" });
@@ -64,7 +72,8 @@ export function useMappingApi({
     setAutoValues(data.auto_values ?? {});
     setValues(data.values ?? {});
     setManualValues(data.manual_values ?? {});
-  }, [setAutoValues, setError, setFieldCatalog, setManualValues, setValues, t]);
+    setFormulas(data.field_formulas ?? {});
+  }, [setAutoValues, setError, setFieldCatalog, setFormulas, setManualValues, setValues, t]);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -90,7 +99,20 @@ export function useMappingApi({
     setMessage("");
     try {
       const mapping = JSON.parse(mappingText);
-      const alias_map = JSON.parse(aliasText);
+      const alias_map = JSON.parse(aliasText) as Record<string, unknown>;
+      const duplicates = getDuplicateAliasGroups(alias_map);
+      const duplicateEntries = Object.entries(duplicates);
+      if (duplicateEntries.length > 0) {
+        const lines = duplicateEntries.map(
+          ([norm, keys]) => `"${norm}": ${keys.map((k) => `"${k}"`).join(", ")}`,
+        );
+        setError(
+          "Alias trùng tên (sau chuẩn hóa). Vui lòng chỉnh trong file Alias và giữ một tên duy nhất cho mỗi trường: " +
+            lines.join("; "),
+        );
+        setSaving(false);
+        return;
+      }
       const normalizedCatalog = normalizeFieldCatalogForSchema(fieldCatalog);
       const res = await fetch("/api/report/mapping", {
         method: "PUT",
@@ -119,11 +141,25 @@ export function useMappingApi({
         });
       }
 
+      await fetch("/api/report/values", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ manual_values: manualValues, field_formulas: formulas }),
+      });
+
+      const payloadValues = { ...values };
+      const fieldTypeMap = new Map(fieldCatalog.map((f) => [f.field_key, f.type]));
+      for (const [fieldKey, formula] of Object.entries(formulas)) {
+        const fieldType = fieldTypeMap.get(fieldKey) ?? "text";
+        const v = evaluateFieldFormula(formula, payloadValues, fieldType);
+        if (v !== null) payloadValues[fieldKey] = v;
+      }
+
       let msg = `${t("mapping.msg.savedDraft")}`;
       const customerRes = await fetch("/api/customers/from-draft", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ values }),
+        body: JSON.stringify({ values: payloadValues }),
       });
       const customerData = (await customerRes.json()) as {
         ok?: boolean;
@@ -164,7 +200,9 @@ export function useMappingApi({
   }, [
     aliasText,
     fieldCatalog,
+    formulas,
     loadData,
+    manualValues,
     mappingText,
     selectedCustomerId,
     selectedFieldTemplateId,

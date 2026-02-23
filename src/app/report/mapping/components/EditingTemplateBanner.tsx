@@ -1,3 +1,5 @@
+import { FolderOpen } from "lucide-react";
+
 type EditingTemplateBannerProps = {
   t: (key: string) => string;
   editingFieldTemplateId: string;
@@ -6,6 +8,7 @@ type EditingTemplateBannerProps = {
   saveEditedFieldTemplate: () => void;
   savingEditedTemplate: boolean;
   stopEditingFieldTemplate: () => void;
+  openBackupFolder: () => void;
 };
 
 export function EditingTemplateBanner({
@@ -16,6 +19,7 @@ export function EditingTemplateBanner({
   saveEditedFieldTemplate,
   savingEditedTemplate,
   stopEditingFieldTemplate,
+  openBackupFolder,
 }: EditingTemplateBannerProps) {
   if (!editingFieldTemplateId) return null;
 
@@ -43,6 +47,14 @@ export function EditingTemplateBanner({
         className="rounded-md border border-coral-tree-300 px-3 py-1.5 text-sm hover:bg-coral-tree-50"
       >
         {t("mapping.fieldTemplate.stopEditing")}
+      </button>
+      <button
+        type="button"
+        onClick={openBackupFolder}
+        className="inline-flex items-center gap-1.5 rounded-md border border-coral-tree-300 px-3 py-1.5 text-sm hover:bg-coral-tree-50"
+      >
+        <FolderOpen className="h-4 w-4" />
+        Mở backup
       </button>
     </div>
   );

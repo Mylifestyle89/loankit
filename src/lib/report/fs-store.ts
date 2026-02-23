@@ -30,6 +30,20 @@ import {
 
 const nowIso = () => new Date().toISOString();
 
+function tsForFilename(date = new Date()): string {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${date.getFullYear()}${pad(date.getMonth() + 1)}${pad(date.getDate())}-${pad(date.getHours())}${pad(
+    date.getMinutes(),
+  )}${pad(date.getSeconds())}`;
+}
+
+async function pruneOldBackups(folder: string, maxKeep: number): Promise<void> {
+  const entries = await fs.readdir(folder, { withFileTypes: true });
+  const files = entries.filter((entry) => entry.isFile()).map((entry) => entry.name).sort().reverse();
+  const stale = files.slice(maxKeep);
+  await Promise.all(stale.map((name) => fs.unlink(path.join(folder, name)).catch(() => undefined)));
+}
+
 function toGroup(fieldKey: string): string {
   const chunks = fieldKey.split(".");
   const raw = chunks.length > 1 ? `${chunks[0]}.${chunks[1]}` : chunks[0];
@@ -163,7 +177,30 @@ export async function loadState(): Promise<FrameworkState> {
 
 export async function saveState(state: FrameworkState): Promise<void> {
   await ensureDirectories();
-  await writeJsonFile(REPORT_STATE_FILE, frameworkStateSchema.parse(state));
+  const parsed = frameworkStateSchema.parse(state);
+  const nextRaw = JSON.stringify(parsed, null, 2);
+
+  let currentRaw = "";
+  try {
+    currentRaw = await fs.readFile(REPORT_STATE_FILE, "utf-8");
+  } catch {
+    currentRaw = "";
+  }
+
+  // Skip redundant write/backup when content does not change.
+  if (currentRaw === nextRaw) {
+    return;
+  }
+
+  if (currentRaw) {
+    const backupDir = path.join(process.cwd(), "report_assets", "backups", "state-config");
+    await fs.mkdir(backupDir, { recursive: true });
+    const backupPath = path.join(backupDir, `framework_state-${tsForFilename()}.json`);
+    await fs.writeFile(backupPath, currentRaw, "utf-8");
+    await pruneOldBackups(backupDir, 100);
+  }
+
+  await fs.writeFile(REPORT_STATE_FILE, nextRaw, "utf-8");
 }
 
 export async function createMappingDraft(params: {

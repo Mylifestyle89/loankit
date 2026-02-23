@@ -1,5 +1,5 @@
 import { memo, useEffect, useRef, useState } from "react";
-import { ChevronUp, ChevronDown, Pencil, Trash2, GripVertical } from "lucide-react";
+import { ChevronUp, ChevronDown, Pencil, Trash2, GripVertical, FunctionSquare } from "lucide-react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import type { FieldCatalogItem } from "@/lib/report/config-schema";
@@ -35,6 +35,11 @@ export type FieldRowProps = {
     onOpenChangeGroupModal: (fieldKey: string) => void;
     onDeleteField: (fieldKey: string) => void;
     dndId?: string;
+    valueReadOnly?: boolean;
+    /** Chỉ số, phần trăm, ngày mới hiện nút công thức */
+    formulaAllowed?: boolean;
+    hasFormula?: boolean;
+    onOpenFormula?: () => void;
 };
 
 export const FieldRow = memo(function FieldRow({
@@ -60,6 +65,10 @@ export const FieldRow = memo(function FieldRow({
     onOpenChangeGroupModal,
     onDeleteField,
     dndId,
+    valueReadOnly = false,
+    formulaAllowed = false,
+    hasFormula = false,
+    onOpenFormula,
 }: FieldRowProps) {
     const sortableId = dndId || field.field_key;
     const {
@@ -93,6 +102,7 @@ export const FieldRow = memo(function FieldRow({
     const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+        if (isReadOnly) return;
         const newVal = e.target.value;
         setLocalText(newVal);
 
@@ -104,6 +114,7 @@ export const FieldRow = memo(function FieldRow({
 
     const handleBlur = () => {
         setIsFocused(false);
+        if (isReadOnly) return;
         if (timeoutRef.current) clearTimeout(timeoutRef.current);
         onManualChange(field, localText);
     };
@@ -114,16 +125,24 @@ export const FieldRow = memo(function FieldRow({
     const textareaClassName =
         "min-h-[80px] w-full rounded border border-transparent bg-transparent px-2 py-1.5 font-mono text-sm transition-colors whitespace-pre placeholder:text-coral-tree-700 hover:border-coral-tree-300 focus:border-coral-tree-500 focus:bg-white focus:outline-none focus:ring-1 focus:ring-coral-tree-500";
 
+    const isReadOnly = valueReadOnly || hasFormula;
+    const readOnlyClassName = isReadOnly
+        ? "cursor-not-allowed bg-coral-tree-50 text-coral-tree-600 hover:border-transparent focus:border-transparent focus:ring-0"
+        : "";
+
     const valueInput =
         field.type === "date" ? (
             <input
-                type="date"
+                type="text"
                 value={localText}
                 onChange={handleChange}
                 onBlur={handleBlur}
                 onFocus={() => setIsFocused(true)}
                 aria-label={field.label_vi}
-                className={inputClassName}
+                className={`${inputClassName} ${readOnlyClassName}`}
+                readOnly={isReadOnly}
+                placeholder="dd/mm/yyyy"
+                inputMode="numeric"
             />
         ) : field.type === "number" ? (
             <input
@@ -132,8 +151,9 @@ export const FieldRow = memo(function FieldRow({
                 onBlur={handleBlur}
                 onFocus={() => setIsFocused(true)}
                 inputMode="decimal"
-                className={inputClassName}
+                className={`${inputClassName} ${readOnlyClassName}`}
                 placeholder={typeHintNumber}
+                readOnly={isReadOnly}
             />
         ) : field.type === "percent" ? (
             <input
@@ -142,8 +162,9 @@ export const FieldRow = memo(function FieldRow({
                 onBlur={handleBlur}
                 onFocus={() => setIsFocused(true)}
                 inputMode="decimal"
-                className={inputClassName}
+                className={`${inputClassName} ${readOnlyClassName}`}
                 placeholder={typeHintPercent}
+                readOnly={isReadOnly}
             />
         ) : field.type === "table" ? (
             <div className="space-y-1">
@@ -152,9 +173,10 @@ export const FieldRow = memo(function FieldRow({
                     onChange={handleChange}
                     onBlur={handleBlur}
                     onFocus={() => setIsFocused(true)}
-                    className={textareaClassName}
+                    className={`${textareaClassName} ${readOnlyClassName}`}
                     placeholder={typeHintTable}
                     spellCheck={false}
+                    readOnly={isReadOnly}
                 />
                 <p className="text-[10px] font-medium text-coral-tree-700 px-2">{tablePasteHint}</p>
             </div>
@@ -164,8 +186,9 @@ export const FieldRow = memo(function FieldRow({
                 onChange={handleChange}
                 onBlur={handleBlur}
                 onFocus={() => setIsFocused(true)}
-                className={inputClassName}
+                className={`${inputClassName} ${readOnlyClassName}`}
                 placeholder={columnValuePlaceholder}
+                readOnly={isReadOnly}
             />
         );
 
@@ -216,6 +239,16 @@ export const FieldRow = memo(function FieldRow({
                 </select>
             </div>
             <div className="flex items-center justify-center gap-1 pt-1 opacity-0 transition-opacity group-hover:opacity-100">
+                {formulaAllowed && onOpenFormula ? (
+                    <button
+                        type="button"
+                        onClick={onOpenFormula}
+                        className={`rounded p-1 ${hasFormula ? "bg-amber-100 text-amber-800" : "text-coral-tree-700 hover:bg-coral-tree-200 hover:text-coral-tree-900"}`}
+                        title={hasFormula ? "Sửa công thức" : "Nhập công thức"}
+                    >
+                        <FunctionSquare className="h-3.5 w-3.5" />
+                    </button>
+                ) : null}
                 <button
                     type="button"
                     onClick={() => onOpenChangeGroupModal(field.field_key)}

@@ -180,7 +180,16 @@ export default function RunsPage() {
                 {t("runs.meta.mapping")}: {run.mapping_version_id} | {t("runs.meta.template")}: {run.template_profile_id}
               </p>
               <p className="text-xs text-blue-chill-500">
-                {new Date(run.created_at).toLocaleString()} | {run.duration_ms} ms
+                {new Date(run.created_at).toLocaleString("vi-VN", {
+                  day: "2-digit",
+                  month: "2-digit",
+                  year: "numeric",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  second: "2-digit",
+                  hour12: false,
+                })}{" "}
+                | {run.duration_ms} ms
               </p>
               <div className="mt-2 flex flex-wrap gap-2">
                 {run.output_paths.map((p) => (

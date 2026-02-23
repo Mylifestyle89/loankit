@@ -76,7 +76,7 @@ export function useFieldTemplates({
 
   async function loadAllFieldTemplates() {
     try {
-      const res = await fetch("/api/report/field-templates", { cache: "no-store" });
+      const res = await fetch("/api/report/field-templates?with_usage=1", { cache: "no-store" });
       const data = (await res.json()) as FieldTemplatesResponse;
       if (data.ok && Array.isArray(data.field_templates)) {
         setAllFieldTemplates(data.field_templates);

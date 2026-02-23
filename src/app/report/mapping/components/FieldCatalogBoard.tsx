@@ -27,6 +27,7 @@ type FieldCatalogBoardProps = {
   toggleRepeaterGroup: (groupPath: string) => void;
   prepareAddFieldForGroup: (groupPath: string) => void;
   openEditGroupModal: (group: string) => void;
+  onDeleteGroup: (groupPath: string) => void;
   values: Record<string, unknown>;
   fieldCatalog: FieldCatalogItem[];
   showTechnicalKeys: boolean;
@@ -40,6 +41,8 @@ type FieldCatalogBoardProps = {
   onMoveField: (fieldKey: string, direction: "up" | "down") => void;
   onOpenChangeGroupModal: (fieldKey: string) => void;
   onDeleteField: (fieldKey: string) => void;
+  formulas: Record<string, string>;
+  onOpenFormulaModal: (fieldKey: string) => void;
 };
 
 export function FieldCatalogBoard({
@@ -58,6 +61,7 @@ export function FieldCatalogBoard({
   toggleRepeaterGroup,
   prepareAddFieldForGroup,
   openEditGroupModal,
+  onDeleteGroup,
   values,
   fieldCatalog,
   showTechnicalKeys,
@@ -71,6 +75,8 @@ export function FieldCatalogBoard({
   onMoveField,
   onOpenChangeGroupModal,
   onDeleteField,
+  formulas,
+  onOpenFormulaModal,
 }: FieldCatalogBoardProps) {
   return (
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd} modifiers={[restrictToVerticalAxis]}>
@@ -186,6 +192,14 @@ export function FieldCatalogBoard({
                           <Pencil className="h-3 w-3" />
                           {t("mapping.editGroup")}
                         </button>
+                        <button
+                          type="button"
+                          onClick={() => onDeleteGroup(child.fullPath)}
+                          className="flex items-center gap-1 rounded px-1.5 py-0.5 text-[11px] font-medium text-red-500 hover:bg-red-100 hover:text-red-700"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                          {t("mapping.deleteGroup")}
+                        </button>
                       </div>
                     </div>
 
@@ -210,6 +224,7 @@ export function FieldCatalogBoard({
                             <div className="flex flex-col">
                               <SortableContext items={child.fields.map((f) => `${f.field_key}___${index}`)} strategy={verticalListSortingStrategy}>
                                 {child.fields.map((field) => (
+                                  // STT in repeater is auto-managed, keep value read-only.
                                   <FieldRow
                                     key={`${field.field_key}___${index}`}
                                     dndId={`${field.field_key}___${index}`}
@@ -234,6 +249,7 @@ export function FieldCatalogBoard({
                                     onMoveField={onMoveField}
                                     onOpenChangeGroupModal={onOpenChangeGroupModal}
                                     onDeleteField={onDeleteField}
+                                    valueReadOnly={field.is_repeater && field.label_vi.trim().toUpperCase() === "STT"}
                                   />
                                 ))}
                               </SortableContext>
@@ -251,32 +267,42 @@ export function FieldCatalogBoard({
                       </div>
                     ) : (
                       <SortableContext items={child.fields.map((f) => f.field_key)} strategy={verticalListSortingStrategy}>
-                        {child.fields.map((field, indexInGroup) => (
-                          <FieldRow
-                            key={field.field_key}
-                            field={field}
-                            value={values[field.field_key]}
-                            showTechnicalKeys={showTechnicalKeys}
-                            canMoveUp={indexInGroup > 0}
-                            canMoveDown={indexInGroup < child.fields.length - 1}
-                            typeLabels={typeLabels}
-                            columnValuePlaceholder={t("mapping.column.value")}
-                            typeHintNumber={t("mapping.typeHintNumber")}
-                            typeHintPercent={t("mapping.typeHintPercent")}
-                            typeHintTable={t("mapping.typeHintTable")}
-                            tablePasteHint={t("mapping.tablePasteHint")}
-                            moveUpTitle={t("mapping.moveUp")}
-                            moveDownTitle={t("mapping.moveDown")}
-                            changeGroupTitle={t("mapping.changeGroup")}
-                            deleteFieldTitle={t("mapping.deleteField")}
-                            onManualChange={onManualChange}
-                            onFieldLabelChange={onFieldLabelChange}
-                            onFieldTypeChange={onFieldTypeChange}
-                            onMoveField={onMoveField}
-                            onOpenChangeGroupModal={onOpenChangeGroupModal}
-                            onDeleteField={onDeleteField}
-                          />
-                        ))}
+                        {child.fields.map((field, indexInGroup) => {
+                          const formulaAllowed =
+                            field.type === "number" ||
+                            field.type === "percent" ||
+                            field.type === "date" ||
+                            field.type === "text";
+                          return (
+                            <FieldRow
+                              key={field.field_key}
+                              field={field}
+                              value={values[field.field_key]}
+                              showTechnicalKeys={showTechnicalKeys}
+                              canMoveUp={indexInGroup > 0}
+                              canMoveDown={indexInGroup < child.fields.length - 1}
+                              typeLabels={typeLabels}
+                              columnValuePlaceholder={t("mapping.column.value")}
+                              typeHintNumber={t("mapping.typeHintNumber")}
+                              typeHintPercent={t("mapping.typeHintPercent")}
+                              typeHintTable={t("mapping.typeHintTable")}
+                              tablePasteHint={t("mapping.tablePasteHint")}
+                              moveUpTitle={t("mapping.moveUp")}
+                              moveDownTitle={t("mapping.moveDown")}
+                              changeGroupTitle={t("mapping.changeGroup")}
+                              deleteFieldTitle={t("mapping.deleteField")}
+                              onManualChange={onManualChange}
+                              onFieldLabelChange={onFieldLabelChange}
+                              onFieldTypeChange={onFieldTypeChange}
+                              onMoveField={onMoveField}
+                              onOpenChangeGroupModal={onOpenChangeGroupModal}
+                              onDeleteField={onDeleteField}
+                              formulaAllowed={formulaAllowed}
+                              hasFormula={!!formulas[field.field_key]}
+                              onOpenFormula={() => onOpenFormulaModal(field.field_key)}
+                            />
+                          );
+                        })}
                       </SortableContext>
                     )}
                   </div>

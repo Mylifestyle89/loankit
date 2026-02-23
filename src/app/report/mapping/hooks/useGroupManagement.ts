@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import type { Dispatch, SetStateAction } from "react";
 import type { FieldCatalogItem } from "@/lib/report/config-schema";
+import { buildInternalFieldKey } from "../helpers";
 
 type GroupTreeNode = {
   parent: string;
@@ -80,6 +81,15 @@ export function useGroupManagement({
   setCollapsedParentGroups,
   customGroups,
 }: UseGroupManagementParams) {
+  function isSttField(field: FieldCatalogItem): boolean {
+    return field.label_vi.trim().toUpperCase() === "STT";
+  }
+
+  function getGroupSttFieldKey(groupPath: string, fields: FieldCatalogItem[]): string | null {
+    const sttField = fields.find((item) => item.group === groupPath && item.is_repeater && isSttField(item));
+    return sttField?.field_key ?? null;
+  }
+
   const existingGroups = useMemo(() => {
     const groups = new Set([...fieldCatalog.map((item) => item.group), ...customGroups]);
     return Array.from(groups).sort((a, b) => a.localeCompare(b, "vi"));
@@ -128,13 +138,48 @@ export function useGroupManagement({
       .find((c) => c.fullPath === groupPath)
       ?.fields.some((f) => f.is_repeater);
 
-    setFieldCatalog((prev) => prev.map((f) => (f.group === groupPath ? { ...f, is_repeater: !isRepeater } : f)));
+    const turningOn = !isRepeater;
+    setFieldCatalog((prev) => {
+      const toggled = prev.map((f) => (f.group === groupPath ? { ...f, is_repeater: turningOn } : f));
+      if (!turningOn) {
+        return toggled;
+      }
+
+      const hasStt = toggled.some((item) => item.group === groupPath && item.is_repeater && isSttField(item));
+      if (hasStt) {
+        return toggled;
+      }
+
+      const sttKey = buildInternalFieldKey({
+        group: groupPath,
+        labelVi: "STT",
+        existingKeys: toggled.map((item) => item.field_key),
+      });
+      const sttField: FieldCatalogItem = {
+        field_key: sttKey,
+        label_vi: "STT",
+        group: groupPath,
+        type: "number",
+        required: false,
+        examples: [],
+        is_repeater: true,
+      };
+
+      const insertIndex = toggled.findIndex((item) => item.group === groupPath);
+      if (insertIndex === -1) {
+        return [...toggled, sttField];
+      }
+      return [...toggled.slice(0, insertIndex), sttField, ...toggled.slice(insertIndex)];
+    });
   }
 
   function addRepeaterItem(groupPath: string) {
     setValues((prev) => {
       const currentList = Array.isArray(prev[groupPath]) ? prev[groupPath] : [];
-      return { ...prev, [groupPath]: [...currentList, {}] };
+      const sttFieldKey = getGroupSttFieldKey(groupPath, fieldCatalog);
+      const nextIndex = currentList.length + 1;
+      const newItem = sttFieldKey ? { [sttFieldKey]: nextIndex } : {};
+      return { ...prev, [groupPath]: [...currentList, newItem] };
     });
   }
 
@@ -143,6 +188,13 @@ export function useGroupManagement({
       const currentList = (Array.isArray(prev[groupPath]) ? prev[groupPath] : []) as any[];
       const newList = [...currentList];
       newList.splice(index, 1);
+      const sttFieldKey = getGroupSttFieldKey(groupPath, fieldCatalog);
+      if (sttFieldKey) {
+        for (let i = 0; i < newList.length; i += 1) {
+          const currentItem = typeof newList[i] === "object" && newList[i] !== null ? newList[i] : {};
+          newList[i] = { ...currentItem, [sttFieldKey]: i + 1 };
+        }
+      }
       return { ...prev, [groupPath]: newList };
     });
   }

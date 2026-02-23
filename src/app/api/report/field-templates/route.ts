@@ -18,10 +18,30 @@ function parseCustomerDataJson(raw: string | null): Record<string, unknown> {
 export async function GET(req: NextRequest) {
   try {
     const customerId = req.nextUrl.searchParams.get("customer_id") ?? "";
+    const withUsage = req.nextUrl.searchParams.get("with_usage") === "1";
     const state = await loadState();
     const allTemplates = state.field_templates ?? [];
 
     if (!customerId) {
+      if (withUsage) {
+        const customers = await prisma.customer.findMany({
+          select: { data_json: true },
+        });
+        const usageMap = new Map<string, number>();
+        for (const customer of customers) {
+          const dataJson = parseCustomerDataJson(customer.data_json);
+          const assignedIdsRaw = dataJson.__field_template_ids;
+          const assignedIds = Array.isArray(assignedIdsRaw) ? assignedIdsRaw.map(String) : [];
+          for (const id of assignedIds) {
+            usageMap.set(id, (usageMap.get(id) ?? 0) + 1);
+          }
+        }
+        const templatesWithUsage = allTemplates.map((template) => ({
+          ...template,
+          assigned_customer_count: usageMap.get(template.id) ?? 0,
+        }));
+        return NextResponse.json({ ok: true, field_templates: templatesWithUsage });
+      }
       return NextResponse.json({ ok: true, field_templates: allTemplates });
     }
 

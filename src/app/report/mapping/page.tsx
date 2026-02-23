@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { useLanguage } from "@/components/language-provider";
 import type { FieldCatalogItem } from "@/lib/report/config-schema";
@@ -20,6 +20,7 @@ import { ValidationResultPanel } from "./components/ValidationResultPanel";
 import { MappingTabSwitch } from "./components/MappingTabSwitch";
 import { MappingModals } from "./components/MappingModals";
 import { MappingVisualSection } from "./components/MappingVisualSection";
+import { ImportGroupPromptModal } from "./components/Modals/ImportGroupPromptModal";
 import { useFieldCatalogImport } from "./hooks/useFieldCatalogImport";
 import { useFieldTemplates } from "./hooks/useFieldTemplates";
 import { useGroupManagement } from "./hooks/useGroupManagement";
@@ -27,11 +28,25 @@ import { useMappingApi } from "./hooks/useMappingApi";
 import type { FieldTemplateItem, MappingApiResponse, ValidationResponse } from "./types";
 import {
   buildInternalFieldKey,
+  normalizeFieldCatalogForSchema,
   toInternalType,
   normalizeInputByType,
   typeLabelKey,
   TypeLabelMap,
 } from "./helpers";
+import { evaluateFieldFormula } from "@/lib/report/field-calc";
+
+type UndoSnapshot = {
+  fieldCatalog: FieldCatalogItem[];
+  values: Record<string, unknown>;
+  manualValues: Record<string, string | number | boolean | null>;
+  formulas: Record<string, string>;
+  customGroups: string[];
+  selectedGroup: string;
+  newField: { label_vi: string; group: string; type: "string" | "number" | "percent" | "date" | "table" };
+  mappingText: string;
+  collapsedParentGroups: string[];
+};
 
 export default function MappingPage() {
   const { t } = useLanguage();
@@ -48,7 +63,9 @@ export default function MappingPage() {
   const [autoValues, setAutoValues] = useState<Record<string, unknown>>({});
   const [values, setValues] = useState<Record<string, unknown>>({});
   const [manualValues, setManualValues] = useState<Record<string, string | number | boolean | null>>({});
+  const [formulas, setFormulas] = useState<Record<string, string>>({});
   const [exportingDocx, setExportingDocx] = useState(false);
+  const [formulaModalFieldKey, setFormulaModalFieldKey] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"visual" | "advanced">("visual");
   const [searchTerm, setSearchTerm] = useState("");
   const [showTechnicalKeys, setShowTechnicalKeys] = useState(false);
@@ -94,6 +111,29 @@ export default function MappingPage() {
   const [editingFieldTemplateId, setEditingFieldTemplateId] = useState("");
   const [editingFieldTemplateName, setEditingFieldTemplateName] = useState("");
   const [savingEditedTemplate, setSavingEditedTemplate] = useState(false);
+  const [functionListModalOpen, setFunctionListModalOpen] = useState(false);
+  const [undoHistory, setUndoHistory] = useState<UndoSnapshot[]>([]);
+  const [importGroupPrompt, setImportGroupPrompt] = useState<{
+    rowNumber: number;
+    missingPath: string;
+    level: "parent" | "subgroup";
+  } | null>(null);
+  const importGroupPromptResolver = useRef<((decision: "create_once" | "create_all" | "stop") => void) | null>(null);
+
+  const openImportGroupPrompt = useCallback(
+    (args: { rowNumber: number; missingPath: string; level: "parent" | "subgroup" }) =>
+      new Promise<"create_once" | "create_all" | "stop">((resolve) => {
+        importGroupPromptResolver.current = resolve;
+        setImportGroupPrompt(args);
+      }),
+    [],
+  );
+
+  const resolveImportGroupPrompt = useCallback((decision: "create_once" | "create_all" | "stop") => {
+    importGroupPromptResolver.current?.(decision);
+    importGroupPromptResolver.current = null;
+    setImportGroupPrompt(null);
+  }, []);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -137,6 +177,8 @@ export default function MappingPage() {
     aliasText,
     fieldCatalog,
     values,
+    manualValues,
+    formulas,
     selectedCustomerId,
     selectedFieldTemplateId,
     setLoading,
@@ -154,6 +196,7 @@ export default function MappingPage() {
     setValues,
     setManualValues,
     setLastExportedDocxPath,
+    setFormulas,
   });
 
   const {
@@ -197,6 +240,39 @@ export default function MappingPage() {
     setError,
   });
 
+  async function createTemplateFromImport(params: { templateName: string; fieldCatalog: FieldCatalogItem[] }) {
+    const normalizedCatalog = normalizeFieldCatalogForSchema(params.fieldCatalog);
+    const res = await fetch("/api/report/field-templates", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: params.templateName,
+        field_catalog: normalizedCatalog,
+        customer_id: selectedCustomerId || undefined,
+      }),
+    });
+    const data = (await res.json()) as { ok: boolean; error?: string; field_template?: FieldTemplateItem };
+    if (!data.ok) {
+      throw new Error(data.error ?? t("mapping.fieldTemplate.errSave"));
+    }
+
+    await loadAllFieldTemplates();
+    if (selectedCustomerId) {
+      await loadFieldTemplates(selectedCustomerId);
+    }
+
+    if (data.field_template) {
+      const createdCatalog = normalizeFieldCatalogForSchema(data.field_template.field_catalog ?? normalizedCatalog);
+      setSelectedFieldTemplateId(data.field_template.id);
+      setEditingFieldTemplateId(data.field_template.id);
+      setEditingFieldTemplateName(data.field_template.name);
+      setFieldCatalog(createdCatalog);
+      const emptyValues = Object.fromEntries(createdCatalog.map((field) => [field.field_key, ""]));
+      setManualValues({});
+      setValues(emptyValues);
+    }
+  }
+
   const { handleImportFieldFile } = useFieldCatalogImport({
     t,
     fieldCatalog,
@@ -204,6 +280,8 @@ export default function MappingPage() {
     setImportingCatalog,
     setError,
     setMessage,
+    onMissingGroupPrompt: openImportGroupPrompt,
+    onCreateTemplateFromImport: createTemplateFromImport,
   });
 
   useEffect(() => {
@@ -325,6 +403,17 @@ export default function MappingPage() {
 
   const parentGroups = useMemo(() => groupedFieldTree.map((node) => node.parent), [groupedFieldTree]);
 
+  const effectiveValues = useMemo(() => {
+    const base = { ...values };
+    const fieldTypeMap = new Map(fieldCatalog.map((f) => [f.field_key, f.type]));
+    for (const [fieldKey, formula] of Object.entries(formulas)) {
+      const fieldType = fieldTypeMap.get(fieldKey) ?? "text";
+      const v = evaluateFieldFormula(formula, base, fieldType);
+      if (v !== null) base[fieldKey] = v;
+    }
+    return base;
+  }, [values, formulas, fieldCatalog]);
+
   const onManualChange = useCallback((field: FieldCatalogItem, rawValue: string) => {
     const normalized = normalizeInputByType(rawValue, field.type);
     setManualValues((prev) => ({ ...prev, [field.field_key]: normalized }));
@@ -364,8 +453,23 @@ export default function MappingPage() {
     });
   }, []);
 
+  const pushUndoSnapshot = useCallback((snapshot: UndoSnapshot) => {
+    setUndoHistory((prev) => [snapshot, ...prev].slice(0, 5));
+  }, []);
+
   const deleteField = useCallback((fieldKey: string) => {
     if (!window.confirm(t("mapping.deleteFieldConfirm"))) return;
+    pushUndoSnapshot({
+      fieldCatalog: [...fieldCatalog],
+      values: { ...values },
+      manualValues: { ...manualValues },
+      formulas: { ...formulas },
+      customGroups: [...customGroups],
+      selectedGroup,
+      newField: { ...newField },
+      mappingText,
+      collapsedParentGroups: [...collapsedParentGroups],
+    });
     setFieldCatalog((prev) => prev.filter((f) => f.field_key !== fieldKey));
     setValues((prev) => {
       const next = { ...prev };
@@ -373,6 +477,11 @@ export default function MappingPage() {
       return next;
     });
     setManualValues((prev) => {
+      const next = { ...prev };
+      delete next[fieldKey];
+      return next;
+    });
+    setFormulas((prev) => {
       const next = { ...prev };
       delete next[fieldKey];
       return next;
@@ -390,7 +499,125 @@ export default function MappingPage() {
       return prevTxt;
     });
     setMessage(t("mapping.msg.fieldDeleted"));
-  }, [t]);
+    setError("");
+  }, [collapsedParentGroups, customGroups, fieldCatalog, formulas, manualValues, mappingText, newField, pushUndoSnapshot, selectedGroup, t, values]);
+
+  const deleteGroup = useCallback(
+    (groupPath: string) => {
+      const normalized = groupPath.trim();
+      if (!normalized) return;
+      const groupsToDelete = new Set(
+        [...customGroups, ...fieldCatalog.map((f) => f.group)]
+          .map((g) => g.trim())
+          .filter((g) => g === normalized || g.startsWith(`${normalized}/`)),
+      );
+      if (groupsToDelete.size === 0) return;
+
+      const fieldsToDelete = fieldCatalog.filter((f) => groupsToDelete.has(f.group.trim()));
+      const fieldCount = fieldsToDelete.length;
+      if (!window.confirm(t("mapping.deleteGroupConfirm").replace("{name}", normalized).replace("{count}", String(fieldCount)))) {
+        return;
+      }
+
+      pushUndoSnapshot({
+        fieldCatalog: [...fieldCatalog],
+        values: { ...values },
+        manualValues: { ...manualValues },
+        formulas: { ...formulas },
+        customGroups: [...customGroups],
+        selectedGroup,
+        newField: { ...newField },
+        mappingText,
+        collapsedParentGroups: [...collapsedParentGroups],
+      });
+
+      const fieldKeysToDelete = new Set(fieldsToDelete.map((f) => f.field_key));
+      const firstSegmentsToDelete = new Set(Array.from(groupsToDelete).map((g) => g.split("/")[0]).filter(Boolean));
+
+      setFieldCatalog((prev) => prev.filter((f) => !groupsToDelete.has(f.group.trim())));
+      setCustomGroups((prev) =>
+        prev.filter((g) => {
+          const trimmed = g.trim();
+          return !(trimmed === normalized || trimmed.startsWith(`${normalized}/`));
+        }),
+      );
+      setValues((prev) => {
+        const next: Record<string, unknown> = { ...prev };
+        for (const key of fieldKeysToDelete) {
+          delete next[key];
+        }
+        for (const group of groupsToDelete) {
+          delete next[group];
+        }
+        return next;
+      });
+      setManualValues((prev) => {
+        const next = { ...prev };
+        for (const key of fieldKeysToDelete) {
+          delete next[key];
+        }
+        return next;
+      });
+      setFormulas((prev) => {
+        const next = { ...prev };
+        for (const key of fieldKeysToDelete) {
+          delete next[key];
+        }
+        return next;
+      });
+      setCollapsedParentGroups((prev) => prev.filter((parent) => !firstSegmentsToDelete.has(parent)));
+      if (selectedGroup.trim() === normalized || selectedGroup.trim().startsWith(`${normalized}/`)) {
+        setSelectedGroup("");
+      }
+      if (newField.group.trim() === normalized || newField.group.trim().startsWith(`${normalized}/`)) {
+        setNewField((prev) => ({ ...prev, group: "Nhóm mới" }));
+      }
+      setMappingText((prevTxt) => {
+        try {
+          const mappingObj = JSON.parse(prevTxt);
+          if (mappingObj && Array.isArray(mappingObj.mappings)) {
+            mappingObj.mappings = mappingObj.mappings.filter((m: any) => !fieldKeysToDelete.has(String(m.template_field ?? "")));
+            return JSON.stringify(mappingObj, null, 2);
+          }
+        } catch (e) {
+          console.error("Failed to update mappingText on group delete", e);
+        }
+        return prevTxt;
+      });
+      setMessage(t("mapping.msg.groupDeleted").replace("{name}", normalized));
+      setError("");
+    },
+    [
+      collapsedParentGroups,
+      customGroups,
+      fieldCatalog,
+      formulas,
+      manualValues,
+      mappingText,
+      newField,
+      pushUndoSnapshot,
+      selectedGroup,
+      t,
+      values,
+    ],
+  );
+
+  const undoLastAction = useCallback(() => {
+    if (undoHistory.length === 0) return;
+    const latest = undoHistory[0];
+    setFieldCatalog(latest.fieldCatalog);
+    setValues(latest.values);
+    setManualValues(latest.manualValues);
+    setFormulas(latest.formulas);
+    setCustomGroups(latest.customGroups);
+    setSelectedGroup(latest.selectedGroup);
+    setNewField(latest.newField);
+    setMappingText(latest.mappingText);
+    setCollapsedParentGroups(latest.collapsedParentGroups);
+    setUndoHistory((prev) => prev.slice(1));
+    setMessage(t("mapping.msg.undoDone"));
+    setError("");
+  }, [t, undoHistory]);
 
   const openChangeGroupModal = useCallback((fieldKey: string) => {
     const field = fieldCatalog.find((f) => f.field_key === fieldKey);
@@ -516,7 +743,8 @@ export default function MappingPage() {
     setNewField({
       label_vi: "",
       group,
-      type: "string",
+      // Keep the user's selected type for faster consecutive field creation.
+      type,
     });
     setSelectedGroup(group);
     setAddingFieldModal(false);
@@ -527,6 +755,19 @@ export default function MappingPage() {
     setSelectedGroup(groupPath);
     setNewField((prev) => ({ ...prev, group: groupPath }));
     setAddingFieldModal(true);
+  }
+
+  async function openBackupFolder() {
+    setError("");
+    const res = await fetch("/api/report/template/open-backup-folder", {
+      method: "POST",
+    });
+    const data = (await res.json()) as { ok?: boolean; error?: string };
+    if (!res.ok || !data.ok) {
+      setError(data.error ?? "Không thể mở thư mục backup.");
+      return;
+    }
+    setMessage("Đã mở thư mục backup.");
   }
 
   const typeLabels = useMemo<TypeLabelMap>(
@@ -554,6 +795,10 @@ export default function MappingPage() {
         error={error}
         saving={saving}
         onSaveDraft={() => void saveDraft()}
+        onOpenFunctionList={() => setFunctionListModalOpen(true)}
+        canUndo={undoHistory.length > 0}
+        onUndo={() => void undoLastAction()}
+        undoCount={undoHistory.length}
       />
 
       <MappingTabSwitch t={t} activeTab={activeTab} setActiveTab={setActiveTab} />
@@ -574,6 +819,7 @@ export default function MappingPage() {
           loadingCustomers={loadingCustomers}
           loading={loading}
           fieldTemplates={fieldTemplates}
+          allFieldTemplates={allFieldTemplates}
           selectedFieldTemplateId={selectedFieldTemplateId}
           applySelectedFieldTemplate={applySelectedFieldTemplate}
           loadingFieldTemplates={loadingFieldTemplates}
@@ -592,6 +838,7 @@ export default function MappingPage() {
           savingEditedTemplate={savingEditedTemplate}
           saveEditedFieldTemplate={() => void saveEditedFieldTemplate()}
           stopEditingFieldTemplate={stopEditingFieldTemplate}
+          openBackupFolder={() => void openBackupFolder()}
           sensors={sensors}
           handleDragEnd={handleDragEnd}
           groupedFieldTree={groupedFieldTree}
@@ -604,8 +851,11 @@ export default function MappingPage() {
           toggleRepeaterGroup={toggleRepeaterGroup}
           prepareAddFieldForGroup={prepareAddFieldForGroup}
           openEditGroupModal={openEditGroupModal}
-          values={values}
+          onDeleteGroup={deleteGroup}
+          values={effectiveValues}
           fieldCatalog={fieldCatalog}
+          formulas={formulas}
+          onOpenFormulaModal={(fieldKey) => setFormulaModalFieldKey(fieldKey)}
           typeLabels={typeLabels}
           onRepeaterItemChange={onRepeaterItemChange}
           onManualChange={onManualChange}
@@ -680,7 +930,16 @@ export default function MappingPage() {
         setEditingGroupError={setEditingGroupError}
         addNewField={addNewField}
         buildInternalFieldKey={buildInternalFieldKey}
+        functionListModalOpen={functionListModalOpen}
+        setFunctionListModalOpen={setFunctionListModalOpen}
+        aliasText={aliasText}
+        formulaModalFieldKey={formulaModalFieldKey}
+        setFormulaModalFieldKey={setFormulaModalFieldKey}
+        formulas={formulas}
+        setFormulas={setFormulas}
       />
+
+      <ImportGroupPromptModal prompt={importGroupPrompt} onResolve={resolveImportGroupPrompt} />
 
       <ValidationResultPanel t={t} validation={validation} />
 

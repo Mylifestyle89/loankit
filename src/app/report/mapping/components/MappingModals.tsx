@@ -5,6 +5,8 @@ import { EditGroupModal } from "./Modals/EditGroupModal";
 import { ChangeFieldGroupModal } from "./Modals/ChangeFieldGroupModal";
 import { MergeGroupsModal } from "./Modals/MergeGroupsModal";
 import { AddFieldModal } from "./Modals/AddFieldModal";
+import { FunctionListModal } from "./Modals/FunctionListModal";
+import { FormulaModal } from "./Modals/FormulaModal";
 import type { FieldTemplateItem } from "../types";
 
 type MappingModalsProps = {
@@ -59,8 +61,16 @@ type MappingModalsProps = {
   setSelectedGroup: Dispatch<SetStateAction<string>>;
   setEditingGroup: Dispatch<SetStateAction<string | null>>;
   setEditingGroupError: Dispatch<SetStateAction<string>>;
-  addNewField: () => void;
+  addNewField: (override?: Partial<{ label_vi: string; group: string; type: "string" | "number" | "percent" | "date" | "table" }>) => void;
   buildInternalFieldKey: (params: { group: string; labelVi: string; existingKeys: string[] }) => string;
+
+  functionListModalOpen: boolean;
+  setFunctionListModalOpen: Dispatch<SetStateAction<boolean>>;
+  aliasText: string;
+  formulaModalFieldKey: string | null;
+  setFormulaModalFieldKey: Dispatch<SetStateAction<string | null>>;
+  formulas: Record<string, string>;
+  setFormulas: Dispatch<SetStateAction<Record<string, string>>>;
 };
 
 export function MappingModals({
@@ -113,9 +123,45 @@ export function MappingModals({
   setEditingGroupError,
   addNewField,
   buildInternalFieldKey,
+  functionListModalOpen,
+  setFunctionListModalOpen,
+  aliasText,
+  formulaModalFieldKey,
+  setFormulaModalFieldKey,
+  formulas,
+  setFormulas,
 }: MappingModalsProps) {
+  const formulaField = formulaModalFieldKey
+    ? fieldCatalog.find((f) => f.field_key === formulaModalFieldKey) ?? null
+    : null;
+
   return (
     <>
+      <FunctionListModal
+        isOpen={functionListModalOpen}
+        onClose={() => setFunctionListModalOpen(false)}
+        aliasText={aliasText}
+      />
+
+      <FormulaModal
+        isOpen={formulaModalFieldKey !== null}
+        onClose={() => setFormulaModalFieldKey(null)}
+        field={formulaField}
+        currentFormula={formulaModalFieldKey ? formulas[formulaModalFieldKey] ?? "" : ""}
+        onSave={(fieldKey, formula) => {
+          setFormulas((prev) => ({ ...prev, [fieldKey]: formula }));
+          setFormulaModalFieldKey(null);
+        }}
+        onClear={(fieldKey) => {
+          setFormulas((prev) => {
+            const next = { ...prev };
+            delete next[fieldKey];
+            return next;
+          });
+          setFormulaModalFieldKey(null);
+        }}
+      />
+
       <FieldTemplateModals
         creatingFieldTemplate={creatingFieldTemplate}
         closeCreateFieldTemplateModal={closeCreateFieldTemplateModal}

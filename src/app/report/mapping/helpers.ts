@@ -129,14 +129,20 @@ export function toDateInputValue(raw: unknown): string {
         return "";
     }
     const text = String(raw).trim();
-    if (/^\d{4}-\d{2}-\d{2}$/.test(text)) {
+    if (/^\d{2}\/\d{2}\/\d{4}$/.test(text)) {
         return text;
     }
+    // yyyy-mm-dd -> dd/mm/yyyy
+    if (/^\d{4}-\d{2}-\d{2}$/.test(text)) {
+        const [yyyy, mm, dd] = text.split("-");
+        return `${dd}/${mm}/${yyyy}`;
+    }
+    // d/m/yyyy or dd/mm/yyyy -> dd/mm/yyyy
     const parts = text.split("/");
     if (parts.length === 3) {
-        const [dd, mm, yyyy] = parts;
+        const [dd, mm, yyyy] = parts.map((p) => p.trim());
         if (yyyy && mm && dd) {
-            return `${yyyy.padStart(4, "0")}-${mm.padStart(2, "0")}-${dd.padStart(2, "0")}`;
+            return `${dd.padStart(2, "0")}/${mm.padStart(2, "0")}/${yyyy.padStart(4, "0")}`;
         }
     }
     return "";

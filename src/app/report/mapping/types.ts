@@ -28,6 +28,7 @@ export type ValuesResponse = {
   auto_values?: Record<string, unknown>;
   values?: Record<string, unknown>;
   manual_values?: Record<string, string | number | boolean | null>;
+  field_formulas?: Record<string, string>;
 };
 
 export type FieldTemplateItem = {
@@ -35,6 +36,7 @@ export type FieldTemplateItem = {
   name: string;
   created_at: string;
   field_catalog: FieldCatalogItem[];
+  assigned_customer_count?: number;
 };
 
 export type FieldTemplatesResponse = {

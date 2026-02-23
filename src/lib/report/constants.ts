@@ -6,6 +6,7 @@ export const REPORT_STATE_FILE = path.join(REPORT_CONFIG_DIR, "framework_state.j
 export const REPORT_VERSIONS_DIR = path.join(REPORT_CONFIG_DIR, "versions");
 export const REPORT_INVENTORY_DIR = path.join(REPORT_CONFIG_DIR, "inventories");
 export const REPORT_MANUAL_VALUES_FILE = path.join(REPORT_CONFIG_DIR, "manual_values.json");
+export const REPORT_FIELD_FORMULAS_FILE = path.join(REPORT_CONFIG_DIR, "field_formulas.json");
 export const REPORT_MERGED_FLAT_FILE = path.join(REPORT_CONFIG_DIR, "merged_report_draft_flat.json");
 
 export const DEFAULT_MAPPING_FILE = "report_assets/mapping_master.json";

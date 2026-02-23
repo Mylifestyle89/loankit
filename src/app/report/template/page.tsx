@@ -392,6 +392,8 @@ export default function TemplatePage() {
             setEditorBuffer(null);
           }}
           onSaveDocx={saveEditorDocx}
+          enableAutoBackup={editorSource === "managed"}
+          autoBackupIntervalMs={60_000}
         />
       ) : null}
     </section>

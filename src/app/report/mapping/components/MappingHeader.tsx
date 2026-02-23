@@ -1,4 +1,4 @@
-import { Save } from "lucide-react";
+import { Save, BookOpen, Undo2 } from "lucide-react";
 
 type MappingHeaderProps = {
   t: (key: string) => string;
@@ -8,6 +8,10 @@ type MappingHeaderProps = {
   error: string;
   saving: boolean;
   onSaveDraft: () => void;
+  onOpenFunctionList?: () => void;
+  canUndo?: boolean;
+  onUndo?: () => void;
+  undoCount?: number;
 };
 
 export function MappingHeader({
@@ -18,6 +22,10 @@ export function MappingHeader({
   error,
   saving,
   onSaveDraft,
+  onOpenFunctionList,
+  canUndo = false,
+  onUndo,
+  undoCount = 0,
 }: MappingHeaderProps) {
   return (
     <div className="flex flex-col gap-4 rounded-xl border border-blue-chill-200 bg-white p-4 md:flex-row md:items-center md:justify-between">
@@ -31,6 +39,27 @@ export function MappingHeader({
         {error ? <p className="mt-2 text-sm text-red-700">{error}</p> : null}
       </div>
       <div className="flex flex-wrap items-center gap-2">
+        {onUndo ? (
+          <button
+            type="button"
+            onClick={onUndo}
+            disabled={!canUndo}
+            className="flex items-center gap-2 rounded-md border border-blue-chill-300 bg-white px-4 py-2 text-sm font-medium text-blue-chill-800 hover:bg-blue-chill-50 disabled:opacity-50"
+          >
+            <Undo2 className="h-4 w-4" />
+            {t("mapping.undo")} ({undoCount}/5)
+          </button>
+        ) : null}
+        {onOpenFunctionList ? (
+          <button
+            type="button"
+            onClick={onOpenFunctionList}
+            className="flex items-center gap-2 rounded-md border border-blue-chill-300 bg-white px-4 py-2 text-sm font-medium text-blue-chill-800 hover:bg-blue-chill-50"
+          >
+            <BookOpen className="h-4 w-4" />
+            Danh sách hàm
+          </button>
+        ) : null}
         <button
           onClick={onSaveDraft}
           disabled={saving}

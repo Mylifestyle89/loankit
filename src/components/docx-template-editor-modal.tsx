@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { X, Save, Copy } from "lucide-react";
+import { X, Save, Copy, FolderOpen } from "lucide-react";
 
 import { useLanguage } from "@/components/language-provider";
 
@@ -18,6 +18,8 @@ type Props = {
   fieldCatalog: FieldCatalogItem[];
   onClose: () => void;
   onSaveDocx: (buffer: ArrayBuffer) => Promise<void>;
+  enableAutoBackup?: boolean;
+  autoBackupIntervalMs?: number;
 };
 
 // Loaded only in browser (DOM required)
@@ -35,12 +37,22 @@ type DocxEditorRef = {
   getEditorElement?: () => HTMLElement | null;
 };
 
-export function DocxTemplateEditorModal({ docxPath, documentBuffer, fieldCatalog, onClose, onSaveDocx }: Props) {
+export function DocxTemplateEditorModal({
+  docxPath,
+  documentBuffer,
+  fieldCatalog,
+  onClose,
+  onSaveDocx,
+  enableAutoBackup = false,
+  autoBackupIntervalMs = 60_000,
+}: Props) {
   const { t } = useLanguage();
   const editorRef = useRef<DocxEditorRef | null>(null);
   const editorElementRef = useRef<HTMLElement | null>(null);
+  const backingUpRef = useRef(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [lastBackupAt, setLastBackupAt] = useState<string>("");
 
   const fieldsByGroup = useMemo(() => {
     return fieldCatalog.reduce(
@@ -190,6 +202,63 @@ export function DocxTemplateEditorModal({ docxPath, documentBuffer, fieldCatalog
     setSaving(false);
   }
 
+  async function runAutoBackup(): Promise<void> {
+    if (!enableAutoBackup || backingUpRef.current) return;
+    backingUpRef.current = true;
+    try {
+      const buffer = await editorRef.current?.save();
+      if (!buffer || buffer.byteLength < 100) return;
+      const res = await fetch(`/api/report/template/save-docx?path=${encodeURIComponent(docxPath)}&mode=backup`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/octet-stream" },
+        body: buffer,
+      });
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!data.ok) {
+        throw new Error(data.error ?? "Auto backup failed.");
+      }
+      setLastBackupAt(
+        new Date().toLocaleString("vi-VN", {
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+          hour12: false,
+        }),
+      );
+    } catch (e) {
+      // Non-blocking warning. User can still continue editing.
+      setError(e instanceof Error ? e.message : "Auto backup failed.");
+    } finally {
+      backingUpRef.current = false;
+    }
+  }
+
+  async function openBackupFolder() {
+    setError("");
+    try {
+      const res = await fetch("/api/report/template/open-backup-folder", {
+        method: "POST",
+      });
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || !data.ok) {
+        throw new Error(data.error ?? "Không thể mở thư mục backup.");
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Không thể mở thư mục backup.");
+    }
+  }
+
+  useEffect(() => {
+    if (!enableAutoBackup) return;
+    const timer = window.setInterval(() => {
+      void runAutoBackup();
+    }, Math.max(15_000, autoBackupIntervalMs));
+    return () => window.clearInterval(timer);
+  }, [enableAutoBackup, autoBackupIntervalMs, docxPath]);
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-3">
       <div className="flex h-full max-h-[95vh] w-full max-w-7xl flex-col overflow-hidden rounded-xl bg-white shadow-xl">
@@ -199,6 +268,15 @@ export function DocxTemplateEditorModal({ docxPath, documentBuffer, fieldCatalog
             <p className="text-xs text-coral-tree-500 truncate">{docxPath}</p>
           </div>
           <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => void openBackupFolder()}
+              className="flex items-center gap-1.5 rounded-md border border-coral-tree-300 px-3 py-1.5 text-sm hover:bg-coral-tree-50"
+              title="Mở thư mục backup"
+            >
+              <FolderOpen className="h-4 w-4" />
+              Mở backup
+            </button>
             <button
               type="button"
               onClick={onClose}
@@ -220,6 +298,12 @@ export function DocxTemplateEditorModal({ docxPath, documentBuffer, fieldCatalog
         </div>
 
         <div className="border-b border-coral-tree-200 bg-coral-tree-50 px-4 py-3">
+          {enableAutoBackup ? (
+            <p className="mb-2 text-xs text-coral-tree-600">
+              Auto backup mỗi {Math.round(autoBackupIntervalMs / 1000)} giây
+              {lastBackupAt ? ` • Lần gần nhất: ${lastBackupAt}` : ""}
+            </p>
+          ) : null}
           <div className="flex flex-wrap items-end gap-3">
             <div className="flex flex-col gap-1">
               <label className="text-xs text-coral-tree-600">{t("template.editor.selectGroup")}</label>

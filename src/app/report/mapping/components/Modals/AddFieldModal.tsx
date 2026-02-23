@@ -14,7 +14,7 @@ interface AddFieldModalProps {
     setEditingGroup: (group: string) => void;
     setEditingGroupValue: (val: string) => void;
     setEditingGroupError: (err: string) => void;
-    addNewField: () => void;
+    addNewField: (override?: Partial<{ label_vi: string; group: string; type: "string" | "number" | "percent" | "date" | "table" }>) => void;
     buildInternalFieldKey: (args: { group: string; labelVi: string; existingKeys: string[] }) => string;
 }
 
@@ -132,7 +132,13 @@ export function AddFieldModal({
                     </button>
                     <button
                         type="button"
-                        onClick={addNewField}
+                        onClick={() =>
+                            addNewField({
+                                label_vi: newField.label_vi,
+                                group: resolveGroupSelection(),
+                                type: newField.type as "string" | "number" | "percent" | "date" | "table",
+                            })
+                        }
                         className="flex items-center gap-2 rounded-md bg-coral-tree-700 px-4 py-2 text-sm font-medium text-white hover:bg-coral-tree-800"
                     >
                         <Plus className="h-4 w-4" />
