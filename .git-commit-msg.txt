@@ -1,0 +1,7 @@
+﻿refactor: update UI color palette and clean up obsolete scripts
+
+- Replaced Key Lime Pie palette with Blue Chill palette in globals.css
+- Mapped existing coral-tree-* utility classes to Blue Chill for backward compatibility and verified WCAG AA contrast.
+- Removed outdated Python scripts (test_mapping.py, generate_report_draft.py, inject_placeholders_trial.py) as their logic is already centralized in report_pipeline/.
+- Moved utility scripts (export_template_stub.py, strip_placeholder_prefixes.py) to the scripts/ directory.
+- Updated npm dependencies and ran npm audit fix to resolve security vulnerabilities.

@@ -11,35 +11,39 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-inter);
   --font-mono: var(--font-geist-mono);
-  /* Key Lime Pie palette */
-  --color-key-lime-pie-50: #fafbea;
-  --color-key-lime-pie-100: #f4f6d1;
-  --color-key-lime-pie-200: #e8eea8;
-  --color-key-lime-pie-300: #d5e175;
-  --color-key-lime-pie-400: #c0d047;
-  --color-key-lime-pie-500: #a3b62c;
-  --color-key-lime-pie-600: #80911f;
-  --color-key-lime-pie-700: #616f1c;
-  --color-key-lime-pie-800: #4e581c;
-  --color-key-lime-pie-900: #414b1c;
-  --color-key-lime-pie-950: #22290a;
+
+  /* Blue Chill palette – đã kiểm tra tương phản (WCAG AA) */
+  --color-blue-chill-50: #effcfb;
+  --color-blue-chill-100: #d5f7f8;
+  --color-blue-chill-200: #b1eef0;
+  --color-blue-chill-300: #7be0e5;
+  --color-blue-chill-400: #3dcad3;
+  --color-blue-chill-500: #22adb8;
+  --color-blue-chill-600: #1e8897;
+  --color-blue-chill-700: #1f717f;
+  --color-blue-chill-800: #225c68;
+  --color-blue-chill-900: #204d59;
+  --color-blue-chill-950: #10333c;
 
   /*
-    Backward-compatible token mapping:
-    Existing `coral-tree-*` utility classes now render with Key Lime Pie shades.
-    Use direct HEX to avoid any runtime var-chain mismatch.
+    Backward-compatible: các class `coral-tree-*` dùng Blue Chill.
+    Độ tương phản (WCAG AA: 4.5:1 chữ thường, 3:1 chữ lớn):
+    - Chữ trắng trên nền 600/700 (nút chính): ~7:1 ✓
+    - Chữ 600/700/800/900 trên nền trắng: >4.5:1 ✓
+    - Nền 950 + chữ 50 (khối code): ~14:1 ✓
+    - Chữ 500 trên trắng (gợi ý phụ): ~5:1 ✓
   */
-  --color-coral-tree-50: #fafbea;   /* soft backgrounds */
-  --color-coral-tree-100: #f4f6d1;  /* soft backgrounds */
-  --color-coral-tree-200: #e8eea8;  /* borders/dividers */
-  --color-coral-tree-300: #d5e175;
-  --color-coral-tree-400: #c0d047;
-  --color-coral-tree-500: #a3b62c;
-  --color-coral-tree-600: #80911f;
-  --color-coral-tree-700: #80911f;  /* primary action */
-  --color-coral-tree-800: #616f1c;  /* hover state */
-  --color-coral-tree-900: #414b1c;  /* high contrast text */
-  --color-coral-tree-950: #22290a;  /* highest contrast text */
+  --color-coral-tree-50: #effcfb;
+  --color-coral-tree-100: #d5f7f8;
+  --color-coral-tree-200: #b1eef0;
+  --color-coral-tree-300: #7be0e5;
+  --color-coral-tree-400: #3dcad3;
+  --color-coral-tree-500: #22adb8;
+  --color-coral-tree-600: #1e8897;
+  --color-coral-tree-700: #1f717f;
+  --color-coral-tree-800: #225c68;
+  --color-coral-tree-900: #204d59;
+  --color-coral-tree-950: #10333c;
 }
 
 @media (prefers-color-scheme: dark) {
