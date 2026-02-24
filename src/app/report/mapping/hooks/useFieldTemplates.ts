@@ -68,7 +68,7 @@ export function useFieldTemplates({
         setFieldTemplates(data.field_templates);
       }
     } catch (e) {
-      console.error("Failed to load field templates:", e);
+      setError(e instanceof Error ? e.message : t("mapping.fieldTemplate.errLoad"));
     } finally {
       setLoadingFieldTemplates(false);
     }
@@ -82,7 +82,7 @@ export function useFieldTemplates({
         setAllFieldTemplates(data.field_templates);
       }
     } catch (e) {
-      console.error("Failed to load all field templates:", e);
+      setError(e instanceof Error ? e.message : t("mapping.fieldTemplate.errLoad"));
     }
   }
 

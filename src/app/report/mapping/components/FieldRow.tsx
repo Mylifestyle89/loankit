@@ -1,5 +1,5 @@
-import { memo, useEffect, useRef, useState } from "react";
-import { ChevronUp, ChevronDown, Pencil, Trash2, GripVertical, FunctionSquare } from "lucide-react";
+import { memo, useMemo, useRef, useState } from "react";
+import { Pencil, Trash2, GripVertical, FunctionSquare } from "lucide-react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import type { FieldCatalogItem } from "@/lib/report/config-schema";
@@ -46,22 +46,17 @@ export const FieldRow = memo(function FieldRow({
     field,
     value,
     showTechnicalKeys,
-    canMoveUp,
-    canMoveDown,
     typeLabels,
     columnValuePlaceholder,
     typeHintNumber,
     typeHintPercent,
     typeHintTable,
     tablePasteHint,
-    moveUpTitle,
-    moveDownTitle,
     changeGroupTitle,
     deleteFieldTitle,
     onManualChange,
     onFieldLabelChange,
     onFieldTypeChange,
-    onMoveField,
     onOpenChangeGroupModal,
     onDeleteField,
     dndId,
@@ -84,20 +79,17 @@ export const FieldRow = memo(function FieldRow({
         transform: CSS.Transform.toString(transform),
         transition,
         zIndex: isDragging ? 2 : 1,
-        position: (isDragging ? "relative" : "static") as any,
+        position: isDragging ? ("relative" as const) : ("static" as const),
     };
 
-    const [localText, setLocalText] = useState("");
+    const displayText = useMemo(() => {
+        if (field.type === "number") return formatNumberVnDisplay(value);
+        if (field.type === "percent") return formatPercentVnDisplay(value);
+        if (field.type === "date") return toDateInputValue(value);
+        return value === null || value === undefined ? "" : String(value);
+    }, [field.type, value]);
+    const [localText, setLocalText] = useState(displayText);
     const [isFocused, setIsFocused] = useState(false);
-
-    useEffect(() => {
-        if (!isFocused) {
-            if (field.type === "number") setLocalText(formatNumberVnDisplay(value));
-            else if (field.type === "percent") setLocalText(formatPercentVnDisplay(value));
-            else if (field.type === "date") setLocalText(toDateInputValue(value));
-            else setLocalText(value === null || value === undefined ? "" : String(value));
-        }
-    }, [value, field.type, isFocused]);
 
     const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -118,6 +110,10 @@ export const FieldRow = memo(function FieldRow({
         if (timeoutRef.current) clearTimeout(timeoutRef.current);
         onManualChange(field, localText);
     };
+    const handleFocus = () => {
+        setLocalText(displayText);
+        setIsFocused(true);
+    };
 
     const inputClassName =
         "h-8 w-full rounded border border-transparent bg-transparent px-2 py-1 text-sm transition-colors placeholder:text-coral-tree-700 hover:border-coral-tree-300 focus:border-coral-tree-500 focus:bg-white focus:outline-none focus:ring-1 focus:ring-coral-tree-500";
@@ -134,10 +130,10 @@ export const FieldRow = memo(function FieldRow({
         field.type === "date" ? (
             <input
                 type="text"
-                value={localText}
+                value={isFocused ? localText : displayText}
                 onChange={handleChange}
                 onBlur={handleBlur}
-                onFocus={() => setIsFocused(true)}
+                onFocus={handleFocus}
                 aria-label={field.label_vi}
                 className={`${inputClassName} ${readOnlyClassName}`}
                 readOnly={isReadOnly}
@@ -146,10 +142,10 @@ export const FieldRow = memo(function FieldRow({
             />
         ) : field.type === "number" ? (
             <input
-                value={localText}
+                value={isFocused ? localText : displayText}
                 onChange={handleChange}
                 onBlur={handleBlur}
-                onFocus={() => setIsFocused(true)}
+                onFocus={handleFocus}
                 inputMode="decimal"
                 className={`${inputClassName} ${readOnlyClassName}`}
                 placeholder={typeHintNumber}
@@ -157,10 +153,10 @@ export const FieldRow = memo(function FieldRow({
             />
         ) : field.type === "percent" ? (
             <input
-                value={localText}
+                value={isFocused ? localText : displayText}
                 onChange={handleChange}
                 onBlur={handleBlur}
-                onFocus={() => setIsFocused(true)}
+                onFocus={handleFocus}
                 inputMode="decimal"
                 className={`${inputClassName} ${readOnlyClassName}`}
                 placeholder={typeHintPercent}
@@ -169,10 +165,10 @@ export const FieldRow = memo(function FieldRow({
         ) : field.type === "table" ? (
             <div className="space-y-1">
                 <textarea
-                    value={localText}
+                    value={isFocused ? localText : displayText}
                     onChange={handleChange}
                     onBlur={handleBlur}
-                    onFocus={() => setIsFocused(true)}
+                    onFocus={handleFocus}
                     className={`${textareaClassName} ${readOnlyClassName}`}
                     placeholder={typeHintTable}
                     spellCheck={false}
@@ -182,10 +178,10 @@ export const FieldRow = memo(function FieldRow({
             </div>
         ) : (
             <input
-                value={localText}
+                value={isFocused ? localText : displayText}
                 onChange={handleChange}
                 onBlur={handleBlur}
-                onFocus={() => setIsFocused(true)}
+                onFocus={handleFocus}
                 className={`${inputClassName} ${readOnlyClassName}`}
                 placeholder={columnValuePlaceholder}
                 readOnly={isReadOnly}

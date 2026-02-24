@@ -5,8 +5,8 @@ import { useLanguage } from "@/components/language-provider";
 interface AddFieldModalProps {
     isOpen: boolean;
     onClose: () => void;
-    newField: { label_vi: string; group: string; type: "string" | "number" | "percent" | "date" | "table" | string };
-    setNewField: React.Dispatch<React.SetStateAction<{ label_vi: string; group: string; type: "string" | "number" | "percent" | "date" | "table" | any }>>;
+    newField: { label_vi: string; group: string; type: "string" | "number" | "percent" | "date" | "table" };
+    setNewField: React.Dispatch<React.SetStateAction<{ label_vi: string; group: string; type: "string" | "number" | "percent" | "date" | "table" }>>;
     selectedGroup: string;
     setSelectedGroup: (val: string) => void;
     existingGroups: string[];
@@ -98,7 +98,12 @@ export function AddFieldModal({
                             <label className="mb-1 block text-sm font-medium text-coral-tree-700">Kiểu dữ liệu</label>
                             <select
                                 value={newField.type}
-                                onChange={(e) => setNewField((prev) => ({ ...prev, type: e.target.value }))}
+                                onChange={(e) =>
+                                    setNewField((prev) => ({
+                                        ...prev,
+                                        type: e.target.value as "string" | "number" | "percent" | "date" | "table",
+                                    }))
+                                }
                                 className="w-full rounded-md border border-coral-tree-300 px-3 py-2 text-sm"
                             >
                                 <option value="string">{t(typeLabelKey("string"))}</option>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useRef, useState } from "react";
 import { X } from "lucide-react";
 import type { FieldCatalogItem } from "@/lib/report/config-schema";
 
@@ -21,20 +21,14 @@ export function FormulaModal({
   onSave,
   onClear,
 }: FormulaModalProps) {
-  const [input, setInput] = useState("");
   const [error, setError] = useState("");
-
-  useEffect(() => {
-    if (isOpen && field) {
-      setInput(currentFormula);
-      setError("");
-    }
-  }, [isOpen, field, currentFormula]);
+  const inputRef = useRef<HTMLInputElement | null>(null);
 
   if (!isOpen || !field) return null;
 
   const handleSave = () => {
-    const trimmed = input.trim();
+    setError("");
+    const trimmed = (inputRef.current?.value ?? currentFormula).trim();
     if (!trimmed) {
       onClear(field.field_key);
       onClose();
@@ -72,14 +66,15 @@ export function FormulaModal({
             Trường kiểu Số, Phần trăm, Ngày và Text có thể dùng công thức. Dùng mã trường hoặc Alias (gạch dưới thay khoảng trắng).
             Với field ngày: dùng + / -; ví dụ `Ngay_hop_dong + 10d`, `Ngay_hop_dong + 2m`, `Ngay_hop_dong + 1y`, `Ngay_ket_thuc - Ngay_bat_dau`.
             Với field số/phần trăm: hỗ trợ ROUND, ROUNDUP, ROUNDDOWN (ví dụ `ROUND(Doanh_thu/3,2)`).
-            Với field text: hỗ trợ DOCSO và DOCSOCODONVI (ví dụ `DOCSOCODONVI(TSBD.Gia_tri_tai_san,"đồng")`).
+            Với field text: hỗ trợ DOCSO và DOCSOCODONVI (ví dụ `DOCSOCODONVI(TSBD.Gia_tri_tai_san,{'\"'}đồng{'\"'})`).
           </p>
           <label className="block">
             <span className="text-sm font-medium text-blue-chill-800">Biểu thức</span>
             <input
+              key={`${field.field_key}:${currentFormula}`}
+              ref={inputRef}
               type="text"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
+              defaultValue={currentFormula}
               placeholder="Ví dụ: Doanh_thu - Chi_phí"
               className="mt-1 w-full rounded border border-blue-chill-200 px-3 py-2 text-sm font-sans placeholder:text-blue-chill-400 focus:border-blue-chill-500 focus:outline-none focus:ring-1 focus:ring-blue-chill-500"
             />

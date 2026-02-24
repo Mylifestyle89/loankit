@@ -2,7 +2,6 @@
 
 import dynamic from "next/dynamic";
 import { Download, X } from "lucide-react";
-import { useLanguage } from "@/components/language-provider";
 
 // Loaded only in browser (DOM required)
 const EigenpalDocxEditor = dynamic(
@@ -21,8 +20,6 @@ type Props = {
 };
 
 export function DocxPreviewModal({ documentBuffer, fileName, onClose, onDownload }: Props) {
-  const { t } = useLanguage();
-
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-3">
       <div className="flex h-full max-h-[95vh] w-full max-w-7xl flex-col overflow-hidden rounded-xl bg-white shadow-xl">

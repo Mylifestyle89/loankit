@@ -1,8 +1,9 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { X, Save, Copy, FolderOpen } from "lucide-react";
+import type { DocxEditorRef as EigenpalDocxEditorRef } from "@eigenpal/docx-js-editor";
 
 import { useLanguage } from "@/components/language-provider";
 
@@ -31,12 +32,6 @@ const EigenpalDocxEditor = dynamic(
   { ssr: false },
 );
 
-type DocxEditorRef = {
-  save: () => Promise<ArrayBuffer | undefined>;
-  focus: () => void;
-  getEditorElement?: () => HTMLElement | null;
-};
-
 export function DocxTemplateEditorModal({
   docxPath,
   documentBuffer,
@@ -47,7 +42,7 @@ export function DocxTemplateEditorModal({
   autoBackupIntervalMs = 60_000,
 }: Props) {
   const { t } = useLanguage();
-  const editorRef = useRef<DocxEditorRef | null>(null);
+  const editorRef = useRef<EigenpalDocxEditorRef | null>(null);
   const editorElementRef = useRef<HTMLElement | null>(null);
   const backingUpRef = useRef(false);
   const [saving, setSaving] = useState(false);
@@ -69,7 +64,10 @@ export function DocxTemplateEditorModal({
 
   const [selectedGroup, setSelectedGroup] = useState("");
   const [selectedFieldKey, setSelectedFieldKey] = useState("");
-  const fieldsInSelectedGroup = selectedGroup ? fieldsByGroup[selectedGroup] ?? [] : [];
+  const fieldsInSelectedGroup = useMemo(
+    () => (selectedGroup ? fieldsByGroup[selectedGroup] ?? [] : []),
+    [fieldsByGroup, selectedGroup],
+  );
   
   // Get Vietnamese label for selected field
   const selectedFieldLabel = useMemo(() => {
@@ -79,20 +77,24 @@ export function DocxTemplateEditorModal({
   }, [selectedFieldKey, fieldCatalog]);
 
   useEffect(() => {
-    if (!selectedGroup && groups.length > 0) {
+    if (groups.length === 0) {
+      setSelectedGroup("");
+      return;
+    }
+    if (!selectedGroup || !groups.includes(selectedGroup)) {
       setSelectedGroup(groups[0]);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [groups.length]);
+  }, [groups, selectedGroup]);
 
   useEffect(() => {
-    if (fieldsInSelectedGroup.length > 0) {
-      setSelectedFieldKey(fieldsInSelectedGroup[0].field_key);
-    } else {
+    if (fieldsInSelectedGroup.length === 0) {
       setSelectedFieldKey("");
+      return;
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedGroup]);
+    setSelectedFieldKey((prev) =>
+      fieldsInSelectedGroup.some((field) => field.field_key === prev) ? prev : fieldsInSelectedGroup[0].field_key,
+    );
+  }, [fieldsInSelectedGroup]);
 
   // Find editor element after mount
   useEffect(() => {
@@ -142,8 +144,8 @@ export function DocxTemplateEditorModal({
         selection.removeAllRanges();
         selection.addRange(range);
         inserted = true;
-      } catch (e) {
-        console.warn("Failed to insert via Selection API:", e);
+      } catch {
+        // Try next insertion strategy
       }
     }
     
@@ -154,8 +156,8 @@ export function DocxTemplateEditorModal({
         if (success) {
           inserted = true;
         }
-      } catch (e) {
-        console.warn("execCommand failed:", e);
+      } catch {
+        // Try next insertion strategy
       }
     }
     
@@ -171,8 +173,8 @@ export function DocxTemplateEditorModal({
           if (success) {
             inserted = true;
           }
-        } catch (e) {
-          console.warn("Failed to insert via execCommand on element:", e);
+        } catch {
+          // Fallback to clipboard flow below
         }
       }
     }
@@ -202,7 +204,7 @@ export function DocxTemplateEditorModal({
     setSaving(false);
   }
 
-  async function runAutoBackup(): Promise<void> {
+  const runAutoBackup = useCallback(async (): Promise<void> => {
     if (!enableAutoBackup || backingUpRef.current) return;
     backingUpRef.current = true;
     try {
@@ -234,7 +236,7 @@ export function DocxTemplateEditorModal({
     } finally {
       backingUpRef.current = false;
     }
-  }
+  }, [docxPath, enableAutoBackup]);
 
   async function openBackupFolder() {
     setError("");
@@ -257,7 +259,7 @@ export function DocxTemplateEditorModal({
       void runAutoBackup();
     }, Math.max(15_000, autoBackupIntervalMs));
     return () => window.clearInterval(timer);
-  }, [enableAutoBackup, autoBackupIntervalMs, docxPath]);
+  }, [enableAutoBackup, autoBackupIntervalMs, runAutoBackup]);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-3">
@@ -354,7 +356,7 @@ export function DocxTemplateEditorModal({
         </div>
 
         <div className="flex-1 overflow-auto bg-white">
-          <EigenpalDocxEditor ref={editorRef as any} documentBuffer={documentBuffer} />
+          <EigenpalDocxEditor ref={editorRef} documentBuffer={documentBuffer} />
         </div>
       </div>
     </div>

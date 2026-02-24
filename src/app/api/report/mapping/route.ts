@@ -1,34 +1,25 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { aliasMapSchema, fieldCatalogItemSchema, mappingMasterSchema } from "@/lib/report/config-schema";
-import {
-  createMappingDraft,
-  getActiveMappingVersion,
-  loadState,
-  publishMappingVersion,
-  readAliasFile,
-  readMappingFile,
-} from "@/lib/report/fs-store";
+import { toHttpError, ValidationError } from "@/core/errors/app-error";
+import { reportService } from "@/services/report.service";
 
 export const runtime = "nodejs";
 
 export async function GET() {
   try {
-    const state = await loadState();
-    const activeVersion = await getActiveMappingVersion(state);
-    const mapping = await readMappingFile(activeVersion.mapping_json_path);
-    const aliasMap = await readAliasFile(activeVersion.alias_json_path);
+    const result = await reportService.getMapping();
     return NextResponse.json({
       ok: true,
-      active_version_id: activeVersion.id,
-      versions: state.mapping_versions,
-      mapping,
-      alias_map: aliasMap,
+      active_version_id: result.active_version_id,
+      versions: result.versions,
+      mapping: result.mapping,
+      alias_map: result.alias_map,
     });
   } catch (error) {
+    const httpError = toHttpError(error, "Failed to load mapping.");
     return NextResponse.json(
-      { ok: false, error: error instanceof Error ? error.message : "Failed to load mapping." },
-      { status: 500 },
+      { ok: false, error: httpError.message },
+      { status: httpError.status },
     );
   }
 }
@@ -42,28 +33,24 @@ export async function PUT(req: NextRequest) {
       alias_map?: unknown;
       field_catalog?: unknown[];
     };
-    const mapping = mappingMasterSchema.parse(body.mapping);
-    const aliasMap = aliasMapSchema.parse(body.alias_map);
-    const fieldCatalog = Array.isArray(body.field_catalog)
-      ? body.field_catalog.map((item) => fieldCatalogItemSchema.parse(item))
-      : undefined;
-    const { state, version } = await createMappingDraft({
-      createdBy: body.created_by ?? "web-user",
+    const result = await reportService.saveMappingDraft({
+      createdBy: body.created_by,
       notes: body.notes,
-      mapping,
-      aliasMap,
-      fieldCatalog,
+      mapping: body.mapping,
+      aliasMap: body.alias_map,
+      fieldCatalog: body.field_catalog,
     });
     return NextResponse.json({
       ok: true,
       message: "Draft mapping saved.",
-      version,
-      active_version_id: state.active_mapping_version_id,
+      version: result.version,
+      active_version_id: result.activeVersionId,
     });
   } catch (error) {
+    const httpError = toHttpError(error, "Failed to save mapping draft.");
     return NextResponse.json(
-      { ok: false, error: error instanceof Error ? error.message : "Failed to save mapping draft." },
-      { status: 400 },
+      { ok: false, error: httpError.message },
+      { status: httpError.status },
     );
   }
 }
@@ -72,22 +59,20 @@ export async function POST(req: NextRequest) {
   try {
     const body = (await req.json()) as { action?: string; version_id?: string };
     if (body.action !== "publish") {
-      return NextResponse.json({ ok: false, error: "Unsupported action." }, { status: 400 });
+      throw new ValidationError("Unsupported action.");
     }
-    if (!body.version_id) {
-      return NextResponse.json({ ok: false, error: "version_id is required." }, { status: 400 });
-    }
-    const state = await publishMappingVersion(body.version_id);
+    const result = await reportService.publishMappingVersion(body.version_id ?? "");
     return NextResponse.json({
       ok: true,
       message: "Mapping version published.",
-      active_version_id: state.active_mapping_version_id,
-      versions: state.mapping_versions,
+      active_version_id: result.active_version_id,
+      versions: result.versions,
     });
   } catch (error) {
+    const httpError = toHttpError(error, "Failed to publish mapping version.");
     return NextResponse.json(
-      { ok: false, error: error instanceof Error ? error.message : "Failed to publish mapping version." },
-      { status: 400 },
+      { ok: false, error: httpError.message },
+      { status: httpError.status },
     );
   }
 }

@@ -127,7 +127,7 @@ export function FunctionListModal({ isOpen, onClose, aliasText }: FunctionListMo
               <ul className="space-y-2 text-sm">
                 {Object.entries(duplicateGroups).map(([normalized, keys]) => (
                   <li key={normalized} className="flex flex-wrap items-baseline gap-2">
-                    <span className="font-medium text-amber-900">"{normalized}"</span>
+                    <span className="font-medium text-amber-900">{"\""}{normalized}{"\""}</span>
                     <span className="text-amber-700">→</span>
                     {keys.map((k) => (
                       <code key={k} className="rounded bg-amber-100 px-1.5 py-0.5 text-xs">

@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
-import { prisma } from "@/lib/db";
+import { toHttpError, ValidationError } from "@/core/errors/app-error";
+import { customerService } from "@/services/customer.service";
 
 export const runtime = "nodejs";
 
@@ -19,17 +20,16 @@ const createCustomerSchema = z.object({
 
 export async function GET() {
   try {
-    const customers = await prisma.customer.findMany({
-      orderBy: { updatedAt: "desc" },
-    });
+    const customers = await customerService.listCustomers();
     return NextResponse.json({ ok: true, customers });
   } catch (error) {
+    const httpError = toHttpError(error, "Failed to list customers.");
     return NextResponse.json(
       {
         ok: false,
-        error: error instanceof Error ? error.message : "Failed to list customers.",
+        error: httpError.message,
       },
-      { status: 500 },
+      { status: httpError.status },
     );
   }
 }
@@ -38,35 +38,33 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const parsed = createCustomerSchema.parse(body);
-    const data_json =
-      parsed.data_json != null ? JSON.stringify(parsed.data_json) : "{}";
-    const customer = await prisma.customer.create({
-      data: {
-        customer_code: parsed.customer_code,
-        customer_name: parsed.customer_name,
-        address: parsed.address ?? null,
-        main_business: parsed.main_business ?? null,
-        charter_capital: parsed.charter_capital ?? null,
-        legal_representative_name: parsed.legal_representative_name ?? null,
-        legal_representative_title: parsed.legal_representative_title ?? null,
-        organization_type: parsed.organization_type ?? null,
-        data_json,
-      },
+    const customer = await customerService.createCustomer({
+      customer_code: parsed.customer_code,
+      customer_name: parsed.customer_name,
+      address: parsed.address ?? null,
+      main_business: parsed.main_business ?? null,
+      charter_capital: parsed.charter_capital ?? null,
+      legal_representative_name: parsed.legal_representative_name ?? null,
+      legal_representative_title: parsed.legal_representative_title ?? null,
+      organization_type: parsed.organization_type ?? null,
+      data_json: parsed.data_json ?? {},
     });
     return NextResponse.json({ ok: true, customer });
   } catch (error) {
     if (error instanceof z.ZodError) {
+      const validationError = new ValidationError("Invalid request body.", error.flatten().fieldErrors);
       return NextResponse.json(
-        { ok: false, error: error.flatten().fieldErrors },
-        { status: 400 },
+        { ok: false, error: validationError.message, details: validationError.details },
+        { status: validationError.status },
       );
     }
+    const httpError = toHttpError(error, "Failed to create customer.");
     return NextResponse.json(
       {
         ok: false,
-        error: error instanceof Error ? error.message : "Failed to create customer.",
+        error: httpError.message,
       },
-      { status: 500 },
+      { status: httpError.status },
     );
   }
 }

@@ -1,5 +1,5 @@
 import { Download, FileText, Plus } from "lucide-react";
-import type { ReactNode } from "react";
+import { useMemo, type ReactNode } from "react";
 
 type MappingVisualToolbarProps = {
   t: (key: string) => string;
@@ -24,6 +24,14 @@ export function MappingVisualToolbar({
   lastExportedDocxPath,
   sidebar,
 }: MappingVisualToolbarProps) {
+  const downloadHref = useMemo(
+    () =>
+      lastExportedDocxPath
+        ? `/api/report/file?path=${encodeURIComponent(lastExportedDocxPath)}&download=1`
+        : "",
+    [lastExportedDocxPath],
+  );
+
   return (
     <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-coral-tree-200 bg-white p-2">
       <div className={`flex items-center gap-2 w-full md:w-auto transition-opacity duration-300 ${!hasContext ? "opacity-0 pointer-events-none" : "opacity-100"}`}>
@@ -56,7 +64,7 @@ export function MappingVisualToolbar({
 
         {lastExportedDocxPath ? (
           <a
-            href={`/api/report/file?path=${encodeURIComponent(lastExportedDocxPath)}&download=1&ts=${Date.now()}`}
+            href={downloadHref}
             className="flex items-center gap-1.5 rounded-md border border-coral-tree-300 bg-white px-2 py-1.5 text-sm hover:bg-coral-tree-50"
             title={t("mapping.downloadDocx")}
           >

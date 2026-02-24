@@ -17,7 +17,7 @@ export function ImportGroupPromptModal({ prompt, onResolve }: ImportGroupPromptM
         <p className="text-sm text-coral-tree-800">
           Dòng <span className="font-semibold">{prompt.rowNumber}</span>:{" "}
           {prompt.level === "parent" ? "group cha" : "subgroup"}{" "}
-          <span className="font-semibold">"{prompt.missingPath}"</span> chưa tồn tại.
+          <span className="font-semibold">{"\""}{prompt.missingPath}{"\""}</span> chưa tồn tại.
         </p>
         <p className="text-xs text-coral-tree-600">Chọn cách xử lý để tiếp tục import theo đúng thứ tự dòng.</p>
         <div className="mt-2 flex flex-wrap justify-end gap-2">

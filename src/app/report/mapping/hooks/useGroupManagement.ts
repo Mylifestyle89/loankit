@@ -185,7 +185,7 @@ export function useGroupManagement({
 
   function removeRepeaterItem(groupPath: string, index: number) {
     setValues((prev) => {
-      const currentList = (Array.isArray(prev[groupPath]) ? prev[groupPath] : []) as any[];
+      const currentList = (Array.isArray(prev[groupPath]) ? prev[groupPath] : []) as Record<string, unknown>[];
       const newList = [...currentList];
       newList.splice(index, 1);
       const sttFieldKey = getGroupSttFieldKey(groupPath, fieldCatalog);
@@ -201,7 +201,7 @@ export function useGroupManagement({
 
   function onRepeaterItemChange(groupPath: string, index: number, field: FieldCatalogItem, rawVal: string) {
     setValues((prev) => {
-      const currentList = (Array.isArray(prev[groupPath]) ? prev[groupPath] : []) as any[];
+      const currentList = (Array.isArray(prev[groupPath]) ? prev[groupPath] : []) as Record<string, unknown>[];
       const newList = [...currentList];
       if (!newList[index]) newList[index] = {};
       let parsedVal: unknown = rawVal;

@@ -1,5 +1,5 @@
 import { Plus, Pencil, Trash2, ChevronUp, ChevronDown, ChevronsUp, ChevronsDown, Layers } from "lucide-react";
-import { DndContext, closestCenter, type DragEndEvent } from "@dnd-kit/core";
+import { DndContext, closestCenter, type DragEndEvent, type SensorDescriptor, type SensorOptions } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
 import type { FieldCatalogItem } from "@/lib/report/config-schema";
@@ -13,7 +13,7 @@ type GroupedTreeNode = {
 
 type FieldCatalogBoardProps = {
   t: (key: string) => string;
-  sensors: any;
+  sensors: SensorDescriptor<SensorOptions>[];
   onDragEnd: (event: DragEndEvent) => void;
   groupedFieldTree: GroupedTreeNode[];
   hasContext: boolean;
@@ -114,7 +114,7 @@ export function FieldCatalogBoard({
               <>
                 <h3 className="text-base font-semibold text-coral-tree-800 mb-1">Chưa chọn ngữ cảnh làm việc</h3>
                 <p className="text-sm text-coral-tree-500 mb-4 max-w-sm">
-                  Vui lòng bấm nút "Lựa chọn khách hàng" ở góc trên bên phải để bắt đầu làm việc, hoặc tạo một mẫu dữ liệu mới.
+                  Vui lòng bấm nút {"\""}Lựa chọn khách hàng{"\""} ở góc trên bên phải để bắt đầu làm việc, hoặc tạo một mẫu dữ liệu mới.
                 </p>
               </>
             ) : (

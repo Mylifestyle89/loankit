@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Play, Eye, Download } from "lucide-react";
+import { Play, Eye } from "lucide-react";
 
 import { useLanguage } from "@/components/language-provider";
 import { DocxPreviewModal } from "@/components/docx-preview-modal";

@@ -34,7 +34,8 @@ import {
   typeLabelKey,
   TypeLabelMap,
 } from "./helpers";
-import { evaluateFieldFormula } from "@/lib/report/field-calc";
+import { computeEffectiveValues } from "@/core/use-cases/formula-processor";
+import { buildGroupedFieldTree } from "@/core/use-cases/mapping-engine";
 
 type UndoSnapshot = {
   fieldCatalog: FieldCatalogItem[];
@@ -60,7 +61,7 @@ export default function MappingPage() {
   const [aliasText, setAliasText] = useState("");
   const [validation, setValidation] = useState<ValidationResponse["validation"]>();
   const [fieldCatalog, setFieldCatalog] = useState<FieldCatalogItem[]>([]);
-  const [autoValues, setAutoValues] = useState<Record<string, unknown>>({});
+  const [, setAutoValues] = useState<Record<string, unknown>>({});
   const [values, setValues] = useState<Record<string, unknown>>({});
   const [manualValues, setManualValues] = useState<Record<string, string | number | boolean | null>>({});
   const [formulas, setFormulas] = useState<Record<string, string>>({});
@@ -288,10 +289,29 @@ export default function MappingPage() {
     void loadData();
   }, [loadData]);
 
+  const loadCustomers = useCallback(async () => {
+    setLoadingCustomers(true);
+    try {
+      const res = await fetch("/api/customers", { cache: "no-store" });
+      const data = (await res.json()) as {
+        ok: boolean;
+        error?: string;
+        customers?: Array<{ id: string; customer_name: string; customer_code: string }>;
+      };
+      if (data.ok && data.customers) {
+        setCustomers(data.customers);
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : t("mapping.err.loadData"));
+    } finally {
+      setLoadingCustomers(false);
+    }
+  }, [t]);
+
   useEffect(() => {
     void loadCustomers();
     void loadAllFieldTemplates();
-  }, []);
+  }, [loadAllFieldTemplates, loadCustomers]);
 
   useEffect(() => {
     if (editingFieldTemplateId) {
@@ -310,26 +330,7 @@ export default function MappingPage() {
     setValues({});
     setManualValues({});
     void loadFieldTemplates(selectedCustomerId);
-  }, [editingFieldTemplateId, selectedCustomerId]);
-
-  async function loadCustomers() {
-    setLoadingCustomers(true);
-    try {
-      const res = await fetch("/api/customers", { cache: "no-store" });
-      const data = (await res.json()) as {
-        ok: boolean;
-        error?: string;
-        customers?: Array<{ id: string; customer_name: string; customer_code: string }>;
-      };
-      if (data.ok && data.customers) {
-        setCustomers(data.customers);
-      }
-    } catch (e) {
-      console.error("Failed to load customers:", e);
-    } finally {
-      setLoadingCustomers(false);
-    }
-  }
+  }, [editingFieldTemplateId, loadFieldTemplates, selectedCustomerId]);
 
   const activeVersion = useMemo(
     () => versions?.find((item) => item.id === activeVersionId),
@@ -341,77 +342,24 @@ export default function MappingPage() {
     [editingFieldTemplateId, fieldCatalog, selectedCustomerId, selectedFieldTemplateId],
   );
 
-  const groupedFields = useMemo(() => {
-    const normalizedQuery = searchTerm.trim().toLowerCase();
-    const groups = new Map<string, FieldCatalogItem[]>();
-    for (const item of visibleFieldCatalog) {
-      if (normalizedQuery) {
-        const inLabel = item.label_vi.toLowerCase().includes(normalizedQuery);
-        const inKey = item.field_key.toLowerCase().includes(normalizedQuery);
-        const inGroup = item.group.toLowerCase().includes(normalizedQuery);
-        if (!inLabel && !inKey && !inGroup) {
-          continue;
-        }
-      }
-      const list = groups.get(item.group) ?? [];
-      list.push(item);
-      groups.set(item.group, list);
-    }
-    return Array.from(groups.entries()).sort((a, b) => a[0].localeCompare(b[0]));
-  }, [searchTerm, visibleFieldCatalog]);
-
   const hasContext = !!selectedCustomerId || !!editingFieldTemplateId;
 
   const groupedFieldTree = useMemo(() => {
-    const tree = new Map<string, Array<{ fullPath: string; subgroup: string; fields: FieldCatalogItem[] }>>();
-    const groupedFieldMap = new Map(groupedFields);
-
-    // Keep empty custom groups/subgroups visible even when they have no fields yet.
-    const baseGroupPaths = new Set<string>([...groupedFieldMap.keys(), ...customGroups.map((group) => group.trim()).filter(Boolean)]);
-    const normalizedQuery = searchTerm.trim().toLowerCase();
-
-    for (const groupPath of baseGroupPaths) {
-      if (normalizedQuery && !groupPath.toLowerCase().includes(normalizedQuery)) {
-        // When searching, keep behavior intuitive for empty subgroups by matching path text.
-        if (!groupedFieldMap.has(groupPath)) {
-          continue;
-        }
-      }
-      const fields = groupedFieldMap.get(groupPath) ?? [];
-      const parts = groupPath
-        .split("/")
-        .map((part) => part.trim())
-        .filter((part) => part.length > 0);
-      const parent = parts[0] ?? groupPath;
-      const subgroup = parts.slice(1).join("/");
-      const siblings = tree.get(parent) ?? [];
-      siblings.push({ fullPath: groupPath, subgroup, fields });
-      tree.set(parent, siblings);
-    }
-
-    return Array.from(tree.entries())
-      .map(([parent, children]) => ({
-        parent,
-        children: children.sort((a, b) => {
-          if (!a.subgroup && b.subgroup) return -1;
-          if (a.subgroup && !b.subgroup) return 1;
-          return a.subgroup.localeCompare(b.subgroup, "vi");
-        }),
-      }))
-      .sort((a, b) => a.parent.localeCompare(b.parent, "vi"));
-  }, [customGroups, groupedFields, searchTerm]);
+    return buildGroupedFieldTree({
+      visibleFieldCatalog,
+      customGroups,
+      searchTerm,
+    });
+  }, [customGroups, searchTerm, visibleFieldCatalog]);
 
   const parentGroups = useMemo(() => groupedFieldTree.map((node) => node.parent), [groupedFieldTree]);
 
   const effectiveValues = useMemo(() => {
-    const base = { ...values };
-    const fieldTypeMap = new Map(fieldCatalog.map((f) => [f.field_key, f.type]));
-    for (const [fieldKey, formula] of Object.entries(formulas)) {
-      const fieldType = fieldTypeMap.get(fieldKey) ?? "text";
-      const v = evaluateFieldFormula(formula, base, fieldType);
-      if (v !== null) base[fieldKey] = v;
-    }
-    return base;
+    return computeEffectiveValues({
+      values,
+      formulas,
+      fieldCatalog,
+    });
   }, [values, formulas, fieldCatalog]);
 
   const onManualChange = useCallback((field: FieldCatalogItem, rawValue: string) => {
@@ -490,11 +438,13 @@ export default function MappingPage() {
       try {
         const mappingObj = JSON.parse(prevTxt);
         if (mappingObj && Array.isArray(mappingObj.mappings)) {
-          mappingObj.mappings = mappingObj.mappings.filter((m: any) => m.template_field !== fieldKey);
+          mappingObj.mappings = mappingObj.mappings.filter(
+            (m: { template_field?: unknown }) => m.template_field !== fieldKey,
+          );
           return JSON.stringify(mappingObj, null, 2);
         }
       } catch (e) {
-        console.error("Failed to update mappingText on field delete", e);
+        setError(e instanceof Error ? e.message : "Failed to update mapping on field delete.");
       }
       return prevTxt;
     });
@@ -576,11 +526,13 @@ export default function MappingPage() {
         try {
           const mappingObj = JSON.parse(prevTxt);
           if (mappingObj && Array.isArray(mappingObj.mappings)) {
-            mappingObj.mappings = mappingObj.mappings.filter((m: any) => !fieldKeysToDelete.has(String(m.template_field ?? "")));
+            mappingObj.mappings = mappingObj.mappings.filter(
+              (m: { template_field?: unknown }) => !fieldKeysToDelete.has(String(m.template_field ?? "")),
+            );
             return JSON.stringify(mappingObj, null, 2);
           }
         } catch (e) {
-          console.error("Failed to update mappingText on group delete", e);
+          setError(e instanceof Error ? e.message : "Failed to update mapping on group delete.");
         }
         return prevTxt;
       });

@@ -1,5 +1,5 @@
 import type { ChangeEvent, Dispatch, SetStateAction } from "react";
-import type { DragEndEvent } from "@dnd-kit/core";
+import type { DragEndEvent, SensorDescriptor, SensorOptions } from "@dnd-kit/core";
 import type { FieldCatalogItem } from "@/lib/report/config-schema";
 import type { TypeLabelMap } from "../helpers";
 import { MappingVisualToolbar } from "./MappingVisualToolbar";
@@ -51,7 +51,7 @@ type MappingVisualSectionProps = {
   saveEditedFieldTemplate: () => void;
   stopEditingFieldTemplate: () => void;
   openBackupFolder: () => void;
-  sensors: any;
+  sensors: SensorDescriptor<SensorOptions>[];
   handleDragEnd: (event: DragEndEvent) => void;
   groupedFieldTree: GroupedTreeNode[];
   parentGroups: string[];

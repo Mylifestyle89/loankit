@@ -17,9 +17,9 @@ export const mappingItemSchema = z.object({
 export const mappingMasterSchema = z.object({
   version: z.string().default("1.0.0"),
   scope: z.string().default("Mau 02A/BCDX-PN"),
-  sources: z.record(z.string(), z.record(z.string(), z.any())),
-  priority_policy: z.record(z.string(), z.any()).default({}),
-  normalizers: z.record(z.string(), z.any()).default({}),
+  sources: z.record(z.string(), z.record(z.string(), z.unknown())),
+  priority_policy: z.record(z.string(), z.unknown()).default({}),
+  normalizers: z.record(z.string(), z.unknown()).default({}),
   mappings: z.array(mappingItemSchema),
 });
 
@@ -27,7 +27,7 @@ export const aliasValueSchema = z.union([
   z.string(),
   z.array(z.string()),
   z.object({
-    literal: z.any().optional(),
+    literal: z.unknown().optional(),
     from: z.union([z.string(), z.array(z.string())]).optional(),
   }),
 ]);
@@ -67,7 +67,7 @@ export const runLogSchema = z.object({
   run_id: z.string().min(1),
   mapping_version_id: z.string().min(1),
   template_profile_id: z.string().min(1),
-  result_summary: z.record(z.string(), z.any()).default({}),
+  result_summary: z.record(z.string(), z.unknown()).default({}),
   output_paths: z.array(z.string()).default([]),
   duration_ms: z.number().nonnegative().default(0),
   created_at: z.string().min(1),

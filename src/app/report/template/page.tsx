@@ -188,8 +188,14 @@ export default function TemplatePage() {
     });
   }
 
-  const selectedFieldTemplate = fieldTemplates.find((item) => item.id === selectedFieldTemplateId) ?? null;
-  const availableFieldCatalog = selectedFieldTemplate?.field_catalog ?? [];
+  const selectedFieldTemplate = useMemo(
+    () => fieldTemplates.find((item) => item.id === selectedFieldTemplateId) ?? null,
+    [fieldTemplates, selectedFieldTemplateId],
+  );
+  const availableFieldCatalog = useMemo(
+    () => selectedFieldTemplate?.field_catalog ?? [],
+    [selectedFieldTemplate],
+  );
 
   // Group fields by group name (filtered by selected field template)
   const fieldsByGroup = useMemo(
@@ -206,7 +212,10 @@ export default function TemplatePage() {
   );
 
   const groups = useMemo(() => Object.keys(fieldsByGroup).sort((a, b) => a.localeCompare(b, "vi")), [fieldsByGroup]);
-  const fieldsInSelectedGroup = selectedGroup ? fieldsByGroup[selectedGroup] ?? [] : [];
+  const fieldsInSelectedGroup = useMemo(
+    () => (selectedGroup ? fieldsByGroup[selectedGroup] ?? [] : []),
+    [fieldsByGroup, selectedGroup],
+  );
 
   // Auto-select first group and first field when groups are loaded
   useEffect(() => {
@@ -228,7 +237,7 @@ export default function TemplatePage() {
     } else {
       setSelectedFieldKey("");
     }
-  }, [selectedGroup]);
+  }, [fieldsInSelectedGroup]);
 
   // Reset group and field when selected field template changes
   useEffect(() => {
@@ -246,7 +255,7 @@ export default function TemplatePage() {
       setSelectedGroup("");
       setSelectedFieldKey("");
     }
-  }, [selectedFieldTemplateId]);
+  }, [fieldsByGroup, selectedFieldTemplateId]);
 
   if (loading) {
     return <p className="text-sm text-coral-tree-600">{t("template.loading")}</p>;

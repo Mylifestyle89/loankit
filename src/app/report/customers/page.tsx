@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Download, Upload, X, CheckSquare, Square } from "lucide-react";
+import { Download, Upload, X } from "lucide-react";
 
 import { useLanguage } from "@/components/language-provider";
 
@@ -78,13 +78,16 @@ export default function CustomersPage() {
     setSelectedCustomers(new Set(customers.map(c => c.id)));
     try {
       const res = await fetch("/api/report/field-templates");
-      const data = await res.json();
+      const data = (await res.json()) as {
+        ok?: boolean;
+        field_templates?: Array<{ id: string; name: string }>;
+      };
       if (data.ok) {
         setAllTemplates(data.field_templates || []);
-        setSelectedTemplates(new Set((data.field_templates || []).map((t: any) => t.id)));
+        setSelectedTemplates(new Set((data.field_templates || []).map((t) => t.id)));
       }
     } catch (e) {
-      console.error(e);
+      setError(e instanceof Error ? e.message : "Không thể tải danh sách template.");
     }
   }
 

@@ -1,20 +1,22 @@
 import { NextResponse } from "next/server";
 
-import { loadState } from "@/lib/report/fs-store";
+import { toHttpError } from "@/core/errors/app-error";
+import { reportService } from "@/services/report.service";
 
 export const runtime = "nodejs";
 
 export async function GET() {
   try {
-    const state = await loadState();
+    const state = await reportService.getState();
     return NextResponse.json({ ok: true, state });
   } catch (error) {
+    const httpError = toHttpError(error, "Failed to load state.");
     return NextResponse.json(
       {
         ok: false,
-        error: error instanceof Error ? error.message : "Failed to load state.",
+        error: httpError.message,
       },
-      { status: 500 },
+      { status: httpError.status },
     );
   }
 }

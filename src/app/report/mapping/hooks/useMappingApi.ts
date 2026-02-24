@@ -106,12 +106,16 @@ export function useMappingApi({
         const lines = duplicateEntries.map(
           ([norm, keys]) => `"${norm}": ${keys.map((k) => `"${k}"`).join(", ")}`,
         );
-        setError(
-          "Alias trùng tên (sau chuẩn hóa). Vui lòng chỉnh trong file Alias và giữ một tên duy nhất cho mỗi trường: " +
-            lines.join("; "),
+        const shouldContinue = window.confirm(
+          "Cảnh báo: phát hiện alias trùng tên (sau chuẩn hóa).\n\n" +
+            lines.join("\n") +
+            "\n\nBạn vẫn muốn lưu dữ liệu?",
         );
-        setSaving(false);
-        return;
+        if (!shouldContinue) {
+          setError("Đã hủy lưu dữ liệu do alias trùng tên.");
+          setSaving(false);
+          return;
+        }
       }
       const normalizedCatalog = normalizeFieldCatalogForSchema(fieldCatalog);
       const res = await fetch("/api/report/mapping", {
@@ -186,8 +190,8 @@ export function useMappingApi({
           setValidation(validateData.validation);
           msg += ` - Đã tự động cập nhật & kiểm tra dữ liệu.`;
         }
-      } catch (err) {
-        console.error("Auto validate failed", err);
+      } catch {
+        msg += `. Tự động kiểm tra dữ liệu thất bại.`;
       }
 
       setMessage(msg);
