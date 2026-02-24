@@ -1,6 +1,8 @@
-import type { Customer, Prisma } from "@generated/prisma/client";
+import type { Customer, Prisma } from "@prisma/client";
+import path from "node:path";
 
 import { NotFoundError, SystemError, ValidationError } from "@/core/errors/app-error";
+import { groupDataByField } from "@/core/use-cases/grouping-engine";
 import { validateReportPayload } from "@/core/use-cases/report-validation";
 import { CorruptedTemplateError, DataPlaceholderMismatchError, docxEngine, TemplateNotFoundError } from "@/lib/docx-engine";
 import { prisma } from "@/lib/prisma";
@@ -77,6 +79,32 @@ async function* customerBatches(where?: Prisma.CustomerWhereInput, batchSize = 5
 
 function encode(data: string): Uint8Array {
   return new TextEncoder().encode(data);
+}
+
+function sanitizeFilePart(input: unknown, fallback: string): string {
+  const raw = String(input ?? "").trim();
+  if (!raw) return fallback;
+  const safe = raw.replace(/[<>:"/\\|?*\u0000-\u001F]/g, "_").replace(/\s+/g, " ").trim();
+  return safe || fallback;
+}
+
+function resolveParentFromGroupedRecord(
+  grouped: Record<string, unknown>,
+  repeatKey: string,
+): Record<string, unknown> {
+  const parent = { ...grouped };
+  const itemsRaw = parent[repeatKey];
+  const items = Array.isArray(itemsRaw) ? (itemsRaw as Array<Record<string, unknown>>) : [];
+  if (items.length > 0) {
+    const first = items[0];
+    for (const [k, v] of Object.entries(first)) {
+      if (!(k in parent) || parent[k] === null || parent[k] === undefined || parent[k] === "") {
+        parent[k] = v;
+      }
+    }
+  }
+  parent[repeatKey] = items;
+  return parent;
 }
 
 type ImportCustomerRecord = {
@@ -300,6 +328,98 @@ export const reportService = {
       report_path: reportPath,
       report,
       command: { stdout: "Rendered via DOCX engine.", stderr: "", exitCode: 0 },
+    };
+  },
+
+  async processBankReportExport(input?: {
+    reportPath?: string;
+    templatePath?: string;
+    outputDir?: string;
+    groupKey?: string;
+    repeatKey?: string;
+    customerNameKey?: string;
+  }) {
+    const start = Date.now();
+    const state = await loadState();
+    const activeVersion = await getActiveMappingVersion(state);
+    const activeTemplate = await getActiveTemplateProfile(state);
+
+    const templatePath = input?.templatePath ?? activeTemplate.docx_path;
+    const reportPath = input?.reportPath ?? "report_assets/template_export_report_bank.json";
+    const outputDir = input?.outputDir ?? "report_assets/exports/bank-rate-notices";
+    const groupKey = input?.groupKey?.trim() || "HĐTD";
+    const repeatKey = input?.repeatKey?.trim() || "items";
+    const customerNameKey = input?.customerNameKey?.trim() || "TÊN KH";
+
+    const [baseFlat, aliasMapRaw, manualValues] = await Promise.all([
+      docxEngine.readJson<Record<string, unknown>>("report_assets/report_draft_flat.json"),
+      docxEngine.readJson<Record<string, unknown>>(activeVersion.alias_json_path),
+      loadManualValues(),
+    ]);
+    const aliasMap = aliasMapRaw as Record<string, unknown>;
+    const mergedFlat = mergeFlatWithManualValues(baseFlat, manualValues);
+    await docxEngine.writeJson(REPORT_MERGED_FLAT_FILE, mergedFlat);
+
+    const rowsRaw = mergedFlat[repeatKey];
+    if (!Array.isArray(rowsRaw)) {
+      throw new ValidationError(`Không tìm thấy mảng dữ liệu '${repeatKey}' trong report_draft_flat.json.`);
+    }
+    const rows = rowsRaw.filter((row): row is Record<string, unknown> => Boolean(row && typeof row === "object" && !Array.isArray(row)));
+    if (rows.length === 0) {
+      throw new ValidationError(`Mảng '${repeatKey}' không có dòng dữ liệu hợp lệ.`);
+    }
+
+    const groupedRecords = groupDataByField(rows, groupKey, repeatKey) as Array<Record<string, unknown>>;
+    if (groupedRecords.length === 0) {
+      throw new ValidationError(`Không thể gom nhóm theo khóa '${groupKey}'.`);
+    }
+
+    const outputPaths: string[] = [];
+    for (const groupedRecord of groupedRecords) {
+      const payload = resolveParentFromGroupedRecord(groupedRecord, repeatKey);
+      const contractNo = sanitizeFilePart(payload[groupKey], "unknown-contract");
+      const customerName = sanitizeFilePart(payload[customerNameKey], "unknown-customer");
+      const outputPath = path.posix.join(outputDir, `${customerName}__${contractNo}.docx`);
+      try {
+        await docxEngine.generateDocx(
+          templatePath,
+          { flat: { ...mergedFlat, ...payload }, aliasMap },
+          outputPath,
+        );
+      } catch (error) {
+        mapDocxError(error);
+      }
+      outputPaths.push(outputPath);
+    }
+
+    const report = {
+      mode: "bank_grouped_export",
+      template_docx: templatePath,
+      output_dir: outputDir,
+      total_files: outputPaths.length,
+      group_key: groupKey,
+      repeat_key: repeatKey,
+      outputs: outputPaths,
+    };
+    await docxEngine.writeJson(reportPath, report);
+
+    const durationMs = Date.now() - start;
+    await logRun({
+      resultSummary: {
+        step: "export_docx_bank_grouped",
+        report,
+      },
+      outputPaths: [...outputPaths, reportPath],
+      durationMs,
+    });
+
+    return {
+      duration_ms: durationMs,
+      output_dir: outputDir,
+      output_paths: outputPaths,
+      report_path: reportPath,
+      report,
+      command: { stdout: "Rendered grouped bank DOCX via DOCX engine.", stderr: "", exitCode: 0 },
     };
   },
 

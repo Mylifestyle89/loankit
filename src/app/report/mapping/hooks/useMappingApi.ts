@@ -3,8 +3,60 @@ import type { Dispatch, SetStateAction } from "react";
 import type { FieldCatalogItem } from "@/lib/report/config-schema";
 import { getDuplicateAliasGroups } from "@/lib/report/alias-utils";
 import { evaluateFieldFormula } from "@/lib/report/field-calc";
-import type { MappingApiResponse, ValidationResponse, ValuesResponse } from "../types";
+import type {
+  AutoProcessAssetsResponse,
+  AutoProcessJobResponse,
+  AutoProcessUploadResponse,
+  MappingApiResponse,
+  MappingSuggestResponse,
+  ValidationResponse,
+  ValuesResponse,
+} from "../types";
 import { normalizeFieldCatalogForSchema } from "../helpers";
+
+function normalizeText(input: string): string {
+  return input
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function shouldUseBankGroupedExport(mappingText: string): boolean {
+  try {
+    const parsed = JSON.parse(mappingText) as {
+      mappings?: Array<{ template_field?: string }>;
+    };
+    const placeholders = (parsed.mappings ?? [])
+      .map((item) => (typeof item.template_field === "string" ? item.template_field.trim() : ""))
+      .filter(Boolean);
+    if (placeholders.length === 0) return false;
+
+    const normalized = placeholders.map((p) => normalizeText(p));
+    const hasContractKey = normalized.some(
+      (p) => p === "hdtd" || p.includes("hop dong tin dung") || p.includes("so hdtd"),
+    );
+    if (!hasContractKey) return false;
+
+    const detailHints = ["so giai ngan", "lai suat cu", "lai suat moi", "ngay dieu chinh"];
+    const matchedDetailCount = detailHints.filter((hint) => normalized.some((p) => p.includes(hint))).length;
+    return matchedDetailCount >= 1;
+  } catch {
+    return false;
+  }
+}
+
+type SmartAutoBatchInput = {
+  excelPath: string;
+  templatePath: string;
+  jobType?: string;
+  rootKeyOverride?: string;
+  onProgress?: (job: NonNullable<AutoProcessJobResponse["job"]>) => void;
+};
+
+type UploadKind = "data" | "template";
 
 type UseMappingApiParams = {
   t: (key: string) => string;
@@ -61,6 +113,82 @@ export function useMappingApi({
   setLastExportedDocxPath,
   setFormulas,
 }: UseMappingApiParams) {
+  const suggestMappingFromHeaders = useCallback(
+    async (excelHeaders: string[]) => {
+      setError("");
+      setMessage("");
+      try {
+        const mappingObj = JSON.parse(mappingText) as {
+          mappings?: Array<{
+            template_field?: string;
+            sources?: Array<{ source: string; path: string; note?: string }>;
+          }>;
+        };
+        const placeholders = (mappingObj.mappings ?? [])
+          .map((item) => (typeof item.template_field === "string" ? item.template_field.trim() : ""))
+          .filter(Boolean);
+
+        if (placeholders.length === 0) {
+          setError(t("mapping.aiSuggest.err.noPlaceholders"));
+          return;
+        }
+
+        const normalizedHeaders = [...new Set(excelHeaders.map((h) => h.trim()).filter(Boolean))];
+        if (normalizedHeaders.length === 0) {
+          setError(t("mapping.aiSuggest.err.noHeaders"));
+          return;
+        }
+
+        const res = await fetch("/api/report/mapping/suggest", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            excelHeaders: normalizedHeaders,
+            wordPlaceholders: placeholders,
+          }),
+        });
+        const data = (await res.json()) as MappingSuggestResponse;
+        if (!data.ok || !data.suggestion) {
+          throw new Error(data.error ?? t("mapping.aiSuggest.err.failed"));
+        }
+
+        const suggestion = data.suggestion;
+        let matched = 0;
+        const nextMappings = (mappingObj.mappings ?? []).map((item) => {
+          const key = typeof item.template_field === "string" ? item.template_field.trim() : "";
+          const header = key ? suggestion[key] : undefined;
+          if (!header) return item;
+          matched += 1;
+          return {
+            ...item,
+            sources: [
+              {
+                source: "excel_ai",
+                path: header,
+                note: "AI suggestion",
+              },
+            ],
+          };
+        });
+
+        setMappingText(
+          JSON.stringify(
+            {
+              ...mappingObj,
+              mappings: nextMappings,
+            },
+            null,
+            2,
+          ),
+        );
+        setMessage(t("mapping.aiSuggest.ok").replace("{count}", String(matched)));
+      } catch (e) {
+        setError(e instanceof Error ? e.message : t("mapping.aiSuggest.err.failed"));
+      }
+    },
+    [mappingText, setError, setMappingText, setMessage, t],
+  );
+
   const loadFieldValues = useCallback(async () => {
     const res = await fetch("/api/report/values", { cache: "no-store" });
     const data = (await res.json()) as ValuesResponse;
@@ -225,32 +353,152 @@ export function useMappingApi({
     const timestamp = Date.now();
     const outputPath = `report_assets/report_preview_editor_${timestamp}.docx`;
     const reportPath = `report_assets/template_export_report_editor_${timestamp}.json`;
+    const useBankGroupedExport = shouldUseBankGroupedExport(mappingText);
     const res = await fetch("/api/report/export", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        output_path: outputPath,
+        ...(useBankGroupedExport ? {} : { output_path: outputPath }),
         report_path: reportPath,
+        ...(useBankGroupedExport
+          ? {
+              export_mode: "bank_grouped",
+              output_dir: `report_assets/exports/bank-rate-notices-${timestamp}`,
+              group_key: "HĐTD",
+              repeat_key: "items",
+              customer_name_key: "TÊN KH",
+            }
+          : {}),
       }),
     });
-    const data = (await res.json()) as { ok: boolean; error?: string; output_path?: string };
+    const data = (await res.json()) as {
+      ok: boolean;
+      error?: string;
+      output_path?: string;
+      output_paths?: string[];
+      report?: { total_files?: number };
+    };
     if (!data.ok) {
       setError(data.error ?? t("mapping.err.exportDocx"));
       setExportingDocx(false);
       return;
     }
-    const filePath = data.output_path ?? outputPath;
+    const filePath = data.output_path ?? data.output_paths?.[0] ?? outputPath;
+    const totalFiles = data.output_paths?.length ?? data.report?.total_files ?? (data.output_path ? 1 : 0);
     setLastExportedDocxPath(filePath);
-    setMessage(t("mapping.msg.exportDocxDone"));
+    setMessage(
+      useBankGroupedExport
+        ? `Đã xuất ${totalFiles} DOCX theo HĐTD. Đang mở file đầu tiên...`
+        : t("mapping.msg.exportDocxDone"),
+    );
     const openUrl = `/api/report/file?path=${encodeURIComponent(filePath)}&download=0&ts=${Date.now()}`;
     window.open(openUrl, "_blank", "noopener,noreferrer");
     setExportingDocx(false);
-  }, [setError, setExportingDocx, setLastExportedDocxPath, setMessage, t]);
+  }, [mappingText, setError, setExportingDocx, setLastExportedDocxPath, setMessage, t]);
+
+  const getAutoProcessAssets = useCallback(async () => {
+    const res = await fetch("/api/report/auto-process/assets", { cache: "no-store" });
+    const data = (await res.json()) as AutoProcessAssetsResponse;
+    if (!data.ok) {
+      throw new Error(data.error ?? "Không thể tải danh sách file.");
+    }
+    return {
+      excelFiles: data.excel_files ?? [],
+      templateFiles: data.template_files ?? [],
+    };
+  }, []);
+
+  const uploadAutoProcessFile = useCallback(async (file: File, kind: UploadKind): Promise<string> => {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("kind", kind);
+    const res = await fetch("/api/report/auto-process/upload", {
+      method: "POST",
+      body: formData,
+    });
+    const data = (await res.json()) as AutoProcessUploadResponse;
+    if (!data.ok || !data.path) {
+      throw new Error(data.error ?? "Upload file thất bại.");
+    }
+    return data.path;
+  }, []);
+
+  const runSmartAutoBatch = useCallback(
+    async (input: SmartAutoBatchInput) => {
+      setError("");
+      setMessage("");
+      const startRes = await fetch("/api/report/auto-process/start", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          excel_path: input.excelPath,
+          template_path: input.templatePath,
+          job_type: input.jobType,
+        }),
+      });
+      const startData = (await startRes.json()) as AutoProcessJobResponse;
+      if (!startData.ok || !startData.job) {
+        throw new Error(startData.error ?? "Không thể khởi tạo Auto-Process.");
+      }
+      input.onProgress?.(startData.job);
+
+      const runRes = await fetch("/api/report/auto-process/run", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          job_id: startData.job.job_id,
+          root_key: input.rootKeyOverride,
+        }),
+      });
+      const runData = (await runRes.json()) as AutoProcessJobResponse;
+      if (!runData.ok || !runData.job) {
+        throw new Error(runData.error ?? "Không thể chạy Auto-Batch.");
+      }
+
+      let latest = runData.job;
+      input.onProgress?.(latest);
+      while (latest.phase === "running" || latest.phase === "analyzing") {
+        await new Promise((resolve) => setTimeout(resolve, 800));
+        const pollRes = await fetch(`/api/report/auto-process/jobs/${encodeURIComponent(latest.job_id)}`, {
+          cache: "no-store",
+        });
+        const pollData = (await pollRes.json()) as AutoProcessJobResponse;
+        if (!pollData.ok || !pollData.job) {
+          throw new Error(pollData.error ?? "Không thể theo dõi tiến trình batch.");
+        }
+        latest = pollData.job;
+        input.onProgress?.(latest);
+      }
+
+      if (latest.phase !== "completed") {
+        throw new Error(latest.error ?? "Batch chưa hoàn tất.");
+      }
+      return latest;
+    },
+    [setError, setMessage],
+  );
+
+  const openAutoProcessOutputFolder = useCallback(async (jobId: string) => {
+    const res = await fetch("/api/report/auto-process/open-output", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ job_id: jobId }),
+    });
+    const data = (await res.json()) as { ok: boolean; error?: string };
+    if (!data.ok) {
+      throw new Error(data.error ?? "Không thể mở thư mục kết quả.");
+    }
+  }, []);
 
   return {
     loadData,
     loadFieldValues,
     saveDraft,
     exportAndOpenDocx,
+    suggestMappingFromHeaders,
+    getAutoProcessAssets,
+    uploadAutoProcessFile,
+    runSmartAutoBatch,
+    openAutoProcessOutputFolder,
   };
 }

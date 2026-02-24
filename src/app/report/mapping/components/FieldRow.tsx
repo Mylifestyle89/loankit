@@ -40,6 +40,8 @@ export type FieldRowProps = {
     formulaAllowed?: boolean;
     hasFormula?: boolean;
     onOpenFormula?: () => void;
+    sampleData?: string;
+    confidenceScore?: number;
 };
 
 export const FieldRow = memo(function FieldRow({
@@ -64,6 +66,8 @@ export const FieldRow = memo(function FieldRow({
     formulaAllowed = false,
     hasFormula = false,
     onOpenFormula,
+    sampleData = "",
+    confidenceScore = 0,
 }: FieldRowProps) {
     const sortableId = dndId || field.field_key;
     const {
@@ -189,8 +193,8 @@ export const FieldRow = memo(function FieldRow({
         );
 
     return (
-        <div ref={setNodeRef} style={style} className={`group grid grid-cols-[minmax(260px,1fr)_minmax(360px,2fr)_160px_64px] items-start gap-2 border-t border-coral-tree-100 px-4 py-1.5 text-sm transition-colors ${isDragging ? "bg-coral-tree-50 opacity-80 shadow-md ring-1 ring-coral-tree-300" : "bg-white hover:bg-coral-tree-50"}`}>
-            <div className="flex items-start gap-2 pt-0.5">
+        <div ref={setNodeRef} style={style} className={`group min-w-0 grid grid-cols-1 gap-2 border-t border-coral-tree-100 px-3 py-2 text-sm transition-colors md:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)_minmax(110px,140px)_auto] ${isDragging ? "bg-coral-tree-50 opacity-80 shadow-md ring-1 ring-coral-tree-300" : "bg-white hover:bg-coral-tree-50"}`}>
+            <div className="flex min-w-0 items-start gap-2 pt-0.5">
                 <div className="mt-1 flex flex-col gap-0 opacity-0 transition-opacity group-hover:opacity-100">
                     <button
                         type="button"
@@ -202,20 +206,38 @@ export const FieldRow = memo(function FieldRow({
                         <GripVertical className="h-4 w-4" />
                     </button>
                 </div>
-                <div className="flex-1">
+                <div className="min-w-0 flex-1">
                     <input
                         value={field.label_vi}
                         onChange={(e) => onFieldLabelChange(field.field_key, e.target.value)}
                         aria-label="Tên hiển thị field"
-                        className="w-full rounded border border-transparent bg-transparent px-2 py-1 text-sm font-medium text-coral-tree-800 transition-colors hover:border-coral-tree-300 focus:border-coral-tree-500 focus:bg-white focus:outline-none focus:ring-1 focus:ring-coral-tree-500"
+                        className="w-full truncate rounded border border-transparent bg-transparent px-2 py-1 text-sm font-medium text-coral-tree-800 transition-colors hover:border-coral-tree-300 focus:border-coral-tree-500 focus:bg-white focus:outline-none focus:ring-1 focus:ring-coral-tree-500"
+                        title={field.label_vi}
                     />
                     {showTechnicalKeys ? (
                         <p className="mt-0.5 px-2 font-mono text-[10px] text-coral-tree-700">{field.field_key}</p>
                     ) : null}
+                    <div className="mt-0.5 flex items-center justify-between gap-2 px-2">
+                        <p className="truncate text-[10px] text-zinc-400" title={sampleData || "Chưa có dữ liệu mẫu"}>
+                            Sample Data: {sampleData || "—"}
+                        </p>
+                        <span
+                            className={`inline-flex flex-shrink-0 items-center rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${
+                                confidenceScore >= 90
+                                    ? "bg-emerald-100 text-emerald-700"
+                                    : confidenceScore >= 60
+                                      ? "bg-amber-100 text-amber-700"
+                                      : "bg-rose-100 text-rose-700"
+                            }`}
+                            title="Confidence Score (heuristic)"
+                        >
+                            {confidenceScore}%
+                        </span>
+                    </div>
                 </div>
             </div>
-            <div className="w-full pt-1">{valueInput}</div>
-            <div className="w-full pt-1">
+            <div className="min-w-0 w-full pt-1">{valueInput}</div>
+            <div className="min-w-0 w-full pt-1">
                 <select
                     value={toBusinessType(field.type)}
                     onChange={(e) =>

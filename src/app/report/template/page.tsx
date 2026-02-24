@@ -56,6 +56,10 @@ export default function TemplatePage() {
   const [openingEditor, setOpeningEditor] = useState(false);
   const [editorSource, setEditorSource] = useState<"managed" | "local">("managed");
   const [localDocxName, setLocalDocxName] = useState("");
+  const [mergeFiles, setMergeFiles] = useState<File[]>([]);
+  const [mergeOutputName, setMergeOutputName] = useState("merged-template");
+  const [mergeWithPageBreak, setMergeWithPageBreak] = useState(true);
+  const [mergingDocx, setMergingDocx] = useState(false);
   const localDocxInputRef = useRef<HTMLInputElement | null>(null);
 
   const loadTemplates = useCallback(async () => {
@@ -146,6 +150,53 @@ export default function TemplatePage() {
         setOpeningEditor(false);
       }
     })();
+  }
+
+  function onPickMergeFiles(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files ?? []).filter((file) => file.name.toLowerCase().endsWith(".docx"));
+    setMergeFiles(files);
+  }
+
+  async function runMergeDocx() {
+    if (mergeFiles.length < 2) {
+      setError("Vui lòng chọn ít nhất 2 file DOCX để nối.");
+      return;
+    }
+    setError("");
+    setMessage("");
+    setMergingDocx(true);
+    try {
+      const form = new FormData();
+      mergeFiles.forEach((file) => form.append("files", file));
+      form.set("pageBreak", mergeWithPageBreak ? "true" : "false");
+      form.set("outputName", mergeOutputName.trim() || "merged-template");
+
+      const res = await fetch("/api/report/template/merge-docx", {
+        method: "POST",
+        body: form,
+      });
+
+      if (!res.ok) {
+        const data = (await res.json().catch(() => ({}))) as { error?: string };
+        throw new Error(data.error ?? "Nối DOCX thất bại.");
+      }
+
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const outputName = (mergeOutputName.trim() || "merged-template").replace(/[^a-zA-Z0-9._-]+/g, "_");
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = `${outputName}.docx`;
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      URL.revokeObjectURL(url);
+      setMessage(`Đã nối ${mergeFiles.length} file DOCX.`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Nối DOCX thất bại.");
+    } finally {
+      setMergingDocx(false);
+    }
   }
 
   async function saveEditorDocx(buffer: ArrayBuffer) {
@@ -268,6 +319,56 @@ export default function TemplatePage() {
         <p className="mt-1 text-sm text-coral-tree-600">{t("template.desc")}</p>
         {message ? <p className="mt-2 text-sm text-emerald-700">{message}</p> : null}
         {error ? <p className="mt-2 text-sm text-red-700">{error}</p> : null}
+      </div>
+
+      <div className="rounded-xl border border-coral-tree-200 bg-white p-4">
+        <h3 className="text-base font-semibold">Tiện ích nối nhiều DOCX</h3>
+        <p className="mt-1 text-sm text-coral-tree-600">
+          Chọn nhiều file `.docx` và hệ thống sẽ xuất một file gộp theo đúng thứ tự bạn chọn.
+        </p>
+        <div className="mt-3 grid gap-3 md:grid-cols-2">
+          <label className="flex flex-col gap-1 text-sm">
+            <span className="text-coral-tree-700">Danh sách file DOCX</span>
+            <input
+              type="file"
+              multiple
+              accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+              onChange={onPickMergeFiles}
+              className="rounded-md border border-coral-tree-300 bg-white px-3 py-2 text-sm"
+            />
+          </label>
+          <label className="flex flex-col gap-1 text-sm">
+            <span className="text-coral-tree-700">Tên file kết quả</span>
+            <input
+              type="text"
+              value={mergeOutputName}
+              onChange={(e) => setMergeOutputName(e.target.value)}
+              placeholder="merged-template"
+              className="rounded-md border border-coral-tree-300 bg-white px-3 py-2 text-sm"
+            />
+          </label>
+        </div>
+        <div className="mt-3 flex flex-wrap items-center gap-3">
+          <label className="inline-flex items-center gap-2 text-sm text-coral-tree-700">
+            <input
+              type="checkbox"
+              checked={mergeWithPageBreak}
+              onChange={(e) => setMergeWithPageBreak(e.target.checked)}
+            />
+            Chèn ngắt trang giữa các file
+          </label>
+          <button
+            type="button"
+            onClick={() => void runMergeDocx()}
+            disabled={mergingDocx || mergeFiles.length < 2}
+            className="rounded-md bg-coral-tree-600 px-4 py-2 text-sm text-white disabled:opacity-50 hover:bg-coral-tree-700"
+          >
+            {mergingDocx ? "Đang nối..." : "Nối DOCX và tải về"}
+          </button>
+          <span className="text-xs text-coral-tree-600">
+            Đã chọn: {mergeFiles.length} file
+          </span>
+        </div>
       </div>
 
       {/* Template editor: open DOCX + inject field toolbar */}

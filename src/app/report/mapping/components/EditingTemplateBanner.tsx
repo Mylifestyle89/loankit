@@ -9,6 +9,7 @@ type EditingTemplateBannerProps = {
   savingEditedTemplate: boolean;
   stopEditingFieldTemplate: () => void;
   openBackupFolder: () => void;
+  openImportGroupModal: () => void;
 };
 
 export function EditingTemplateBanner({
@@ -20,38 +21,48 @@ export function EditingTemplateBanner({
   savingEditedTemplate,
   stopEditingFieldTemplate,
   openBackupFolder,
+  openImportGroupModal,
 }: EditingTemplateBannerProps) {
   if (!editingFieldTemplateId) return null;
 
   return (
-    <div className="flex flex-wrap items-center gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2">
-      <span className="text-sm font-medium text-amber-900">{t("mapping.fieldTemplate.editing")}</span>
+    <div className="flex flex-wrap items-center gap-2 rounded-xl border border-slate-200/70 bg-white/80 px-3 py-2 shadow-sm backdrop-blur-sm">
+      <span className="rounded-md bg-indigo-50 px-2 py-1 text-sm font-medium text-indigo-700">
+        {t("mapping.fieldTemplate.editing")}
+      </span>
       <input
         value={editingFieldTemplateName}
         onChange={(e) => setEditingFieldTemplateName(e.target.value)}
         aria-label={t("mapping.fieldTemplate.name")}
         placeholder={t("mapping.fieldTemplate.namePlaceholder")}
-        className="min-w-64 rounded-md border border-amber-300 px-2 py-1.5 text-sm"
+        className="min-w-64 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-800 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-400/30"
       />
       <button
         type="button"
         onClick={saveEditedFieldTemplate}
         disabled={savingEditedTemplate}
-        className="rounded-md bg-coral-tree-700 px-3 py-1.5 text-sm text-white disabled:opacity-50"
+        className="rounded-lg bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white shadow-glow transition-colors hover:bg-indigo-700 disabled:opacity-50"
       >
         {savingEditedTemplate ? t("mapping.fieldTemplate.saving") : t("mapping.fieldTemplate.update")}
       </button>
       <button
         type="button"
+        onClick={openImportGroupModal}
+        className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100/60"
+      >
+        Thêm nhóm dữ liệu
+      </button>
+      <button
+        type="button"
         onClick={stopEditingFieldTemplate}
-        className="rounded-md border border-coral-tree-300 px-3 py-1.5 text-sm hover:bg-coral-tree-50"
+        className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100/60"
       >
         {t("mapping.fieldTemplate.stopEditing")}
       </button>
       <button
         type="button"
         onClick={openBackupFolder}
-        className="inline-flex items-center gap-1.5 rounded-md border border-coral-tree-300 px-3 py-1.5 text-sm hover:bg-coral-tree-50"
+        className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100/60"
       >
         <FolderOpen className="h-4 w-4" />
         Mở backup

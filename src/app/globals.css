@@ -2,8 +2,8 @@
 @import "../../node_modules/@eigenpal/docx-js-editor/dist/styles.css";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #fafafa;
+  --foreground: #18181b;
 }
 
 @theme inline {
@@ -12,44 +12,79 @@
   --font-sans: var(--font-inter);
   --font-mono: var(--font-geist-mono);
 
-  /* Blue Chill palette – đã kiểm tra tương phản (WCAG AA) */
-  --color-blue-chill-50: #effcfb;
-  --color-blue-chill-100: #d5f7f8;
-  --color-blue-chill-200: #b1eef0;
-  --color-blue-chill-300: #7be0e5;
-  --color-blue-chill-400: #3dcad3;
-  --color-blue-chill-500: #22adb8;
-  --color-blue-chill-600: #1e8897;
-  --color-blue-chill-700: #1f717f;
-  --color-blue-chill-800: #225c68;
-  --color-blue-chill-900: #204d59;
-  --color-blue-chill-950: #10333c;
+  /* Digital Premium 2025 – Electric Indigo (WCAG AA) */
+  --color-indigo-50: #eef2ff;
+  --color-indigo-100: #e0e7ff;
+  --color-indigo-200: #c7d2fe;
+  --color-indigo-300: #a5b4fc;
+  --color-indigo-400: #818cf8;
+  --color-indigo-500: #6366f1;
+  --color-indigo-600: #4f46e5;
+  --color-indigo-700: #4338ca;
+  --color-indigo-800: #3730a3;
+  --color-indigo-900: #312e81;
+  --color-indigo-950: #1e1b4b;
 
-  /*
-    Backward-compatible: các class `coral-tree-*` dùng Blue Chill.
-    Độ tương phản (WCAG AA: 4.5:1 chữ thường, 3:1 chữ lớn):
-    - Chữ trắng trên nền 600/700 (nút chính): ~7:1 ✓
-    - Chữ 600/700/800/900 trên nền trắng: >4.5:1 ✓
-    - Nền 950 + chữ 50 (khối code): ~14:1 ✓
-    - Chữ 500 trên trắng (gợi ý phụ): ~5:1 ✓
-  */
-  --color-coral-tree-50: #effcfb;
-  --color-coral-tree-100: #d5f7f8;
-  --color-coral-tree-200: #b1eef0;
-  --color-coral-tree-300: #7be0e5;
-  --color-coral-tree-400: #3dcad3;
-  --color-coral-tree-500: #22adb8;
-  --color-coral-tree-600: #1e8897;
-  --color-coral-tree-700: #1f717f;
-  --color-coral-tree-800: #225c68;
-  --color-coral-tree-900: #204d59;
-  --color-coral-tree-950: #10333c;
+  /* Violet – repeater/array chips */
+  --color-violet-50: #f5f3ff;
+  --color-violet-100: #ede9fe;
+  --color-violet-200: #ddd6fe;
+  --color-violet-600: #7c3aed;
+  --color-violet-800: #5b21b6;
+
+  /* Amber – root key chips */
+  --color-amber-50: #fffbeb;
+  --color-amber-100: #fef3c7;
+  --color-amber-200: #fde68a;
+  --color-amber-600: #d97706;
+  --color-amber-800: #92400e;
+
+  /* Zinc / Slate neutrals */
+  --color-zinc-50: #fafafa;
+  --color-zinc-100: #f4f4f5;
+  --color-zinc-200: #e4e4e7;
+  --color-zinc-300: #d4d4d8;
+  --color-zinc-400: #a1a1aa;
+  --color-zinc-500: #71717a;
+  --color-zinc-600: #52525b;
+  --color-zinc-700: #3f3f46;
+  --color-zinc-800: #27272a;
+  --color-zinc-900: #18181b;
+  --color-zinc-950: #09090b;
+
+  /* Glow utility – shadow-indigo-500/20 */
+  --shadow-glow: 0 0 20px rgb(99 102 241 / 0.2);
+  --shadow-glow-lg: 0 0 32px rgb(99 102 241 / 0.25);
+
+  /* Backward-compatible: coral-tree / blue-chill map to indigo */
+  --color-coral-tree-50: var(--color-indigo-50);
+  --color-coral-tree-100: var(--color-indigo-100);
+  --color-coral-tree-200: var(--color-indigo-200);
+  --color-coral-tree-300: var(--color-indigo-300);
+  --color-coral-tree-400: var(--color-indigo-400);
+  --color-coral-tree-500: var(--color-indigo-500);
+  --color-coral-tree-600: var(--color-indigo-600);
+  --color-coral-tree-700: var(--color-indigo-700);
+  --color-coral-tree-800: var(--color-indigo-800);
+  --color-coral-tree-900: var(--color-indigo-900);
+  --color-coral-tree-950: var(--color-indigo-950);
+  --color-blue-chill-50: var(--color-indigo-50);
+  --color-blue-chill-100: var(--color-indigo-100);
+  --color-blue-chill-200: var(--color-indigo-200);
+  --color-blue-chill-300: var(--color-indigo-300);
+  --color-blue-chill-400: var(--color-indigo-400);
+  --color-blue-chill-500: var(--color-indigo-500);
+  --color-blue-chill-600: var(--color-indigo-600);
+  --color-blue-chill-700: var(--color-indigo-700);
+  --color-blue-chill-800: var(--color-indigo-800);
+  --color-blue-chill-900: var(--color-indigo-900);
+  --color-blue-chill-950: var(--color-indigo-950);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #09090b;
+    --foreground: #fafafa;
   }
 }
 
@@ -57,4 +92,103 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+}
+
+/* Glow for primary buttons */
+.shadow-glow {
+  box-shadow: var(--shadow-glow);
+}
+.shadow-glow-lg {
+  box-shadow: var(--shadow-glow-lg);
+}
+
+/* Prevent flex children from overflowing parent width */
+.panel-flex-safe {
+  min-width: 0;
+}
+
+/* Flowing dash animation for AI mapping Bezier lines */
+@keyframes dash-flow {
+  to {
+    stroke-dashoffset: -20;
+  }
+}
+.animate-dash-flow {
+  animation: dash-flow 0.8s linear infinite;
+}
+
+@keyframes landing-gradient-shift {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+    opacity: 0.9;
+  }
+  50% {
+    transform: translate3d(-2%, 1%, 0) scale(1.04);
+    opacity: 1;
+  }
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+    opacity: 0.9;
+  }
+}
+
+@keyframes landing-node-float {
+  0% {
+    transform: translateY(0) scale(1);
+    opacity: 0.7;
+  }
+  50% {
+    transform: translateY(-6px) scale(1.08);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(0) scale(1);
+    opacity: 0.7;
+  }
+}
+
+@keyframes landing-line-breathe {
+  0% {
+    opacity: 0.25;
+  }
+  50% {
+    opacity: 0.5;
+  }
+  100% {
+    opacity: 0.25;
+  }
+}
+
+@keyframes landing-button-pulse {
+  0% {
+    box-shadow:
+      0 12px 40px rgb(99 102 241 / 0.3),
+      inset 0 1px 0 rgb(255 255 255 / 0.35);
+  }
+  50% {
+    box-shadow:
+      0 18px 56px rgb(99 102 241 / 0.45),
+      inset 0 1px 0 rgb(255 255 255 / 0.45);
+  }
+  100% {
+    box-shadow:
+      0 12px 40px rgb(99 102 241 / 0.3),
+      inset 0 1px 0 rgb(255 255 255 / 0.35);
+  }
+}
+
+.landing-gradient-shift {
+  animation: landing-gradient-shift 14s ease-in-out infinite;
+}
+
+.landing-node-float {
+  animation: landing-node-float 4.4s ease-in-out infinite;
+}
+
+.landing-line-breathe {
+  animation: landing-line-breathe 4.8s ease-in-out infinite;
+}
+
+.landing-button-pulse {
+  animation: landing-button-pulse 3s ease-in-out infinite;
 }

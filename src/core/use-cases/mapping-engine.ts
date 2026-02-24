@@ -248,11 +248,24 @@ export function buildGroupedFieldTree(params: {
   visibleFieldCatalog: FieldCatalogItem[];
   customGroups: string[];
   searchTerm: string;
+  values?: Record<string, unknown>;
+  showUnmappedOnly?: boolean;
 }): GroupedTreeNode[] {
   const normalizedQuery = params.searchTerm.trim().toLowerCase();
   const groupedFieldMap = new Map<string, FieldCatalogItem[]>();
+  const hasMappedValue = (value: unknown) => {
+    if (value === null || value === undefined) return false;
+    if (typeof value === "string") return value.trim().length > 0;
+    if (typeof value === "number" || typeof value === "boolean") return true;
+    if (Array.isArray(value)) return value.length > 0;
+    if (typeof value === "object") return Object.keys(value as Record<string, unknown>).length > 0;
+    return false;
+  };
 
   for (const item of params.visibleFieldCatalog) {
+    if (params.showUnmappedOnly && hasMappedValue(params.values?.[item.field_key])) {
+      continue;
+    }
     if (normalizedQuery) {
       const inLabel = item.label_vi.toLowerCase().includes(normalizedQuery);
       const inKey = item.field_key.toLowerCase().includes(normalizedQuery);

@@ -286,5 +286,25 @@ export const docxEngine = {
     }
     return backupDir;
   },
+
+  async openFolder(relDirPath: string): Promise<string> {
+    const normalized = normalizeRelPath(relDirPath);
+    if (!normalized.startsWith("report_assets/") || normalized.includes("..")) {
+      throw new TemplateNotFoundError(relDirPath);
+    }
+    const absDir = resolveWorkspacePath(normalized);
+    await ensureDir(absDir);
+    if (process.platform === "win32") {
+      const child = spawn("explorer.exe", [absDir], { detached: true, stdio: "ignore" });
+      child.unref();
+    } else if (process.platform === "darwin") {
+      const child = spawn("open", [absDir], { detached: true, stdio: "ignore" });
+      child.unref();
+    } else {
+      const child = spawn("xdg-open", [absDir], { detached: true, stdio: "ignore" });
+      child.unref();
+    }
+    return absDir;
+  },
 };
 

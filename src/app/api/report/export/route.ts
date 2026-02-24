@@ -11,12 +11,27 @@ export async function POST(req: NextRequest) {
       output_path?: string;
       report_path?: string;
       template_path?: string;
+      export_mode?: string;
+      output_dir?: string;
+      group_key?: string;
+      repeat_key?: string;
+      customer_name_key?: string;
     };
-    const result = await reportService.runReportExport({
-      outputPath: body.output_path,
-      reportPath: body.report_path,
-      templatePath: body.template_path,
-    });
+    const result =
+      body.export_mode === "bank_grouped"
+        ? await reportService.processBankReportExport({
+            reportPath: body.report_path,
+            templatePath: body.template_path,
+            outputDir: body.output_dir,
+            groupKey: body.group_key,
+            repeatKey: body.repeat_key,
+            customerNameKey: body.customer_name_key,
+          })
+        : await reportService.runReportExport({
+            outputPath: body.output_path,
+            reportPath: body.report_path,
+            templatePath: body.template_path,
+          });
 
     return NextResponse.json({
       ok: true,

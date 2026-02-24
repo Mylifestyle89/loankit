@@ -1,4 +1,4 @@
-import type { Customer } from "@generated/prisma/client";
+import type { Customer } from "@prisma/client";
 
 import { NotFoundError, ValidationError } from "@/core/errors/app-error";
 import { prisma } from "@/lib/prisma";
