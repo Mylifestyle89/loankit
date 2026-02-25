@@ -7,8 +7,11 @@ export const runtime = "nodejs";
 
 export async function POST(req: NextRequest) {
   try {
-    const body = (await req.json().catch(() => ({}))) as { run_build?: boolean };
-    const result = await reportService.validateReport({ runBuild: body.run_build === true });
+    const body = (await req.json().catch(() => ({}))) as { run_build?: boolean; mapping_instance_id?: string };
+    const result = await reportService.validateReport({
+      runBuild: body.run_build === true,
+      mappingInstanceId: body.mapping_instance_id,
+    });
     return NextResponse.json({
       ok: true,
       source: result.source,

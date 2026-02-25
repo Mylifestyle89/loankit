@@ -56,6 +56,14 @@ export async function POST(req: NextRequest) {
     const relPath = path.relative(process.cwd(), uploadPath).replace(/\\/g, "/");
 
     const { paragraphs, suggestions } = await analyzeDocument(docxBuffer, headers, fieldLabels);
+    const normalizedSuggestions = suggestions.map((item) => ({
+      ...item,
+      originalText: item.matchedText,
+      proposedTag: `{{${item.header}}}`,
+      contextSnippet: item.matchedText.length > 240 ? `${item.matchedText.slice(0, 237)}...` : item.matchedText,
+      confidenceScore: Math.max(0, Math.min(1, item.confidence)),
+      sourceHeader: item.header,
+    }));
 
     const documentPreview = paragraphs
       .slice(0, 100)
@@ -65,7 +73,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       ok: true,
       docxPath: relPath,
-      suggestions,
+      suggestions: normalizedSuggestions,
       documentPreview,
       paragraphCount: paragraphs.length,
     });

@@ -68,7 +68,7 @@ export function DocxTemplateEditorModal({
     () => (selectedGroup ? fieldsByGroup[selectedGroup] ?? [] : []),
     [fieldsByGroup, selectedGroup],
   );
-  
+
   // Get Vietnamese label for selected field
   const selectedFieldLabel = useMemo(() => {
     if (!selectedFieldKey) return "";
@@ -104,12 +104,12 @@ export function DocxTemplateEditorModal({
         editorElementRef.current = editorElement;
       }
     };
-    
+
     // Try immediately and also after delays to catch async mounting
     findEditorElement();
     const timeout1 = setTimeout(findEditorElement, 300);
     const timeout2 = setTimeout(findEditorElement, 1000);
-    
+
     return () => {
       clearTimeout(timeout1);
       clearTimeout(timeout2);
@@ -118,18 +118,18 @@ export function DocxTemplateEditorModal({
 
   async function insertPlaceholder() {
     if (!selectedFieldKey || !selectedFieldLabel) return;
-    
+
     const placeholder = `[${selectedFieldLabel}]`;
-    
+
     // Focus editor first
     editorRef.current?.focus();
-    
+
     // Wait a bit for focus to take effect
     await new Promise((resolve) => setTimeout(resolve, 100));
-    
+
     // Try multiple approaches to insert text
     let inserted = false;
-    
+
     // Approach 1: Use Selection API if there's an active selection
     const selection = window.getSelection();
     if (selection && selection.rangeCount > 0) {
@@ -148,7 +148,7 @@ export function DocxTemplateEditorModal({
         // Try next insertion strategy
       }
     }
-    
+
     // Approach 2: Try execCommand (works in most browsers)
     if (!inserted) {
       try {
@@ -160,12 +160,12 @@ export function DocxTemplateEditorModal({
         // Try next insertion strategy
       }
     }
-    
+
     // Approach 3: Find contenteditable element and insert
     if (!inserted) {
-      const editorElement = editorElementRef.current || 
+      const editorElement = editorElementRef.current ||
         (document.querySelector('[contenteditable="true"]') as HTMLElement);
-      
+
       if (editorElement) {
         editorElement.focus();
         try {
@@ -178,7 +178,7 @@ export function DocxTemplateEditorModal({
         }
       }
     }
-    
+
     // Fallback: copy to clipboard if all else fails
     if (!inserted) {
       await navigator.clipboard.writeText(placeholder);

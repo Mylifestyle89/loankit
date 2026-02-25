@@ -4,6 +4,7 @@ import path from "node:path";
 import { z } from "zod";
 
 import { REPORT_FIELD_FORMULAS_FILE } from "@/lib/report/constants";
+import { fileLockService } from "@/lib/report/file-lock.service";
 
 const fieldFormulasSchema = z.record(z.string(), z.string());
 
@@ -20,7 +21,12 @@ export async function loadFieldFormulas(): Promise<FieldFormulas> {
 
 export async function saveFieldFormulas(formulas: FieldFormulas): Promise<FieldFormulas> {
   const parsed = fieldFormulasSchema.parse(formulas);
+  await fileLockService.acquireLock("report_assets");
+  try {
   await fs.mkdir(path.dirname(REPORT_FIELD_FORMULAS_FILE), { recursive: true });
   await fs.writeFile(REPORT_FIELD_FORMULAS_FILE, JSON.stringify(parsed, null, 2), "utf-8");
+  } finally {
+    await fileLockService.releaseLock("report_assets");
+  }
   return parsed;
 }

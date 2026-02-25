@@ -27,6 +27,7 @@ import {
   translateFieldLabelVi,
   translateGroupVi,
 } from "@/lib/report/field-labels";
+import { fileLockService } from "@/lib/report/file-lock.service";
 
 const nowIso = () => new Date().toISOString();
 
@@ -78,7 +79,12 @@ async function readJsonFile<T>(filePath: string): Promise<T> {
 }
 
 async function writeJsonFile(filePath: string, data: unknown): Promise<void> {
-  await fs.writeFile(filePath, JSON.stringify(data, null, 2), "utf-8");
+  await fileLockService.acquireLock("report_assets");
+  try {
+    await fs.writeFile(filePath, JSON.stringify(data, null, 2), "utf-8");
+  } finally {
+    await fileLockService.releaseLock("report_assets");
+  }
 }
 
 export async function readMappingFile(mappingPath: string): Promise<MappingMaster> {
@@ -176,6 +182,8 @@ export async function loadState(): Promise<FrameworkState> {
 }
 
 export async function saveState(state: FrameworkState): Promise<void> {
+  await fileLockService.acquireLock("report_assets");
+  try {
   await ensureDirectories();
   const parsed = frameworkStateSchema.parse(state);
   const nextRaw = JSON.stringify(parsed, null, 2);
@@ -201,6 +209,9 @@ export async function saveState(state: FrameworkState): Promise<void> {
   }
 
   await fs.writeFile(REPORT_STATE_FILE, nextRaw, "utf-8");
+  } finally {
+    await fileLockService.releaseLock("report_assets");
+  }
 }
 
 export async function createMappingDraft(params: {

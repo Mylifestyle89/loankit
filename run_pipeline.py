@@ -3,6 +3,7 @@ import json
 from pathlib import Path
 
 from report_pipeline.builder import build_report_draft
+from report_pipeline.utils import FileLockManager
 from report_pipeline.validator import validate_report
 
 
@@ -43,14 +44,19 @@ def main() -> None:
     draft_flat_file = output_dir / "report_draft_flat.json"
     validation_file = output_dir / "validation_report.json"
 
-    draft_file.write_text(json.dumps(output, ensure_ascii=False, indent=2), encoding="utf-8")
-    draft_flat_file.write_text(
-        json.dumps(output.get("report_draft_flat", {}), ensure_ascii=False, indent=2),
-        encoding="utf-8",
-    )
-    validation_file.write_text(
-        json.dumps(validation, ensure_ascii=False, indent=2), encoding="utf-8"
-    )
+    lock_manager = FileLockManager(root_dir=root)
+    lock_manager.acquire_lock("report_assets")
+    try:
+        draft_file.write_text(json.dumps(output, ensure_ascii=False, indent=2), encoding="utf-8")
+        draft_flat_file.write_text(
+            json.dumps(output.get("report_draft_flat", {}), ensure_ascii=False, indent=2),
+            encoding="utf-8",
+        )
+        validation_file.write_text(
+            json.dumps(validation, ensure_ascii=False, indent=2), encoding="utf-8"
+        )
+    finally:
+        lock_manager.release_lock("report_assets")
 
     summary = output.get("meta", {}).get("summary", {})
     print("=== Pipeline Completed ===")

@@ -24,30 +24,6 @@ function normalizeText(input: string): string {
     .trim();
 }
 
-function shouldUseBankGroupedExport(mappingText: string): boolean {
-  try {
-    const parsed = JSON.parse(mappingText) as {
-      mappings?: Array<{ template_field?: string }>;
-    };
-    const placeholders = (parsed.mappings ?? [])
-      .map((item) => (typeof item.template_field === "string" ? item.template_field.trim() : ""))
-      .filter(Boolean);
-    if (placeholders.length === 0) return false;
-
-    const normalized = placeholders.map((p) => normalizeText(p));
-    const hasContractKey = normalized.some(
-      (p) => p === "hdtd" || p.includes("hop dong tin dung") || p.includes("so hdtd"),
-    );
-    if (!hasContractKey) return false;
-
-    const detailHints = ["so giai ngan", "lai suat cu", "lai suat moi", "ngay dieu chinh"];
-    const matchedDetailCount = detailHints.filter((hint) => normalized.some((p) => p.includes(hint))).length;
-    return matchedDetailCount >= 1;
-  } catch {
-    return false;
-  }
-}
-
 type SmartAutoBatchInput = {
   excelPath: string;
   templatePath: string;
@@ -68,9 +44,9 @@ type UseMappingApiParams = {
   formulas: Record<string, string>;
   selectedCustomerId: string;
   selectedFieldTemplateId: string;
+  selectedMappingInstanceId?: string;
   setLoading: Dispatch<SetStateAction<boolean>>;
   setSaving: Dispatch<SetStateAction<boolean>>;
-  setExportingDocx: Dispatch<SetStateAction<boolean>>;
   setError: Dispatch<SetStateAction<string>>;
   setMessage: Dispatch<SetStateAction<string>>;
   setValidation: Dispatch<SetStateAction<ValidationResponse["validation"] | undefined>>;
@@ -82,7 +58,6 @@ type UseMappingApiParams = {
   setAutoValues: Dispatch<SetStateAction<Record<string, unknown>>>;
   setValues: Dispatch<SetStateAction<Record<string, unknown>>>;
   setManualValues: Dispatch<SetStateAction<Record<string, string | number | boolean | null>>>;
-  setLastExportedDocxPath: Dispatch<SetStateAction<string>>;
   setFormulas: Dispatch<SetStateAction<Record<string, string>>>;
 };
 
@@ -96,9 +71,9 @@ export function useMappingApi({
   formulas,
   selectedCustomerId,
   selectedFieldTemplateId,
+  selectedMappingInstanceId,
   setLoading,
   setSaving,
-  setExportingDocx,
   setError,
   setMessage,
   setValidation,
@@ -110,7 +85,6 @@ export function useMappingApi({
   setAutoValues,
   setValues,
   setManualValues,
-  setLastExportedDocxPath,
   setFormulas,
 }: UseMappingApiParams) {
   const suggestMappingFromHeaders = useCallback(
@@ -206,7 +180,10 @@ export function useMappingApi({
   const loadData = useCallback(async () => {
     setLoading(true);
     setError("");
-    const res = await fetch("/api/report/mapping", { cache: "no-store" });
+    const query = selectedMappingInstanceId
+      ? `?mapping_instance_id=${encodeURIComponent(selectedMappingInstanceId)}`
+      : "";
+    const res = await fetch(`/api/report/mapping${query}`, { cache: "no-store" });
     const data = (await res.json()) as MappingApiResponse;
     if (!data.ok) {
       setError(data.error ?? t("mapping.err.loadData"));
@@ -219,7 +196,17 @@ export function useMappingApi({
     setAliasText(JSON.stringify(data.alias_map ?? {}, null, 2));
     await loadFieldValues();
     setLoading(false);
-  }, [loadFieldValues, setActiveVersionId, setAliasText, setError, setLoading, setMappingText, setVersions, t]);
+  }, [
+    loadFieldValues,
+    selectedMappingInstanceId,
+    setActiveVersionId,
+    setAliasText,
+    setError,
+    setLoading,
+    setMappingText,
+    setVersions,
+    t,
+  ]);
 
   const saveDraft = useCallback(async () => {
     setSaving(true);
@@ -255,6 +242,7 @@ export function useMappingApi({
           mapping,
           alias_map,
           field_catalog: normalizedCatalog,
+          mapping_instance_id: selectedMappingInstanceId || undefined,
         }),
       });
       const data = (await res.json()) as MappingApiResponse;
@@ -263,11 +251,11 @@ export function useMappingApi({
       }
 
       if (selectedCustomerId && selectedFieldTemplateId) {
-        await fetch("/api/report/field-templates", {
+        await fetch("/api/report/master-templates", {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            template_id: selectedFieldTemplateId,
+            master_id: selectedFieldTemplateId,
             field_catalog: normalizedCatalog,
           }),
         });
@@ -311,7 +299,10 @@ export function useMappingApi({
         const validateRes = await fetch("/api/report/validate", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ run_build: true }),
+          body: JSON.stringify({
+            run_build: true,
+            mapping_instance_id: selectedMappingInstanceId || undefined,
+          }),
         });
         const validateData = (await validateRes.json()) as ValidationResponse;
         if (validateData.ok) {
@@ -338,6 +329,7 @@ export function useMappingApi({
     mappingText,
     selectedCustomerId,
     selectedFieldTemplateId,
+    selectedMappingInstanceId,
     setError,
     setMessage,
     setSaving,
@@ -345,56 +337,6 @@ export function useMappingApi({
     t,
     values,
   ]);
-
-  const exportAndOpenDocx = useCallback(async () => {
-    setExportingDocx(true);
-    setError("");
-    setMessage("");
-    const timestamp = Date.now();
-    const outputPath = `report_assets/report_preview_editor_${timestamp}.docx`;
-    const reportPath = `report_assets/template_export_report_editor_${timestamp}.json`;
-    const useBankGroupedExport = shouldUseBankGroupedExport(mappingText);
-    const res = await fetch("/api/report/export", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        ...(useBankGroupedExport ? {} : { output_path: outputPath }),
-        report_path: reportPath,
-        ...(useBankGroupedExport
-          ? {
-              export_mode: "bank_grouped",
-              output_dir: `report_assets/exports/bank-rate-notices-${timestamp}`,
-              group_key: "HĐTD",
-              repeat_key: "items",
-              customer_name_key: "TÊN KH",
-            }
-          : {}),
-      }),
-    });
-    const data = (await res.json()) as {
-      ok: boolean;
-      error?: string;
-      output_path?: string;
-      output_paths?: string[];
-      report?: { total_files?: number };
-    };
-    if (!data.ok) {
-      setError(data.error ?? t("mapping.err.exportDocx"));
-      setExportingDocx(false);
-      return;
-    }
-    const filePath = data.output_path ?? data.output_paths?.[0] ?? outputPath;
-    const totalFiles = data.output_paths?.length ?? data.report?.total_files ?? (data.output_path ? 1 : 0);
-    setLastExportedDocxPath(filePath);
-    setMessage(
-      useBankGroupedExport
-        ? `Đã xuất ${totalFiles} DOCX theo HĐTD. Đang mở file đầu tiên...`
-        : t("mapping.msg.exportDocxDone"),
-    );
-    const openUrl = `/api/report/file?path=${encodeURIComponent(filePath)}&download=0&ts=${Date.now()}`;
-    window.open(openUrl, "_blank", "noopener,noreferrer");
-    setExportingDocx(false);
-  }, [mappingText, setError, setExportingDocx, setLastExportedDocxPath, setMessage, t]);
 
   const getAutoProcessAssets = useCallback(async () => {
     const res = await fetch("/api/report/auto-process/assets", { cache: "no-store" });
@@ -494,7 +436,6 @@ export function useMappingApi({
     loadData,
     loadFieldValues,
     saveDraft,
-    exportAndOpenDocx,
     suggestMappingFromHeaders,
     getAutoProcessAssets,
     uploadAutoProcessFile,

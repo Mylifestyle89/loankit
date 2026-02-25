@@ -2,6 +2,7 @@ import type { Dispatch, SetStateAction } from "react";
 import type { DragEndEvent, SensorDescriptor, SensorOptions } from "@dnd-kit/core";
 import type { FieldCatalogItem } from "@/lib/report/config-schema";
 import type { TypeLabelMap } from "../helpers";
+import type { OcrSuggestionMap } from "../types";
 import { EditingTemplateBanner } from "./EditingTemplateBanner";
 import { FieldCatalogBoard } from "./FieldCatalogBoard";
 
@@ -20,8 +21,9 @@ type MappingVisualSectionProps = {
   saveEditedFieldTemplate: () => void;
   setEditingFieldTemplateName: Dispatch<SetStateAction<string>>;
   stopEditingFieldTemplate: () => void;
-  openBackupFolder: () => void;
+  openImportBackupModal: () => void;
   openImportGroupModal: () => void;
+  openDeleteGenericTemplateModal: () => void;
   sensors: SensorDescriptor<SensorOptions>[];
   handleDragEnd: (event: DragEndEvent) => void;
   groupedFieldTree: GroupedTreeNode[];
@@ -52,6 +54,9 @@ type MappingVisualSectionProps = {
   onOpenFormulaModal: (fieldKey: string) => void;
   confidenceByField: Record<string, number>;
   sampleByField: Record<string, string>;
+  ocrSuggestionsByField: OcrSuggestionMap;
+  onAcceptOcrSuggestion: (fieldKey: string) => void;
+  onDeclineOcrSuggestion: (fieldKey: string) => void;
 };
 
 export function MappingVisualSection({
@@ -65,8 +70,9 @@ export function MappingVisualSection({
   savingEditedTemplate,
   saveEditedFieldTemplate,
   stopEditingFieldTemplate,
-  openBackupFolder,
+  openImportBackupModal,
   openImportGroupModal,
+  openDeleteGenericTemplateModal,
   sensors,
   handleDragEnd,
   groupedFieldTree,
@@ -96,6 +102,9 @@ export function MappingVisualSection({
   onOpenFormulaModal,
   confidenceByField,
   sampleByField,
+  ocrSuggestionsByField,
+  onAcceptOcrSuggestion,
+  onDeclineOcrSuggestion,
 }: MappingVisualSectionProps) {
   return (
     <section className="space-y-4">
@@ -107,8 +116,9 @@ export function MappingVisualSection({
         saveEditedFieldTemplate={saveEditedFieldTemplate}
         savingEditedTemplate={savingEditedTemplate}
         stopEditingFieldTemplate={stopEditingFieldTemplate}
-        openBackupFolder={openBackupFolder}
+        openImportBackupModal={openImportBackupModal}
         openImportGroupModal={openImportGroupModal}
+        openDeleteGenericTemplateModal={openDeleteGenericTemplateModal}
       />
 
       <FieldCatalogBoard
@@ -145,6 +155,9 @@ export function MappingVisualSection({
         onOpenFormulaModal={onOpenFormulaModal}
         confidenceByField={confidenceByField}
         sampleByField={sampleByField}
+        ocrSuggestionsByField={ocrSuggestionsByField}
+        onAcceptOcrSuggestion={onAcceptOcrSuggestion}
+        onDeclineOcrSuggestion={onDeclineOcrSuggestion}
       />
     </section>
   );

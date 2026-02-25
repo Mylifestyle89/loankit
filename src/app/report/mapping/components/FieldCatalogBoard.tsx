@@ -3,9 +3,11 @@ import { motion } from "framer-motion";
 import { DndContext, closestCenter, type DragEndEvent, type SensorDescriptor, type SensorOptions } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
+import { Group, Panel, Separator } from "react-resizable-panels";
 import type { FieldCatalogItem } from "@/lib/report/config-schema";
 import type { TypeLabelMap } from "../helpers";
 import { FieldRow } from "./FieldRow";
+import type { OcrSuggestionMap } from "../types";
 
 type GroupedTreeNode = {
   parent: string;
@@ -46,6 +48,9 @@ type FieldCatalogBoardProps = {
   onOpenFormulaModal: (fieldKey: string) => void;
   confidenceByField: Record<string, number>;
   sampleByField: Record<string, string>;
+  ocrSuggestionsByField: OcrSuggestionMap;
+  onAcceptOcrSuggestion: (fieldKey: string) => void;
+  onDeclineOcrSuggestion: (fieldKey: string) => void;
 };
 
 export function FieldCatalogBoard({
@@ -82,6 +87,9 @@ export function FieldCatalogBoard({
   onOpenFormulaModal,
   confidenceByField,
   sampleByField,
+  ocrSuggestionsByField,
+  onAcceptOcrSuggestion,
+  onDeclineOcrSuggestion,
 }: FieldCatalogBoardProps) {
   return (
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd} modifiers={[restrictToVerticalAxis]}>
@@ -90,71 +98,89 @@ export function FieldCatalogBoard({
         initial={{ opacity: 0.35 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.22, ease: "easeOut" }}
-        className="grid min-h-[320px] grid-cols-1 overflow-hidden rounded-xl border border-zinc-200 bg-white/90 shadow-sm md:grid-cols-[260px_1fr]"
+        className="overflow-hidden rounded-xl border border-zinc-200 bg-white/90 shadow-sm"
+        style={{ height: "calc(100vh - 220px)", minHeight: 420 }}
       >
-        {/* Left column: Group chips */}
-        <div className="min-w-0 max-h-[calc(100vh-250px)] overflow-y-auto overflow-x-hidden pr-2 flex flex-col gap-2 border-r border-zinc-200 bg-zinc-50/80 p-3">
-          <div className="flex items-center gap-1.5 pb-2 text-xs font-semibold uppercase tracking-wide text-zinc-500">
-            <span>{t("mapping.column.field")}</span>
-            <button
-              type="button"
-              onClick={collapseAllGroups}
-              disabled={parentGroups.length === 0 || collapsedParentGroups.length === parentGroups.length}
-              className="rounded-lg border border-zinc-300 bg-white p-1 text-zinc-600 transition-colors hover:bg-indigo-50 hover:border-indigo-300 disabled:opacity-40"
-              title={t("mapping.collapseAllGroups")}
-            >
-              <ChevronsUp className="h-3 w-3" />
-            </button>
-            <button
-              type="button"
-              onClick={expandAllGroups}
-              disabled={collapsedParentGroups.length === 0}
-              className="rounded-lg border border-zinc-300 bg-white p-1 text-zinc-600 transition-colors hover:bg-indigo-50 hover:border-indigo-300 disabled:opacity-40"
-              title={t("mapping.expandAllGroups")}
-            >
-              <ChevronsDown className="h-3 w-3" />
-            </button>
-          </div>
+        <Group orientation="horizontal" className="h-full min-h-0 w-full">
+          {/* Left column: Group chips */}
+          <Panel defaultSize="230px" minSize="180px" maxSize="42%" className="min-w-0">
+            <div className="min-w-0 h-full min-h-0 flex flex-col border-r border-zinc-200 bg-zinc-50/80">
+              {/* Sticky header */}
+              <div className="shrink-0 flex items-center gap-1.5 border-b border-zinc-200/70 bg-zinc-50/95 px-2.5 py-2 text-xs font-semibold uppercase tracking-wide text-zinc-500 backdrop-blur-sm">
+                <span className="flex-1 truncate">{t("mapping.column.field")}</span>
+                <button
+                  type="button"
+                  onClick={collapseAllGroups}
+                  disabled={parentGroups.length === 0 || collapsedParentGroups.length === parentGroups.length}
+                  className="rounded-md border border-zinc-200 bg-white p-1 text-zinc-500 transition-colors hover:bg-indigo-50 hover:border-indigo-300 hover:text-indigo-600 disabled:opacity-30"
+                  title={t("mapping.collapseAllGroups")}
+                >
+                  <ChevronsUp className="h-3 w-3" />
+                </button>
+                <button
+                  type="button"
+                  onClick={expandAllGroups}
+                  disabled={collapsedParentGroups.length === 0}
+                  className="rounded-md border border-zinc-200 bg-white p-1 text-zinc-500 transition-colors hover:bg-indigo-50 hover:border-indigo-300 hover:text-indigo-600 disabled:opacity-30"
+                  title={t("mapping.expandAllGroups")}
+                >
+                  <ChevronsDown className="h-3 w-3" />
+                </button>
+              </div>
 
-          {groupedFieldTree.length === 0 ? null : (
-            <div className="flex flex-wrap gap-1.5">
-              {groupedFieldTree.map((node) => (
-                <div key={node.parent} className="flex flex-col gap-1">
-                  <div className="flex items-center gap-1">
-                    <button
-                      type="button"
-                      onClick={() => toggleParentCollapse(node.parent)}
-                      className="inline-flex flex-1 items-center gap-1.5 rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-xs font-medium text-indigo-800 transition-colors hover:bg-indigo-100"
-                    >
-                      {collapsedParentGroups.includes(node.parent) ? <ChevronDown className="h-3 w-3" /> : <ChevronUp className="h-3 w-3" />}
-                      <span className="truncate">{node.parent}</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => openCreateSubgroupModal(node.parent)}
-                      className="rounded-full p-1.5 text-zinc-500 transition-colors hover:bg-indigo-100 hover:text-indigo-700"
-                      title={t("mapping.addSubgroup")}
-                    >
-                      <Plus className="h-3 w-3" />
-                    </button>
-                  </div>
-                  {!collapsedParentGroups.includes(node.parent)
-                    ? node.children.map((child) => (
-                        <div key={child.fullPath} className="flex flex-wrap gap-1 pl-2">
-                          <span className="rounded-full border border-zinc-200 bg-white px-2.5 py-1 text-[11px] font-medium text-zinc-600">
-                            {child.subgroup || t("mapping.groupPathRoot")}
-                          </span>
-                        </div>
-                      ))
-                    : null}
+              {/* Scrollable group list */}
+              <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-2.5">
+              {groupedFieldTree.length === 0 ? null : (
+                <div className="flex flex-wrap gap-1.5">
+                  {groupedFieldTree.map((node) => (
+                    <div key={node.parent} className="flex flex-col gap-1">
+                      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => toggleParentCollapse(node.parent)}
+                          title={node.parent}
+                          className="inline-flex flex-1 min-w-0 items-center gap-1 rounded-lg border border-indigo-200 bg-indigo-50 px-2 py-1 text-[11px] font-medium text-indigo-800 transition-colors hover:bg-indigo-100"
+                        >
+                          {collapsedParentGroups.includes(node.parent) ? <ChevronDown className="h-3 w-3 shrink-0" /> : <ChevronUp className="h-3 w-3 shrink-0" />}
+                          <span className="truncate">{node.parent}</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => openCreateSubgroupModal(node.parent)}
+                          className="shrink-0 rounded-md border border-zinc-200 bg-white p-1.5 text-zinc-500 transition-colors hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-700"
+                          title={t("mapping.addSubgroup")}
+                        >
+                          <Plus className="h-3 w-3" />
+                        </button>
+                      </div>
+                      {!collapsedParentGroups.includes(node.parent)
+                        ? node.children.map((child) => (
+                            <div key={child.fullPath} className="flex flex-wrap gap-1 pl-2">
+                              <span className="rounded-full border border-zinc-200 bg-white px-2.5 py-1 text-[11px] font-medium text-zinc-600">
+                                {child.subgroup || t("mapping.groupPathRoot")}
+                              </span>
+                            </div>
+                          ))
+                        : null}
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
+              )}
+              </div>{/* end scrollable group list */}
+            </div>{/* end left column */}
+          </Panel>
 
-        {/* Right column: Field chips */}
-        <div className="min-w-0 max-h-[calc(100vh-250px)] overflow-y-auto overflow-x-hidden pr-2 p-3">
+          <Separator
+            className="group relative hidden w-3 shrink-0 cursor-col-resize items-center justify-center bg-transparent outline-none md:flex"
+            aria-label="Resize panels"
+          >
+            <div className="h-full w-px rounded-full bg-slate-200/70 transition-colors group-hover:bg-indigo-300/80 group-focus-visible:bg-indigo-400 group-data-[resize-handle-state=drag]:bg-indigo-500" />
+            <div className="pointer-events-none absolute inset-y-0 left-1/2 w-2 -translate-x-1/2 rounded-full bg-indigo-100/0 transition-colors group-hover:bg-indigo-100/70 group-focus-visible:bg-indigo-100/80 group-data-[resize-handle-state=drag]:bg-indigo-200/80" />
+          </Separator>
+
+          {/* Right column: Field chips */}
+          <Panel minSize="58%" className="min-w-0">
+            <div className="min-w-0 h-full min-h-0 overflow-y-auto overflow-x-hidden p-3">
         {groupedFieldTree.length === 0 ? (
           <div className="flex h-full flex-col items-center justify-center py-16 text-center">
             {!hasContext ? (
@@ -188,15 +214,15 @@ export function FieldCatalogBoard({
             {!collapsedParentGroups.includes(node.parent)
               ? node.children.map((child) => (
                   <div key={child.fullPath} className="space-y-2">
-                    <div className="group/group-header flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-slate-200/60 bg-slate-50/70 p-2">
                       <span className="rounded-full bg-indigo-100 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-indigo-700">
                         {child.subgroup || t("mapping.groupPathRoot")}
                       </span>
-                      <div className="flex items-center gap-1 opacity-0 transition-opacity group-hover/group-header:opacity-100">
+                      <div className="flex flex-wrap items-center gap-1.5">
                         <button
                           type="button"
                           onClick={() => toggleRepeaterGroup(child.fullPath)}
-                          className={`flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium transition-colors ${child.fields.some((f) => f.is_repeater) ? "bg-amber-100 text-amber-800 hover:bg-amber-200" : "text-zinc-500 hover:bg-amber-100 hover:text-amber-800"}`}
+                          className={`inline-flex items-center gap-1 rounded-lg border px-2 py-1 text-[11px] font-medium transition-colors ${child.fields.some((f) => f.is_repeater) ? "border-amber-200 bg-amber-100 text-amber-800 hover:bg-amber-200" : "border-zinc-200 bg-white text-zinc-600 hover:border-amber-300 hover:bg-amber-50 hover:text-amber-800"}`}
                           title="Chuyển đổi thành nhóm lặp (Repeater)"
                         >
                           <Layers className="h-3 w-3" />
@@ -205,7 +231,7 @@ export function FieldCatalogBoard({
                         <button
                           type="button"
                           onClick={() => prepareAddFieldForGroup(child.fullPath)}
-                          className="rounded-full px-1.5 py-0.5 text-[11px] font-medium text-zinc-500 transition-colors hover:bg-indigo-100 hover:text-indigo-800"
+                          className="inline-flex items-center gap-1 rounded-lg border border-zinc-200 bg-white px-2 py-1 text-[11px] font-medium text-zinc-600 transition-colors hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-800"
                         >
                           <Plus className="h-3 w-3" />
                           {t("mapping.addField")}
@@ -213,7 +239,7 @@ export function FieldCatalogBoard({
                         <button
                           type="button"
                           onClick={() => openEditGroupModal(child.fullPath)}
-                          className="rounded-full px-1.5 py-0.5 text-[11px] font-medium text-zinc-500 transition-colors hover:bg-indigo-100 hover:text-indigo-800"
+                          className="inline-flex items-center gap-1 rounded-lg border border-zinc-200 bg-white px-2 py-1 text-[11px] font-medium text-zinc-600 transition-colors hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-800"
                         >
                           <Pencil className="h-3 w-3" />
                           {t("mapping.editGroup")}
@@ -221,7 +247,7 @@ export function FieldCatalogBoard({
                         <button
                           type="button"
                           onClick={() => onDeleteGroup(child.fullPath)}
-                          className="rounded-full px-1.5 py-0.5 text-[11px] font-medium text-rose-500 transition-colors hover:bg-rose-100 hover:text-rose-700"
+                          className="inline-flex items-center gap-1 rounded-lg border border-rose-200/70 bg-rose-50/60 px-2 py-1 text-[11px] font-medium text-rose-600 transition-colors hover:bg-rose-100 hover:text-rose-700"
                         >
                           <Trash2 className="h-3 w-3" />
                           {t("mapping.deleteGroup")}
@@ -277,6 +303,9 @@ export function FieldCatalogBoard({
                                       valueReadOnly={field.is_repeater && field.label_vi.trim().toUpperCase() === "STT"}
                                       confidenceScore={confidenceByField[field.field_key] ?? 0}
                                       sampleData={sampleByField[field.field_key] ?? ""}
+                                      ocrSuggestion={ocrSuggestionsByField[field.field_key]}
+                                      onAcceptOcrSuggestion={onAcceptOcrSuggestion}
+                                      onDeclineOcrSuggestion={onDeclineOcrSuggestion}
                                     />
                                   </div>
                                 ))}
@@ -334,6 +363,9 @@ export function FieldCatalogBoard({
                                   onOpenFormula={() => onOpenFormulaModal(field.field_key)}
                                   confidenceScore={confidenceByField[field.field_key] ?? 0}
                                   sampleData={sampleByField[field.field_key] ?? ""}
+                                  ocrSuggestion={ocrSuggestionsByField[field.field_key]}
+                                  onAcceptOcrSuggestion={onAcceptOcrSuggestion}
+                                  onDeclineOcrSuggestion={onDeclineOcrSuggestion}
                                 />
                               </div>
                             );
@@ -346,7 +378,9 @@ export function FieldCatalogBoard({
               : null}
           </div>
         ))}
-        </div>
+            </div>
+          </Panel>
+        </Group>
       </motion.div>
     </DndContext>
   );

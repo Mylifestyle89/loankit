@@ -11,12 +11,6 @@ import { ImportTemplateGroupModal } from "./Modals/ImportTemplateGroupModal";
 import type { FieldTemplateItem } from "../types";
 
 type MappingModalsProps = {
-  creatingFieldTemplate: boolean;
-  closeCreateFieldTemplateModal: () => void;
-  newFieldTemplateName: string;
-  setNewFieldTemplateName: Dispatch<SetStateAction<string>>;
-  saveFieldTemplate: () => void;
-  savingFieldTemplate: boolean;
   editingFieldTemplatePicker: boolean;
   closeEditFieldTemplatePicker: () => void;
   editPickerTemplateId: string;
@@ -83,12 +77,6 @@ type MappingModalsProps = {
 };
 
 export function MappingModals({
-  creatingFieldTemplate,
-  closeCreateFieldTemplateModal,
-  newFieldTemplateName,
-  setNewFieldTemplateName,
-  saveFieldTemplate,
-  savingFieldTemplate,
   editingFieldTemplatePicker,
   closeEditFieldTemplatePicker,
   editPickerTemplateId,
@@ -179,12 +167,6 @@ export function MappingModals({
       />
 
       <FieldTemplateModals
-        creatingFieldTemplate={creatingFieldTemplate}
-        closeCreateFieldTemplateModal={closeCreateFieldTemplateModal}
-        newFieldTemplateName={newFieldTemplateName}
-        setNewFieldTemplateName={setNewFieldTemplateName}
-        saveFieldTemplate={saveFieldTemplate}
-        savingFieldTemplate={savingFieldTemplate}
         editingFieldTemplatePicker={editingFieldTemplatePicker}
         closeEditFieldTemplatePicker={closeEditFieldTemplatePicker}
         editPickerTemplateId={editPickerTemplateId}

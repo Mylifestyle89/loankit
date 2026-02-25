@@ -1,5 +1,5 @@
 import { memo, useMemo, useRef, useState } from "react";
-import { Pencil, Trash2, GripVertical, FunctionSquare } from "lucide-react";
+import { Pencil, Trash2, GripVertical, FunctionSquare, Check, X } from "lucide-react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import type { FieldCatalogItem } from "@/lib/report/config-schema";
@@ -42,6 +42,9 @@ export type FieldRowProps = {
     onOpenFormula?: () => void;
     sampleData?: string;
     confidenceScore?: number;
+    ocrSuggestion?: { proposedValue: string; confidenceScore: number; status: "pending" | "accepted" | "declined" };
+    onAcceptOcrSuggestion?: (fieldKey: string) => void;
+    onDeclineOcrSuggestion?: (fieldKey: string) => void;
 };
 
 export const FieldRow = memo(function FieldRow({
@@ -68,6 +71,9 @@ export const FieldRow = memo(function FieldRow({
     onOpenFormula,
     sampleData = "",
     confidenceScore = 0,
+    ocrSuggestion,
+    onAcceptOcrSuggestion,
+    onDeclineOcrSuggestion,
 }: FieldRowProps) {
     const sortableId = dndId || field.field_key;
     const {
@@ -192,8 +198,10 @@ export const FieldRow = memo(function FieldRow({
             />
         );
 
+    const hasPendingOcr = ocrSuggestion?.status === "pending";
+
     return (
-        <div ref={setNodeRef} style={style} className={`group min-w-0 grid grid-cols-1 gap-2 border-t border-coral-tree-100 px-3 py-2 text-sm transition-colors md:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)_minmax(110px,140px)_auto] ${isDragging ? "bg-coral-tree-50 opacity-80 shadow-md ring-1 ring-coral-tree-300" : "bg-white hover:bg-coral-tree-50"}`}>
+        <div ref={setNodeRef} style={style} className={`group min-w-0 grid grid-cols-1 gap-2 border-t border-coral-tree-100 px-3 py-2 text-sm transition-colors md:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)_minmax(110px,140px)_auto] ${isDragging ? "bg-coral-tree-50 opacity-80 shadow-md ring-1 ring-coral-tree-300" : hasPendingOcr ? "bg-amber-50/60 hover:bg-amber-50/80" : "bg-white hover:bg-coral-tree-50"}`}>
             <div className="flex min-w-0 items-start gap-2 pt-0.5">
                 <div className="mt-1 flex flex-col gap-0 opacity-0 transition-opacity group-hover:opacity-100">
                     <button
@@ -222,13 +230,12 @@ export const FieldRow = memo(function FieldRow({
                             Sample Data: {sampleData || "—"}
                         </p>
                         <span
-                            className={`inline-flex flex-shrink-0 items-center rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${
-                                confidenceScore >= 90
+                            className={`inline-flex flex-shrink-0 items-center rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${confidenceScore >= 90
                                     ? "bg-emerald-100 text-emerald-700"
                                     : confidenceScore >= 60
-                                      ? "bg-amber-100 text-amber-700"
-                                      : "bg-rose-100 text-rose-700"
-                            }`}
+                                        ? "bg-amber-100 text-amber-700"
+                                        : "bg-rose-100 text-rose-700"
+                                }`}
                             title="Confidence Score (heuristic)"
                         >
                             {confidenceScore}%
@@ -236,7 +243,32 @@ export const FieldRow = memo(function FieldRow({
                     </div>
                 </div>
             </div>
-            <div className="min-w-0 w-full pt-1">{valueInput}</div>
+            <div className="min-w-0 w-full pt-1">
+                {valueInput}
+                {hasPendingOcr ? (
+                    <div className="mt-1 flex flex-wrap items-center gap-1.5 px-1">
+                        <span className="rounded-full border border-amber-200 bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-700">
+                            Pending Review ({Math.round((ocrSuggestion?.confidenceScore ?? 0) * 100)}%)
+                        </span>
+                        <button
+                            type="button"
+                            onClick={() => onAcceptOcrSuggestion?.(field.field_key)}
+                            className="inline-flex items-center gap-1 rounded-md border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 transition-colors hover:bg-emerald-100"
+                        >
+                            <Check className="h-3 w-3" />
+                            Accept Suggestion
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => onDeclineOcrSuggestion?.(field.field_key)}
+                            className="inline-flex items-center gap-1 rounded-md border border-rose-200 bg-rose-50 px-2 py-0.5 text-[10px] font-semibold text-rose-700 transition-colors hover:bg-rose-100"
+                        >
+                            <X className="h-3 w-3" />
+                            Decline
+                        </button>
+                    </div>
+                ) : null}
+            </div>
             <div className="min-w-0 w-full pt-1">
                 <select
                     value={toBusinessType(field.type)}

@@ -1,6 +1,7 @@
 import { useCallback, useState } from "react";
 
-import type { TagFormat, TagSuggestion } from "@/services/auto-tagging.service";
+import type { TagFormat } from "@/services/auto-tagging.service";
+import type { ReverseTagSuggestion } from "../types";
 
 type AutoTaggingState = {
   file: File | null;
@@ -9,7 +10,7 @@ type AutoTaggingState = {
   analyzing: boolean;
   applying: boolean;
   error: string;
-  suggestions: TagSuggestion[];
+  suggestions: ReverseTagSuggestion[];
   accepted: boolean[];
   documentPreview: string;
   resultPath: string;
@@ -80,7 +81,7 @@ export function useAutoTagging(t: (key: string) => string) {
           ok: boolean;
           error?: string;
           docxPath?: string;
-          suggestions?: TagSuggestion[];
+          suggestions?: ReverseTagSuggestion[];
           documentPreview?: string;
         };
 
@@ -92,7 +93,7 @@ export function useAutoTagging(t: (key: string) => string) {
           ...s,
           docxPath: data.docxPath ?? "",
           suggestions: data.suggestions ?? [],
-          accepted: (data.suggestions ?? []).map((sg) => sg.confidence >= 0.5),
+          accepted: (data.suggestions ?? []).map((sg) => sg.confidenceScore >= 0.5),
           documentPreview: data.documentPreview ?? "",
           analyzing: false,
         }));
@@ -126,7 +127,10 @@ export function useAutoTagging(t: (key: string) => string) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           docxPath: state.docxPath,
-          accepted: acceptedSuggestions.map(({ header, matchedText }) => ({ header, matchedText })),
+          accepted: acceptedSuggestions.map(({ sourceHeader, originalText }) => ({
+            header: sourceHeader ?? "",
+            matchedText: originalText,
+          })),
           format: state.format,
         }),
       });

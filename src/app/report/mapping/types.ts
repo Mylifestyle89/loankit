@@ -39,11 +39,50 @@ export type FieldTemplateItem = {
   assigned_customer_count?: number;
 };
 
+export type MasterTemplateItem = {
+  id: string;
+  name: string;
+  description?: string;
+  status: "active" | "archived";
+  created_at: string;
+  updated_at: string;
+  field_catalog: FieldCatalogItem[];
+  assigned_customer_count?: number;
+};
+
+export type MappingInstanceItem = {
+  id: string;
+  master_id?: string;
+  master_snapshot_name?: string;
+  field_catalog: FieldCatalogItem[];
+  customer_id: string;
+  name: string;
+  status: "draft" | "published" | "archived";
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+  published_at?: string;
+};
+
+export type ReverseTagSuggestion = {
+  originalText: string;
+  proposedTag: string;
+  contextSnippet: string;
+  confidenceScore: number;
+  paragraphIndex?: number;
+  sourceHeader?: string;
+  normalizedSignals?: string[];
+};
+
 export type FieldTemplatesResponse = {
   ok: boolean;
   error?: string;
   field_templates?: FieldTemplateItem[];
   field_template?: FieldTemplateItem;
+  master_templates?: MasterTemplateItem[];
+  master_template?: MasterTemplateItem;
+  mapping_instances?: MappingInstanceItem[];
+  mapping_instance?: MappingInstanceItem;
 };
 
 export type MappingSuggestResponse = {
@@ -53,6 +92,32 @@ export type MappingSuggestResponse = {
   grouping?: {
     groupKey: string;
     repeatKey: string;
+  };
+};
+
+export type OcrSuggestionStatus = "pending" | "accepted" | "declined";
+
+export type OcrFieldSuggestionItem = {
+  fieldKey: string;
+  proposedValue: string;
+  confidenceScore: number;
+  status: OcrSuggestionStatus;
+};
+
+export type OcrSuggestionMap = Record<string, OcrFieldSuggestionItem>;
+
+export type OcrProcessResponse = {
+  ok: boolean;
+  error?: string;
+  suggestions?: Array<{
+    fieldKey: string;
+    proposedValue: string;
+    confidenceScore: number;
+  }>;
+  meta?: {
+    provider: "tesseract" | "vision";
+    extractedTextLength: number;
+    masked: true;
   };
 };
 

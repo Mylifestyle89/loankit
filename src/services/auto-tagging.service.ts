@@ -5,6 +5,11 @@ import JSZip from "jszip";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 import { SystemError, ValidationError } from "@/core/errors/app-error";
+import {
+  buildSemanticCandidates,
+  selectTopSuggestions,
+} from "@/core/use-cases/reverse-template-matcher";
+import { reverseTagSuggestionSchema, type ReverseTagSuggestion } from "@/lib/report/config-schema";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -21,6 +26,15 @@ export type TagSuggestion = {
   matchedText: string;
   paragraphIndex: number;
   confidence: number;
+};
+
+export type ReverseSuggestionResult = {
+  suggestions: ReverseTagSuggestion[];
+  meta: {
+    threshold: number;
+    totalCandidates: number;
+    accepted: number;
+  };
 };
 
 export type TagFormat = "square" | "curly";
@@ -292,6 +306,36 @@ export async function analyzeDocument(
 
   suggestions.sort((a, b) => b.confidence - a.confidence);
   return { paragraphs, suggestions };
+}
+
+export async function reverseEngineerTemplate(params: {
+  docxBuffer: Buffer;
+  excelRows: Array<Record<string, unknown>>;
+  threshold?: number;
+}): Promise<ReverseSuggestionResult> {
+  if (!Array.isArray(params.excelRows) || params.excelRows.length === 0) {
+    throw new ValidationError("excelRows is required and must not be empty.");
+  }
+  const paragraphs = await extractParagraphs(params.docxBuffer);
+  if (paragraphs.length === 0) {
+    throw new ValidationError("File DOCX không chứa nội dung text nào.");
+  }
+  const threshold = typeof params.threshold === "number" ? Math.max(0, Math.min(1, params.threshold)) : 0.55;
+  const candidates = buildSemanticCandidates({
+    excelRows: params.excelRows,
+    paragraphs: paragraphs.map((p) => ({ index: p.index, text: p.text })),
+  });
+  const suggestions = selectTopSuggestions(candidates, threshold).map((item) =>
+    reverseTagSuggestionSchema.parse(item),
+  );
+  return {
+    suggestions,
+    meta: {
+      threshold,
+      totalCandidates: candidates.length,
+      accepted: suggestions.length,
+    },
+  };
 }
 
 // ---------------------------------------------------------------------------

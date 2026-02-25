@@ -15,11 +15,12 @@ import {
 } from "lucide-react";
 
 import { useLanguage } from "@/components/language-provider";
+import { GlobalModalProvider } from "./mapping/components/GlobalModalProvider";
 
-const SIDEBAR_COLLAPSED = 64;
-const SIDEBAR_EXPANDED = 260;
+const SIDEBAR_COLLAPSED = 48;
+const SIDEBAR_EXPANDED = 240;
 
-const sidebarSpring = { type: "spring", stiffness: 300, damping: 30 } as const;
+const sidebarSpring = { type: "spring", stiffness: 320, damping: 32 } as const;
 
 export default function ReportLayout({ children }: { children: React.ReactNode }) {
   const { t, locale, setLocale } = useLanguage();
@@ -37,16 +38,17 @@ export default function ReportLayout({ children }: { children: React.ReactNode }
 
   return (
     <div className="min-h-screen bg-zinc-50 text-zinc-900">
+
       {/* ── Sidebar ── */}
       <motion.aside
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
         animate={{ width: hovered ? SIDEBAR_EXPANDED : SIDEBAR_COLLAPSED }}
         transition={sidebarSpring}
-        className="fixed inset-y-0 left-0 z-40 flex flex-col border-r border-slate-200/60 bg-white/80 backdrop-blur-xl"
+        className="fixed inset-y-0 left-0 z-40 flex flex-col overflow-hidden border-r border-slate-200/50 bg-white/90 backdrop-blur-xl"
         style={{ willChange: "width" }}
       >
-        {/* Shadow overlay when expanded */}
+        {/* Shadow when expanded */}
         <AnimatePresence>
           {hovered && (
             <motion.div
@@ -54,30 +56,30 @@ export default function ReportLayout({ children }: { children: React.ReactNode }
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.15 }}
-              className="pointer-events-none absolute inset-0 rounded-r-2xl shadow-xl"
-              style={{ boxShadow: "4px 0 24px rgba(0,0,0,0.08)" }}
+              className="pointer-events-none absolute inset-0 rounded-r-2xl"
+              style={{ boxShadow: "6px 0 28px rgba(99,102,241,0.06), 2px 0 8px rgba(0,0,0,0.05)" }}
             />
           )}
         </AnimatePresence>
 
-        {/* Brand / Title */}
-        <div className="relative flex h-16 shrink-0 items-center overflow-hidden border-b border-slate-200/60 px-4">
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-600 to-violet-600">
-            <ChevronRight className="h-4 w-4 text-white" />
+        {/* ── Brand ── */}
+        <div className="relative flex h-11 shrink-0 items-center overflow-hidden px-2.5">
+          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-600 to-violet-600 shadow-sm">
+            <ChevronRight className="h-3.5 w-3.5 text-white" />
           </div>
           <AnimatePresence>
             {hovered && (
               <motion.div
-                initial={{ opacity: 0, x: -8 }}
+                initial={{ opacity: 0, x: -6 }}
                 animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -8 }}
-                transition={{ delay: 0.06, duration: 0.18 }}
-                className="ml-3 min-w-0"
+                exit={{ opacity: 0, x: -6 }}
+                transition={{ delay: 0.05, duration: 0.15 }}
+                className="ml-2.5 min-w-0"
               >
-                <p className="truncate text-sm font-semibold text-zinc-900">
+                <p className="truncate text-xs font-semibold leading-tight text-zinc-900">
                   {t("report.frameworkTitle")}
                 </p>
-                <p className="truncate text-[11px] text-zinc-500">
+                <p className="truncate text-[10px] leading-tight text-zinc-400">
                   {t("report.frameworkDesc")}
                 </p>
               </motion.div>
@@ -85,8 +87,11 @@ export default function ReportLayout({ children }: { children: React.ReactNode }
           </AnimatePresence>
         </div>
 
-        {/* AI Suggestion — hero CTA */}
-        <div className="px-2 pt-4 pb-2">
+        {/* Divider */}
+        <div className="mx-2.5 h-px bg-slate-100" />
+
+        {/* ── AI CTA ── */}
+        <div className="px-1.5 pt-2.5 pb-1">
           <button
             type="button"
             onClick={() => {
@@ -96,18 +101,20 @@ export default function ReportLayout({ children }: { children: React.ReactNode }
               }
               router.push("/report/mapping?openAiSuggestion=1");
             }}
-            className="group relative flex w-full items-center gap-3 overflow-hidden rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 px-3 py-2.5 text-white shadow-glow transition-all duration-200 hover:shadow-glow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/60"
             title={t("mapping.aiSuggest.button")}
+            className={`group relative flex w-full items-center overflow-hidden rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-sm transition-all duration-200 hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/60 ${
+              hovered ? "gap-2.5 px-2.5 py-2 justify-start" : "justify-center py-2"
+            }`}
           >
-            <Bot className="h-5 w-5 shrink-0" />
+            <Bot className="h-4 w-4 shrink-0" />
             <AnimatePresence>
               {hovered && (
                 <motion.span
-                  initial={{ opacity: 0, x: -6 }}
+                  initial={{ opacity: 0, x: -4 }}
                   animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -6 }}
-                  transition={{ delay: 0.08, duration: 0.16 }}
-                  className="truncate text-sm font-medium"
+                  exit={{ opacity: 0, x: -4 }}
+                  transition={{ delay: 0.07, duration: 0.14 }}
+                  className="truncate text-xs font-medium"
                 >
                   {t("mapping.aiSuggest.button")}
                 </motion.span>
@@ -116,8 +123,8 @@ export default function ReportLayout({ children }: { children: React.ReactNode }
           </button>
         </div>
 
-        {/* Nav links */}
-        <nav className="flex flex-1 flex-col gap-1 overflow-y-auto px-2 py-2">
+        {/* ── Nav links ── */}
+        <nav className="flex flex-1 flex-col gap-0.5 overflow-y-auto px-1.5 py-1">
           {links.map((link) => {
             const isActive = pathname.startsWith(link.href);
             const Icon = link.icon;
@@ -125,25 +132,28 @@ export default function ReportLayout({ children }: { children: React.ReactNode }
               <Link
                 key={link.href}
                 href={link.href}
-                className={`group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 ${
+                title={!hovered ? link.label : undefined}
+                className={`group flex items-center rounded-lg py-2 text-sm font-medium transition-all duration-150 ${
+                  hovered ? "gap-2.5 px-2.5 justify-start" : "justify-center px-0"
+                } ${
                   isActive
-                    ? "bg-indigo-50 text-indigo-700 shadow-sm"
-                    : "text-zinc-600 hover:bg-slate-100/60 hover:text-zinc-900"
+                    ? "bg-indigo-50 text-indigo-700"
+                    : "text-zinc-500 hover:bg-slate-100/70 hover:text-zinc-800"
                 }`}
               >
                 <Icon
-                  className={`h-5 w-5 shrink-0 ${
+                  className={`h-[17px] w-[17px] shrink-0 ${
                     isActive ? "text-indigo-600" : "text-zinc-400 group-hover:text-zinc-600"
                   }`}
                 />
                 <AnimatePresence>
                   {hovered && (
                     <motion.span
-                      initial={{ opacity: 0, x: -6 }}
+                      initial={{ opacity: 0, x: -4 }}
                       animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -6 }}
-                      transition={{ delay: 0.08, duration: 0.16 }}
-                      className="truncate"
+                      exit={{ opacity: 0, x: -4 }}
+                      transition={{ delay: 0.07, duration: 0.14 }}
+                      className="truncate text-xs"
                     >
                       {link.label}
                     </motion.span>
@@ -154,21 +164,25 @@ export default function ReportLayout({ children }: { children: React.ReactNode }
           })}
         </nav>
 
-        {/* Language toggle at bottom */}
-        <div className="shrink-0 border-t border-slate-200/60 px-2 py-3">
+        {/* ── Language toggle ── */}
+        <div className="shrink-0 px-1.5 pb-2.5 pt-1">
+          <div className="mx-0 mb-1.5 h-px bg-slate-100" />
           <button
             type="button"
             onClick={() => setLocale(locale === "vi" ? "en" : "vi")}
-            className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-zinc-600 transition-all duration-200 hover:bg-slate-100/60 hover:text-zinc-900"
+            title={!hovered ? (locale === "vi" ? "Switch to English" : "Đổi sang Tiếng Việt") : undefined}
+            className={`flex w-full items-center rounded-lg py-1.5 text-xs font-medium text-zinc-400 transition-all duration-150 hover:bg-slate-100/70 hover:text-zinc-700 ${
+              hovered ? "gap-2.5 px-2.5 justify-start" : "justify-center px-0"
+            }`}
           >
-            <Globe className="h-5 w-5 shrink-0 text-zinc-400" />
+            <Globe className="h-[17px] w-[17px] shrink-0 text-zinc-400" />
             <AnimatePresence>
               {hovered && (
                 <motion.span
-                  initial={{ opacity: 0, x: -6 }}
+                  initial={{ opacity: 0, x: -4 }}
                   animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -6 }}
-                  transition={{ delay: 0.08, duration: 0.16 }}
+                  exit={{ opacity: 0, x: -4 }}
+                  transition={{ delay: 0.07, duration: 0.14 }}
                   className="truncate"
                 >
                   {locale === "vi" ? "English" : "Tiếng Việt"}
@@ -181,10 +195,12 @@ export default function ReportLayout({ children }: { children: React.ReactNode }
 
       {/* ── Main content ── */}
       <main
-        className="min-h-screen transition-[margin] duration-200"
+        className="min-h-screen"
         style={{ marginLeft: SIDEBAR_COLLAPSED }}
       >
-        <div className="mx-auto max-w-6xl px-6 py-6">{children}</div>
+        <div className="w-full px-5 py-5">
+          <GlobalModalProvider>{children}</GlobalModalProvider>
+        </div>
       </main>
     </div>
   );

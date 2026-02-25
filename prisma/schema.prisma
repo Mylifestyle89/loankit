@@ -29,5 +29,46 @@ model Customer {
   /// JSON object: extra attributes (report field_key -> value) for mapping/export
   data_json String? @default("{}")
 
+  mapping_instances MappingInstance[]
+
   @@map("customers")
+}
+
+model FieldTemplateMaster {
+  id               String   @id @default(cuid())
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  name             String
+  description      String?
+  status           String   @default("active")
+  fieldCatalogJson String   @default("[]")
+
+  mapping_instances MappingInstance[]
+
+  @@index([status])
+  @@map("field_template_masters")
+}
+
+model MappingInstance {
+  id             String   @id @default(cuid())
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  name           String
+  status         String   @default("draft")
+  createdBy      String   @default("web-user")
+  publishedAt    DateTime?
+  mappingJsonPath String
+  aliasJsonPath   String
+  masterSnapshotName String @default("")
+  fieldCatalogJson   String @default("[]")
+
+  masterId   String?
+  customerId String
+  master     FieldTemplateMaster? @relation(fields: [masterId], references: [id], onDelete: SetNull)
+  customer   Customer            @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@index([masterId])
+  @@index([customerId])
+  @@index([customerId, masterId, status])
+  @@map("mapping_instances")
 }

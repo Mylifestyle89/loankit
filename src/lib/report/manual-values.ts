@@ -4,6 +4,7 @@ import path from "node:path";
 import { z } from "zod";
 
 import { REPORT_MANUAL_VALUES_FILE } from "@/lib/report/constants";
+import { fileLockService } from "@/lib/report/file-lock.service";
 
 const manualValuesSchema = z.record(z.string(), z.union([z.string(), z.number(), z.boolean(), z.null()]));
 
@@ -20,8 +21,13 @@ export async function loadManualValues(): Promise<ManualValues> {
 
 export async function saveManualValues(values: ManualValues): Promise<ManualValues> {
   const parsed = manualValuesSchema.parse(values);
+  await fileLockService.acquireLock("report_assets");
+  try {
   await fs.mkdir(path.dirname(REPORT_MANUAL_VALUES_FILE), { recursive: true });
   await fs.writeFile(REPORT_MANUAL_VALUES_FILE, JSON.stringify(parsed, null, 2), "utf-8");
+  } finally {
+    await fileLockService.releaseLock("report_assets");
+  }
   return parsed;
 }
 

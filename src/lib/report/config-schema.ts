@@ -80,9 +80,47 @@ export const fieldTemplateSchema = z.object({
   field_catalog: z.array(fieldCatalogItemSchema).default([]),
 });
 
+export const masterTemplateStatusSchema = z.enum(["active", "archived"]).default("active");
+export const mappingInstanceStatusSchema = z.enum(["draft", "published", "archived"]).default("draft");
+
+export const masterTemplateSummarySchema = z.object({
+  id: z.string().min(1),
+  name: z.string().min(1),
+  description: z.string().optional(),
+  status: masterTemplateStatusSchema,
+  created_at: z.string().min(1),
+  updated_at: z.string().min(1),
+  field_catalog: z.array(fieldCatalogItemSchema).default([]),
+});
+
+export const mappingInstanceSummarySchema = z.object({
+  id: z.string().min(1),
+  master_id: z.string().min(1).optional(),
+  master_snapshot_name: z.string().optional(),
+  field_catalog: z.array(fieldCatalogItemSchema).default([]),
+  customer_id: z.string().min(1),
+  name: z.string().min(1),
+  status: mappingInstanceStatusSchema,
+  created_by: z.string().min(1),
+  created_at: z.string().min(1),
+  updated_at: z.string().min(1),
+  published_at: z.string().optional(),
+});
+
+export const reverseTagSuggestionSchema = z.object({
+  originalText: z.string().min(1),
+  proposedTag: z.string().min(1),
+  contextSnippet: z.string().min(1).max(240),
+  confidenceScore: z.number().min(0).max(1),
+  paragraphIndex: z.number().int().nonnegative().optional(),
+  sourceHeader: z.string().optional(),
+  normalizedSignals: z.array(z.string()).optional(),
+});
+
 export const frameworkStateSchema = z.object({
   field_catalog: z.array(fieldCatalogItemSchema).default([]),
   field_templates: z.array(fieldTemplateSchema).default([]),
+  data_migration_version: z.number().int().nonnegative().optional(),
   mapping_versions: z.array(mappingVersionSchema).default([]),
   template_profiles: z.array(templateProfileSchema).default([]),
   run_logs: z.array(runLogSchema).default([]),
@@ -97,4 +135,7 @@ export type MappingVersion = z.infer<typeof mappingVersionSchema>;
 export type TemplateProfile = z.infer<typeof templateProfileSchema>;
 export type RunLog = z.infer<typeof runLogSchema>;
 export type FieldTemplate = z.infer<typeof fieldTemplateSchema>;
+export type MasterTemplateSummary = z.infer<typeof masterTemplateSummarySchema>;
+export type MappingInstanceSummary = z.infer<typeof mappingInstanceSummarySchema>;
+export type ReverseTagSuggestion = z.infer<typeof reverseTagSuggestionSchema>;
 export type FrameworkState = z.infer<typeof frameworkStateSchema>;

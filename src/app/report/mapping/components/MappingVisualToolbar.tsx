@@ -1,5 +1,5 @@
-import { Download, FileText, Plus } from "lucide-react";
-import { useMemo, type ReactNode } from "react";
+import { Plus } from "lucide-react";
+import { useRef, useState, type DragEvent, type ReactNode } from "react";
 
 type MappingVisualToolbarProps = {
   t: (key: string) => string;
@@ -9,10 +9,9 @@ type MappingVisualToolbarProps = {
   showUnmappedOnly: boolean;
   setShowUnmappedOnly: (value: boolean) => void;
   onOpenAddFieldModal: () => void;
-  exportingDocx: boolean;
-  onExportAndOpenDocx: () => void;
-  lastExportedDocxPath: string;
   sidebar: ReactNode;
+  ocrProcessing?: boolean;
+  onOcrFileSelected?: (file: File) => void;
 };
 
 export function MappingVisualToolbar({
@@ -23,18 +22,19 @@ export function MappingVisualToolbar({
   showUnmappedOnly,
   setShowUnmappedOnly,
   onOpenAddFieldModal,
-  exportingDocx,
-  onExportAndOpenDocx,
-  lastExportedDocxPath,
   sidebar,
+  ocrProcessing = false,
+  onOcrFileSelected,
 }: MappingVisualToolbarProps) {
-  const downloadHref = useMemo(
-    () =>
-      lastExportedDocxPath
-        ? `/api/report/file?path=${encodeURIComponent(lastExportedDocxPath)}&download=1`
-        : "",
-    [lastExportedDocxPath],
-  );
+  const [isDragActive, setIsDragActive] = useState(false);
+  const ocrInputRef = useRef<HTMLInputElement | null>(null);
+
+  const handleDrop = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setIsDragActive(false);
+    const file = event.dataTransfer.files?.[0];
+    if (file && onOcrFileSelected) onOcrFileSelected(file);
+  };
 
   return (
     <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-zinc-200 bg-white/80 p-2 backdrop-blur-sm">
@@ -62,29 +62,42 @@ export function MappingVisualToolbar({
           <Plus className="h-4 w-4" />
           {t("mapping.newFieldTitle")}
         </button>
+        <div
+          onDragOver={(e) => {
+            e.preventDefault();
+            setIsDragActive(true);
+          }}
+          onDragLeave={() => setIsDragActive(false)}
+          onDrop={handleDrop}
+          className={`rounded-lg border px-3 py-1.5 text-xs transition-all ${
+            isDragActive
+              ? "border-indigo-300 bg-indigo-50 text-indigo-700"
+              : "border-slate-200/60 bg-slate-50/50 text-slate-600 hover:border-indigo-200 hover:bg-indigo-50/30"
+          }`}
+        >
+          <input
+            ref={ocrInputRef}
+            type="file"
+            accept=".png,.jpg,.jpeg,.webp,.pdf,application/pdf,image/png,image/jpeg,image/webp"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file && onOcrFileSelected) onOcrFileSelected(file);
+              e.target.value = "";
+            }}
+          />
+          <button
+            type="button"
+            onClick={() => ocrInputRef.current?.click()}
+            disabled={ocrProcessing || !onOcrFileSelected}
+            className="font-medium disabled:opacity-50"
+          >
+            {ocrProcessing ? "Đang OCR..." : "Drop/Pick OCR"}
+          </button>
+        </div>
       </div>
 
       <div className="flex items-center gap-2">
-        <button
-          onClick={onExportAndOpenDocx}
-          disabled={exportingDocx}
-          className="flex items-center gap-1.5 rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-sm font-medium text-zinc-800 transition-colors hover:bg-indigo-50 hover:text-indigo-900 disabled:opacity-75"
-          title={t("mapping.exportOpenDocx")}
-        >
-          <FileText className="h-4 w-4" />
-          {exportingDocx ? "..." : "Xem Docx"}
-        </button>
-
-        {lastExportedDocxPath ? (
-          <a
-            href={downloadHref}
-            className="flex items-center gap-1.5 rounded-lg border border-zinc-300 bg-white px-2 py-1.5 text-sm transition-colors hover:bg-indigo-50"
-            title={t("mapping.downloadDocx")}
-          >
-            <Download className="h-4 w-4 text-indigo-700" />
-          </a>
-        ) : null}
-
         <div className="h-6 w-px bg-zinc-200 mx-1" />
         {sidebar}
       </div>

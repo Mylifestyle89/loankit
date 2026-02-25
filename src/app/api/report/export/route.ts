@@ -16,6 +16,7 @@ export async function POST(req: NextRequest) {
       group_key?: string;
       repeat_key?: string;
       customer_name_key?: string;
+      mapping_instance_id?: string;
     };
     const result =
       body.export_mode === "bank_grouped"
@@ -26,11 +27,13 @@ export async function POST(req: NextRequest) {
             groupKey: body.group_key,
             repeatKey: body.repeat_key,
             customerNameKey: body.customer_name_key,
+            mappingInstanceId: body.mapping_instance_id,
           })
         : await reportService.runReportExport({
             outputPath: body.output_path,
             reportPath: body.report_path,
             templatePath: body.template_path,
+            mappingInstanceId: body.mapping_instance_id,
           });
 
     return NextResponse.json({

@@ -5,9 +5,10 @@ import { reportService } from "@/services/report.service";
 
 export const runtime = "nodejs";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
-    const result = await reportService.getMapping();
+    const mappingInstanceId = req.nextUrl.searchParams.get("mapping_instance_id") ?? undefined;
+    const result = await reportService.getMapping({ mappingInstanceId });
     return NextResponse.json({
       ok: true,
       active_version_id: result.active_version_id,
@@ -32,6 +33,7 @@ export async function PUT(req: NextRequest) {
       mapping?: unknown;
       alias_map?: unknown;
       field_catalog?: unknown[];
+      mapping_instance_id?: string;
     };
     const result = await reportService.saveMappingDraft({
       createdBy: body.created_by,
@@ -39,6 +41,7 @@ export async function PUT(req: NextRequest) {
       mapping: body.mapping,
       aliasMap: body.alias_map,
       fieldCatalog: body.field_catalog,
+      mappingInstanceId: body.mapping_instance_id,
     });
     return NextResponse.json({
       ok: true,

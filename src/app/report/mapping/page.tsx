@@ -1,8 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { Save, BookOpen, Undo2, Download, FileText } from "lucide-react";
+import { Save, BookOpen, Undo2 } from "lucide-react";
 
 import { useLanguage } from "@/components/language-provider";
 import type { FieldCatalogItem } from "@/lib/report/config-schema";
@@ -16,19 +16,25 @@ import {
 } from "@dnd-kit/core";
 import { arrayMove, sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 
-import { AdvancedJsonPanel } from "./components/AdvancedJsonPanel";
 import { ValidationResultPanel } from "./components/ValidationResultPanel";
-import { MappingTabSwitch } from "./components/MappingTabSwitch";
 import { MappingModals } from "./components/MappingModals";
 import { MappingVisualSection } from "./components/MappingVisualSection";
+import { MappingVisualToolbar } from "./components/MappingVisualToolbar";
 import { MappingSidebar } from "./components/MappingSidebar";
 import { ImportGroupPromptModal } from "./components/Modals/ImportGroupPromptModal";
-import { AiMappingModal } from "./components/Modals/AiMappingModal";
+import { SystemLogCard } from "./components/SystemLogCard";
 import { useFieldCatalogImport } from "./hooks/useFieldCatalogImport";
 import { useFieldTemplates } from "./hooks/useFieldTemplates";
 import { useGroupManagement } from "./hooks/useGroupManagement";
 import { useMappingApi } from "./hooks/useMappingApi";
-import type { AutoProcessJob, FieldTemplateItem, MappingApiResponse, ValidationResponse } from "./types";
+import type {
+  AutoProcessJob,
+  FieldTemplateItem,
+  MappingApiResponse,
+  OcrProcessResponse,
+  OcrSuggestionMap,
+  ValidationResponse,
+} from "./types";
 import {
   buildInternalFieldKey,
   normalizeFieldCatalogForSchema,
@@ -40,6 +46,7 @@ import {
 } from "./helpers";
 import { computeEffectiveValues } from "@/core/use-cases/formula-processor";
 import { buildGroupedFieldTree } from "@/core/use-cases/mapping-engine";
+import { useModal } from "@/lib/report/use-modal-store";
 
 type UndoSnapshot = {
   fieldCatalog: FieldCatalogItem[];
@@ -53,7 +60,14 @@ type UndoSnapshot = {
   collapsedParentGroups: string[];
 };
 
-export default function MappingPage() {
+type OcrLogEntry = {
+  id: string;
+  message: string;
+  createdAt: number;
+  type: "ai" | "system" | "error";
+};
+
+function MappingPageContent() {
   const { t } = useLanguage();
   const searchParams = useSearchParams();
   const [loading, setLoading] = useState(true);
@@ -70,16 +84,14 @@ export default function MappingPage() {
   const [values, setValues] = useState<Record<string, unknown>>({});
   const [manualValues, setManualValues] = useState<Record<string, string | number | boolean | null>>({});
   const [formulas, setFormulas] = useState<Record<string, string>>({});
-  const [exportingDocx, setExportingDocx] = useState(false);
-  const [aiModalOpen, setAiModalOpen] = useState(false);
   const [autoProcessJob, setAutoProcessJob] = useState<AutoProcessJob | null>(null);
   const [autoProcessing, setAutoProcessing] = useState(false);
+  const [ocrProcessing, setOcrProcessing] = useState(false);
+  const [ocrSuggestionsByField, setOcrSuggestionsByField] = useState<OcrSuggestionMap>({});
   const [formulaModalFieldKey, setFormulaModalFieldKey] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<"visual" | "advanced">("visual");
   const [searchTerm, setSearchTerm] = useState("");
   const [showUnmappedOnly, setShowUnmappedOnly] = useState(false);
   const [showTechnicalKeys, setShowTechnicalKeys] = useState(false);
-  const [lastExportedDocxPath, setLastExportedDocxPath] = useState<string>("");
   const [selectedGroup, setSelectedGroup] = useState<string>("");
   const [newField, setNewField] = useState<{
     label_vi: string;
@@ -112,9 +124,6 @@ export default function MappingPage() {
   const [allFieldTemplates, setAllFieldTemplates] = useState<FieldTemplateItem[]>([]);
   const [loadingFieldTemplates, setLoadingFieldTemplates] = useState(false);
   const [selectedFieldTemplateId, setSelectedFieldTemplateId] = useState("");
-  const [creatingFieldTemplate, setCreatingFieldTemplate] = useState(false);
-  const [newFieldTemplateName, setNewFieldTemplateName] = useState("");
-  const [savingFieldTemplate, setSavingFieldTemplate] = useState(false);
 
   const [editingFieldTemplatePicker, setEditingFieldTemplatePicker] = useState(false);
   const [editPickerTemplateId, setEditPickerTemplateId] = useState("");
@@ -125,6 +134,8 @@ export default function MappingPage() {
   const [importGroupModalOpen, setImportGroupModalOpen] = useState(false);
   const [importGroupTemplateId, setImportGroupTemplateId] = useState("");
   const [importGroupPath, setImportGroupPath] = useState("");
+  const [ocrLogs, setOcrLogs] = useState<OcrLogEntry[]>([]);
+  const ocrLogEndRef = useRef<HTMLDivElement | null>(null);
   const [undoHistory, setUndoHistory] = useState<UndoSnapshot[]>([]);
   const [importGroupPrompt, setImportGroupPrompt] = useState<{
     rowNumber: number;
@@ -135,6 +146,7 @@ export default function MappingPage() {
   const initLoadRef = useRef(false);
   const customerTemplateSyncKeyRef = useRef("");
   const importGroupPromptResolver = useRef<((decision: "create_once" | "create_all" | "stop") => void) | null>(null);
+  const { openModal } = useModal();
 
   const openImportGroupPrompt = useCallback(
     (args: { rowNumber: number; missingPath: string; level: "parent" | "subgroup" }) =>
@@ -186,7 +198,6 @@ export default function MappingPage() {
   const {
     loadData,
     saveDraft,
-    exportAndOpenDocx,
     getAutoProcessAssets,
     uploadAutoProcessFile,
     runSmartAutoBatch,
@@ -203,7 +214,6 @@ export default function MappingPage() {
     selectedFieldTemplateId,
     setLoading,
     setSaving,
-    setExportingDocx,
     setError,
     setMessage,
     setValidation,
@@ -215,25 +225,8 @@ export default function MappingPage() {
     setAutoValues,
     setValues,
     setManualValues,
-    setLastExportedDocxPath,
     setFormulas,
   });
-
-  const runAiSuggestion = useCallback(() => {
-    setAiModalOpen(true);
-  }, []);
-
-  useEffect(() => {
-    const onOpenSuggestion = () => runAiSuggestion();
-    window.addEventListener("mapping:open-ai-suggestion", onOpenSuggestion);
-    return () => window.removeEventListener("mapping:open-ai-suggestion", onOpenSuggestion);
-  }, [runAiSuggestion]);
-
-  useEffect(() => {
-    if (searchParams.get("openAiSuggestion") === "1") {
-      runAiSuggestion();
-    }
-  }, [runAiSuggestion, searchParams]);
 
   const aiPlaceholders = useMemo(() => {
     try {
@@ -323,8 +316,8 @@ export default function MappingPage() {
         );
         const groupingMsg = payload.grouping
           ? ` ${t("mapping.aiSuggest.groupingResult")
-              .replace("{groupKey}", payload.grouping.groupKey)
-              .replace("{repeatKey}", payload.grouping.repeatKey)}`
+            .replace("{groupKey}", payload.grouping.groupKey)
+            .replace("{repeatKey}", payload.grouping.repeatKey)}`
           : "";
         setMessage(t("mapping.aiSuggest.ok").replace("{count}", String(matched)) + groupingMsg);
         setError("");
@@ -368,18 +361,54 @@ export default function MappingPage() {
     }
   }, [autoProcessJob?.job_id, openAutoProcessOutputFolder, setError]);
 
+  const runAiSuggestion = useCallback(() => {
+    openModal("aiMapping", {
+      placeholders: aiPlaceholders,
+      placeholderLabels: aiPlaceholderLabels,
+      onApply: applyAiSuggestion,
+      onSmartAutoBatch: runSmartAutoBatchFlow,
+      onLoadAssetOptions: () => getAutoProcessAssets(),
+      onUploadFile: (file, kind) => uploadAutoProcessFile(file, kind),
+      autoProcessJob,
+      autoProcessing,
+      onOpenOutputFolder: openAutoProcessResultFolder,
+      t,
+    });
+  }, [
+    aiPlaceholders,
+    aiPlaceholderLabels,
+    applyAiSuggestion,
+    autoProcessJob,
+    autoProcessing,
+    getAutoProcessAssets,
+    openAutoProcessResultFolder,
+    openModal,
+    runSmartAutoBatchFlow,
+    t,
+    uploadAutoProcessFile,
+  ]);
+
+  useEffect(() => {
+    const onOpenSuggestion = () => runAiSuggestion();
+    window.addEventListener("mapping:open-ai-suggestion", onOpenSuggestion);
+    return () => window.removeEventListener("mapping:open-ai-suggestion", onOpenSuggestion);
+  }, [runAiSuggestion]);
+
+  useEffect(() => {
+    if (searchParams.get("openAiSuggestion") === "1") {
+      runAiSuggestion();
+    }
+  }, [runAiSuggestion, searchParams]);
+
   const {
     loadFieldTemplates,
     loadAllFieldTemplates,
     applySelectedFieldTemplate,
-    openCreateFieldTemplateModal,
     openEditFieldTemplatePicker,
     closeEditFieldTemplatePicker,
     startEditingExistingTemplate,
     stopEditingFieldTemplate,
-    closeCreateFieldTemplateModal,
     assignSelectedFieldTemplate,
-    saveFieldTemplate,
     saveEditedFieldTemplate,
   } = useFieldTemplates({
     t,
@@ -387,16 +416,13 @@ export default function MappingPage() {
     selectedFieldTemplateId,
     editingFieldTemplateId,
     editingFieldTemplateName,
-    newFieldTemplateName,
     fieldCatalog,
+    fieldTemplates,
     allFieldTemplates,
     setFieldTemplates,
     setAllFieldTemplates,
     setLoadingFieldTemplates,
     setSelectedFieldTemplateId,
-    setCreatingFieldTemplate,
-    setNewFieldTemplateName,
-    setSavingFieldTemplate,
     setEditingFieldTemplatePicker,
     setEditPickerTemplateId,
     setEditingFieldTemplateId,
@@ -408,6 +434,61 @@ export default function MappingPage() {
     setMessage,
     setError,
   });
+
+  const openCreateMasterTemplateModal = useCallback(
+    (initialName = "") => {
+      openModal("createMasterTemplate", {
+        initialName,
+        onSuccess: async (created) => {
+          setMessage(t("mapping.msg.templateSaved").replace("{name}", created.name));
+          setError("");
+          await loadAllFieldTemplates();
+          if (selectedCustomerId) {
+            await loadFieldTemplates(selectedCustomerId);
+            const attachRes = await fetch("/api/report/mapping-instances", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                customer_id: selectedCustomerId,
+                master_id: created.id,
+                name: `${created.name}-${Date.now()}`,
+              }),
+            });
+            const attachData = (await attachRes.json()) as { ok: boolean; mapping_instance?: { id: string } };
+            await loadFieldTemplates(selectedCustomerId);
+            if (attachData.ok && attachData.mapping_instance?.id) {
+              setSelectedFieldTemplateId(attachData.mapping_instance.id);
+            }
+          } else {
+            setSelectedFieldTemplateId(created.id);
+          }
+          setFieldCatalog([]);
+          setValues({});
+          setManualValues({});
+          setEditingFieldTemplateId(created.id);
+          setEditingFieldTemplateName(created.name);
+        },
+        onError: (message) => {
+          setError(message);
+        },
+      });
+    },
+    [
+      loadAllFieldTemplates,
+      loadFieldTemplates,
+      openModal,
+      selectedCustomerId,
+      setEditingFieldTemplateId,
+      setEditingFieldTemplateName,
+      setError,
+      setFieldCatalog,
+      setManualValues,
+      setMessage,
+      setSelectedFieldTemplateId,
+      setValues,
+      t,
+    ],
+  );
 
   async function createTemplateFromImport(params: { templateName: string; fieldCatalog: FieldCatalogItem[] }) {
     const normalizedCatalog = normalizeFieldCatalogForSchema(params.fieldCatalog);
@@ -594,14 +675,6 @@ export default function MappingPage() {
     return result;
   }, [effectiveValues, fieldCatalog]);
 
-  const downloadHref = useMemo(
-    () =>
-      lastExportedDocxPath
-        ? `/api/report/file?path=${encodeURIComponent(lastExportedDocxPath)}&download=1`
-        : "",
-    [lastExportedDocxPath],
-  );
-
   const onManualChange = useCallback((field: FieldCatalogItem, rawValue: string) => {
     const normalized = normalizeInputByType(rawValue, field.type);
     setManualValues((prev) => ({ ...prev, [field.field_key]: normalized }));
@@ -705,79 +778,81 @@ export default function MappingPage() {
 
       const fieldsToDelete = fieldCatalog.filter((f) => groupsToDelete.has(f.group.trim()));
       const fieldCount = fieldsToDelete.length;
-      if (!window.confirm(t("mapping.deleteGroupConfirm").replace("{name}", normalized).replace("{count}", String(fieldCount)))) {
-        return;
-      }
+      openModal("deleteGroupConfirm", {
+        groupPath: normalized,
+        fieldCount,
+        onConfirm: () => {
+          pushUndoSnapshot({
+            fieldCatalog: [...fieldCatalog],
+            values: { ...values },
+            manualValues: { ...manualValues },
+            formulas: { ...formulas },
+            customGroups: [...customGroups],
+            selectedGroup,
+            newField: { ...newField },
+            mappingText,
+            collapsedParentGroups: [...collapsedParentGroups],
+          });
 
-      pushUndoSnapshot({
-        fieldCatalog: [...fieldCatalog],
-        values: { ...values },
-        manualValues: { ...manualValues },
-        formulas: { ...formulas },
-        customGroups: [...customGroups],
-        selectedGroup,
-        newField: { ...newField },
-        mappingText,
-        collapsedParentGroups: [...collapsedParentGroups],
-      });
+          const fieldKeysToDelete = new Set(fieldsToDelete.map((f) => f.field_key));
+          const firstSegmentsToDelete = new Set(Array.from(groupsToDelete).map((g) => g.split("/")[0]).filter(Boolean));
 
-      const fieldKeysToDelete = new Set(fieldsToDelete.map((f) => f.field_key));
-      const firstSegmentsToDelete = new Set(Array.from(groupsToDelete).map((g) => g.split("/")[0]).filter(Boolean));
-
-      setFieldCatalog((prev) => prev.filter((f) => !groupsToDelete.has(f.group.trim())));
-      setCustomGroups((prev) =>
-        prev.filter((g) => {
-          const trimmed = g.trim();
-          return !(trimmed === normalized || trimmed.startsWith(`${normalized}/`));
-        }),
-      );
-      setValues((prev) => {
-        const next: Record<string, unknown> = { ...prev };
-        for (const key of fieldKeysToDelete) {
-          delete next[key];
-        }
-        for (const group of groupsToDelete) {
-          delete next[group];
-        }
-        return next;
-      });
-      setManualValues((prev) => {
-        const next = { ...prev };
-        for (const key of fieldKeysToDelete) {
-          delete next[key];
-        }
-        return next;
-      });
-      setFormulas((prev) => {
-        const next = { ...prev };
-        for (const key of fieldKeysToDelete) {
-          delete next[key];
-        }
-        return next;
-      });
-      setCollapsedParentGroups((prev) => prev.filter((parent) => !firstSegmentsToDelete.has(parent)));
-      if (selectedGroup.trim() === normalized || selectedGroup.trim().startsWith(`${normalized}/`)) {
-        setSelectedGroup("");
-      }
-      if (newField.group.trim() === normalized || newField.group.trim().startsWith(`${normalized}/`)) {
-        setNewField((prev) => ({ ...prev, group: "Nhóm mới" }));
-      }
-      setMappingText((prevTxt) => {
-        try {
-          const mappingObj = JSON.parse(prevTxt);
-          if (mappingObj && Array.isArray(mappingObj.mappings)) {
-            mappingObj.mappings = mappingObj.mappings.filter(
-              (m: { template_field?: unknown }) => !fieldKeysToDelete.has(String(m.template_field ?? "")),
-            );
-            return JSON.stringify(mappingObj, null, 2);
+          setFieldCatalog((prev) => prev.filter((f) => !groupsToDelete.has(f.group.trim())));
+          setCustomGroups((prev) =>
+            prev.filter((g) => {
+              const trimmed = g.trim();
+              return !(trimmed === normalized || trimmed.startsWith(`${normalized}/`));
+            }),
+          );
+          setValues((prev) => {
+            const next: Record<string, unknown> = { ...prev };
+            for (const key of fieldKeysToDelete) {
+              delete next[key];
+            }
+            for (const group of groupsToDelete) {
+              delete next[group];
+            }
+            return next;
+          });
+          setManualValues((prev) => {
+            const next = { ...prev };
+            for (const key of fieldKeysToDelete) {
+              delete next[key];
+            }
+            return next;
+          });
+          setFormulas((prev) => {
+            const next = { ...prev };
+            for (const key of fieldKeysToDelete) {
+              delete next[key];
+            }
+            return next;
+          });
+          setCollapsedParentGroups((prev) => prev.filter((parent) => !firstSegmentsToDelete.has(parent)));
+          if (selectedGroup.trim() === normalized || selectedGroup.trim().startsWith(`${normalized}/`)) {
+            setSelectedGroup("");
           }
-        } catch (e) {
-          setError(e instanceof Error ? e.message : "Failed to update mapping on group delete.");
-        }
-        return prevTxt;
+          if (newField.group.trim() === normalized || newField.group.trim().startsWith(`${normalized}/`)) {
+            setNewField((prev) => ({ ...prev, group: "Nhóm mới" }));
+          }
+          setMappingText((prevTxt) => {
+            try {
+              const mappingObj = JSON.parse(prevTxt);
+              if (mappingObj && Array.isArray(mappingObj.mappings)) {
+                mappingObj.mappings = mappingObj.mappings.filter(
+                  (m: { template_field?: unknown }) => !fieldKeysToDelete.has(String(m.template_field ?? "")),
+                );
+                return JSON.stringify(mappingObj, null, 2);
+              }
+            } catch (e) {
+              setError(e instanceof Error ? e.message : "Failed to update mapping on group delete.");
+            }
+            return prevTxt;
+          });
+          setMessage(t("mapping.msg.groupDeleted").replace("{name}", normalized));
+          setError("");
+        },
       });
-      setMessage(t("mapping.msg.groupDeleted").replace("{name}", normalized));
-      setError("");
     },
     [
       collapsedParentGroups,
@@ -790,6 +865,7 @@ export default function MappingPage() {
       pushUndoSnapshot,
       selectedGroup,
       t,
+      openModal,
       values,
     ],
   );
@@ -949,19 +1025,6 @@ export default function MappingPage() {
     setAddingFieldModal(true);
   }
 
-  async function openBackupFolder() {
-    setError("");
-    const res = await fetch("/api/report/template/open-backup-folder", {
-      method: "POST",
-    });
-    const data = (await res.json()) as { ok?: boolean; error?: string };
-    if (!res.ok || !data.ok) {
-      setError(data.error ?? "Không thể mở thư mục backup.");
-      return;
-    }
-    setMessage("Đã mở thư mục backup.");
-  }
-
   const openImportGroupModal = useCallback(() => {
     setImportGroupTemplateId("");
     setImportGroupPath("");
@@ -1029,6 +1092,82 @@ export default function MappingPage() {
     setImportGroupModalOpen(false);
   }, [allFieldTemplates, editingFieldTemplateId, importGroupPath, importGroupTemplateId, setError, setMessage]);
 
+  const pushOcrLog = useCallback((type: "ai" | "system" | "error", messageText: string) => {
+    setOcrLogs((prev) => [
+      ...prev.slice(-30),
+      { id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, type, message: messageText, createdAt: Date.now() },
+    ]);
+  }, []);
+
+  const handleOcrFileSelected = useCallback(
+    async (file: File) => {
+      if (!selectedFieldTemplateId) {
+        setError("Vui lòng chọn Mapping Instance hoặc Template trước khi OCR.");
+        pushOcrLog("error", "OCR thất bại: thiếu context mapping/template.");
+        return;
+      }
+      setOcrProcessing(true);
+      setError("");
+      pushOcrLog("system", `Bắt đầu OCR file: ${file.name}`);
+      try {
+        const form = new FormData();
+        form.set("file", file);
+        form.set("fieldTemplateId", selectedFieldTemplateId);
+        const res = await fetch("/api/report/mapping/ocr-process", {
+          method: "POST",
+          body: form,
+        });
+        const data = (await res.json()) as OcrProcessResponse;
+        if (!res.ok || !data.ok) {
+          throw new Error(data.error ?? "OCR process failed.");
+        }
+        const next: OcrSuggestionMap = {};
+        for (const item of data.suggestions ?? []) {
+          next[item.fieldKey] = {
+            fieldKey: item.fieldKey,
+            proposedValue: item.proposedValue,
+            confidenceScore: item.confidenceScore,
+            status: "pending",
+          };
+        }
+        setOcrSuggestionsByField(next);
+        pushOcrLog("ai", `OCR thành công, phát hiện ${Object.keys(next).length} trường dữ liệu.`);
+        pushOcrLog("system", "Đã masking dữ liệu nhạy cảm trước khi AI xử lý.");
+      } catch (error) {
+        const msg = error instanceof Error ? error.message : "OCR process failed.";
+        setError(msg);
+        pushOcrLog("error", `OCR lỗi: ${msg}`);
+      } finally {
+        setOcrProcessing(false);
+      }
+    },
+    [pushOcrLog, selectedFieldTemplateId],
+  );
+
+  const handleAcceptOcrSuggestion = useCallback((fieldKey: string) => {
+    setOcrSuggestionsByField((prev) => {
+      const item = prev[fieldKey];
+      if (!item || item.status !== "pending") return prev;
+      setManualValues((mv) => ({ ...mv, [fieldKey]: item.proposedValue }));
+      setValues((vv) => ({ ...vv, [fieldKey]: item.proposedValue }));
+      pushOcrLog("system", `Đã chấp nhận OCR suggestion cho field: ${fieldKey}`);
+      return { ...prev, [fieldKey]: { ...item, status: "accepted" } };
+    });
+  }, [pushOcrLog]);
+
+  const handleDeclineOcrSuggestion = useCallback((fieldKey: string) => {
+    setOcrSuggestionsByField((prev) => {
+      const item = prev[fieldKey];
+      if (!item || item.status !== "pending") return prev;
+      pushOcrLog("system", `Đã từ chối OCR suggestion cho field: ${fieldKey}`);
+      return { ...prev, [fieldKey]: { ...item, status: "declined" } };
+    });
+  }, [pushOcrLog]);
+
+  useEffect(() => {
+    ocrLogEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+  }, [ocrLogs]);
+
   const typeLabels = useMemo<TypeLabelMap>(
     () => ({
       string: t(typeLabelKey("string")),
@@ -1076,28 +1215,6 @@ export default function MappingPage() {
               </button>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2 rounded-lg border border-zinc-200 bg-zinc-50/60 p-1">
-              <button
-                type="button"
-                onClick={() => void exportAndOpenDocx()}
-                disabled={exportingDocx}
-                className="flex h-9 items-center gap-2 rounded-md border border-zinc-300 bg-white px-3 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-60"
-              >
-                <FileText className="h-4 w-4" />
-                {exportingDocx ? "..." : "Xem Docx"}
-              </button>
-              {lastExportedDocxPath ? (
-                <a
-                  href={downloadHref}
-                  className="flex h-9 items-center gap-2 rounded-md border border-zinc-300 bg-white px-3 text-sm font-medium text-zinc-700 hover:bg-zinc-50"
-                  title={t("mapping.downloadDocx")}
-                >
-                  <Download className="h-4 w-4" />
-                  {t("mapping.downloadDocx")}
-                </a>
-              ) : null}
-            </div>
-
             <button
               type="button"
               onClick={() => void saveDraft()}
@@ -1121,7 +1238,7 @@ export default function MappingPage() {
               editingFieldTemplateId={editingFieldTemplateId}
               applySelectedFieldTemplate={applySelectedFieldTemplate}
               loadingFieldTemplates={loadingFieldTemplates}
-              openCreateFieldTemplateModal={openCreateFieldTemplateModal}
+              openCreateFieldTemplateModal={() => openCreateMasterTemplateModal()}
               openAttachFieldTemplateModal={() => void assignSelectedFieldTemplate()}
               openEditFieldTemplatePicker={() => void openEditFieldTemplatePicker()}
               showTechnicalKeys={showTechnicalKeys}
@@ -1135,95 +1252,72 @@ export default function MappingPage() {
             />
           </div>
         </div>
-        <div className={`flex flex-wrap items-center gap-2 rounded-lg border border-zinc-200 bg-zinc-50/60 p-2 transition-opacity duration-300 ${!hasContext ? "opacity-50" : "opacity-100"}`}>
-          <input
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="h-9 w-full md:w-72 rounded-lg border border-zinc-300 px-3 text-sm text-zinc-900 placeholder:text-zinc-500 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-            placeholder={t("mapping.searchPlaceholder")}
-          />
-          <label className="inline-flex h-9 items-center gap-2 rounded-lg border border-zinc-300 bg-white px-3 text-xs font-medium text-zinc-700">
-            <input
-              type="checkbox"
-              checked={showUnmappedOnly}
-              onChange={(e) => setShowUnmappedOnly(e.target.checked)}
-              className="h-3.5 w-3.5 rounded border-zinc-300 text-indigo-600 focus:ring-indigo-500"
-            />
-            Chưa mapping
-          </label>
-          <button
-            type="button"
-            onClick={() => void openCreateFieldTemplateModal()}
-            className="flex h-9 flex-shrink-0 items-center gap-1.5 rounded-lg bg-indigo-600 px-3 text-sm font-medium text-white shadow-glow transition-colors hover:bg-indigo-700"
-          >
-            + Tạo mẫu dữ liệu
-          </button>
-        </div>
+        <MappingVisualToolbar
+          t={t}
+          hasContext={hasContext}
+          searchTerm={searchTerm}
+          setSearchTerm={setSearchTerm}
+          showUnmappedOnly={showUnmappedOnly}
+          setShowUnmappedOnly={setShowUnmappedOnly}
+          onOpenAddFieldModal={() => void openCreateMasterTemplateModal()}
+          sidebar={<span className="text-xs text-slate-500">{`OCR logs: ${ocrLogs.length}`}</span>}
+          ocrProcessing={ocrProcessing}
+          onOcrFileSelected={(file) => void handleOcrFileSelected(file)}
+        />
+        <SystemLogCard logs={ocrLogs} endRef={ocrLogEndRef} title="OCR Timeline" emptyText="Chưa có OCR log..." variant="light" />
         {message ? <p className="text-sm text-emerald-700">{message}</p> : null}
         {error ? <p className="text-sm text-rose-700">{error}</p> : null}
       </div>
 
-      <MappingTabSwitch t={t} activeTab={activeTab} setActiveTab={setActiveTab} />
-
-      {activeTab === "visual" ? (
-        <MappingVisualSection
-          t={t}
-          hasContext={hasContext}
-          setAddingFieldModal={setAddingFieldModal}
-          editingFieldTemplateId={editingFieldTemplateId}
-          editingFieldTemplateName={editingFieldTemplateName}
-          savingEditedTemplate={savingEditedTemplate}
-          saveEditedFieldTemplate={() => void saveEditedFieldTemplate()}
-          stopEditingFieldTemplate={stopEditingFieldTemplate}
-          openBackupFolder={() => void openBackupFolder()}
-          openImportGroupModal={openImportGroupModal}
-          sensors={sensors}
-          handleDragEnd={handleDragEnd}
-          groupedFieldTree={groupedFieldTree}
-          parentGroups={parentGroups}
-          collapsedParentGroups={collapsedParentGroups}
-          collapseAllGroups={collapseAllGroups}
-          expandAllGroups={expandAllGroups}
-          openCreateSubgroupModal={openCreateSubgroupModal}
-          toggleParentCollapse={toggleParentCollapse}
-          toggleRepeaterGroup={toggleRepeaterGroup}
-          prepareAddFieldForGroup={prepareAddFieldForGroup}
-          openEditGroupModal={openEditGroupModal}
-          onDeleteGroup={deleteGroup}
-          values={effectiveValues}
-          fieldCatalog={fieldCatalog}
-          formulas={formulas}
-          onOpenFormulaModal={(fieldKey) => setFormulaModalFieldKey(fieldKey)}
-          confidenceByField={confidenceByField}
-          sampleByField={sampleByField}
-          typeLabels={typeLabels}
-          onRepeaterItemChange={onRepeaterItemChange}
-          onManualChange={onManualChange}
-          removeRepeaterItem={removeRepeaterItem}
-          addRepeaterItem={addRepeaterItem}
-          onFieldLabelChange={onFieldLabelChange}
-          onFieldTypeChange={onFieldTypeChange}
-          moveField={moveField}
-          openChangeGroupModal={openChangeGroupModal}
-          deleteField={deleteField}
-        />
-      ) : (
-        <AdvancedJsonPanel
-          t={t}
-          mappingText={mappingText}
-          aliasText={aliasText}
-          setMappingText={setMappingText}
-          setAliasText={setAliasText}
-        />
-      )}
+      <MappingVisualSection
+        t={t}
+        hasContext={hasContext}
+        setAddingFieldModal={setAddingFieldModal}
+        showTechnicalKeys={showTechnicalKeys}
+        setEditingFieldTemplateName={setEditingFieldTemplateName}
+        editingFieldTemplateId={editingFieldTemplateId}
+        editingFieldTemplateName={editingFieldTemplateName}
+        savingEditedTemplate={savingEditedTemplate}
+        saveEditedFieldTemplate={() => void saveEditedFieldTemplate()}
+        stopEditingFieldTemplate={stopEditingFieldTemplate}
+        openImportBackupModal={() => {}}
+        openImportGroupModal={openImportGroupModal}
+        openDeleteGenericTemplateModal={() => {}}
+        sensors={sensors}
+        handleDragEnd={handleDragEnd}
+        groupedFieldTree={groupedFieldTree}
+        parentGroups={parentGroups}
+        collapsedParentGroups={collapsedParentGroups}
+        collapseAllGroups={collapseAllGroups}
+        expandAllGroups={expandAllGroups}
+        openCreateSubgroupModal={openCreateSubgroupModal}
+        toggleParentCollapse={toggleParentCollapse}
+        toggleRepeaterGroup={toggleRepeaterGroup}
+        prepareAddFieldForGroup={prepareAddFieldForGroup}
+        openEditGroupModal={openEditGroupModal}
+        onDeleteGroup={deleteGroup}
+        values={effectiveValues}
+        fieldCatalog={fieldCatalog}
+        formulas={formulas}
+        onOpenFormulaModal={(fieldKey) => setFormulaModalFieldKey(fieldKey)}
+        confidenceByField={confidenceByField}
+        sampleByField={sampleByField}
+        typeLabels={typeLabels}
+        onRepeaterItemChange={onRepeaterItemChange}
+        onManualChange={onManualChange}
+        removeRepeaterItem={removeRepeaterItem}
+        addRepeaterItem={addRepeaterItem}
+        onFieldLabelChange={onFieldLabelChange}
+        onFieldTypeChange={onFieldTypeChange}
+        moveField={moveField}
+        openChangeGroupModal={openChangeGroupModal}
+        deleteField={deleteField}
+        ocrSuggestionsByField={ocrSuggestionsByField}
+        onAcceptOcrSuggestion={handleAcceptOcrSuggestion}
+        onDeclineOcrSuggestion={handleDeclineOcrSuggestion}
+      />
 
       <MappingModals
-        creatingFieldTemplate={creatingFieldTemplate}
-        closeCreateFieldTemplateModal={closeCreateFieldTemplateModal}
-        newFieldTemplateName={newFieldTemplateName}
-        setNewFieldTemplateName={setNewFieldTemplateName}
-        saveFieldTemplate={saveFieldTemplate}
-        savingFieldTemplate={savingFieldTemplate}
         editingFieldTemplatePicker={editingFieldTemplatePicker}
         closeEditFieldTemplatePicker={closeEditFieldTemplatePicker}
         editPickerTemplateId={editPickerTemplateId}
@@ -1287,25 +1381,16 @@ export default function MappingPage() {
       />
 
       <ImportGroupPromptModal prompt={importGroupPrompt} onResolve={resolveImportGroupPrompt} />
-      <AiMappingModal
-        isOpen={aiModalOpen}
-        onClose={() => {
-          setAiModalOpen(false);
-        }}
-        placeholders={aiPlaceholders}
-        placeholderLabels={aiPlaceholderLabels}
-        onApply={applyAiSuggestion}
-        onSmartAutoBatch={runSmartAutoBatchFlow}
-        onLoadAssetOptions={() => getAutoProcessAssets()}
-        onUploadFile={(file, kind) => uploadAutoProcessFile(file, kind)}
-        autoProcessJob={autoProcessJob}
-        autoProcessing={autoProcessing}
-        onOpenOutputFolder={openAutoProcessResultFolder}
-        t={t}
-      />
-
       <ValidationResultPanel t={t} validation={validation} />
 
     </section>
+  );
+}
+
+export default function MappingPage() {
+  return (
+    <Suspense fallback={<p className="text-sm text-coral-tree-600">Loading mapping...</p>}>
+      <MappingPageContent />
+    </Suspense>
   );
 }

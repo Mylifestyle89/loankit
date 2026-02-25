@@ -40,6 +40,20 @@ export class SystemError extends AppError {
   }
 }
 
+export class OcrProcessError extends AppError {
+  constructor(message: string, details?: unknown) {
+    super(message, { code: "OCR_PROCESS_ERROR", status: 500, details });
+    this.name = "OcrProcessError";
+  }
+}
+
+export class AiMappingTimeoutError extends AppError {
+  constructor(message: string, details?: unknown) {
+    super(message, { code: "AI_MAPPING_TIMEOUT", status: 504, details });
+    this.name = "AiMappingTimeoutError";
+  }
+}
+
 export function toHttpError(error: unknown, fallbackMessage: string): { status: number; message: string; details?: unknown } {
   if (error instanceof AppError) {
     return { status: error.status, message: error.message, details: error.details };

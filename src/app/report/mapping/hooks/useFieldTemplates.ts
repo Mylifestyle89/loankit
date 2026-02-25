@@ -1,6 +1,10 @@
 import type { Dispatch, SetStateAction } from "react";
 import type { FieldCatalogItem } from "@/lib/report/config-schema";
-import type { FieldTemplateItem, FieldTemplatesResponse } from "../types";
+import type {
+  FieldTemplateItem,
+  MappingInstanceItem,
+  MasterTemplateItem,
+} from "../types";
 import { normalizeFieldCatalogForSchema } from "../helpers";
 
 type UseFieldTemplatesParams = {
@@ -9,16 +13,13 @@ type UseFieldTemplatesParams = {
   selectedFieldTemplateId: string;
   editingFieldTemplateId: string;
   editingFieldTemplateName: string;
-  newFieldTemplateName: string;
   fieldCatalog: FieldCatalogItem[];
+  fieldTemplates: FieldTemplateItem[];
   allFieldTemplates: FieldTemplateItem[];
   setFieldTemplates: Dispatch<SetStateAction<FieldTemplateItem[]>>;
   setAllFieldTemplates: Dispatch<SetStateAction<FieldTemplateItem[]>>;
   setLoadingFieldTemplates: Dispatch<SetStateAction<boolean>>;
   setSelectedFieldTemplateId: Dispatch<SetStateAction<string>>;
-  setCreatingFieldTemplate: Dispatch<SetStateAction<boolean>>;
-  setNewFieldTemplateName: Dispatch<SetStateAction<string>>;
-  setSavingFieldTemplate: Dispatch<SetStateAction<boolean>>;
   setEditingFieldTemplatePicker: Dispatch<SetStateAction<boolean>>;
   setEditPickerTemplateId: Dispatch<SetStateAction<string>>;
   setEditingFieldTemplateId: Dispatch<SetStateAction<string>>;
@@ -37,16 +38,13 @@ export function useFieldTemplates({
   selectedFieldTemplateId,
   editingFieldTemplateId,
   editingFieldTemplateName,
-  newFieldTemplateName,
   fieldCatalog,
+  fieldTemplates,
   allFieldTemplates,
   setFieldTemplates,
   setAllFieldTemplates,
   setLoadingFieldTemplates,
   setSelectedFieldTemplateId,
-  setCreatingFieldTemplate,
-  setNewFieldTemplateName,
-  setSavingFieldTemplate,
   setEditingFieldTemplatePicker,
   setEditPickerTemplateId,
   setEditingFieldTemplateId,
@@ -62,10 +60,35 @@ export function useFieldTemplates({
     setLoadingFieldTemplates(true);
     try {
       const query = customerId ? `?customer_id=${encodeURIComponent(customerId)}` : "";
-      const res = await fetch(`/api/report/field-templates${query}`, { cache: "no-store" });
-      const data = (await res.json()) as FieldTemplatesResponse;
-      if (data.ok && Array.isArray(data.field_templates)) {
-        setFieldTemplates(data.field_templates);
+      const [instancesRes, mastersRes] = await Promise.all([
+        fetch(`/api/report/mapping-instances${query}`, { cache: "no-store" }),
+        fetch("/api/report/master-templates?with_usage=1", { cache: "no-store" }),
+      ]);
+      const instancesData = (await instancesRes.json()) as { ok: boolean; error?: string; mapping_instances?: MappingInstanceItem[] };
+      const mastersData = (await mastersRes.json()) as { ok: boolean; error?: string; master_templates?: MasterTemplateItem[] };
+      if (!instancesData.ok || !mastersData.ok) {
+        throw new Error(instancesData.error ?? mastersData.error ?? t("mapping.fieldTemplate.errLoad"));
+      }
+      const masters = mastersData.master_templates ?? [];
+      const instances = instancesData.mapping_instances ?? [];
+      if (customerId) {
+        const list: FieldTemplateItem[] = instances.map((item) => ({
+          id: item.id,
+          name: item.name || item.master_snapshot_name || "Template khách hàng",
+          created_at: item.updated_at || item.created_at,
+          field_catalog: normalizeFieldCatalogForSchema(item.field_catalog ?? []),
+          assigned_customer_count: 1,
+        }));
+        setFieldTemplates(list);
+      } else {
+        const list: FieldTemplateItem[] = masters.map((master) => ({
+          id: master.id,
+          name: master.name,
+          created_at: master.created_at,
+          field_catalog: master.field_catalog,
+          assigned_customer_count: master.assigned_customer_count,
+        }));
+        setFieldTemplates(list);
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : t("mapping.fieldTemplate.errLoad"));
@@ -76,10 +99,18 @@ export function useFieldTemplates({
 
   async function loadAllFieldTemplates() {
     try {
-      const res = await fetch("/api/report/field-templates?with_usage=1", { cache: "no-store" });
-      const data = (await res.json()) as FieldTemplatesResponse;
-      if (data.ok && Array.isArray(data.field_templates)) {
-        setAllFieldTemplates(data.field_templates);
+      const res = await fetch("/api/report/master-templates?with_usage=1", { cache: "no-store" });
+      const data = (await res.json()) as { ok: boolean; error?: string; master_templates?: MasterTemplateItem[] };
+      if (data.ok && Array.isArray(data.master_templates)) {
+        setAllFieldTemplates(
+          data.master_templates.map((master) => ({
+            id: master.id,
+            name: master.name,
+            created_at: master.created_at,
+            field_catalog: master.field_catalog,
+            assigned_customer_count: master.assigned_customer_count,
+          })),
+        );
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : t("mapping.fieldTemplate.errLoad"));
@@ -91,7 +122,8 @@ export function useFieldTemplates({
       setSelectedFieldTemplateId("");
       return;
     }
-    const template = allFieldTemplates.find((item) => item.id === templateId);
+    const template = fieldTemplates.find((item) => item.id === templateId)
+      ?? allFieldTemplates.find((item) => item.id === templateId);
     if (!template) return;
     setEditingFieldTemplateId("");
     setEditingFieldTemplateName("");
@@ -101,11 +133,6 @@ export function useFieldTemplates({
     setManualValues({});
     setValues(emptyValues);
     setSelectedFieldTemplateId(templateId);
-  }
-
-  function openCreateFieldTemplateModal() {
-    setCreatingFieldTemplate(true);
-    setNewFieldTemplateName("");
   }
 
   async function openEditFieldTemplatePicker() {
@@ -153,11 +180,6 @@ export function useFieldTemplates({
     }
   }
 
-  function closeCreateFieldTemplateModal() {
-    setCreatingFieldTemplate(false);
-    setNewFieldTemplateName("");
-  }
-
   async function assignSelectedFieldTemplate() {
     if (!selectedCustomerId) {
       setError(t("mapping.fieldTemplate.errSelectCustomer"));
@@ -167,71 +189,30 @@ export function useFieldTemplates({
       setError(t("mapping.fieldTemplate.errSelectAttach"));
       return;
     }
+    const selectedMaster = allFieldTemplates.find((item) => item.id === selectedFieldTemplateId);
+    if (!selectedMaster) {
+      setError("Vui lòng chọn template mẫu (generic) từ thư viện để áp dụng.");
+      return;
+    }
     setError("");
     try {
-      const res = await fetch("/api/report/field-templates", {
-        method: "PATCH",
+      const res = await fetch("/api/report/mapping-instances", {
+        method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           customer_id: selectedCustomerId,
-          template_id: selectedFieldTemplateId,
+          master_id: selectedMaster.id,
+          name: `instance-${Date.now()}`,
         }),
       });
       const data = (await res.json()) as { ok: boolean; error?: string };
       if (!data.ok) {
         throw new Error(data.error ?? t("mapping.fieldTemplate.errAttach"));
       }
-      const attached = allFieldTemplates.find((item) => item.id === selectedFieldTemplateId);
-      if (attached) {
-        setMessage(`Đã áp dụng mẫu "${attached.name}" cho khách hàng này.`);
-      }
+      setMessage(`Đã áp dụng mẫu "${selectedMaster.name}" cho khách hàng này.`);
       await loadFieldTemplates(selectedCustomerId);
     } catch (e) {
       setError(e instanceof Error ? e.message : t("mapping.fieldTemplate.errAttach"));
-    }
-  }
-
-  async function saveFieldTemplate() {
-    const name = newFieldTemplateName.trim();
-    if (!name) {
-      setError(t("mapping.fieldTemplate.errName"));
-      return;
-    }
-    setSavingFieldTemplate(true);
-    setError("");
-    try {
-      const res = await fetch("/api/report/field-templates", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name,
-          field_catalog: [],
-          customer_id: selectedCustomerId,
-        }),
-      });
-      const data = (await res.json()) as FieldTemplatesResponse;
-      if (!data.ok) {
-        throw new Error(data.error ?? t("mapping.fieldTemplate.errSave"));
-      }
-      if (selectedCustomerId) {
-        await loadFieldTemplates(selectedCustomerId);
-      } else {
-        await loadAllFieldTemplates();
-      }
-      if (data.field_template) {
-        setFieldCatalog([]);
-        setValues({});
-        setManualValues({});
-        setSelectedFieldTemplateId(data.field_template.id);
-        setEditingFieldTemplateId(data.field_template.id);
-        setEditingFieldTemplateName(data.field_template.name);
-      }
-      setMessage(t("mapping.msg.templateSaved").replace("{name}", name));
-      closeCreateFieldTemplateModal();
-    } catch (e) {
-      setError(e instanceof Error ? e.message : t("mapping.fieldTemplate.errSave"));
-    } finally {
-      setSavingFieldTemplate(false);
     }
   }
 
@@ -250,16 +231,16 @@ export function useFieldTemplates({
     setError("");
     try {
       const normalizedCatalog = normalizeFieldCatalogForSchema(fieldCatalog);
-      const res = await fetch("/api/report/field-templates", {
+      const res = await fetch("/api/report/master-templates", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          template_id: editingFieldTemplateId,
+          master_id: editingFieldTemplateId,
           name: nextName,
           field_catalog: normalizedCatalog,
         }),
       });
-      const data = (await res.json()) as FieldTemplatesResponse;
+      const data = (await res.json()) as { ok: boolean; error?: string };
       if (!data.ok) {
         throw new Error(data.error ?? t("mapping.fieldTemplate.errSave"));
       }
@@ -279,14 +260,11 @@ export function useFieldTemplates({
     loadFieldTemplates,
     loadAllFieldTemplates,
     applySelectedFieldTemplate,
-    openCreateFieldTemplateModal,
     openEditFieldTemplatePicker,
     closeEditFieldTemplatePicker,
     startEditingExistingTemplate,
     stopEditingFieldTemplate,
-    closeCreateFieldTemplateModal,
     assignSelectedFieldTemplate,
-    saveFieldTemplate,
     saveEditedFieldTemplate,
   };
 }

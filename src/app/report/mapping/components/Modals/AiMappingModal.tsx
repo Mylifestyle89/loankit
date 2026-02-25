@@ -926,23 +926,27 @@ export function AiMappingModal({
 
                     <div className="space-y-2">
                       {tagging.suggestions.map((sg, idx) => {
-                        const tag = tagging.format === "curly" ? `{{${sg.header}}}` : `[${sg.header}]`;
+                        const fallbackTag =
+                          tagging.format === "curly"
+                            ? `{{${sg.sourceHeader ?? ""}}}`
+                            : `[${sg.sourceHeader ?? ""}]`;
+                        const tag = sg.proposedTag || fallbackTag;
                         const confLabel =
-                          sg.confidence >= 0.8
+                          sg.confidenceScore >= 0.8
                             ? t("autoTagging.confidenceHigh")
-                            : sg.confidence >= 0.5
+                            : sg.confidenceScore >= 0.5
                               ? t("autoTagging.confidenceMid")
                               : t("autoTagging.confidenceLow");
                         const confColor =
-                          sg.confidence >= 0.8
+                          sg.confidenceScore >= 0.8
                             ? "bg-emerald-100 text-emerald-700"
-                            : sg.confidence >= 0.5
+                            : sg.confidenceScore >= 0.5
                               ? "bg-amber-100 text-amber-700"
                               : "bg-slate-100 text-slate-600";
 
                         return (
                           <motion.label
-                            key={`${sg.header}-${sg.paragraphIndex}`}
+                            key={`${sg.proposedTag}-${sg.paragraphIndex}`}
                             initial={{ opacity: 0, y: 6 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: idx * 0.03 }}
@@ -960,8 +964,8 @@ export function AiMappingModal({
                             />
                             <div className="min-w-0 flex-1">
                               <div className="flex items-center gap-2">
-                                <span className="truncate rounded-md bg-rose-50 px-2 py-0.5 text-xs font-medium text-rose-700" title={sg.matchedText}>
-                                  &ldquo;{sg.matchedText.length > 50 ? sg.matchedText.slice(0, 50) + "..." : sg.matchedText}&rdquo;
+                                <span className="truncate rounded-md bg-rose-50 px-2 py-0.5 text-xs font-medium text-rose-700" title={sg.originalText}>
+                                  &ldquo;{sg.originalText.length > 50 ? sg.originalText.slice(0, 50) + "..." : sg.originalText}&rdquo;
                                 </span>
                                 <ArrowRight className="h-3 w-3 flex-shrink-0 text-slate-400" />
                                 <span className="truncate rounded-md bg-indigo-50 px-2 py-0.5 text-xs font-mono font-medium text-indigo-700">
