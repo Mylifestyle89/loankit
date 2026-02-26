@@ -1,14 +1,38 @@
 @import "tailwindcss";
 @import "../../node_modules/@eigenpal/docx-js-editor/dist/styles.css";
 
+/* ── Dark mode: apply when <html> has class="dark" ── */
+@custom-variant dark (&:is(.dark *));
+
+/* ── Semantic design tokens ── */
 :root {
-  --background: #fafafa;
-  --foreground: #18181b;
+  --bg-base:      #fafafa;
+  --surface:      #ffffff;
+  --surface-2:    #f8fafc;
+  --border-sub:   rgb(226 232 240 / 0.6);
+  --border-str:   rgb(226 232 240 / 0.8);
+  --text-1:       #0f172a;
+  --text-2:       #64748b;
+  --glow:         0 0 20px rgb(99 102 241 / 0.2);
+  --glow-lg:      0 0 32px rgb(99 102 241 / 0.25);
+}
+
+html.dark {
+  color-scheme: dark;                               /* native controls dark */
+  --bg-base:      #080c18;                          /* deep navy space   */
+  --surface:      #0f1629;                          /* card / panel      */
+  --surface-2:    #151e36;                          /* elevated surface  */
+  --border-sub:   rgb(255 255 255 / 0.07);
+  --border-str:   rgb(255 255 255 / 0.12);
+  --text-1:       #e2e8f0;                          /* slate-200         */
+  --text-2:       #64748b;                          /* slate-500         */
+  --glow:         0 0 28px rgb(99 102 241 / 0.35);  /* stronger in dark  */
+  --glow-lg:      0 0 44px rgb(99 102 241 / 0.4);
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  --color-background: var(--bg-base);
+  --color-foreground: var(--text-1);
   --font-sans: var(--font-inter);
   --font-mono: var(--font-geist-mono);
 
@@ -52,9 +76,9 @@
   --color-zinc-900: #18181b;
   --color-zinc-950: #09090b;
 
-  /* Glow utility – shadow-indigo-500/20 */
-  --shadow-glow: 0 0 20px rgb(99 102 241 / 0.2);
-  --shadow-glow-lg: 0 0 32px rgb(99 102 241 / 0.25);
+  /* Glow utility */
+  --shadow-glow: var(--glow);
+  --shadow-glow-lg: var(--glow-lg);
 
   /* Backward-compatible: coral-tree / blue-chill map to indigo */
   --color-coral-tree-50: var(--color-indigo-50);
@@ -81,30 +105,41 @@
   --color-blue-chill-950: var(--color-indigo-950);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #09090b;
-    --foreground: #fafafa;
-  }
+body {
+  background: var(--bg-base);
+  color: var(--text-1);
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+  transition: background-color 0.2s ease, color 0.15s ease;
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+/* ── Native <select> dropdown dark mode ── */
+/* color-scheme on html.dark doesn't always cascade to the native popup on Windows */
+.dark select {
+  color-scheme: dark;
+}
+.dark option {
+  background-color: #0f1629;
+  color: #e2e8f0;
 }
 
 /* Glow for primary buttons */
 .shadow-glow {
-  box-shadow: var(--shadow-glow);
+  box-shadow: var(--glow);
 }
 .shadow-glow-lg {
-  box-shadow: var(--shadow-glow-lg);
+  box-shadow: var(--glow-lg);
 }
 
 /* Prevent flex children from overflowing parent width */
 .panel-flex-safe {
   min-width: 0;
+}
+
+/* ── Aurora ambient light on sidebar in dark mode ── */
+.dark aside {
+  background-image:
+    radial-gradient(ellipse at 25% 20%, rgb(99 102 241 / 0.08), transparent 55%),
+    radial-gradient(ellipse at 80% 85%, rgb(124 58 237 / 0.06), transparent 50%);
 }
 
 /* Flowing dash animation for AI mapping Bezier lines */
@@ -191,4 +226,111 @@ body {
 
 .landing-button-pulse {
   animation: landing-button-pulse 3s ease-in-out infinite;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   Dark mode – @eigenpal/docx-js-editor override
+   Strategy: darken the editor chrome (toolbar/menus); keep document
+   pages white (as printed) with a dramatic shadow on dark canvas.
+   ════════════════════════════════════════════════════════════════ */
+
+/* 1. CSS variable override for eigenpal's shadcn-style tokens */
+html.dark .ep-root {
+  /* Surface */
+  --background:              222 51% 12%;   /* #0f1629 */
+  --foreground:              214 32% 91%;   /* slate-200 */
+  /* Primary – Indigo */
+  --primary:                 239 84% 67%;   /* indigo-400 */
+  --primary-foreground:      0   0%  100%;
+  /* Secondary / muted */
+  --secondary:               222 44% 17%;   /* #151e36 */
+  --secondary-foreground:    214 32% 78%;
+  --muted:                   222 44% 17%;
+  --muted-foreground:        215 16% 47%;   /* slate-500 */
+  /* Accent (hover bg) */
+  --accent:                  222 44% 21%;
+  --accent-foreground:       214 32% 91%;
+  /* Destructive */
+  --destructive:             0   63% 55%;
+  --destructive-foreground:  0   0%  100%;
+  /* Borders / inputs / ring */
+  --border:                  220 28% 24%;
+  --input:                   220 28% 24%;
+  --ring:                    239 84% 67%;
+  /* Radius (preserve existing) */
+  --radius:                  0.5rem;
+}
+
+/* 2. Toolbar buttons / dropdowns extra overrides
+      (some eigenpal classes use hard-coded colors, not CSS vars) */
+html.dark .ep-root .bg-white {
+  background-color: #0f1629 !important;
+}
+html.dark .ep-root .bg-slate-100 {
+  background-color: #1a2440 !important;
+}
+html.dark .ep-root .bg-slate-200 {
+  background-color: #1e2d4a !important;
+}
+html.dark .ep-root .border-slate-200,
+html.dark .ep-root .border-slate-200\/50 {
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+html.dark .ep-root .border-slate-300 {
+  border-color: rgba(255, 255, 255, 0.12) !important;
+}
+html.dark .ep-root .text-slate-700 {
+  color: #cbd5e1 !important;   /* slate-300 */
+}
+html.dark .ep-root .text-slate-500 {
+  color: #64748b !important;
+}
+html.dark .ep-root .text-slate-400 {
+  color: #475569 !important;
+}
+html.dark .ep-root .hover\:bg-slate-100:hover,
+html.dark .ep-root .hover\:bg-slate-100\/80:hover,
+html.dark .ep-root .hover\:bg-slate-50:hover,
+html.dark .ep-root .focus\:bg-slate-100:focus,
+html.dark .ep-root .focus\:bg-slate-100\/80:focus {
+  background-color: rgba(255, 255, 255, 0.07) !important;
+}
+html.dark .ep-root .hover\:bg-slate-800:hover {
+  background-color: #1a2440 !important;
+}
+html.dark .ep-root .hover\:text-slate-900:hover {
+  color: #e2e8f0 !important;
+}
+html.dark .ep-root .shadow-lg,
+html.dark .ep-root .shadow {
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5) !important;
+}
+html.dark .ep-root .shadow-sm {
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* 3. Document pages – keep white (like print preview) but with
+      a premium shadow so they "float" on the dark canvas */
+html.dark .docx-editor-wrap .docx-editor-page,
+html.dark .docx-editor-wrap .layout-page {
+  background-color: #ffffff !important;
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.06),
+    0 8px 32px rgba(0, 0, 0, 0.55),
+    0 24px 64px rgba(0, 0, 0, 0.4) !important;
+  border-radius: 2px;
+}
+
+/* 4. Section-break dividers inside document */
+html.dark .docx-editor-wrap .docx-section-break::after {
+  --doc-text-muted: #9ca3af;
+  --doc-border:     #d1d5db;
+}
+
+/* 5. Find-highlight colours stay visible on white pages */
+html.dark .docx-editor-wrap .docx-find-highlight {
+  background-color: rgba(253, 224, 71, 0.55) !important;
+}
+html.dark .docx-editor-wrap .docx-find-highlight-current {
+  background-color: rgba(251, 146, 60, 0.65) !important;
 }

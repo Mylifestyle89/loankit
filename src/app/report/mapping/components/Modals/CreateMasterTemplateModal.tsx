@@ -75,7 +75,7 @@ export function CreateMasterTemplateModal() {
             type="button"
             onClick={onClose}
             disabled={saving}
-            className="rounded-xl border border-slate-200/60 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition-all hover:bg-slate-50/80 disabled:opacity-60"
+            className="rounded-xl border border-slate-200/60 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition-all hover:bg-slate-50/80 disabled:opacity-60 dark:border-white/[0.07] dark:bg-[#0f1629]/90 dark:text-slate-200 dark:hover:bg-white/[0.05]"
           >
             Hủy
           </button>
@@ -90,7 +90,7 @@ export function CreateMasterTemplateModal() {
         </div>
       }
     >
-      <label className="text-xs font-medium text-slate-600" htmlFor="global-create-master-template-name">
+      <label className="text-xs font-medium text-slate-600 dark:text-slate-300" htmlFor="global-create-master-template-name">
         Tên mẫu
       </label>
       <input
@@ -98,7 +98,7 @@ export function CreateMasterTemplateModal() {
         value={effectiveName}
         onChange={(e) => setName(e.target.value)}
         placeholder="Nhập tên mẫu dữ liệu"
-        className="mt-2 h-10 w-full rounded-xl border border-slate-200/60 bg-slate-50/50 px-3 text-sm text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+        className="mt-2 h-10 w-full rounded-xl border border-slate-200/60 bg-slate-50/50 px-3 text-sm text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:border-white/[0.08] dark:bg-white/[0.04] dark:text-slate-100"
         autoFocus
       />
       {error ? <p className="mt-2 text-xs text-rose-600">{error}</p> : null}

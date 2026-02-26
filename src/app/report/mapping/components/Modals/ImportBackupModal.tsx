@@ -88,17 +88,17 @@ export function ImportBackupModal({ open, onClose, onRestore }: ImportBackupModa
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
       <div
-        className="w-full max-w-lg rounded-2xl border border-slate-200/60 bg-white/90 p-5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] backdrop-blur-md"
+        className="w-full max-w-lg rounded-2xl border border-slate-200/60 bg-white/90 p-5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] backdrop-blur-md dark:border-white/[0.07] dark:bg-[#0f1629]/90"
         role="dialog"
         aria-labelledby="import-backup-title"
       >
-        <div className="flex items-center gap-2 border-b border-slate-200/60 pb-3">
-          <FolderOpen className="h-5 w-5 text-indigo-600" />
-          <h2 id="import-backup-title" className="text-lg font-semibold text-slate-800">
+        <div className="flex items-center gap-2 border-b border-slate-200/60 pb-3 dark:border-white/[0.07]">
+          <FolderOpen className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+          <h2 id="import-backup-title" className="text-lg font-semibold text-slate-800 dark:text-slate-200">
             Import từ backup
           </h2>
         </div>
-        <p className="mt-1 text-sm text-slate-600">
+        <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
           Chọn file backup rồi chọn mẫu dữ liệu để khôi phục cấu trúc field vào template hiện tại.
         </p>
 
@@ -108,16 +108,16 @@ export function ImportBackupModal({ open, onClose, onRestore }: ImportBackupModa
 
         <div className="mt-4 space-y-3">
           <div>
-            <span className="text-xs font-medium text-slate-500">File backup</span>
+            <span className="text-xs font-medium text-slate-500 dark:text-slate-400">File backup</span>
             {loadingList ? (
-              <div className="mt-1 flex items-center gap-2 text-sm text-slate-500">
+              <div className="mt-1 flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
                 <Loader2 className="h-4 w-4 animate-spin" />
                 Đang tải...
               </div>
             ) : backups.length === 0 ? (
-              <p className="mt-1 text-sm text-slate-500">Chưa có file backup nào.</p>
+              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Chưa có file backup nào.</p>
             ) : (
-              <ul className="mt-1 max-h-40 overflow-y-auto rounded-xl border border-slate-200/60 bg-slate-50/50">
+              <ul className="mt-1 max-h-40 overflow-y-auto rounded-xl border border-slate-200/60 bg-slate-50/50 dark:border-white/[0.07] dark:bg-white/[0.04]">
                 {backups.map((b) => (
                   <li key={b.filename}>
                     <button
@@ -125,8 +125,8 @@ export function ImportBackupModal({ open, onClose, onRestore }: ImportBackupModa
                       onClick={() => handleSelectFile(b.filename)}
                       className={`flex w-full items-center gap-2 px-3 py-2 text-left text-sm transition-colors ${
                         selectedFile === b.filename
-                          ? "bg-indigo-50/80 text-indigo-800"
-                          : "text-slate-700 hover:bg-slate-100/60"
+                          ? "bg-indigo-50/80 text-indigo-800 dark:bg-indigo-500/10 dark:text-indigo-400"
+                          : "text-slate-700 hover:bg-slate-100/60 dark:text-slate-200 dark:hover:bg-white/[0.06]"
                       }`}
                     >
                       <FileJson className="h-4 w-4 shrink-0" />
@@ -140,16 +140,16 @@ export function ImportBackupModal({ open, onClose, onRestore }: ImportBackupModa
 
           {selectedFile && (
             <div>
-              <span className="text-xs font-medium text-slate-500">Mẫu trong backup</span>
+              <span className="text-xs font-medium text-slate-500 dark:text-slate-400">Mẫu trong backup</span>
               {loadingContent ? (
-                <div className="mt-1 flex items-center gap-2 text-sm text-slate-500">
+                <div className="mt-1 flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
                   <Loader2 className="h-4 w-4 animate-spin" />
                   Đang đọc...
                 </div>
               ) : templates.length === 0 ? (
-                <p className="mt-1 text-sm text-slate-500">File này không có mẫu dữ liệu.</p>
+                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">File này không có mẫu dữ liệu.</p>
               ) : (
-                <ul className="mt-1 max-h-40 overflow-y-auto rounded-xl border border-slate-200/60 bg-slate-50/50">
+                <ul className="mt-1 max-h-40 overflow-y-auto rounded-xl border border-slate-200/60 bg-slate-50/50 dark:border-white/[0.07] dark:bg-white/[0.04]">
                   {templates.map((tpl) => (
                     <li key={tpl.id}>
                       <button
@@ -157,12 +157,12 @@ export function ImportBackupModal({ open, onClose, onRestore }: ImportBackupModa
                         onClick={() => setSelectedTemplate(tpl)}
                         className={`flex w-full items-center justify-between px-3 py-2 text-left text-sm transition-colors ${
                           selectedTemplate?.id === tpl.id
-                            ? "bg-indigo-50/80 text-indigo-800"
-                            : "text-slate-700 hover:bg-slate-100/60"
+                            ? "bg-indigo-50/80 text-indigo-800 dark:bg-indigo-500/10 dark:text-indigo-400"
+                            : "text-slate-700 hover:bg-slate-100/60 dark:text-slate-200 dark:hover:bg-white/[0.06]"
                         }`}
                       >
                         <span className="font-medium">{tpl.name}</span>
-                        <span className="text-xs text-slate-500">
+                        <span className="text-xs text-slate-500 dark:text-slate-400">
                           {tpl.field_catalog?.length ?? 0} field
                         </span>
                       </button>
@@ -174,11 +174,11 @@ export function ImportBackupModal({ open, onClose, onRestore }: ImportBackupModa
           )}
         </div>
 
-        <div className="mt-5 flex flex-wrap justify-end gap-2 border-t border-slate-200/60 pt-4">
+        <div className="mt-5 flex flex-wrap justify-end gap-2 border-t border-slate-200/60 pt-4 dark:border-white/[0.07]">
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg border border-slate-200/60 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50/80"
+            className="rounded-lg border border-slate-200/60 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50/80 dark:border-white/[0.07] dark:bg-[#0f1629]/90 dark:text-slate-200 dark:hover:bg-white/[0.05]"
           >
             Hủy
           </button>

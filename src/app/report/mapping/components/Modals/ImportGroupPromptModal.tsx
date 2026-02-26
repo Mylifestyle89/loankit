@@ -12,26 +12,26 @@ export function ImportGroupPromptModal({ prompt, onResolve }: ImportGroupPromptM
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-      <div className="w-full max-w-md space-y-3 rounded-lg bg-white p-4 shadow-xl">
-        <h3 className="text-base font-semibold text-coral-tree-900">Xác nhận tạo nhóm khi import</h3>
-        <p className="text-sm text-coral-tree-800">
+      <div className="w-full max-w-md space-y-3 rounded-lg bg-white dark:bg-[#0f1629]/90 p-4 shadow-xl">
+        <h3 className="text-base font-semibold text-coral-tree-900 dark:text-slate-100">Xác nhận tạo nhóm khi import</h3>
+        <p className="text-sm text-coral-tree-800 dark:text-slate-200">
           Dòng <span className="font-semibold">{prompt.rowNumber}</span>:{" "}
           {prompt.level === "parent" ? "group cha" : "subgroup"}{" "}
           <span className="font-semibold">{"\""}{prompt.missingPath}{"\""}</span> chưa tồn tại.
         </p>
-        <p className="text-xs text-coral-tree-600">Chọn cách xử lý để tiếp tục import theo đúng thứ tự dòng.</p>
+        <p className="text-xs text-coral-tree-600 dark:text-slate-300">Chọn cách xử lý để tiếp tục import theo đúng thứ tự dòng.</p>
         <div className="mt-2 flex flex-wrap justify-end gap-2">
           <button
             type="button"
             onClick={() => onResolve("stop")}
-            className="rounded-md border border-coral-tree-300 px-3 py-1.5 text-sm hover:bg-coral-tree-50"
+            className="rounded-md border border-coral-tree-300 dark:border-white/[0.09] dark:text-slate-200 px-3 py-1.5 text-sm hover:bg-coral-tree-50 dark:hover:bg-white/[0.06]"
           >
             Dừng import
           </button>
           <button
             type="button"
             onClick={() => onResolve("create_once")}
-            className="rounded-md border border-coral-tree-300 px-3 py-1.5 text-sm hover:bg-coral-tree-50"
+            className="rounded-md border border-coral-tree-300 dark:border-white/[0.09] dark:text-slate-200 px-3 py-1.5 text-sm hover:bg-coral-tree-50 dark:hover:bg-white/[0.06]"
           >
             Tạo dòng này
           </button>

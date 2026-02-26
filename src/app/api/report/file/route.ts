@@ -3,30 +3,26 @@ import path from "node:path";
 
 import { NextRequest, NextResponse } from "next/server";
 
+import { toHttpError, NotFoundError, ValidationError } from "@/core/errors/app-error";
+
 export const runtime = "nodejs";
 
-function isSafeReportAssetPath(relPath: string): boolean {
-  if (!relPath.startsWith("report_assets/")) {
-    return false;
-  }
-  if (relPath.includes("..")) {
-    return false;
-  }
-  return relPath.toLowerCase().endsWith(".docx");
-}
+const allowedBase = path.resolve(process.cwd(), "report_assets");
 
 export async function GET(req: NextRequest) {
   try {
     const relPath = req.nextUrl.searchParams.get("path") ?? "";
     const download = req.nextUrl.searchParams.get("download") === "1";
 
-    if (!isSafeReportAssetPath(relPath)) {
-      return NextResponse.json({ ok: false, error: "Invalid file path." }, { status: 400 });
+    const resolved = path.resolve(process.cwd(), relPath);
+    const withinBase = resolved.startsWith(allowedBase + path.sep) || resolved === allowedBase;
+    const isDocx = relPath.toLowerCase().endsWith(".docx");
+    if (!withinBase || !isDocx) {
+      throw new ValidationError("Invalid file path.");
     }
 
-    const absolute = path.join(process.cwd(), relPath);
-    const buffer = await fs.readFile(absolute);
-    const filename = path.basename(relPath);
+    const buffer = await fs.readFile(resolved);
+    const filename = path.basename(resolved);
 
     return new NextResponse(buffer, {
       status: 200,
@@ -37,9 +33,11 @@ export async function GET(req: NextRequest) {
       },
     });
   } catch (error) {
-    return NextResponse.json(
-      { ok: false, error: error instanceof Error ? error.message : "Failed to read file." },
-      { status: 404 },
-    );
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") {
+      const nfe = new NotFoundError("File không tồn tại.");
+      return NextResponse.json({ ok: false, error: nfe.message }, { status: nfe.status });
+    }
+    const httpError = toHttpError(error, "Failed to read file.");
+    return NextResponse.json({ ok: false, error: httpError.message }, { status: httpError.status });
   }
 }

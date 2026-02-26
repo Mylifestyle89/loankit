@@ -1,23 +1,44 @@
 import { NextRequest, NextResponse } from "next/server";
+import path from "node:path";
+import { z } from "zod";
 
-import { toHttpError } from "@/core/errors/app-error";
+import { toHttpError, ValidationError } from "@/core/errors/app-error";
 import { reportService } from "@/services/report.service";
 
 export const runtime = "nodejs";
 
+const allowedBase = path.resolve(process.cwd(), "report_assets");
+
+function isAllowedAssetPath(v: string | undefined): boolean {
+  if (v === undefined) return true;
+  const resolved = path.resolve(process.cwd(), v);
+  return resolved.startsWith(allowedBase + path.sep) || resolved === allowedBase;
+}
+
+const safePath = z
+  .string()
+  .optional()
+  .refine(isAllowedAssetPath, { message: "Đường dẫn file không hợp lệ." });
+
+const exportSchema = z.object({
+  export_mode: z.enum(["bank_grouped"]).optional(),
+  output_path: safePath,
+  report_path: safePath,
+  template_path: safePath,
+  output_dir: safePath,
+  group_key: z.string().max(100).optional(),
+  repeat_key: z.string().max(100).optional(),
+  customer_name_key: z.string().max(100).optional(),
+  mapping_instance_id: z.string().optional(),
+});
+
 export async function POST(req: NextRequest) {
   try {
-    const body = (await req.json().catch(() => ({}))) as {
-      output_path?: string;
-      report_path?: string;
-      template_path?: string;
-      export_mode?: string;
-      output_dir?: string;
-      group_key?: string;
-      repeat_key?: string;
-      customer_name_key?: string;
-      mapping_instance_id?: string;
-    };
+    const raw = await req.json().catch(() => {
+      throw new ValidationError("Request body phải là JSON hợp lệ.");
+    });
+    const body = exportSchema.parse(raw);
+
     const result =
       body.export_mode === "bank_grouped"
         ? await reportService.processBankReportExport({
@@ -41,6 +62,13 @@ export async function POST(req: NextRequest) {
       ...result,
     });
   } catch (error) {
+    if (error instanceof z.ZodError) {
+      const validationError = new ValidationError("Dữ liệu request không hợp lệ.", error.flatten().fieldErrors);
+      return NextResponse.json(
+        { ok: false, error: validationError.message, details: validationError.details },
+        { status: validationError.status },
+      );
+    }
     const httpError = toHttpError(error, "Export failed.");
     return NextResponse.json(
       { ok: false, error: httpError.message },

@@ -33,25 +33,25 @@ export function ChangeFieldGroupModal({
 
     return (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-4">
-            <div className="w-full max-w-sm space-y-3 rounded-lg bg-white p-4 shadow-xl">
-                <h3 className="text-sm font-semibold">{t("mapping.changeGroup.modalTitle")}</h3>
+            <div className="w-full max-w-sm space-y-3 rounded-lg bg-white dark:bg-[#0f1629]/90 p-4 shadow-xl">
+                <h3 className="text-sm font-semibold dark:text-slate-100">{t("mapping.changeGroup.modalTitle")}</h3>
                 {(() => {
                     const field = fieldCatalog.find((f) => f.field_key === changingFieldGroup);
                     return field ? (
-                        <p className="text-xs text-coral-tree-600">
+                        <p className="text-xs text-coral-tree-600 dark:text-slate-300">
                             {t("mapping.changeGroup.current")}: <span className="font-medium">{field.group}</span>
                         </p>
                     ) : null;
                 })()}
                 <div className="space-y-1">
-                    <label className="text-xs text-coral-tree-600" htmlFor="change-group-select">
+                    <label className="text-xs text-coral-tree-600 dark:text-slate-300" htmlFor="change-group-select">
                         {t("mapping.changeGroup.select")}
                     </label>
                     <select
                         id="change-group-select"
                         value={changingFieldGroupValue}
                         onChange={(e) => setChangingFieldGroupValue(e.target.value)}
-                        className="w-full rounded-md border border-coral-tree-300 px-2 py-1.5 text-sm"
+                        className="w-full rounded-md border border-coral-tree-300 dark:border-white/[0.09] dark:bg-white/[0.05] dark:text-slate-100 px-2 py-1.5 text-sm"
                         autoFocus
                     >
                         <option value="" disabled>
@@ -76,7 +76,7 @@ export function ChangeFieldGroupModal({
                             value={changingFieldGroupNewName}
                             onChange={(e) => setChangingFieldGroupNewName(e.target.value)}
                             placeholder={t("mapping.newGroupPlaceholder")}
-                            className="mt-2 w-full rounded-md border border-coral-tree-300 px-2 py-1.5 text-sm"
+                            className="mt-2 w-full rounded-md border border-coral-tree-300 dark:border-white/[0.09] dark:bg-white/[0.05] dark:text-slate-100 px-2 py-1.5 text-sm"
                         />
                     ) : null}
                 </div>
@@ -84,7 +84,7 @@ export function ChangeFieldGroupModal({
                     <button
                         type="button"
                         onClick={onClose}
-                        className="flex items-center gap-1.5 rounded-md border border-coral-tree-300 px-3 py-1.5 text-xs hover:bg-coral-tree-50"
+                        className="flex items-center gap-1.5 rounded-md border border-coral-tree-300 dark:border-white/[0.09] dark:text-slate-200 px-3 py-1.5 text-xs hover:bg-coral-tree-50 dark:hover:bg-white/[0.06]"
                     >
                         <X className="h-3.5 w-3.5" />
                         {t("mapping.changeGroup.cancel")}

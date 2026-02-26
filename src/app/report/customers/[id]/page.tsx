@@ -104,7 +104,7 @@ export default function EditCustomerPage() {
   }
 
   if (loading) {
-    return <p className="text-sm text-coral-tree-600">{t("customers.loading")}</p>;
+    return <p className="text-sm text-coral-tree-600 dark:text-slate-400">{t("customers.loading")}</p>;
   }
 
   return (
@@ -112,16 +112,16 @@ export default function EditCustomerPage() {
       <div className="flex items-center gap-4">
         <Link
           href="/report/customers"
-          className="rounded border border-coral-tree-300 px-3 py-1.5 text-sm hover:bg-coral-tree-100"
+          className="rounded border border-coral-tree-300 dark:border-white/[0.09] px-3 py-1.5 text-sm hover:bg-coral-tree-100 dark:hover:bg-white/[0.06] dark:text-slate-300"
         >
           ← {t("customers.title")}
         </Link>
         <h2 className="text-lg font-semibold">{t("customers.edit")}</h2>
       </div>
-      {error ? <p className="text-sm text-red-700">{error}</p> : null}
+      {error ? <p className="text-sm text-red-700 dark:text-red-400">{error}</p> : null}
       <form
         onSubmit={handleSubmit}
-        className="max-w-2xl space-y-4 rounded-xl border border-coral-tree-200 bg-white p-6"
+        className="max-w-2xl space-y-4 rounded-xl border border-coral-tree-200 dark:border-white/[0.08] bg-white dark:bg-[#0f1629]/90 p-6"
       >
         <label className="block">
           <span className="text-sm font-medium">{t("customers.code")} *</span>
@@ -129,7 +129,7 @@ export default function EditCustomerPage() {
             required
             value={form.customer_code}
             onChange={(e) => setForm((p) => ({ ...p, customer_code: e.target.value }))}
-            className="mt-1 w-full rounded-md border border-coral-tree-300 px-3 py-2"
+            className="mt-1 w-full rounded-md border border-coral-tree-300 dark:border-white/[0.09] bg-white dark:bg-[#0f1629] text-zinc-900 dark:text-slate-100 px-3 py-2"
           />
         </label>
         <label className="block">
@@ -138,7 +138,7 @@ export default function EditCustomerPage() {
             required
             value={form.customer_name}
             onChange={(e) => setForm((p) => ({ ...p, customer_name: e.target.value }))}
-            className="mt-1 w-full rounded-md border border-coral-tree-300 px-3 py-2"
+            className="mt-1 w-full rounded-md border border-coral-tree-300 dark:border-white/[0.09] bg-white dark:bg-[#0f1629] text-zinc-900 dark:text-slate-100 px-3 py-2"
           />
         </label>
         <label className="block">
@@ -146,7 +146,7 @@ export default function EditCustomerPage() {
           <input
             value={form.address}
             onChange={(e) => setForm((p) => ({ ...p, address: e.target.value }))}
-            className="mt-1 w-full rounded-md border border-coral-tree-300 px-3 py-2"
+            className="mt-1 w-full rounded-md border border-coral-tree-300 dark:border-white/[0.09] bg-white dark:bg-[#0f1629] text-zinc-900 dark:text-slate-100 px-3 py-2"
           />
         </label>
         <label className="block">
@@ -154,7 +154,7 @@ export default function EditCustomerPage() {
           <input
             value={form.main_business}
             onChange={(e) => setForm((p) => ({ ...p, main_business: e.target.value }))}
-            className="mt-1 w-full rounded-md border border-coral-tree-300 px-3 py-2"
+            className="mt-1 w-full rounded-md border border-coral-tree-300 dark:border-white/[0.09] bg-white dark:bg-[#0f1629] text-zinc-900 dark:text-slate-100 px-3 py-2"
           />
         </label>
         <label className="block">
@@ -162,7 +162,7 @@ export default function EditCustomerPage() {
           <input
             value={form.charter_capital}
             onChange={(e) => setForm((p) => ({ ...p, charter_capital: e.target.value }))}
-            className="mt-1 w-full rounded-md border border-coral-tree-300 px-3 py-2"
+            className="mt-1 w-full rounded-md border border-coral-tree-300 dark:border-white/[0.09] bg-white dark:bg-[#0f1629] text-zinc-900 dark:text-slate-100 px-3 py-2"
           />
         </label>
         <label className="block">
@@ -172,7 +172,7 @@ export default function EditCustomerPage() {
             onChange={(e) =>
               setForm((p) => ({ ...p, legal_representative_name: e.target.value }))
             }
-            className="mt-1 w-full rounded-md border border-coral-tree-300 px-3 py-2"
+            className="mt-1 w-full rounded-md border border-coral-tree-300 dark:border-white/[0.09] bg-white dark:bg-[#0f1629] text-zinc-900 dark:text-slate-100 px-3 py-2"
           />
         </label>
         <label className="block">
@@ -182,7 +182,7 @@ export default function EditCustomerPage() {
             onChange={(e) =>
               setForm((p) => ({ ...p, legal_representative_title: e.target.value }))
             }
-            className="mt-1 w-full rounded-md border border-coral-tree-300 px-3 py-2"
+            className="mt-1 w-full rounded-md border border-coral-tree-300 dark:border-white/[0.09] bg-white dark:bg-[#0f1629] text-zinc-900 dark:text-slate-100 px-3 py-2"
           />
         </label>
         <label className="block">
@@ -192,7 +192,7 @@ export default function EditCustomerPage() {
             onChange={(e) =>
               setForm((p) => ({ ...p, organization_type: e.target.value }))
             }
-            className="mt-1 w-full rounded-md border border-coral-tree-300 px-3 py-2"
+            className="mt-1 w-full rounded-md border border-coral-tree-300 dark:border-white/[0.09] bg-white dark:bg-[#0f1629] text-zinc-900 dark:text-slate-100 px-3 py-2"
           />
         </label>
         <div className="flex gap-3 pt-2">
@@ -205,7 +205,7 @@ export default function EditCustomerPage() {
           </button>
           <Link
             href="/report/customers"
-            className="rounded-md border border-coral-tree-300 px-4 py-2 text-sm"
+            className="rounded-md border border-coral-tree-300 dark:border-white/[0.09] px-4 py-2 text-sm dark:text-slate-300 hover:bg-coral-tree-50 dark:hover:bg-white/[0.06]"
           >
             Hủy
           </Link>

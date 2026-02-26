@@ -51,14 +51,15 @@ async function extractWithTesseract(buffer: Buffer): Promise<OcrExtractResult> {
   }
 }
 
-async function extractSinglePagePdfText(buffer: Buffer): Promise<string> {
+const PDF_MAX_BYTES = 20 * 1024 * 1024; // 20 MB
+
+async function extractPdfText(buffer: Buffer): Promise<string> {
+  if (buffer.length > PDF_MAX_BYTES) {
+    throw new ValidationError("PDF vượt quá giới hạn 20MB.");
+  }
   const parser = new PDFParse({ data: buffer });
   try {
-    const info = await parser.getInfo();
-    if (info.total > 1) {
-      throw new ValidationError("Only single-page PDF is supported in this phase.");
-    }
-    const parsed = await parser.getText({ first: 1 });
+    const parsed = await parser.getText();
     return (parsed.text ?? "").trim();
   } catch (error) {
     throw new OcrProcessError("PDF parsing failed.", error);
@@ -102,7 +103,7 @@ export const ocrService = {
 
     const mime = input.mimeType.toLowerCase();
     if (mime === "application/pdf") {
-      const extracted = await extractSinglePagePdfText(input.buffer);
+      const extracted = await extractPdfText(input.buffer);
       if (extracted) {
         return { text: extracted, provider: "tesseract", confidence: 0.99 };
       }

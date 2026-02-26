@@ -66,8 +66,8 @@ export function ValidationResultPanel({ t, validation }: ValidationResultPanelPr
   })();
 
   return (
-    <div className="rounded-xl border border-coral-tree-200 bg-white p-4">
-      <h3 className="text-sm font-semibold">{t("mapping.validationResult")}</h3>
+    <div className="rounded-xl border border-coral-tree-200 dark:border-white/[0.07] bg-white dark:bg-[#0f1629]/90 p-4">
+      <h3 className="text-sm font-semibold dark:text-slate-100">{t("mapping.validationResult")}</h3>
       {validation ? (
         <div className="mt-3 space-y-2">
           {insights.map((item, index) => (
@@ -87,7 +87,7 @@ export function ValidationResultPanel({ t, validation }: ValidationResultPanelPr
           ))}
         </div>
       ) : (
-        <p className="mt-1 text-sm text-coral-tree-600">{t("mapping.noValidation")}</p>
+        <p className="mt-1 text-sm text-coral-tree-600 dark:text-slate-300">{t("mapping.noValidation")}</p>
       )}
     </div>
   );

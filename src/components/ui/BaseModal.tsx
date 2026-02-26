@@ -40,7 +40,7 @@ export function BaseModal({
         >
           <motion.button
             aria-label="Close modal backdrop"
-            className="absolute inset-0 bg-slate-900/25 backdrop-blur-sm"
+            className="absolute inset-0 bg-slate-900/25 backdrop-blur-sm dark:bg-black/50"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -49,19 +49,19 @@ export function BaseModal({
           <motion.div
             role="dialog"
             aria-modal="true"
-            className={`relative w-full ${maxWidthClassName} rounded-2xl border border-slate-200/60 bg-white/80 shadow-[0_8px_30px_rgb(0,0,0,0.04)] backdrop-blur-md`}
+            className={`relative w-full ${maxWidthClassName} rounded-2xl border border-slate-200/60 bg-white/80 shadow-[0_8px_30px_rgb(0,0,0,0.04)] backdrop-blur-md dark:border-white/[0.08] dark:bg-[#0f1629]/90 dark:shadow-[0_8px_40px_rgb(0,0,0,0.5)]`}
             initial={{ opacity: 0, y: 20, scale: 0.99 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 12, scale: 0.99 }}
             transition={{ duration: 0.18, ease: "easeOut" }}
           >
             {title ? (
-              <div className="border-b border-slate-200/60 px-5 py-3">
-                <h3 className="text-base font-semibold text-slate-900">{title}</h3>
+              <div className="border-b border-slate-200/60 px-5 py-3 dark:border-white/[0.07]">
+                <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">{title}</h3>
               </div>
             ) : null}
             <div className="px-5 py-4">{children}</div>
-            {footer ? <div className="border-t border-slate-200/60 px-5 py-3">{footer}</div> : null}
+            {footer ? <div className="border-t border-slate-200/60 px-5 py-3 dark:border-white/[0.07]">{footer}</div> : null}
           </motion.div>
         </motion.div>
       ) : null}

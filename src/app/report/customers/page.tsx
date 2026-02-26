@@ -155,14 +155,14 @@ export default function CustomersPage() {
 
   return (
     <section className="space-y-4">
-      <div className="rounded-xl border border-coral-tree-200 bg-white p-4">
+      <div className="rounded-xl border border-coral-tree-200 dark:border-white/[0.08] bg-white dark:bg-[#0f1629]/90 p-4">
         <h2 className="text-lg font-semibold">{t("customers.title")}</h2>
-        <p className="mt-1 text-sm text-coral-tree-600">{t("customers.desc")}</p>
+        <p className="mt-1 text-sm text-coral-tree-600 dark:text-slate-400">{t("customers.desc")}</p>
         {error ? (
-          <p className="mt-2 text-sm text-red-700">{error}</p>
+          <p className="mt-2 text-sm text-red-700 dark:text-red-400">{error}</p>
         ) : null}
         {success ? (
-          <p className="mt-2 text-sm text-green-700">{success}</p>
+          <p className="mt-2 text-sm text-green-700 dark:text-emerald-400">{success}</p>
         ) : null}
       </div>
 
@@ -171,7 +171,7 @@ export default function CustomersPage() {
           <button
             type="button"
             onClick={openExportModal}
-            className="flex items-center gap-2 rounded-md border border-coral-tree-300 bg-white px-4 py-2 text-sm text-coral-tree-700 hover:bg-coral-tree-50"
+            className="flex items-center gap-2 rounded-md border border-coral-tree-300 dark:border-white/[0.09] bg-white dark:bg-[#0f1629]/90 px-4 py-2 text-sm text-coral-tree-700 dark:text-slate-300 hover:bg-coral-tree-50 dark:hover:bg-white/[0.06]"
           >
             <Download className="h-4 w-4" />
             Tải File Cấu Hình (JSON)
@@ -188,7 +188,7 @@ export default function CustomersPage() {
             type="button"
             onClick={() => fileInputRef.current?.click()}
             disabled={importing}
-            className="flex items-center gap-2 rounded-md border border-coral-tree-300 bg-white px-4 py-2 text-sm text-coral-tree-700 hover:bg-coral-tree-50 disabled:opacity-50"
+            className="flex items-center gap-2 rounded-md border border-coral-tree-300 dark:border-white/[0.09] bg-white dark:bg-[#0f1629]/90 px-4 py-2 text-sm text-coral-tree-700 dark:text-slate-300 hover:bg-coral-tree-50 dark:hover:bg-white/[0.06] disabled:opacity-50"
           >
             <Upload className="h-4 w-4" />
             {importing ? "Đang import..." : "Nạp File Cấu Hình (JSON)"}
@@ -203,15 +203,15 @@ export default function CustomersPage() {
         </Link>
       </div>
 
-      <div className="rounded-xl border border-coral-tree-200 bg-white overflow-hidden">
+      <div className="rounded-xl border border-coral-tree-200 dark:border-white/[0.08] bg-white dark:bg-[#0f1629]/90 overflow-hidden">
         {loading ? (
-          <p className="p-6 text-sm text-coral-tree-600">{t("customers.loading")}</p>
+          <p className="p-6 text-sm text-coral-tree-600 dark:text-slate-400">{t("customers.loading")}</p>
         ) : customers.length === 0 ? (
-          <p className="p-6 text-sm text-coral-tree-600">{t("customers.noCustomers")}</p>
+          <p className="p-6 text-sm text-coral-tree-600 dark:text-slate-400">{t("customers.noCustomers")}</p>
         ) : (
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-coral-tree-200 bg-coral-tree-100 text-left">
+              <tr className="border-b border-coral-tree-200 dark:border-white/[0.07] bg-coral-tree-100 dark:bg-white/[0.05] text-left">
                 <th className="px-4 py-2 font-semibold">{t("customers.code")}</th>
                 <th className="px-4 py-2 font-semibold">{t("customers.name")}</th>
                 <th className="px-4 py-2 font-semibold">{t("customers.address")}</th>
@@ -220,21 +220,21 @@ export default function CustomersPage() {
             </thead>
             <tbody>
               {customers.map((c) => (
-                <tr key={c.id} className="border-t border-coral-tree-200 hover:bg-coral-tree-50">
+                <tr key={c.id} className="border-t border-coral-tree-200 dark:border-white/[0.07] hover:bg-coral-tree-50 dark:hover:bg-white/[0.04]">
                   <td className="px-4 py-2">{c.customer_code}</td>
                   <td className="px-4 py-2">{c.customer_name}</td>
-                  <td className="px-4 py-2 text-coral-tree-600">{c.address ?? "—"}</td>
+                  <td className="px-4 py-2 text-coral-tree-600 dark:text-slate-400">{c.address ?? "—"}</td>
                   <td className="px-4 py-2 flex gap-2">
                     <Link
                       href={`/report/customers/${c.id}`}
-                      className="rounded border border-coral-tree-300 px-2 py-1 text-xs hover:bg-coral-tree-100"
+                      className="rounded border border-coral-tree-300 dark:border-white/[0.09] px-2 py-1 text-xs hover:bg-coral-tree-100 dark:hover:bg-white/[0.06]"
                     >
                       {t("customers.edit")}
                     </Link>
                     <button
                       type="button"
                       onClick={() => handleDelete(c.id)}
-                      className="rounded border border-red-200 px-2 py-1 text-xs text-red-700 hover:bg-red-50"
+                      className="rounded border border-red-200 dark:border-red-500/30 px-2 py-1 text-xs text-red-700 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10"
                     >
                       {t("customers.delete")}
                     </button>
@@ -248,12 +248,12 @@ export default function CustomersPage() {
 
       {exportModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-          <div className="w-full max-w-3xl rounded-xl bg-white shadow-xl flex flex-col h-[80vh]">
-            <div className="flex items-center justify-between border-b border-coral-tree-100 px-6 py-4">
-              <h3 className="text-lg font-semibold text-coral-tree-800">Tùy chọn xuất dữ liệu</h3>
+          <div className="w-full max-w-3xl rounded-xl bg-white dark:bg-[#0f1629]/90 shadow-xl flex flex-col h-[80vh]">
+            <div className="flex items-center justify-between border-b border-coral-tree-100 dark:border-white/[0.07] px-6 py-4">
+              <h3 className="text-lg font-semibold text-coral-tree-800 dark:text-slate-200">Tùy chọn xuất dữ liệu</h3>
               <button
                 onClick={() => setExportModalOpen(false)}
-                className="rounded-md p-1.5 text-coral-tree-400 hover:bg-coral-tree-100 hover:text-coral-tree-700"
+                className="rounded-md p-1.5 text-coral-tree-400 dark:text-slate-500 hover:bg-coral-tree-100 dark:hover:bg-white/[0.06] hover:text-coral-tree-700 dark:hover:text-slate-300"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -261,19 +261,19 @@ export default function CustomersPage() {
 
             <div className="flex-1 overflow-y-auto px-6 py-4 grid grid-cols-2 gap-8">
               {/* Cột khách hàng */}
-              <div className="flex flex-col h-full border border-coral-tree-200 rounded-lg overflow-hidden">
-                <div className="bg-coral-tree-100 px-4 py-2 font-medium flex justify-between items-center border-b border-coral-tree-200">
+              <div className="flex flex-col h-full border border-coral-tree-200 dark:border-white/[0.08] rounded-lg overflow-hidden">
+                <div className="bg-coral-tree-100 dark:bg-white/[0.05] px-4 py-2 font-medium flex justify-between items-center border-b border-coral-tree-200 dark:border-white/[0.07]">
                   <span>Khách hàng ({selectedCustomers.size}/{customers.length})</span>
                   <button
                     onClick={() => setSelectedCustomers(selectedCustomers.size === customers.length ? new Set() : new Set(customers.map(c => c.id)))}
-                    className="text-xs text-coral-tree-600 hover:underline"
+                    className="text-xs text-coral-tree-600 dark:text-slate-400 hover:underline"
                   >
                     {selectedCustomers.size === customers.length ? "Bỏ chọn tất cả" : "Chọn tất cả"}
                   </button>
                 </div>
                 <div className="flex-1 overflow-y-auto p-2">
                   {customers.map(c => (
-                    <label key={c.id} className="flex items-center gap-3 p-2 hover:bg-coral-tree-50 rounded cursor-pointer">
+                    <label key={c.id} className="flex items-center gap-3 p-2 hover:bg-coral-tree-50 dark:hover:bg-white/[0.04] rounded cursor-pointer">
                       <input
                         type="checkbox"
                         checked={selectedCustomers.has(c.id)}
@@ -287,28 +287,28 @@ export default function CustomersPage() {
                       />
                       <div className="flex flex-col">
                         <span className="text-sm font-medium">{c.customer_name}</span>
-                        <span className="text-xs text-coral-tree-500">{c.customer_code}</span>
+                        <span className="text-xs text-coral-tree-500 dark:text-slate-400">{c.customer_code}</span>
                       </div>
                     </label>
                   ))}
-                  {customers.length === 0 && <p className="text-sm text-coral-tree-500 text-center py-4">Không có khách hàng nào</p>}
+                  {customers.length === 0 && <p className="text-sm text-coral-tree-500 dark:text-slate-400 text-center py-4">Không có khách hàng nào</p>}
                 </div>
               </div>
 
               {/* Cột Mẫu (Templates) */}
-              <div className="flex flex-col h-full border border-coral-tree-200 rounded-lg overflow-hidden">
-                <div className="bg-coral-tree-100 px-4 py-2 font-medium flex justify-between items-center border-b border-coral-tree-200">
+              <div className="flex flex-col h-full border border-coral-tree-200 dark:border-white/[0.08] rounded-lg overflow-hidden">
+                <div className="bg-coral-tree-100 dark:bg-white/[0.05] px-4 py-2 font-medium flex justify-between items-center border-b border-coral-tree-200 dark:border-white/[0.07]">
                   <span>Mẫu Dữ Liệu ({selectedTemplates.size}/{allTemplates.length})</span>
                   <button
                     onClick={() => setSelectedTemplates(selectedTemplates.size === allTemplates.length ? new Set() : new Set(allTemplates.map(t => t.id)))}
-                    className="text-xs text-coral-tree-600 hover:underline"
+                    className="text-xs text-coral-tree-600 dark:text-slate-400 hover:underline"
                   >
                     {selectedTemplates.size === allTemplates.length ? "Bỏ chọn tất cả" : "Chọn tất cả"}
                   </button>
                 </div>
                 <div className="flex-1 overflow-y-auto p-2">
                   {allTemplates.map(t => (
-                    <label key={t.id} className="flex items-center gap-3 p-2 hover:bg-coral-tree-50 rounded cursor-pointer">
+                    <label key={t.id} className="flex items-center gap-3 p-2 hover:bg-coral-tree-50 dark:hover:bg-white/[0.04] rounded cursor-pointer">
                       <input
                         type="checkbox"
                         checked={selectedTemplates.has(t.id)}
@@ -323,15 +323,15 @@ export default function CustomersPage() {
                       <span className="text-sm">{t.name}</span>
                     </label>
                   ))}
-                  {allTemplates.length === 0 && <p className="text-sm text-coral-tree-500 text-center py-4">Chưa có mẫu nào</p>}
+                  {allTemplates.length === 0 && <p className="text-sm text-coral-tree-500 dark:text-slate-400 text-center py-4">Chưa có mẫu nào</p>}
                 </div>
               </div>
             </div>
 
-            <div className="flex justify-end gap-3 border-t border-coral-tree-100 p-6">
+            <div className="flex justify-end gap-3 border-t border-coral-tree-100 dark:border-white/[0.07] p-6">
               <button
                 onClick={() => setExportModalOpen(false)}
-                className="rounded-md px-4 py-2 text-sm font-medium text-coral-tree-600 hover:bg-coral-tree-100"
+                className="rounded-md px-4 py-2 text-sm font-medium text-coral-tree-600 dark:text-slate-400 hover:bg-coral-tree-100 dark:hover:bg-white/[0.06]"
               >
                 Hủy
               </button>

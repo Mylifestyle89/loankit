@@ -1,5 +1,5 @@
 import { Users, FileText, Upload, ChevronsDown, X, Download, PanelRightClose, PanelRightOpen, Search, Library, Settings, ChevronDown, ChevronUp } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useReducer, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import * as XLSX from "xlsx";
@@ -35,6 +35,45 @@ export type MappingSidebarProps = {
   setEditingFieldTemplateName: (name: string) => void;
   isMappingValid?: boolean;
 };
+
+type MergeState = {
+  files: File[];
+  outputName: string;
+  withPageBreak: boolean;
+  merging: boolean;
+  notice: { type: "success" | "error"; text: string } | null;
+};
+
+type MergeAction =
+  | { type: "SET_FILES"; files: File[] }
+  | { type: "SET_OUTPUT_NAME"; name: string }
+  | { type: "SET_PAGE_BREAK"; value: boolean }
+  | { type: "START" }
+  | { type: "SUCCESS"; fileCount: number }
+  | { type: "ERROR"; message: string }
+  | { type: "CLEAR_NOTICE" }
+  | { type: "FINISH" };
+
+const MERGE_INITIAL: MergeState = {
+  files: [],
+  outputName: "merged-template",
+  withPageBreak: true,
+  merging: false,
+  notice: null,
+};
+
+function mergeReducer(state: MergeState, action: MergeAction): MergeState {
+  switch (action.type) {
+    case "SET_FILES":      return { ...state, files: action.files, notice: null };
+    case "SET_OUTPUT_NAME": return { ...state, outputName: action.name };
+    case "SET_PAGE_BREAK":  return { ...state, withPageBreak: action.value };
+    case "START":           return { ...state, merging: true, notice: null };
+    case "SUCCESS":         return { ...state, notice: { type: "success", text: `Đã nối thành công ${action.fileCount} file DOCX.` } };
+    case "ERROR":           return { ...state, notice: { type: "error", text: action.message } };
+    case "CLEAR_NOTICE":    return { ...state, notice: null };
+    case "FINISH":          return { ...state, merging: false };
+  }
+}
 
 export function MappingSidebar({
   t,
@@ -76,15 +115,20 @@ export function MappingSidebar({
     utility: false,
     actions: false,
   });
-  const [mergeFiles, setMergeFiles] = useState<File[]>([]);
-  const [mergeOutputName, setMergeOutputName] = useState("merged-template");
-  const [mergeWithPageBreak, setMergeWithPageBreak] = useState(true);
-  const [mergingDocx, setMergingDocx] = useState(false);
-  const [mergeDocxNotice, setMergeDocxNotice] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [mergeState, dispatchMerge] = useReducer(mergeReducer, MERGE_INITIAL);
   const importInputRef = useRef<HTMLInputElement | null>(null);
+  const mergeNoticeTimerRef = useRef<number | null>(null);
   const [portalTarget, setPortalTarget] = useState<HTMLElement | null>(null);
 
   useEffect(() => { setPortalTarget(document.body); }, []);
+
+  useEffect(() => {
+    return () => {
+      if (mergeNoticeTimerRef.current !== null) {
+        window.clearTimeout(mergeNoticeTimerRef.current);
+      }
+    };
+  }, []);
 
   const innerHandleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
     let templateName: string | null = null;
@@ -254,22 +298,20 @@ export function MappingSidebar({
 
   function onPickMergeFiles(e: React.ChangeEvent<HTMLInputElement>) {
     const files = Array.from(e.target.files ?? []).filter((file) => file.name.toLowerCase().endsWith(".docx"));
-    setMergeFiles(files);
-    setMergeDocxNotice(null);
+    dispatchMerge({ type: "SET_FILES", files });
   }
 
   async function runMergeDocx() {
-    if (mergeFiles.length < 2) {
-      setMergeDocxNotice({ type: "error", text: "Vui lòng chọn ít nhất 2 file DOCX để nối." });
+    if (mergeState.files.length < 2) {
+      dispatchMerge({ type: "ERROR", message: "Vui lòng chọn ít nhất 2 file DOCX để nối." });
       return;
     }
-    setMergingDocx(true);
-    setMergeDocxNotice(null);
+    dispatchMerge({ type: "START" });
     try {
       const form = new FormData();
-      mergeFiles.forEach((file) => form.append("files", file));
-      form.set("pageBreak", mergeWithPageBreak ? "true" : "false");
-      form.set("outputName", mergeOutputName.trim() || "merged-template");
+      mergeState.files.forEach((file) => form.append("files", file));
+      form.set("pageBreak", mergeState.withPageBreak ? "true" : "false");
+      form.set("outputName", mergeState.outputName.trim() || "merged-template");
       const res = await fetch("/api/report/template/merge-docx", {
         method: "POST",
         body: form,
@@ -279,17 +321,15 @@ export function MappingSidebar({
         throw new Error(data.error ?? "Nối DOCX thất bại.");
       }
       const blob = await res.blob();
-      const outputName = (mergeOutputName.trim() || "merged-template").replace(/[^a-zA-Z0-9._-]+/g, "_");
+      const outputName = (mergeState.outputName.trim() || "merged-template").replace(/[^a-zA-Z0-9._-]+/g, "_");
       downloadBlob(blob, `${outputName}.docx`);
-      setMergeDocxNotice({ type: "success", text: `Đã nối thành công ${mergeFiles.length} file DOCX.` });
-      window.setTimeout(() => setMergeDocxNotice(null), 5000);
+      dispatchMerge({ type: "SUCCESS", fileCount: mergeState.files.length });
+      if (mergeNoticeTimerRef.current !== null) window.clearTimeout(mergeNoticeTimerRef.current);
+      mergeNoticeTimerRef.current = window.setTimeout(() => dispatchMerge({ type: "CLEAR_NOTICE" }), 5000);
     } catch (error) {
-      setMergeDocxNotice({
-        type: "error",
-        text: error instanceof Error ? error.message : "Nối DOCX thất bại.",
-      });
+      dispatchMerge({ type: "ERROR", message: error instanceof Error ? error.message : "Nối DOCX thất bại." });
     } finally {
-      setMergingDocx(false);
+      dispatchMerge({ type: "FINISH" });
     }
   }
 
@@ -305,11 +345,11 @@ export function MappingSidebar({
         <Users className="h-6 w-6" />
       </button>
       {showFabHint ? (
-        <div className="fixed bottom-[84px] right-6 z-[95] max-w-[240px] rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700 shadow-xl">
+        <div className="fixed bottom-[84px] right-6 z-[95] max-w-[240px] rounded-lg border border-slate-200 bg-white dark:border-white/[0.07] dark:bg-[#0f1629]/90 px-3 py-2 text-xs text-slate-700 dark:text-slate-200 shadow-xl">
           <button
             type="button"
             onClick={() => setShowFabHint(false)}
-            className="absolute right-1 top-1 rounded p-1 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
+            className="absolute right-1 top-1 rounded p-1 text-slate-400 dark:text-slate-500 transition-colors hover:bg-slate-100 dark:hover:bg-white/[0.07] hover:text-slate-700 dark:hover:text-slate-200"
             aria-label="Đóng gợi ý điều phối dữ liệu"
           >
             <X className="h-3.5 w-3.5" />
@@ -343,16 +383,16 @@ export function MappingSidebar({
                 animate={{ x: 0, width: isCollapsed ? 72 : 400 }}
                 exit={{ x: "100%" }}
                 transition={{ x: { type: "spring", damping: 28, stiffness: 300 }, width: { type: "spring", damping: 28, stiffness: 300 } }}
-                className="fixed inset-y-0 right-0 z-[101] flex h-screen min-h-screen flex-col border-l border-slate-200/60 bg-slate-50/80 shadow-2xl backdrop-blur-xl"
+                className="fixed inset-y-0 right-0 z-[101] flex h-screen min-h-screen flex-col border-l border-slate-200/60 dark:border-white/[0.07] bg-slate-50/80 dark:bg-[#0f1629]/90 shadow-2xl backdrop-blur-xl"
               >
                 {/* Header */}
-                <div className="flex shrink-0 items-center justify-between border-b border-slate-200/60 px-4 py-3">
+                <div className="flex shrink-0 items-center justify-between border-b border-slate-200/60 dark:border-white/[0.07] px-4 py-3">
                   {!isCollapsed ? (
                     <div className="flex items-center gap-2">
                       <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-indigo-300/50 bg-gradient-to-br from-indigo-600 to-violet-600 text-white shadow-glow">
                         <Users className="h-4 w-4" />
                       </span>
-                      <h2 className="text-base font-semibold text-slate-800">Điều phối dữ liệu</h2>
+                      <h2 className="text-base font-semibold text-slate-800 dark:text-slate-200">Điều phối dữ liệu</h2>
                     </div>
                   ) : null}
                   <div className="ml-auto flex items-center gap-1">
@@ -360,7 +400,7 @@ export function MappingSidebar({
                       type="button"
                       onClick={() => setIsCollapsed((c) => !c)}
                       aria-label={isCollapsed ? "Mở rộng sidebar" : "Thu gọn sidebar"}
-                      className="rounded-lg p-2 text-slate-600 transition-all duration-200 hover:bg-slate-100/50"
+                      className="rounded-lg p-2 text-slate-600 dark:text-slate-300 transition-all duration-200 hover:bg-slate-100/50 dark:hover:bg-white/[0.07]"
                     >
                       {isCollapsed ? <PanelRightOpen className="h-5 w-5" /> : <PanelRightClose className="h-5 w-5" />}
                     </button>
@@ -368,7 +408,7 @@ export function MappingSidebar({
                       onClick={() => setIsOpen(false)}
                       aria-label="Đóng sidebar cài đặt"
                       title="Đóng"
-                      className="rounded-lg p-2 text-slate-600 transition-all duration-200 hover:bg-slate-100/50 hover:text-indigo-600"
+                      className="rounded-lg p-2 text-slate-600 dark:text-slate-300 transition-all duration-200 hover:bg-slate-100/50 dark:hover:bg-white/[0.07] hover:text-indigo-600 dark:hover:text-indigo-400"
                     >
                       <X className="h-5 w-5" />
                     </button>
@@ -379,10 +419,10 @@ export function MappingSidebar({
                 <div className="flex min-h-0 flex-1 flex-col overflow-y-auto overflow-x-hidden">
                   {isCollapsed ? (
                     <div className="flex flex-col items-center gap-1 px-2 py-4">
-                      <span className="mb-1 text-[10px] font-medium text-slate-400">Menu</span>
-                      <button type="button" onClick={() => importInputRef.current?.click()} disabled={importingCatalog} className="rounded-lg p-2 text-slate-600 transition-all duration-200 hover:bg-slate-100/50" title={t("mapping.import.button")}><Upload className="h-5 w-5" /></button>
-                      <button type="button" onClick={exportCatalogCsv} disabled={exportingCatalog || !exportTemplateId || exportFieldCount === 0} className="rounded-lg p-2 text-slate-600 transition-all duration-200 hover:bg-slate-100/50" title={t("mapping.export.csv")}><Download className="h-5 w-5" /></button>
-                      <button type="button" onClick={exportCatalogXlsx} disabled={exportingCatalog || !exportTemplateId || exportFieldCount === 0} className="rounded-lg p-2 text-slate-600 transition-all duration-200 hover:bg-slate-100/50" title={t("mapping.export.xlsx")}><Download className="h-5 w-5" /></button>
+                      <span className="mb-1 text-[10px] font-medium text-slate-400 dark:text-slate-500">Menu</span>
+                      <button type="button" onClick={() => importInputRef.current?.click()} disabled={importingCatalog} className="rounded-lg p-2 text-slate-600 dark:text-slate-300 transition-all duration-200 hover:bg-slate-100/50 dark:hover:bg-white/[0.07]" title={t("mapping.import.button")}><Upload className="h-5 w-5" /></button>
+                      <button type="button" onClick={exportCatalogCsv} disabled={exportingCatalog || !exportTemplateId || exportFieldCount === 0} className="rounded-lg p-2 text-slate-600 dark:text-slate-300 transition-all duration-200 hover:bg-slate-100/50 dark:hover:bg-white/[0.07]" title={t("mapping.export.csv")}><Download className="h-5 w-5" /></button>
+                      <button type="button" onClick={exportCatalogXlsx} disabled={exportingCatalog || !exportTemplateId || exportFieldCount === 0} className="rounded-lg p-2 text-slate-600 dark:text-slate-300 transition-all duration-200 hover:bg-slate-100/50 dark:hover:bg-white/[0.07]" title={t("mapping.export.xlsx")}><Download className="h-5 w-5" /></button>
                     </div>
                   ) : (
                     <div className="flex-1 space-y-6 px-4 py-5">
@@ -390,33 +430,33 @@ export function MappingSidebar({
                         <button
                           type="button"
                           onClick={() => setSectionOpen((prev) => ({ ...prev, context: !prev.context }))}
-                          className="flex w-full items-center justify-between rounded-lg px-1 py-1 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 transition-colors hover:bg-slate-100/60"
+                          className="flex w-full items-center justify-between rounded-lg px-1 py-1 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 transition-colors hover:bg-slate-100/60 dark:hover:bg-white/[0.06]"
                         >
                           <span>1. Ngữ cảnh làm việc</span>
-                          {sectionOpen.context ? <ChevronUp className="h-4 w-4 text-slate-400" /> : <ChevronDown className="h-4 w-4 text-slate-400" />}
+                          {sectionOpen.context ? <ChevronUp className="h-4 w-4 text-slate-400 dark:text-slate-500" /> : <ChevronDown className="h-4 w-4 text-slate-400 dark:text-slate-500" />}
                         </button>
                         {sectionOpen.context ? (
                           <>
                             <div className="space-y-2">
-                              <label className="flex items-center gap-2 text-sm font-medium text-slate-700"><Users className="h-4 w-4 text-slate-600" />Dữ liệu khách hàng</label>
-                              <select value={selectedCustomerId} onChange={(e) => { setEditingFieldTemplateId(""); setEditingFieldTemplateName(""); setSelectedCustomerId(e.target.value); }} aria-label="Chọn dữ liệu khách hàng" disabled={loadingCustomers || loading} className="w-full rounded-lg border border-slate-200/80 bg-white/90 px-3 py-2.5 text-sm font-medium text-slate-800 transition-all duration-200 hover:bg-slate-100/50 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-400/30 disabled:opacity-70">
+                              <label className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-200"><Users className="h-4 w-4 text-slate-600 dark:text-slate-300" />Dữ liệu khách hàng</label>
+                              <select value={selectedCustomerId} onChange={(e) => { setEditingFieldTemplateId(""); setEditingFieldTemplateName(""); setSelectedCustomerId(e.target.value); }} aria-label="Chọn dữ liệu khách hàng" disabled={loadingCustomers || loading} className="w-full rounded-lg border border-slate-200/80 dark:border-white/[0.09] bg-white/90 dark:bg-white/[0.05] px-3 py-2.5 text-sm font-medium text-slate-800 dark:text-slate-100 transition-all duration-200 hover:bg-slate-100/50 dark:hover:bg-white/[0.06] focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-400/30 dark:focus:ring-indigo-400/20 disabled:opacity-70">
                                 <option value="">{t("mapping.selectCustomer")}</option>
                                 {customers.map((c) => (<option key={c.id} value={c.id}>{c.customer_name} ({c.customer_code})</option>))}
                               </select>
                             </div>
                             <div className="space-y-2">
-                              <label className="flex items-center gap-2 text-sm font-medium text-slate-700"><FileText className="h-4 w-4 text-slate-600" />Mẫu dữ liệu</label>
+                              <label className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-200"><FileText className="h-4 w-4 text-slate-600 dark:text-slate-300" />Mẫu dữ liệu</label>
                               <div className="relative">
                                 <button
                                   type="button"
                                   onClick={() => setTemplatePickerOpen((v) => !v)}
                                   disabled={!selectedCustomerId || loadingFieldTemplates}
-                                  className={`flex w-full items-center justify-between rounded-lg border bg-white/90 px-3 py-2.5 text-left text-sm font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-400/30 disabled:opacity-70 ${selectedFieldTemplateId ? "border-indigo-200 bg-indigo-50/50 text-indigo-700 shadow-sm" : "border-slate-200/80 text-slate-800 hover:bg-slate-100/50"}`}
+                                  className={`flex w-full items-center justify-between rounded-lg border bg-white/90 dark:bg-white/[0.05] px-3 py-2.5 text-left text-sm font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-400/30 dark:focus:ring-indigo-400/20 disabled:opacity-70 ${selectedFieldTemplateId ? "border-indigo-200 dark:border-indigo-500/30 bg-indigo-50/50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 shadow-sm" : "border-slate-200/80 dark:border-white/[0.09] text-slate-800 dark:text-slate-100 hover:bg-slate-100/50 dark:hover:bg-white/[0.06]"}`}
                                 >
                                   <span className="truncate">
                                     {selectedTemplate?.name ?? t("mapping.selectFieldTemplate")}
                                   </span>
-                                  <span className="ml-2 text-slate-500">▾</span>
+                                  <span className="ml-2 text-slate-500 dark:text-slate-400">▾</span>
                                 </button>
                                 <button
                                   type="button"
@@ -424,7 +464,7 @@ export function MappingSidebar({
                                     openEditFieldTemplatePicker();
                                     setIsOpen(false);
                                   }}
-                                  className="absolute right-9 top-1/2 -translate-y-1/2 rounded-md p-1.5 text-slate-500 transition-colors hover:bg-slate-100 hover:text-indigo-600"
+                                  className="absolute right-9 top-1/2 -translate-y-1/2 rounded-md p-1.5 text-slate-500 dark:text-slate-400 transition-colors hover:bg-slate-100 dark:hover:bg-white/[0.07] hover:text-indigo-600 dark:hover:text-indigo-400"
                                   title="Manage templates"
                                 >
                                   <Settings className="h-4 w-4" />
@@ -436,16 +476,16 @@ export function MappingSidebar({
                                       initial={{ opacity: 0, y: -6 }}
                                       animate={{ opacity: 1, y: 0 }}
                                       exit={{ opacity: 0, y: -6 }}
-                                      className="absolute z-20 mt-2 w-full overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl"
+                                      className="absolute z-20 mt-2 w-full overflow-hidden rounded-xl border border-slate-200 dark:border-white/[0.07] bg-white dark:bg-[#0f1629]/90 shadow-xl"
                                     >
-                                      <div className="border-b border-slate-200 p-2">
+                                      <div className="border-b border-slate-200 dark:border-white/[0.07] p-2">
                                         <div className="relative">
-                                          <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                                          <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
                                           <input
                                             value={templateQuery}
                                             onChange={(e) => setTemplateQuery(e.target.value)}
                                             placeholder="Tìm template..."
-                                            className="h-9 w-full rounded-lg border border-slate-200 pl-8 pr-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-400/20"
+                                            className="h-9 w-full rounded-lg border border-slate-200 dark:border-white/[0.09] dark:bg-white/[0.05] dark:text-slate-100 pl-8 pr-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-400/20 dark:focus:ring-indigo-400/20"
                                           />
                                         </div>
                                       </div>
@@ -464,17 +504,17 @@ export function MappingSidebar({
                                                   setTemplatePickerOpen(false);
                                                 }}
                                                 className={`mb-1 flex w-full items-start justify-between rounded-lg px-2 py-2 text-left transition-colors ${selectedFieldTemplateId === tpl.id
-                                                    ? "bg-indigo-50 text-indigo-700"
-                                                    : "hover:bg-slate-100/70 text-slate-700"
+                                                    ? "bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-400"
+                                                    : "hover:bg-slate-100/70 dark:hover:bg-white/[0.06] text-slate-700 dark:text-slate-200"
                                                   }`}
                                               >
                                                 <span className="min-w-0">
                                                   <span className="block truncate text-sm font-medium">{tpl.name}</span>
-                                                  <span className="block truncate text-[11px] text-slate-500">
+                                                  <span className="block truncate text-[11px] text-slate-500 dark:text-slate-400">
                                                     Cập nhật {formatRelativeTime(tpl.created_at)}
                                                   </span>
                                                 </span>
-                                                <span className="ml-2 inline-flex items-center gap-1 rounded-full bg-emerald-50 px-1.5 py-0.5 text-[10px] font-medium text-emerald-700">
+                                                <span className="ml-2 inline-flex items-center gap-1 rounded-full bg-emerald-50 dark:bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-medium text-emerald-700 dark:text-emerald-400">
                                                   <span className={`h-1.5 w-1.5 rounded-full ${isMappingValid ? "bg-emerald-500" : "bg-amber-400"}`} />
                                                   {isMappingValid ? "Đã hoàn thiện" : "Đang soạn thảo"}
                                                 </span>
@@ -484,7 +524,7 @@ export function MappingSidebar({
                                         ) : null}
 
                                         <div>
-                                          <p className="px-2 pb-1 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+                                          <p className="px-2 pb-1 text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                                             Thư viện mẫu
                                           </p>
                                           {filteredMasters.length > 0 ? (
@@ -497,24 +537,24 @@ export function MappingSidebar({
                                                   setTemplatePickerOpen(false);
                                                 }}
                                                 className={`mb-1 flex w-full items-start justify-between rounded-lg px-2 py-2 text-left transition-colors ${selectedFieldTemplateId === tpl.id
-                                                    ? "bg-slate-100 text-slate-800"
-                                                    : "hover:bg-slate-100/70 text-slate-700"
+                                                    ? "bg-slate-100 dark:bg-white/[0.06] text-slate-800 dark:text-slate-200"
+                                                    : "hover:bg-slate-100/70 dark:hover:bg-white/[0.06] text-slate-700 dark:text-slate-200"
                                                   }`}
                                               >
                                                 <span className="min-w-0">
                                                   <span className="block truncate text-sm font-medium">{tpl.name}</span>
-                                                  <span className="block truncate text-[11px] text-slate-500">
+                                                  <span className="block truncate text-[11px] text-slate-500 dark:text-slate-400">
                                                     Mẫu chuẩn hệ thống
                                                   </span>
                                                 </span>
-                                                <span className="ml-2 inline-flex items-center rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-600">
+                                                <span className="ml-2 inline-flex items-center rounded-full bg-slate-100 dark:bg-white/[0.06] px-1.5 py-0.5 text-[10px] font-medium text-slate-600 dark:text-slate-300">
                                                   <Library className="mr-1 h-3 w-3" />
                                                   Library
                                                 </span>
                                               </button>
                                             ))
                                           ) : (
-                                            <p className="rounded-lg border border-dashed border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-500">
+                                            <p className="rounded-lg border border-dashed border-slate-200 dark:border-white/[0.10] bg-slate-50 dark:bg-white/[0.04] px-3 py-2 text-xs text-slate-500 dark:text-slate-400">
                                               {selectedCustomerId
                                                 ? "Không tìm thấy template phù hợp."
                                                 : "Chọn khách hàng trước để tạo hồ sơ."}
@@ -523,7 +563,7 @@ export function MappingSidebar({
                                         </div>
 
                                         {selectedCustomerId && filteredInstances.length === 0 ? (
-                                          <p className="mt-2 rounded-lg border border-indigo-100 bg-indigo-50 px-3 py-2 text-xs text-indigo-700">
+                                          <p className="mt-2 rounded-lg border border-indigo-100 dark:border-indigo-500/30 bg-indigo-50 dark:bg-indigo-500/10 px-3 py-2 text-xs text-indigo-700 dark:text-indigo-400">
                                             Chọn mẫu từ thư viện để bắt đầu tạo hồ sơ.
                                           </p>
                                         ) : null}
@@ -533,65 +573,65 @@ export function MappingSidebar({
                                 </AnimatePresence>
                               </div>
                               <div className="flex flex-wrap items-center gap-2 pt-1">
-                                <button type="button" onClick={() => { openCreateFieldTemplateModal(); setIsOpen(false); }} className="rounded-lg border border-slate-200/80 bg-white px-3 py-2 text-xs font-medium text-slate-700 transition-all duration-200 hover:bg-slate-100/50">Tạo mẫu mới</button>
-                                <button type="button" onClick={() => { openAttachFieldTemplateModal(); setIsOpen(false); }} disabled={!selectedFieldTemplateId} className={`rounded-lg border px-3 py-2 text-xs font-medium transition-all duration-200 ${!selectedFieldTemplateId ? "cursor-not-allowed border-slate-200/60 bg-slate-50 text-slate-400" : "border-slate-200/80 bg-white text-slate-700 hover:bg-slate-100/50"}`}>Áp dụng mẫu</button>
-                                <button type="button" onClick={() => { openEditFieldTemplatePicker(); setIsOpen(false); }} className="rounded-lg border border-slate-200/80 bg-white px-3 py-2 text-xs font-medium text-slate-700 transition-all duration-200 hover:bg-slate-100/50">Chỉnh sửa tên mẫu</button>
+                                <button type="button" onClick={() => { openCreateFieldTemplateModal(); setIsOpen(false); }} className="rounded-lg border border-slate-200/80 dark:border-white/[0.09] bg-white dark:bg-[#0f1629]/90 px-3 py-2 text-xs font-medium text-slate-700 dark:text-slate-200 transition-all duration-200 hover:bg-slate-100/50 dark:hover:bg-white/[0.06]">Tạo mẫu mới</button>
+                                <button type="button" onClick={() => { openAttachFieldTemplateModal(); setIsOpen(false); }} disabled={!selectedFieldTemplateId} className={`rounded-lg border px-3 py-2 text-xs font-medium transition-all duration-200 ${!selectedFieldTemplateId ? "cursor-not-allowed border-slate-200/60 dark:border-white/[0.07] bg-slate-50 dark:bg-white/[0.04] text-slate-400 dark:text-slate-500" : "border-slate-200/80 dark:border-white/[0.09] bg-white dark:bg-[#0f1629]/90 text-slate-700 dark:text-slate-200 hover:bg-slate-100/50 dark:hover:bg-white/[0.06]"}`}>Áp dụng mẫu</button>
+                                <button type="button" onClick={() => { openEditFieldTemplatePicker(); setIsOpen(false); }} className="rounded-lg border border-slate-200/80 dark:border-white/[0.09] bg-white dark:bg-[#0f1629]/90 px-3 py-2 text-xs font-medium text-slate-700 dark:text-slate-200 transition-all duration-200 hover:bg-slate-100/50 dark:hover:bg-white/[0.06]">Chỉnh sửa tên mẫu</button>
                               </div>
                             </div>
                           </>
                         ) : null}
                       </div>
 
-                      <hr className="border-slate-200/60" />
+                      <hr className="border-slate-200/60 dark:border-white/[0.07]" />
 
                       <div className="space-y-3">
                         <button
                           type="button"
                           onClick={() => setSectionOpen((prev) => ({ ...prev, utility: !prev.utility }))}
-                          className="flex w-full items-center justify-between rounded-lg px-1 py-1 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 transition-colors hover:bg-slate-100/60"
+                          className="flex w-full items-center justify-between rounded-lg px-1 py-1 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 transition-colors hover:bg-slate-100/60 dark:hover:bg-white/[0.06]"
                         >
                           <span>2. Các tiện ích</span>
-                          {sectionOpen.utility ? <ChevronUp className="h-4 w-4 text-slate-400" /> : <ChevronDown className="h-4 w-4 text-slate-400" />}
+                          {sectionOpen.utility ? <ChevronUp className="h-4 w-4 text-slate-400 dark:text-slate-500" /> : <ChevronDown className="h-4 w-4 text-slate-400 dark:text-slate-500" />}
                         </button>
                         {sectionOpen.utility ? (
                           <>
-                            <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-slate-200/60 bg-white/70 p-3 transition-all duration-200 hover:bg-slate-100/50">
+                            <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-slate-200/60 dark:border-white/[0.07] bg-white/70 dark:bg-[#0f1629]/90 p-3 transition-all duration-200 hover:bg-slate-100/50 dark:hover:bg-white/[0.06]">
                               <input type="checkbox" checked={showTechnicalKeys} onChange={(e) => setShowTechnicalKeys(e.target.checked)} className="mt-0.5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500" />
                               <div>
-                                <span className="block text-sm font-medium text-slate-800">{t("mapping.showTechnicalKeys")}</span>
-                                <span className="text-xs text-slate-600">Phục vụ coder gán mapping vào mẫu Docx.</span>
+                                <span className="block text-sm font-medium text-slate-800 dark:text-slate-200">{t("mapping.showTechnicalKeys")}</span>
+                                <span className="text-xs text-slate-600 dark:text-slate-300">Phục vụ coder gán mapping vào mẫu Docx.</span>
                               </div>
                             </label>
-                            <button type="button" onClick={() => { setIsOpen(false); openMergeGroupsModal(); }} className="flex w-full items-center gap-2 rounded-lg border border-slate-200/60 bg-white/70 px-3 py-2.5 text-sm font-medium text-slate-700 transition-all duration-200 hover:bg-slate-100/50">
-                              <ChevronsDown className="h-4 w-4 text-slate-600" />{t("mapping.mergeGroups")}
+                            <button type="button" onClick={() => { setIsOpen(false); openMergeGroupsModal(); }} className="flex w-full items-center gap-2 rounded-lg border border-slate-200/60 dark:border-white/[0.07] bg-white/70 dark:bg-[#0f1629]/90 px-3 py-2.5 text-sm font-medium text-slate-700 dark:text-slate-200 transition-all duration-200 hover:bg-slate-100/50 dark:hover:bg-white/[0.06]">
+                              <ChevronsDown className="h-4 w-4 text-slate-600 dark:text-slate-300" />{t("mapping.mergeGroups")}
                             </button>
-                            <div className="space-y-2 rounded-lg border border-slate-200/60 bg-white/70 p-3">
-                              <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">Tiện ích nối nhiều DOCX</p>
+                            <div className="space-y-2 rounded-lg border border-slate-200/60 dark:border-white/[0.07] bg-white/70 dark:bg-[#0f1629]/90 p-3">
+                              <p className="text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">Tiện ích nối nhiều DOCX</p>
                               <label className="flex flex-col gap-1 text-xs">
-                                <span className="text-slate-600">Danh sách file DOCX</span>
+                                <span className="text-slate-600 dark:text-slate-300">Danh sách file DOCX</span>
                                 <input
                                   type="file"
                                   multiple
                                   accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                                   onChange={onPickMergeFiles}
-                                  className="block w-full text-xs file:mr-2 file:rounded-md file:border file:border-slate-200/80 file:bg-white file:px-2 file:py-1.5 file:text-xs file:font-medium file:text-slate-700 hover:file:bg-slate-50"
+                                  className="block w-full text-xs dark:text-slate-300 file:mr-2 file:rounded-md file:border file:border-slate-200/80 dark:file:border-white/[0.09] file:bg-white dark:file:bg-white/[0.05] file:px-2 file:py-1.5 file:text-xs file:font-medium file:text-slate-700 dark:file:text-slate-200 hover:file:bg-slate-50 dark:hover:file:bg-white/[0.06]"
                                 />
                               </label>
                               <label className="flex flex-col gap-1 text-xs">
-                                <span className="text-slate-600">Tên file kết quả</span>
+                                <span className="text-slate-600 dark:text-slate-300">Tên file kết quả</span>
                                 <input
                                   type="text"
-                                  value={mergeOutputName}
-                                  onChange={(e) => setMergeOutputName(e.target.value)}
+                                  value={mergeState.outputName}
+                                  onChange={(e) => dispatchMerge({ type: "SET_OUTPUT_NAME", name: e.target.value })}
                                   placeholder="merged-template"
-                                  className="rounded-lg border border-slate-200/80 bg-white px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-400/30"
+                                  className="rounded-lg border border-slate-200/80 dark:border-white/[0.09] bg-white dark:bg-white/[0.05] dark:text-slate-100 px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-400/30 dark:focus:ring-indigo-400/20"
                                 />
                               </label>
-                              <label className="inline-flex items-center gap-2 text-xs text-slate-700">
+                              <label className="inline-flex items-center gap-2 text-xs text-slate-700 dark:text-slate-200">
                                 <input
                                   type="checkbox"
-                                  checked={mergeWithPageBreak}
-                                  onChange={(e) => setMergeWithPageBreak(e.target.checked)}
+                                  checked={mergeState.withPageBreak}
+                                  onChange={(e) => dispatchMerge({ type: "SET_PAGE_BREAK", value: e.target.checked })}
                                   className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
                                 />
                                 Chèn ngắt trang giữa các file
@@ -600,22 +640,22 @@ export function MappingSidebar({
                                 <button
                                   type="button"
                                   onClick={() => void runMergeDocx()}
-                                  disabled={mergingDocx || mergeFiles.length < 2}
+                                  disabled={mergeState.merging || mergeState.files.length < 2}
                                   className="rounded-lg bg-gradient-to-r from-violet-600 to-indigo-600 px-3 py-2 text-xs font-medium text-white transition-all hover:from-violet-700 hover:to-indigo-700 disabled:opacity-50"
                                 >
-                                  {mergingDocx ? "Đang nối..." : "Nối DOCX và tải về"}
+                                  {mergeState.merging ? "Đang nối..." : "Nối DOCX và tải về"}
                                 </button>
-                                <span className="text-[11px] text-slate-500">Đã chọn: {mergeFiles.length} file</span>
+                                <span className="text-[11px] text-slate-500 dark:text-slate-400">Đã chọn: {mergeState.files.length} file</span>
                               </div>
-                              {mergeDocxNotice ? (
+                              {mergeState.notice ? (
                                 <p
                                   className={`rounded-lg border px-2.5 py-2 text-xs ${
-                                    mergeDocxNotice.type === "success"
-                                      ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-                                      : "border-rose-200 bg-rose-50 text-rose-700"
+                                    mergeState.notice.type === "success"
+                                      ? "border-emerald-200 dark:border-emerald-500/30 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
+                                      : "border-rose-200 dark:border-rose-500/30 bg-rose-50 dark:bg-rose-500/10 text-rose-700 dark:text-rose-400"
                                   }`}
                                 >
-                                  {mergeDocxNotice.text}
+                                  {mergeState.notice.text}
                                 </p>
                               ) : null}
                             </div>
@@ -623,55 +663,55 @@ export function MappingSidebar({
                         ) : null}
                       </div>
 
-                      <hr className="border-slate-200/60" />
+                      <hr className="border-slate-200/60 dark:border-white/[0.07]" />
 
                       <div className="space-y-3">
                         <button
                           type="button"
                           onClick={() => setSectionOpen((prev) => ({ ...prev, actions: !prev.actions }))}
-                          className="flex w-full items-center justify-between rounded-lg px-1 py-1 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 transition-colors hover:bg-slate-100/60"
+                          className="flex w-full items-center justify-between rounded-lg px-1 py-1 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 transition-colors hover:bg-slate-100/60 dark:hover:bg-white/[0.06]"
                         >
                           <span>3. Thao tác hệ thống</span>
-                          {sectionOpen.actions ? <ChevronUp className="h-4 w-4 text-slate-400" /> : <ChevronDown className="h-4 w-4 text-slate-400" />}
+                          {sectionOpen.actions ? <ChevronUp className="h-4 w-4 text-slate-400 dark:text-slate-500" /> : <ChevronDown className="h-4 w-4 text-slate-400 dark:text-slate-500" />}
                         </button>
                         {sectionOpen.actions ? (
                           <>
-                            <div className="space-y-2 rounded-lg border border-slate-200/60 bg-white/70 p-3">
-                              <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">Import</p>
+                            <div className="space-y-2 rounded-lg border border-slate-200/60 dark:border-white/[0.07] bg-white/70 dark:bg-[#0f1629]/90 p-3">
+                              <p className="text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">Import</p>
                               <input ref={importInputRef} type="file" accept=".csv,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" aria-label="Import field từ file" className="hidden" onChange={innerHandleImport} />
                               <div className="space-y-1">
-                                <label className="text-xs font-medium text-slate-600">{t("mapping.import.modeLabel")}</label>
-                                <select value={importMode} onChange={(e) => setImportMode(e.target.value as "append" | "overwrite")} aria-label={t("mapping.import.modeLabel")} className="w-full rounded-lg border border-slate-200/80 bg-white px-3 py-2 text-sm font-medium focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-400/30">
+                                <label className="text-xs font-medium text-slate-600 dark:text-slate-300">{t("mapping.import.modeLabel")}</label>
+                                <select value={importMode} onChange={(e) => setImportMode(e.target.value as "append" | "overwrite")} aria-label={t("mapping.import.modeLabel")} className="w-full rounded-lg border border-slate-200/80 dark:border-white/[0.09] bg-white dark:bg-white/[0.05] dark:text-slate-100 px-3 py-2 text-sm font-medium focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-400/30 dark:focus:ring-indigo-400/20">
                                   <option value="append">{t("mapping.import.mode.append")}</option>
                                   <option value="overwrite">{t("mapping.import.mode.overwrite")}</option>
                                 </select>
                               </div>
-                              <button type="button" onClick={() => importInputRef.current?.click()} disabled={importingCatalog} className="flex w-full items-center justify-center gap-2 rounded-lg border border-slate-200/80 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition-all duration-200 hover:bg-slate-100/50 disabled:opacity-75">
-                                <Upload className="h-4 w-4 text-slate-600" />{importingCatalog ? t("mapping.import.loading") : t("mapping.import.button")}
+                              <button type="button" onClick={() => importInputRef.current?.click()} disabled={importingCatalog} className="flex w-full items-center justify-center gap-2 rounded-lg border border-slate-200/80 dark:border-white/[0.09] bg-white dark:bg-[#0f1629]/90 px-4 py-2.5 text-sm font-medium text-slate-700 dark:text-slate-200 transition-all duration-200 hover:bg-slate-100/50 dark:hover:bg-white/[0.06] disabled:opacity-75">
+                                <Upload className="h-4 w-4 text-slate-600 dark:text-slate-300" />{importingCatalog ? t("mapping.import.loading") : t("mapping.import.button")}
                               </button>
                             </div>
-                            <div className="space-y-2 rounded-lg border border-slate-200/60 bg-indigo-50/50 p-3">
-                              <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">Export</p>
-                              <label className="text-xs font-medium text-slate-600">{t("mapping.export.scopeLabel")}</label>
-                              <select value={exportScope} onChange={(e) => setExportScope(e.target.value as "customer" | "common" | "all")} aria-label={t("mapping.export.scopeLabel")} className="w-full rounded-lg border border-slate-200/80 bg-white px-3 py-2 text-sm font-medium focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-400/30">
+                            <div className="space-y-2 rounded-lg border border-slate-200/60 dark:border-white/[0.07] bg-indigo-50/50 dark:bg-indigo-500/10 p-3">
+                              <p className="text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">Export</p>
+                              <label className="text-xs font-medium text-slate-600 dark:text-slate-300">{t("mapping.export.scopeLabel")}</label>
+                              <select value={exportScope} onChange={(e) => setExportScope(e.target.value as "customer" | "common" | "all")} aria-label={t("mapping.export.scopeLabel")} className="w-full rounded-lg border border-slate-200/80 dark:border-white/[0.09] bg-white dark:bg-white/[0.05] dark:text-slate-100 px-3 py-2 text-sm font-medium focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-400/30 dark:focus:ring-indigo-400/20">
                                 <option value="customer">{t("mapping.export.scope.customer")}</option>
                                 <option value="common">{t("mapping.export.scope.common")}</option>
                                 <option value="all">{t("mapping.export.scope.all")}</option>
                               </select>
-                              {exportScope === "customer" ? (selectedCustomerId ? <p className="text-xs text-slate-600">Khách hàng: <span className="font-medium">{customers.find((c) => c.id === selectedCustomerId)?.customer_name ?? t("mapping.selectCustomer")}</span></p> : <p className="text-xs text-amber-600">{t("mapping.export.scope.customerHint")}</p>) : null}
-                              {exportScope === "common" ? <p className="text-xs text-slate-600">{t("mapping.export.scope.commonHint")}</p> : null}
-                              <label className="text-xs font-medium text-slate-600">{t("mapping.export.templateLabel")}</label>
-                              <select value={exportTemplateId} onChange={(e) => setExportTemplateId(e.target.value)} aria-label={t("mapping.export.templateLabel")} disabled={exportTemplateOptions.length === 0} className="w-full rounded-lg border border-slate-200/80 bg-white px-3 py-2 text-sm font-medium disabled:opacity-70 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-400/30">
+                              {exportScope === "customer" ? (selectedCustomerId ? <p className="text-xs text-slate-600 dark:text-slate-300">Khách hàng: <span className="font-medium">{customers.find((c) => c.id === selectedCustomerId)?.customer_name ?? t("mapping.selectCustomer")}</span></p> : <p className="text-xs text-amber-600">{t("mapping.export.scope.customerHint")}</p>) : null}
+                              {exportScope === "common" ? <p className="text-xs text-slate-600 dark:text-slate-300">{t("mapping.export.scope.commonHint")}</p> : null}
+                              <label className="text-xs font-medium text-slate-600 dark:text-slate-300">{t("mapping.export.templateLabel")}</label>
+                              <select value={exportTemplateId} onChange={(e) => setExportTemplateId(e.target.value)} aria-label={t("mapping.export.templateLabel")} disabled={exportTemplateOptions.length === 0} className="w-full rounded-lg border border-slate-200/80 dark:border-white/[0.09] bg-white dark:bg-white/[0.05] dark:text-slate-100 px-3 py-2 text-sm font-medium disabled:opacity-70 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-400/30 dark:focus:ring-indigo-400/20">
                                 <option value="">{t("mapping.export.templatePlaceholder")}</option>
                                 {exportTemplateOptions.map((tpl) => (<option key={tpl.id} value={tpl.id}>{tpl.name}</option>))}
                               </select>
-                              <p className="text-xs text-slate-600">{t("mapping.export.fieldCount").replace("{count}", String(exportFieldCount))}</p>
+                              <p className="text-xs text-slate-600 dark:text-slate-300">{t("mapping.export.fieldCount").replace("{count}", String(exportFieldCount))}</p>
                             </div>
-                            <button type="button" onClick={exportCatalogCsv} disabled={exportingCatalog || !exportTemplateId || exportFieldCount === 0} className="flex w-full items-center justify-center gap-2 rounded-lg border border-slate-200/80 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition-all duration-200 hover:bg-slate-100/50 disabled:opacity-75">
-                              <Download className="h-4 w-4 text-slate-600" />{t("mapping.export.csv")}
+                            <button type="button" onClick={exportCatalogCsv} disabled={exportingCatalog || !exportTemplateId || exportFieldCount === 0} className="flex w-full items-center justify-center gap-2 rounded-lg border border-slate-200/80 dark:border-white/[0.09] bg-white dark:bg-[#0f1629]/90 px-4 py-2.5 text-sm font-medium text-slate-700 dark:text-slate-200 transition-all duration-200 hover:bg-slate-100/50 dark:hover:bg-white/[0.06] disabled:opacity-75">
+                              <Download className="h-4 w-4 text-slate-600 dark:text-slate-300" />{t("mapping.export.csv")}
                             </button>
-                            <button type="button" onClick={exportCatalogXlsx} disabled={exportingCatalog || !exportTemplateId || exportFieldCount === 0} className="flex w-full items-center justify-center gap-2 rounded-lg border border-slate-200/80 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition-all duration-200 hover:bg-slate-100/50 disabled:opacity-75">
-                              <Download className="h-4 w-4 text-slate-600" />{t("mapping.export.xlsx")}
+                            <button type="button" onClick={exportCatalogXlsx} disabled={exportingCatalog || !exportTemplateId || exportFieldCount === 0} className="flex w-full items-center justify-center gap-2 rounded-lg border border-slate-200/80 dark:border-white/[0.09] bg-white dark:bg-[#0f1629]/90 px-4 py-2.5 text-sm font-medium text-slate-700 dark:text-slate-200 transition-all duration-200 hover:bg-slate-100/50 dark:hover:bg-white/[0.06] disabled:opacity-75">
+                              <Download className="h-4 w-4 text-slate-600 dark:text-slate-300" />{t("mapping.export.xlsx")}
                             </button>
                           </>
                         ) : null}

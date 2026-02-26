@@ -218,8 +218,12 @@ async function callOpenAI(prompt: string): Promise<string> {
     }),
   });
   if (!res.ok) {
-    const detail = await res.text().catch(() => "");
-    throw new SystemError("OpenAI auto-tagging request failed.", { status: res.status, detail });
+    let errorCode: string | undefined;
+    try {
+      const errBody = (await res.json()) as { error?: { message?: string; code?: string } };
+      errorCode = errBody.error?.code ?? undefined;
+    } catch { /* non-JSON response — ignore */ }
+    throw new SystemError("OpenAI auto-tagging request failed.", { status: res.status, code: errorCode });
   }
   const data = (await res.json()) as { choices?: Array<{ message?: { content?: string } }> };
   return data.choices?.[0]?.message?.content?.trim() ?? "";

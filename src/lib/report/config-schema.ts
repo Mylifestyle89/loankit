@@ -43,6 +43,8 @@ export const fieldCatalogItemSchema = z.object({
   is_repeater: z.boolean().optional(),
   normalizer: z.string().optional(),
   examples: z.array(z.string()).default([]),
+  /** Per-field instruction for AI financial analysis (Phase 3). */
+  analysis_prompt: z.string().optional(),
 });
 
 export const mappingVersionSchema = z.object({

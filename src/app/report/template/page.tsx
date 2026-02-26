@@ -264,7 +264,7 @@ export default function TemplatePage() {
 
   return (
     <section className="space-y-4">
-      <div className="rounded-xl border border-coral-tree-200 bg-white p-4">
+      <div className="rounded-xl border border-coral-tree-200 bg-white dark:bg-[#0f1629]/90 p-4">
         <h2 className="text-lg font-semibold">{t("nav.template")}</h2>
         <p className="mt-1 text-sm text-coral-tree-600">{t("template.desc")}</p>
         {message ? <p className="mt-2 text-sm text-emerald-700">{message}</p> : null}
@@ -273,7 +273,7 @@ export default function TemplatePage() {
 
       {/* Template editor: open DOCX + inject field toolbar */}
       {templates.length > 0 ? (
-        <div className="rounded-xl border border-coral-tree-200 bg-white p-4">
+        <div className="rounded-xl border border-coral-tree-200 bg-white dark:bg-[#0f1629]/90 p-4">
           <h3 className="text-base font-semibold">{t("template.editor.title")}</h3>
           <p className="mt-1 text-sm text-coral-tree-600">{t("template.editor.desc")}</p>
           <div className="mt-3 flex flex-wrap items-center gap-3">
@@ -281,7 +281,7 @@ export default function TemplatePage() {
               value={activeTemplateId}
               onChange={(e) => setActiveTemplateId(e.target.value)}
               aria-label={t("template.editor.title")}
-              className="rounded-md border border-coral-tree-300 bg-white px-3 py-2 text-sm"
+              className="rounded-md border border-coral-tree-300 bg-white dark:bg-white/[0.05] dark:text-slate-100 px-3 py-2 text-sm"
             >
               {templates.map((tpl) => (
                 <option key={tpl.id} value={tpl.id}>
@@ -331,7 +331,7 @@ export default function TemplatePage() {
                   value={selectedFieldTemplateId}
                   onChange={(e) => setSelectedFieldTemplateId(e.target.value)}
                   aria-label={t("mapping.selectFieldTemplate")}
-                  className="min-w-64 rounded-md border border-coral-tree-300 bg-white px-3 py-2 text-sm"
+                  className="min-w-64 rounded-md border border-coral-tree-300 bg-white dark:bg-white/[0.05] dark:text-slate-100 px-3 py-2 text-sm"
                 >
                   {fieldTemplates.map((item) => (
                     <option key={item.id} value={item.id}>
@@ -346,7 +346,7 @@ export default function TemplatePage() {
                   value={selectedGroup}
                   onChange={(e) => setSelectedGroup(e.target.value)}
                   aria-label={t("template.editor.selectGroup")}
-                  className="min-w-48 rounded-md border border-coral-tree-300 bg-white px-3 py-2 text-sm"
+                  className="min-w-48 rounded-md border border-coral-tree-300 bg-white dark:bg-white/[0.05] dark:text-slate-100 px-3 py-2 text-sm"
                   disabled={!selectedFieldTemplateId || groups.length === 0}
                 >
                   {groups.map((group) => (
@@ -362,7 +362,7 @@ export default function TemplatePage() {
                   value={selectedFieldKey}
                   onChange={(e) => setSelectedFieldKey(e.target.value)}
                   aria-label={t("template.editor.selectField")}
-                  className="min-w-64 rounded-md border border-coral-tree-300 bg-white px-3 py-2 text-sm"
+                  className="min-w-64 rounded-md border border-coral-tree-300 bg-white dark:bg-white/[0.05] dark:text-slate-100 px-3 py-2 text-sm"
                   disabled={!selectedFieldTemplateId || fieldsInSelectedGroup.length === 0}
                 >
                   {fieldsInSelectedGroup.map((field) => (

@@ -22,7 +22,7 @@ type Props = {
 export function DocxPreviewModal({ documentBuffer, fileName, onClose, onDownload }: Props) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-3">
-      <div className="flex h-full max-h-[95vh] w-full max-w-7xl flex-col overflow-hidden rounded-xl bg-white shadow-xl">
+      <div className="flex h-full max-h-[95vh] w-full max-w-7xl flex-col overflow-hidden rounded-xl bg-white dark:bg-[#0f1629]/90 shadow-xl">
         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-blue-chill-200 px-4 py-3">
           <div className="min-w-0">
             <p className="text-sm font-semibold">Xem trước: {fileName}</p>
@@ -48,7 +48,7 @@ export function DocxPreviewModal({ documentBuffer, fileName, onClose, onDownload
           </div>
         </div>
 
-        <div className="flex-1 overflow-auto bg-gray-100">
+        <div className="flex-1 overflow-auto bg-gray-100 dark:bg-[#080c18]">
           <EigenpalDocxEditor documentBuffer={documentBuffer} />
         </div>
       </div>

@@ -99,13 +99,13 @@ export function FunctionListModal({ isOpen, onClose, aliasText }: FunctionListMo
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="max-h-[90vh] w-full max-w-2xl overflow-hidden rounded-xl bg-white shadow-2xl flex flex-col">
-        <div className="flex items-center justify-between border-b border-blue-chill-200 bg-blue-chill-50 px-4 py-3">
-          <h2 className="text-lg font-semibold text-blue-chill-900">Danh sách hàm tính toán</h2>
+      <div className="max-h-[90vh] w-full max-w-2xl overflow-hidden rounded-xl bg-white dark:bg-[#0f1629]/90 shadow-2xl flex flex-col">
+        <div className="flex items-center justify-between border-b border-blue-chill-200 dark:border-white/[0.07] bg-blue-chill-50 dark:bg-white/[0.04] px-4 py-3">
+          <h2 className="text-lg font-semibold text-blue-chill-900 dark:text-slate-100">Danh sách hàm tính toán</h2>
           <button
             type="button"
             onClick={onClose}
-            className="rounded p-1.5 text-blue-chill-600 hover:bg-blue-chill-200 hover:text-blue-chill-900"
+            className="rounded p-1.5 text-blue-chill-600 dark:text-slate-300 hover:bg-blue-chill-200 dark:hover:bg-white/[0.07] hover:text-blue-chill-900 dark:hover:text-slate-100"
             aria-label="Đóng"
           >
             <X className="h-5 w-5" />
@@ -113,9 +113,9 @@ export function FunctionListModal({ isOpen, onClose, aliasText }: FunctionListMo
         </div>
 
         <div className="flex-1 overflow-y-auto p-4 space-y-6">
-          <p className="text-sm text-blue-chill-700">
+          <p className="text-sm text-blue-chill-700 dark:text-slate-300">
             Các hàm dùng cho trường (field) hỗ trợ cả <strong>mã kỹ thuật</strong> và <strong>tên Alias</strong>.
-            Trong biểu thức có thể gõ mã trường (ví dụ <code className="rounded bg-blue-chill-100 px-1">custom.doanh_thu.doanh_thu</code>) hoặc tên Alias: nếu Alias có khoảng trắng (ví dụ &quot;Doanh thu thuần&quot;) thì trong công thức gõ bằng <strong>dấu gạch dưới</strong> (ví dụ <code className="rounded bg-blue-chill-100 px-1">Doanh_thu_thuần</code>). Không nên đặt hai Alias trùng nhau (sau khi chuẩn hóa) để tránh lỗi công thức.
+            Trong biểu thức có thể gõ mã trường (ví dụ <code className="rounded bg-blue-chill-100 dark:bg-white/[0.06] px-1">custom.doanh_thu.doanh_thu</code>) hoặc tên Alias: nếu Alias có khoảng trắng (ví dụ &quot;Doanh thu thuần&quot;) thì trong công thức gõ bằng <strong>dấu gạch dưới</strong> (ví dụ <code className="rounded bg-blue-chill-100 dark:bg-white/[0.06] px-1">Doanh_thu_thuần</code>). Không nên đặt hai Alias trùng nhau (sau khi chuẩn hóa) để tránh lỗi công thức.
           </p>
 
           {hasDuplicates && (
@@ -141,15 +141,15 @@ export function FunctionListModal({ isOpen, onClose, aliasText }: FunctionListMo
           )}
 
           <div>
-            <h3 className="text-sm font-semibold text-blue-chill-900 mb-3">Hàm tổng hợp (mảng)</h3>
+            <h3 className="text-sm font-semibold text-blue-chill-900 dark:text-slate-100 mb-3">Hàm tổng hợp (mảng)</h3>
             <ul className="space-y-4">
               {FUNCTIONS.filter((f) => ["sum", "average", "min", "max"].includes(f.nameEn)).map((f) => (
-                <li key={f.nameEn} className="rounded-lg border border-blue-chill-100 bg-blue-chill-50/50 p-3">
-                  <div className="font-medium text-blue-chill-800">{f.nameVi}</div>
-                  <div className="mt-1 text-xs font-sans text-blue-chill-600">{f.syntax}</div>
-                  <p className="mt-1 text-sm text-blue-chill-700">{f.desc}</p>
+                <li key={f.nameEn} className="rounded-lg border border-blue-chill-100 dark:border-white/[0.07] bg-blue-chill-50/50 dark:bg-white/[0.04] p-3">
+                  <div className="font-medium text-blue-chill-800 dark:text-slate-200">{f.nameVi}</div>
+                  <div className="mt-1 text-xs font-sans text-blue-chill-600 dark:text-slate-300">{f.syntax}</div>
+                  <p className="mt-1 text-sm text-blue-chill-700 dark:text-slate-300">{f.desc}</p>
                   {f.example && (
-                    <p className="mt-1 text-xs text-blue-chill-600">Ví dụ: {f.example}</p>
+                    <p className="mt-1 text-xs text-blue-chill-600 dark:text-slate-400">Ví dụ: {f.example}</p>
                   )}
                 </li>
               ))}
@@ -157,28 +157,28 @@ export function FunctionListModal({ isOpen, onClose, aliasText }: FunctionListMo
           </div>
 
           <div>
-            <h3 className="text-sm font-semibold text-blue-chill-900 mb-3">Biểu thức số học</h3>
-            <div className="rounded-lg border border-blue-chill-100 bg-blue-chill-50/50 p-3">
+            <h3 className="text-sm font-semibold text-blue-chill-900 dark:text-slate-100 mb-3">Biểu thức số học</h3>
+            <div className="rounded-lg border border-blue-chill-100 dark:border-white/[0.07] bg-blue-chill-50/50 dark:bg-white/[0.04] p-3">
               {FUNCTIONS.filter((f) => ["evaluateExpression", "ROUND", "ROUNDUP", "ROUNDDOWN"].includes(f.nameEn)).map((f) => (
                 <div key={f.nameEn}>
-                  <div className="font-medium text-blue-chill-800">{f.nameVi}</div>
-                  <div className="mt-1 text-xs font-sans text-blue-chill-600">{f.syntax}</div>
-                  <p className="mt-1 text-sm text-blue-chill-700">{f.desc}</p>
-                  <p className="mt-1 text-xs text-blue-chill-600">Ví dụ: {f.example}</p>
+                  <div className="font-medium text-blue-chill-800 dark:text-slate-200">{f.nameVi}</div>
+                  <div className="mt-1 text-xs font-sans text-blue-chill-600 dark:text-slate-300">{f.syntax}</div>
+                  <p className="mt-1 text-sm text-blue-chill-700 dark:text-slate-300">{f.desc}</p>
+                  <p className="mt-1 text-xs text-blue-chill-600 dark:text-slate-400">Ví dụ: {f.example}</p>
                 </div>
               ))}
             </div>
           </div>
 
           <div>
-            <h3 className="text-sm font-semibold text-blue-chill-900 mb-3">Đọc số thành chữ</h3>
-            <div className="rounded-lg border border-blue-chill-100 bg-blue-chill-50/50 p-3">
+            <h3 className="text-sm font-semibold text-blue-chill-900 dark:text-slate-100 mb-3">Đọc số thành chữ</h3>
+            <div className="rounded-lg border border-blue-chill-100 dark:border-white/[0.07] bg-blue-chill-50/50 dark:bg-white/[0.04] p-3">
               {FUNCTIONS.filter((f) => ["docso", "docsocodonvi"].includes(f.nameEn)).map((f) => (
                 <div key={f.nameEn}>
-                  <div className="font-medium text-blue-chill-800">{f.nameVi}</div>
-                  <div className="mt-1 text-xs font-sans text-blue-chill-600">{f.syntax}</div>
-                  <p className="mt-1 text-sm text-blue-chill-700">{f.desc}</p>
-                  <p className="mt-1 text-xs text-blue-chill-600">Ví dụ: {f.example}</p>
+                  <div className="font-medium text-blue-chill-800 dark:text-slate-200">{f.nameVi}</div>
+                  <div className="mt-1 text-xs font-sans text-blue-chill-600 dark:text-slate-300">{f.syntax}</div>
+                  <p className="mt-1 text-sm text-blue-chill-700 dark:text-slate-300">{f.desc}</p>
+                  <p className="mt-1 text-xs text-blue-chill-600 dark:text-slate-400">Ví dụ: {f.example}</p>
                 </div>
               ))}
             </div>

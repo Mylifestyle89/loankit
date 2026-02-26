@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 
 import { useLanguage } from "@/components/language-provider";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { GlobalModalProvider } from "./mapping/components/GlobalModalProvider";
 
 const SIDEBAR_COLLAPSED = 48;
@@ -37,7 +38,7 @@ export default function ReportLayout({ children }: { children: React.ReactNode }
   ];
 
   return (
-    <div className="min-h-screen bg-zinc-50 text-zinc-900">
+    <div className="min-h-screen bg-zinc-50 text-zinc-900 dark:bg-[#080c18] dark:text-slate-100">
 
       {/* ── Sidebar ── */}
       <motion.aside
@@ -45,7 +46,7 @@ export default function ReportLayout({ children }: { children: React.ReactNode }
         onMouseLeave={() => setHovered(false)}
         animate={{ width: hovered ? SIDEBAR_EXPANDED : SIDEBAR_COLLAPSED }}
         transition={sidebarSpring}
-        className="fixed inset-y-0 left-0 z-40 flex flex-col overflow-hidden border-r border-slate-200/50 bg-white/90 backdrop-blur-xl"
+        className="fixed inset-y-0 left-0 z-40 flex flex-col overflow-hidden border-r border-slate-200/50 bg-white/90 backdrop-blur-xl dark:border-white/[0.08] dark:bg-[#0f1629]/90"
         style={{ willChange: "width" }}
       >
         {/* Shadow when expanded */}
@@ -76,10 +77,10 @@ export default function ReportLayout({ children }: { children: React.ReactNode }
                 transition={{ delay: 0.05, duration: 0.15 }}
                 className="ml-2.5 min-w-0"
               >
-                <p className="truncate text-xs font-semibold leading-tight text-zinc-900">
+                <p className="truncate text-xs font-semibold leading-tight text-zinc-900 dark:text-slate-100">
                   {t("report.frameworkTitle")}
                 </p>
-                <p className="truncate text-[10px] leading-tight text-zinc-400">
+                <p className="truncate text-[10px] leading-tight text-zinc-400 dark:text-slate-500">
                   {t("report.frameworkDesc")}
                 </p>
               </motion.div>
@@ -88,7 +89,7 @@ export default function ReportLayout({ children }: { children: React.ReactNode }
         </div>
 
         {/* Divider */}
-        <div className="mx-2.5 h-px bg-slate-100" />
+        <div className="mx-2.5 h-px bg-slate-100 dark:bg-white/[0.06]" />
 
         {/* ── AI CTA ── */}
         <div className="px-1.5 pt-2.5 pb-1">
@@ -137,13 +138,15 @@ export default function ReportLayout({ children }: { children: React.ReactNode }
                   hovered ? "gap-2.5 px-2.5 justify-start" : "justify-center px-0"
                 } ${
                   isActive
-                    ? "bg-indigo-50 text-indigo-700"
-                    : "text-zinc-500 hover:bg-slate-100/70 hover:text-zinc-800"
+                    ? "bg-indigo-50 text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-400"
+                    : "text-zinc-500 hover:bg-slate-100/70 hover:text-zinc-800 dark:text-slate-400 dark:hover:bg-white/[0.06] dark:hover:text-slate-200"
                 }`}
               >
                 <Icon
                   className={`h-[17px] w-[17px] shrink-0 ${
-                    isActive ? "text-indigo-600" : "text-zinc-400 group-hover:text-zinc-600"
+                    isActive
+                      ? "text-indigo-600 dark:text-indigo-400"
+                      : "text-zinc-400 group-hover:text-zinc-600 dark:text-slate-500 dark:group-hover:text-slate-300"
                   }`}
                 />
                 <AnimatePresence>
@@ -164,18 +167,21 @@ export default function ReportLayout({ children }: { children: React.ReactNode }
           })}
         </nav>
 
-        {/* ── Language toggle ── */}
+        {/* ── Bottom controls: Theme + Language ── */}
         <div className="shrink-0 px-1.5 pb-2.5 pt-1">
-          <div className="mx-0 mb-1.5 h-px bg-slate-100" />
+          <div className="mx-0 mb-1.5 h-px bg-slate-100 dark:bg-white/[0.06]" />
+
+          <ThemeToggle expanded={hovered} />
+
           <button
             type="button"
             onClick={() => setLocale(locale === "vi" ? "en" : "vi")}
             title={!hovered ? (locale === "vi" ? "Switch to English" : "Đổi sang Tiếng Việt") : undefined}
-            className={`flex w-full items-center rounded-lg py-1.5 text-xs font-medium text-zinc-400 transition-all duration-150 hover:bg-slate-100/70 hover:text-zinc-700 ${
+            className={`flex w-full items-center rounded-lg py-1.5 text-xs font-medium text-zinc-400 transition-all duration-150 hover:bg-slate-100/70 hover:text-zinc-700 dark:text-slate-500 dark:hover:bg-white/[0.06] dark:hover:text-slate-300 ${
               hovered ? "gap-2.5 px-2.5 justify-start" : "justify-center px-0"
             }`}
           >
-            <Globe className="h-[17px] w-[17px] shrink-0 text-zinc-400" />
+            <Globe className="h-[17px] w-[17px] shrink-0 text-zinc-400 dark:text-slate-500" />
             <AnimatePresence>
               {hovered && (
                 <motion.span

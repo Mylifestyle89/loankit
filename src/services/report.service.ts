@@ -17,7 +17,7 @@ import {
   type MappingInstanceSummary,
   type MasterTemplateSummary,
 } from "@/lib/report/config-schema";
-import { REPORT_MERGED_FLAT_FILE } from "@/lib/report/constants";
+import { REPORT_BUILD_META_FILE, REPORT_MERGED_FLAT_FILE } from "@/lib/report/constants";
 import { evaluateFieldFormula } from "@/lib/report/field-calc";
 import { loadFieldFormulas, saveFieldFormulas } from "@/lib/report/field-formulas";
 import {
@@ -125,11 +125,13 @@ async function createInstanceDraftFiles(seed: {
   return { mappingPath, aliasPath };
 }
 
+function hasPrismaModel(modelName: string): boolean {
+  const model: unknown = Reflect.get(prisma as object, modelName);
+  return model !== null && typeof model === "object" && typeof (model as { count?: unknown }).count === "function";
+}
+
 function ensurePrismaModelsExist(): void {
-  const prismaRecord = prisma as unknown as Record<string, unknown>;
-  const hasMaster = typeof (prismaRecord.fieldTemplateMaster as { count?: unknown } | undefined)?.count === "function";
-  const hasInstance = typeof (prismaRecord.mappingInstance as { count?: unknown } | undefined)?.count === "function";
-  if (!hasMaster || !hasInstance) {
+  if (!hasPrismaModel("fieldTemplateMaster") || !hasPrismaModel("mappingInstance")) {
     throw new SystemError(
       "Prisma client thiếu model FieldTemplateMaster/MappingInstance. Chạy: npx prisma generate",
     );
@@ -224,8 +226,8 @@ async function relPathExists(relPath: string): Promise<boolean> {
 }
 
 async function resolveMappingSource(mappingInstanceId?: string): Promise<
-  | { mode: "instance"; mappingPath: string; aliasPath: string; instanceId: string }
-  | { mode: "legacy"; mappingPath: string; aliasPath: string; versionId: string }
+  | { mode: "instance"; mappingPath: string; aliasPath: string; instanceId: string; mappingUpdatedAt: string }
+  | { mode: "legacy"; mappingPath: string; aliasPath: string; versionId: string; mappingUpdatedAt: string }
 > {
   await ensureMasterInstanceMigration();
   if (mappingInstanceId) {
@@ -236,6 +238,7 @@ async function resolveMappingSource(mappingInstanceId?: string): Promise<
         mappingPath: instance.mappingJsonPath,
         aliasPath: instance.aliasJsonPath,
         instanceId: instance.id,
+        mappingUpdatedAt: instance.updatedAt.toISOString(),
       };
     }
   }
@@ -247,6 +250,7 @@ async function resolveMappingSource(mappingInstanceId?: string): Promise<
     mappingPath: activeVersion.mapping_json_path,
     aliasPath: activeVersion.alias_json_path,
     versionId: activeVersion.id,
+    mappingUpdatedAt: activeVersion.created_at,
   };
 }
 
@@ -257,6 +261,108 @@ async function loadFlatDraftWithBuildFallback(): Promise<Record<string, unknown>
     await runBuildAndValidate();
     return await docxEngine.readJson<Record<string, unknown>>("report_assets/report_draft_flat.json");
   }
+}
+
+type BuildMeta = {
+  built_at: string;
+  mapping_source_mode: "instance" | "legacy";
+  mapping_source_id: string;
+  mapping_source_updated_at: string;
+  template_profile_id: string;
+};
+
+type BuildFreshness = {
+  is_stale: boolean;
+  reasons: string[];
+  has_flat_draft: boolean;
+  current_mapping_source_mode: "instance" | "legacy";
+  current_mapping_source_id: string;
+  current_mapping_updated_at: string;
+  last_build_at?: string;
+};
+
+async function readBuildMeta(): Promise<BuildMeta | null> {
+  try {
+    const raw = await fs.readFile(REPORT_BUILD_META_FILE, "utf-8");
+    const parsed = JSON.parse(raw) as Partial<BuildMeta>;
+    if (
+      typeof parsed.built_at === "string" &&
+      (parsed.mapping_source_mode === "instance" || parsed.mapping_source_mode === "legacy") &&
+      typeof parsed.mapping_source_id === "string" &&
+      typeof parsed.mapping_source_updated_at === "string" &&
+      typeof parsed.template_profile_id === "string"
+    ) {
+      return parsed as BuildMeta;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+async function writeBuildMeta(params: {
+  source: Awaited<ReturnType<typeof resolveMappingSource>>;
+  templateProfileId: string;
+}): Promise<BuildMeta> {
+  const next: BuildMeta = {
+    built_at: new Date().toISOString(),
+    mapping_source_mode: params.source.mode,
+    mapping_source_id: params.source.mode === "instance" ? params.source.instanceId : params.source.versionId,
+    mapping_source_updated_at: params.source.mappingUpdatedAt,
+    template_profile_id: params.templateProfileId,
+  };
+  await fs.writeFile(REPORT_BUILD_META_FILE, JSON.stringify(next, null, 2), "utf-8");
+  return next;
+}
+
+async function hasFlatDraftFile(): Promise<boolean> {
+  try {
+    await fs.access(path.join(process.cwd(), "report_assets", "report_draft_flat.json"));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function getBuildFreshnessStatus(mappingInstanceId?: string): Promise<BuildFreshness> {
+  const [state, source, buildMeta, hasFlatDraft] = await Promise.all([
+    loadState(),
+    resolveMappingSource(mappingInstanceId),
+    readBuildMeta(),
+    hasFlatDraftFile(),
+  ]);
+  const reasons: string[] = [];
+
+  if (!hasFlatDraft) reasons.push("FLAT_DRAFT_MISSING");
+  if (!buildMeta) reasons.push("NO_BUILD_META");
+  if (buildMeta) {
+    if (buildMeta.mapping_source_mode !== source.mode) reasons.push("MAPPING_SOURCE_MODE_CHANGED");
+    const sourceId = source.mode === "instance" ? source.instanceId : source.versionId;
+    if (buildMeta.mapping_source_id !== sourceId) reasons.push("MAPPING_SOURCE_CHANGED");
+    if (buildMeta.mapping_source_updated_at !== source.mappingUpdatedAt) reasons.push("MAPPING_UPDATED");
+    if ((buildMeta.template_profile_id || "unknown") !== (state.active_template_id || "unknown")) {
+      reasons.push("TEMPLATE_CHANGED");
+    }
+    const builtAtMs = Date.parse(buildMeta.built_at);
+    const mappingUpdatedMs = Date.parse(source.mappingUpdatedAt);
+    if (Number.isFinite(builtAtMs) && Number.isFinite(mappingUpdatedMs) && builtAtMs < mappingUpdatedMs) {
+      reasons.push("MAPPING_NEWER_THAN_BUILD");
+    }
+  }
+
+  return {
+    is_stale: reasons.length > 0,
+    reasons,
+    has_flat_draft: hasFlatDraft,
+    current_mapping_source_mode: source.mode,
+    current_mapping_source_id: source.mode === "instance" ? source.instanceId : source.versionId,
+    current_mapping_updated_at: source.mappingUpdatedAt,
+    last_build_at: buildMeta?.built_at,
+  };
+}
+
+function sourceIdFromResolved(source: Awaited<ReturnType<typeof resolveMappingSource>>): string {
+  return source.mode === "instance" ? source.instanceId : source.versionId;
 }
 
 function mapDocxError(error: unknown): never {
@@ -338,7 +444,13 @@ export const reportService = {
 
   async runBuildAndLog() {
     const start = Date.now();
+    const state = await loadState();
+    const source = await resolveMappingSource();
     const result = await runBuildAndValidate();
+    await writeBuildMeta({
+      source,
+      templateProfileId: state.active_template_id ?? "unknown",
+    });
     const durationMs = Date.now() - start;
     await logRun({
       resultSummary: {
@@ -353,6 +465,10 @@ export const reportService = {
       durationMs,
     });
     return { durationMs, command: result.command, validation: result.validation };
+  },
+
+  async getBuildFreshness(params?: { mappingInstanceId?: string }) {
+    return getBuildFreshnessStatus(params?.mappingInstanceId);
   },
 
   async loadRuns() {
@@ -569,6 +685,16 @@ export const reportService = {
     const outputPath = input.outputPath ?? "report_assets/report_preview.docx";
     const reportPath = input.reportPath ?? "report_assets/template_export_report.json";
     const templatePath = input.templatePath ?? activeTemplate.docx_path;
+    const stale = await getBuildFreshnessStatus(input.mappingInstanceId);
+    let autoBuildTriggered = false;
+    if (stale.is_stale) {
+      await runBuildAndValidate();
+      await writeBuildMeta({
+        source,
+        templateProfileId: state.active_template_id ?? "unknown",
+      });
+      autoBuildTriggered = true;
+    }
     const baseFlat = await docxEngine.readJson<Record<string, unknown>>("report_assets/report_draft_flat.json");
     const aliasMap = await docxEngine.readJson<Record<string, unknown>>(source.aliasPath);
     const manualValues = await loadManualValues();
@@ -591,6 +717,9 @@ export const reportService = {
     await logRun({
       resultSummary: {
         step: "export_docx",
+        auto_build_triggered: autoBuildTriggered,
+        stale_reasons: stale.reasons,
+        mapping_source_id: sourceIdFromResolved(source),
         report,
       },
       outputPaths: [outputPath, reportPath],
@@ -602,6 +731,8 @@ export const reportService = {
       output_path: outputPath,
       report_path: reportPath,
       report,
+      auto_build_triggered: autoBuildTriggered,
+      stale_reasons: stale.reasons,
       command: { stdout: "Rendered via DOCX engine.", stderr: "", exitCode: 0 },
     };
   },
@@ -627,6 +758,16 @@ export const reportService = {
     const repeatKey = input?.repeatKey?.trim() || "items";
     const customerNameKey = input?.customerNameKey?.trim() || "TÊN KH";
 
+    const stale = await getBuildFreshnessStatus(input?.mappingInstanceId);
+    let autoBuildTriggered = false;
+    if (stale.is_stale) {
+      await runBuildAndValidate();
+      await writeBuildMeta({
+        source,
+        templateProfileId: state.active_template_id ?? "unknown",
+      });
+      autoBuildTriggered = true;
+    }
     const [baseFlat, aliasMapRaw, manualValues] = await Promise.all([
       docxEngine.readJson<Record<string, unknown>>("report_assets/report_draft_flat.json"),
       docxEngine.readJson<Record<string, unknown>>(source.aliasPath),
@@ -683,6 +824,8 @@ export const reportService = {
     await logRun({
       resultSummary: {
         step: "export_docx_bank_grouped",
+        auto_build_triggered: autoBuildTriggered,
+        stale_reasons: stale.reasons,
         report,
       },
       outputPaths: [...outputPaths, reportPath],
@@ -695,6 +838,8 @@ export const reportService = {
       output_paths: outputPaths,
       report_path: reportPath,
       report,
+      auto_build_triggered: autoBuildTriggered,
+      stale_reasons: stale.reasons,
       command: { stdout: "Rendered grouped bank DOCX via DOCX engine.", stderr: "", exitCode: 0 },
     };
   },
@@ -706,6 +851,10 @@ export const reportService = {
 
     if (input.runBuild) {
       const result = await runBuildAndValidate();
+      await writeBuildMeta({
+        source,
+        templateProfileId: state.active_template_id ?? activeTemplate.id,
+      });
       const final = validateReportPayload({
         validation: result.validation,
         templatePath: activeTemplate.docx_path,

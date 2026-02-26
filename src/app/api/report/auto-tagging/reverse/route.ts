@@ -22,7 +22,12 @@ export async function POST(req: NextRequest) {
     if (!Array.isArray(body.excelRows) || body.excelRows.length === 0) {
       throw new ValidationError("excelRows is required.");
     }
-    const docxBuffer = await fs.readFile(path.join(process.cwd(), body.docxPath));
+    const allowedBase = path.resolve(process.cwd(), "report_assets");
+    const resolvedPath = path.resolve(process.cwd(), body.docxPath);
+    if (!resolvedPath.startsWith(allowedBase + path.sep) && resolvedPath !== allowedBase) {
+      throw new ValidationError("Đường dẫn file không hợp lệ.");
+    }
+    const docxBuffer = await fs.readFile(resolvedPath);
     const result = await reverseEngineerTemplate({
       docxBuffer,
       excelRows: body.excelRows,

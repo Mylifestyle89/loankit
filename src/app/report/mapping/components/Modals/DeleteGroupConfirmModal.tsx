@@ -48,7 +48,7 @@ export function DeleteGroupConfirmModal() {
             type="button"
             onClick={onClose}
             disabled={loading}
-            className="rounded-xl border border-slate-200/60 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition-all hover:bg-slate-50/80 disabled:opacity-60"
+            className="rounded-xl border border-slate-200/60 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition-all hover:bg-slate-50/80 disabled:opacity-60 dark:border-white/[0.07] dark:bg-[#0f1629]/90 dark:text-slate-200 dark:hover:bg-white/[0.05]"
           >
             Hủy
           </button>
@@ -63,7 +63,7 @@ export function DeleteGroupConfirmModal() {
         </div>
       }
     >
-      <p className="text-sm text-slate-700">
+      <p className="text-sm text-slate-700 dark:text-slate-200">
         {`Bạn sắp xóa nhóm "${expectedName}" và toàn bộ field liên quan. Hành động này có thể hoàn tác bằng Undo gần nhất.`}
       </p>
       {data && "fieldCount" in data ? (
@@ -71,15 +71,15 @@ export function DeleteGroupConfirmModal() {
           {`Số field sẽ bị xóa: ${data.fieldCount}`}
         </div>
       ) : null}
-      <div className="mt-3 rounded-xl border border-slate-200/60 bg-slate-50/50 px-3 py-2">
-        <p className="text-xs text-slate-600">
+      <div className="mt-3 rounded-xl border border-slate-200/60 bg-slate-50/50 px-3 py-2 dark:border-white/[0.07] dark:bg-white/[0.04]">
+        <p className="text-xs text-slate-600 dark:text-slate-300">
           Nhập chính xác tên nhóm để xác nhận: <span className="font-semibold">{expectedName}</span>
         </p>
         <input
           value={typedName}
           onChange={(e) => setTypedName(e.target.value)}
           placeholder="Nhập lại tên nhóm"
-          className="mt-2 h-10 w-full rounded-xl border border-slate-200/60 bg-white px-3 text-sm text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+          className="mt-2 h-10 w-full rounded-xl border border-slate-200/60 bg-white px-3 text-sm text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:border-white/[0.08] dark:bg-white/[0.04] dark:text-slate-100"
           autoFocus
         />
       </div>

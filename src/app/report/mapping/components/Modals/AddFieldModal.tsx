@@ -46,24 +46,24 @@ export function AddFieldModal({
 
     return (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-4">
-            <div className="w-full max-w-xl space-y-4 rounded-xl bg-white p-5 shadow-2xl">
-                <h3 className="text-base font-semibold">{t("mapping.newFieldTitle")}</h3>
+            <div className="w-full max-w-xl space-y-4 rounded-xl bg-white dark:bg-[#0f1629]/90 p-5 shadow-2xl">
+                <h3 className="text-base font-semibold dark:text-slate-100">{t("mapping.newFieldTitle")}</h3>
 
                 <div className="grid gap-3">
                     <div>
-                        <label className="mb-1 block text-sm font-medium text-coral-tree-700">Tên hiển thị</label>
+                        <label className="mb-1 block text-sm font-medium text-coral-tree-700 dark:text-slate-200">Tên hiển thị</label>
                         <input
                             value={newField.label_vi}
                             onChange={(e) => setNewField((prev) => ({ ...prev, label_vi: e.target.value }))}
                             placeholder={t("mapping.newFieldLabelPlaceholder")}
-                            className="w-full rounded-md border border-coral-tree-300 px-3 py-2 text-sm"
+                            className="w-full rounded-md border border-coral-tree-300 dark:border-white/[0.09] dark:bg-white/[0.05] dark:text-slate-100 px-3 py-2 text-sm"
                             autoFocus
                         />
                     </div>
 
                     <div className="grid grid-cols-2 gap-3">
                         <div>
-                            <label className="mb-1 block text-sm font-medium text-coral-tree-700">Thuộc Nhóm</label>
+                            <label className="mb-1 block text-sm font-medium text-coral-tree-700 dark:text-slate-200">Thuộc Nhóm</label>
                             <div className="flex gap-1">
                                 <select
                                     value={selectedGroup}
@@ -82,7 +82,7 @@ export function AddFieldModal({
                                             }
                                         }
                                     }}
-                                    className="w-full rounded-md border border-coral-tree-300 px-3 py-2 text-sm"
+                                    className="w-full rounded-md border border-coral-tree-300 dark:border-white/[0.09] dark:bg-white/[0.05] dark:text-slate-100 px-3 py-2 text-sm"
                                 >
                                     <option value="" disabled>{t("mapping.selectGroup")}</option>
                                     {existingGroups.map((group) => (
@@ -91,11 +91,11 @@ export function AddFieldModal({
                                     <option value="__create_new__" className="font-medium text-emerald-600">{t("mapping.newGroupOption")}</option>
                                 </select>
                             </div>
-                            <p className="mt-1 text-xs text-coral-tree-500">{t("mapping.groupPathHint")}</p>
+                            <p className="mt-1 text-xs text-coral-tree-500 dark:text-slate-400">{t("mapping.groupPathHint")}</p>
                         </div>
 
                         <div>
-                            <label className="mb-1 block text-sm font-medium text-coral-tree-700">Kiểu dữ liệu</label>
+                            <label className="mb-1 block text-sm font-medium text-coral-tree-700 dark:text-slate-200">Kiểu dữ liệu</label>
                             <select
                                 value={newField.type}
                                 onChange={(e) =>
@@ -104,7 +104,7 @@ export function AddFieldModal({
                                         type: e.target.value as "string" | "number" | "percent" | "date" | "table",
                                     }))
                                 }
-                                className="w-full rounded-md border border-coral-tree-300 px-3 py-2 text-sm"
+                                className="w-full rounded-md border border-coral-tree-300 dark:border-white/[0.09] dark:bg-white/[0.05] dark:text-slate-100 px-3 py-2 text-sm"
                             >
                                 <option value="string">{t(typeLabelKey("string"))}</option>
                                 <option value="number">{t(typeLabelKey("number"))}</option>

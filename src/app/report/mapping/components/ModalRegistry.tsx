@@ -33,6 +33,8 @@ export function ModalRegistry() {
           onOpenOutputFolder={aiPayload.onOpenOutputFolder}
           onDownloadAllAsZip={aiPayload.onDownloadAllAsZip}
           t={aiPayload.t}
+          fieldCatalog={aiPayload.fieldCatalog}
+          onApplyFinancialValues={aiPayload.onApplyFinancialValues}
         />
       ) : null}
       <DeleteGroupConfirmModal />
