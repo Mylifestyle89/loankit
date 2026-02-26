@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 
 import { toHttpError } from "@/core/errors/app-error";
+import { withErrorHandling, withValidatedBody } from "@/lib/api-helpers";
 import { reportService } from "@/services/report.service";
 
 export const runtime = "nodejs";
@@ -16,24 +18,23 @@ export async function GET(req: NextRequest) {
   }
 }
 
-export async function POST(req: NextRequest) {
-  try {
-    const body = (await req.json()) as {
-      name?: string;
-      description?: string;
-      field_catalog?: unknown[];
-    };
+const masterTemplatesPostSchema = z.object({
+  name: z.string().min(1),
+  description: z.string().optional(),
+  field_catalog: z.array(z.unknown()).optional(),
+});
+
+export const POST = withErrorHandling(
+  withValidatedBody(masterTemplatesPostSchema, async (body) => {
     const master = await reportService.createMasterTemplate({
-      name: body.name ?? "",
+      name: body.name,
       description: body.description,
-      fieldCatalog: Array.isArray(body.field_catalog) ? body.field_catalog : [],
+      fieldCatalog: body.field_catalog ?? [],
     });
     return NextResponse.json({ ok: true, master_template: master });
-  } catch (error) {
-    const httpError = toHttpError(error, "Failed to create master template.");
-    return NextResponse.json({ ok: false, error: httpError.message }, { status: httpError.status });
-  }
-}
+  }),
+  "Failed to create master template.",
+);
 
 export async function PUT(req: NextRequest) {
   try {

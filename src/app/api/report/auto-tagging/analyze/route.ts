@@ -3,13 +3,14 @@ import fs from "node:fs/promises";
 import path from "node:path";
 
 import { toHttpError } from "@/core/errors/app-error";
+import { withRateLimit } from "@/lib/api-helpers";
 import { analyzeDocument } from "@/services/auto-tagging.service";
 
 export const runtime = "nodejs";
 
 const ALLOWED_EXT = new Set([".docx", ".doc"]);
 
-export async function POST(req: NextRequest) {
+export const POST = withRateLimit("tagging-analyze")(async (req: NextRequest) => {
   try {
     const formData = await req.formData();
     const file = formData.get("file");
@@ -84,4 +85,4 @@ export async function POST(req: NextRequest) {
       { status: httpError.status },
     );
   }
-}
+});

@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 
 import { toHttpError } from "@/core/errors/app-error";
+import { withErrorHandling, withValidatedBody } from "@/lib/api-helpers";
 import { reportService } from "@/services/report.service";
 
 export const runtime = "nodejs";
@@ -24,12 +26,13 @@ export async function GET() {
   }
 }
 
-export async function PUT(req: NextRequest) {
-  try {
-    const body = (await req.json()) as {
-      manual_values?: Record<string, string | number | boolean | null>;
-      field_formulas?: Record<string, string>;
-    };
+const valuesPutSchema = z.object({
+  manual_values: z.record(z.string(), z.union([z.string(), z.number(), z.boolean(), z.null()])).optional(),
+  field_formulas: z.record(z.string(), z.string()).optional(),
+});
+
+export const PUT = withErrorHandling(
+  withValidatedBody(valuesPutSchema, async (body) => {
     const result = await reportService.saveFieldValues({
       manualValues: body.manual_values,
       fieldFormulas: body.field_formulas,
@@ -39,11 +42,6 @@ export async function PUT(req: NextRequest) {
       manual_values: result.manual_values,
       field_formulas: result.field_formulas,
     });
-  } catch (error) {
-    const httpError = toHttpError(error, "Failed to save manual values.");
-    return NextResponse.json(
-      { ok: false, error: httpError.message },
-      { status: httpError.status },
-    );
-  }
-}
+  }),
+  "Failed to save manual values.",
+);

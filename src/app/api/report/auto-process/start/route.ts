@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { toHttpError } from "@/core/errors/app-error";
+import { withRateLimit } from "@/lib/api-helpers";
 import { autoProcessService } from "@/services/auto-process.service";
 
 export const runtime = "nodejs";
@@ -11,7 +12,7 @@ type StartBody = {
   job_type?: unknown;
 };
 
-export async function POST(req: NextRequest) {
+export const POST = withRateLimit("auto-process-start")(async (req: NextRequest) => {
   try {
     const body = (await req.json()) as StartBody;
     const result = await autoProcessService.startUniversalAutoProcess({
@@ -34,4 +35,4 @@ export async function POST(req: NextRequest) {
       { status: httpError.status },
     );
   }
-}
+});

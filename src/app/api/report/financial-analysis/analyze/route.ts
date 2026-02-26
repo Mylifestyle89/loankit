@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { ValidationError, toHttpError } from "@/core/errors/app-error";
+import { withRateLimit } from "@/lib/api-helpers";
 import { financialAnalysisService } from "@/services/financial-analysis.service";
 
 export const runtime = "nodejs";
 
-export async function POST(req: NextRequest) {
+export const POST = withRateLimit("financial-analyze")(async (req: NextRequest) => {
   try {
     const body = await req.json();
 
@@ -41,4 +42,4 @@ export async function POST(req: NextRequest) {
       { status: httpError.status },
     );
   }
-}
+});

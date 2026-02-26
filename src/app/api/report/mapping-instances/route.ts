@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 
 import { toHttpError } from "@/core/errors/app-error";
+import { withErrorHandling, withValidatedBody } from "@/lib/api-helpers";
 import { reportService } from "@/services/report.service";
 
 export const runtime = "nodejs";
@@ -22,23 +24,22 @@ export async function GET(req: NextRequest) {
   }
 }
 
-export async function POST(req: NextRequest) {
-  try {
-    const body = (await req.json()) as {
-      master_id?: string;
-      customer_id?: string;
-      name?: string;
-      created_by?: string;
-    };
+const mappingInstancesPostSchema = z.object({
+  master_id: z.string().min(1),
+  customer_id: z.string().min(1),
+  name: z.string().optional(),
+  created_by: z.string().optional(),
+});
+
+export const POST = withErrorHandling(
+  withValidatedBody(mappingInstancesPostSchema, async (body) => {
     const mappingInstance = await reportService.createMappingInstance({
-      masterId: body.master_id ?? "",
-      customerId: body.customer_id ?? "",
+      masterId: body.master_id,
+      customerId: body.customer_id,
       name: body.name,
       createdBy: body.created_by,
     });
     return NextResponse.json({ ok: true, mapping_instance: mappingInstance });
-  } catch (error) {
-    const httpError = toHttpError(error, "Failed to create mapping instance.");
-    return NextResponse.json({ ok: false, error: httpError.message }, { status: httpError.status });
-  }
-}
+  }),
+  "Failed to create mapping instance.",
+);

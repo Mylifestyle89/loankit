@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { toHttpError } from "@/core/errors/app-error";
+import { withRateLimit } from "@/lib/api-helpers";
 import { parseExtractRequestForm, runExtractProcess } from "@/app/api/report/mapping/_extract-helper";
 
 export const runtime = "nodejs";
 
-export async function POST(req: NextRequest) {
+export const POST = withRateLimit("extract-process")(async (req: NextRequest) => {
   try {
     const form = await req.formData();
     const context = await parseExtractRequestForm(form);
@@ -27,5 +28,5 @@ export async function POST(req: NextRequest) {
       { status: httpError.status },
     );
   }
-}
+});
 

@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 
 import { toHttpError, ValidationError } from "@/core/errors/app-error";
+import { withErrorHandling, withValidatedBody } from "@/lib/api-helpers";
 import { reportService } from "@/services/report.service";
 
 export const runtime = "nodejs";
@@ -25,16 +27,17 @@ export async function GET(req: NextRequest) {
   }
 }
 
-export async function PUT(req: NextRequest) {
-  try {
-    const body = (await req.json()) as {
-      created_by?: string;
-      notes?: string;
-      mapping?: unknown;
-      alias_map?: unknown;
-      field_catalog?: unknown[];
-      mapping_instance_id?: string;
-    };
+const mappingPutSchema = z.object({
+  created_by: z.string().optional(),
+  notes: z.string().optional(),
+  mapping: z.unknown().optional(),
+  alias_map: z.unknown().optional(),
+  field_catalog: z.array(z.unknown()).optional(),
+  mapping_instance_id: z.string().optional(),
+});
+
+export const PUT = withErrorHandling(
+  withValidatedBody(mappingPutSchema, async (body) => {
     const result = await reportService.saveMappingDraft({
       createdBy: body.created_by,
       notes: body.notes,
@@ -49,14 +52,9 @@ export async function PUT(req: NextRequest) {
       version: result.version,
       active_version_id: result.activeVersionId,
     });
-  } catch (error) {
-    const httpError = toHttpError(error, "Failed to save mapping draft.");
-    return NextResponse.json(
-      { ok: false, error: httpError.message },
-      { status: httpError.status },
-    );
-  }
-}
+  }),
+  "Failed to save mapping draft.",
+);
 
 export async function POST(req: NextRequest) {
   try {

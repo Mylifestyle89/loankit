@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { toHttpError } from "@/core/errors/app-error";
+import { withRateLimit } from "@/lib/api-helpers";
 import { aiMappingService } from "@/services/ai-mapping.service";
 
 export const runtime = "nodejs";
@@ -11,7 +12,7 @@ type SuggestBody = {
   includeGrouping?: unknown;
 };
 
-export async function POST(req: NextRequest) {
+export const POST = withRateLimit("suggest")(async (req: NextRequest) => {
   try {
     const body = (await req.json()) as SuggestBody;
     const excelHeaders = Array.isArray(body.excelHeaders) ? body.excelHeaders.map((v) => String(v)) : [];
@@ -34,5 +35,5 @@ export async function POST(req: NextRequest) {
       { status: httpError.status },
     );
   }
-}
+});
 
