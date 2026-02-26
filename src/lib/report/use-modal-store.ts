@@ -2,6 +2,8 @@
 
 import { create } from "zustand";
 import type { AutoProcessJob } from "@/app/report/mapping/types";
+import type { FieldCatalogItem } from "@/lib/report/config-schema";
+import type { ApplyAiSuggestionPayload } from "@/core/use-cases/apply-ai-suggestion";
 
 export type DeleteGroupPayload = {
   groupPath: string;
@@ -18,7 +20,7 @@ export type CreateMasterTemplatePayload = {
 export type AiMappingPayload = {
   placeholders: string[];
   placeholderLabels?: Record<string, string>;
-  onApply: (payload: { suggestion: Record<string, string>; grouping?: { groupKey: string; repeatKey: string } }) => void;
+  onApply: (payload: ApplyAiSuggestionPayload) => void;
   onSmartAutoBatch: (input: {
     excelPath: string;
     templatePath: string;
@@ -32,6 +34,8 @@ export type AiMappingPayload = {
   onOpenOutputFolder: () => Promise<void>;
   onDownloadAllAsZip?: (paths: string[]) => Promise<void>;
   t: (key: string) => string;
+  fieldCatalog?: FieldCatalogItem[];
+  onApplyFinancialValues?: (values: Record<string, string>) => void;
 };
 
 export type ModalPayloadMap = {

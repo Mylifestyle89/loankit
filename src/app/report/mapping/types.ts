@@ -96,15 +96,26 @@ export type MappingSuggestResponse = {
 };
 
 export type OcrSuggestionStatus = "pending" | "accepted" | "declined";
+export type ExtractSuggestionSource = "ocr_ai" | "docx_ai";
 
 export type OcrFieldSuggestionItem = {
   fieldKey: string;
   proposedValue: string;
   confidenceScore: number;
   status: OcrSuggestionStatus;
+  source: ExtractSuggestionSource;
 };
 
 export type OcrSuggestionMap = Record<string, OcrFieldSuggestionItem>;
+
+export type RepeaterSuggestionItem = {
+  groupPath: string;
+  fieldKeys: string[];
+  rows: Array<Record<string, string | number | boolean | null>>;
+  confidenceScore: number;
+  status?: OcrSuggestionStatus;
+  source?: ExtractSuggestionSource;
+};
 
 export type OcrProcessResponse = {
   ok: boolean;
@@ -113,11 +124,14 @@ export type OcrProcessResponse = {
     fieldKey: string;
     proposedValue: string;
     confidenceScore: number;
+    source?: ExtractSuggestionSource;
   }>;
+  repeaterSuggestions?: RepeaterSuggestionItem[];
   meta?: {
-    provider: "tesseract" | "vision";
+    provider: "tesseract" | "vision" | "docx_ai";
     extractedTextLength: number;
     masked: true;
+    paragraphCount?: number;
   };
 };
 

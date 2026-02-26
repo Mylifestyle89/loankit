@@ -21,7 +21,9 @@ import { MappingModals } from "./components/MappingModals";
 import { MappingVisualSection } from "./components/MappingVisualSection";
 import { MappingVisualToolbar } from "./components/MappingVisualToolbar";
 import { MappingSidebar } from "./components/MappingSidebar";
+import { DeleteConfirmModal } from "./components/Modals/DeleteConfirmModal";
 import { ImportGroupPromptModal } from "./components/Modals/ImportGroupPromptModal";
+import { OcrReviewModal } from "./components/Modals/OcrReviewModal";
 import { SystemLogCard } from "./components/SystemLogCard";
 import { useFieldCatalogImport } from "./hooks/useFieldCatalogImport";
 import { useFieldTemplates } from "./hooks/useFieldTemplates";
@@ -32,6 +34,7 @@ import type {
   FieldTemplateItem,
   MappingApiResponse,
   OcrProcessResponse,
+  RepeaterSuggestionItem,
   OcrSuggestionMap,
   ValidationResponse,
 } from "./types";
@@ -46,6 +49,8 @@ import {
 } from "./helpers";
 import { computeEffectiveValues } from "@/core/use-cases/formula-processor";
 import { buildGroupedFieldTree } from "@/core/use-cases/mapping-engine";
+import { applyAiSuggestion as applyAiSuggestionPure } from "@/core/use-cases/apply-ai-suggestion";
+import type { ApplyAiSuggestionPayload } from "@/core/use-cases/apply-ai-suggestion";
 import { useModal } from "@/lib/report/use-modal-store";
 
 type UndoSnapshot = {
@@ -66,6 +71,18 @@ type OcrLogEntry = {
   createdAt: number;
   type: "ai" | "system" | "error";
 };
+
+type RepeaterSuggestionMap = Record<
+  string,
+  {
+    groupPath: string;
+    fieldKeys: string[];
+    rows: Array<Record<string, string | number | boolean | null>>;
+    confidenceScore: number;
+    status: "pending" | "accepted" | "declined";
+    source: "docx_ai";
+  }
+>;
 
 function MappingPageContent() {
   const { t } = useLanguage();
@@ -88,6 +105,7 @@ function MappingPageContent() {
   const [autoProcessing, setAutoProcessing] = useState(false);
   const [ocrProcessing, setOcrProcessing] = useState(false);
   const [ocrSuggestionsByField, setOcrSuggestionsByField] = useState<OcrSuggestionMap>({});
+  const [repeaterSuggestionsByGroup, setRepeaterSuggestionsByGroup] = useState<RepeaterSuggestionMap>({});
   const [formulaModalFieldKey, setFormulaModalFieldKey] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [showUnmappedOnly, setShowUnmappedOnly] = useState(false);
@@ -136,6 +154,11 @@ function MappingPageContent() {
   const [importGroupPath, setImportGroupPath] = useState("");
   const [ocrLogs, setOcrLogs] = useState<OcrLogEntry[]>([]);
   const ocrLogEndRef = useRef<HTMLDivElement | null>(null);
+  const [ocrReviewModalOpen, setOcrReviewModalOpen] = useState(false);
+  const [lastOcrMeta, setLastOcrMeta] = useState<OcrProcessResponse["meta"]>(undefined);
+  const [deleteMasterModalOpen, setDeleteMasterModalOpen] = useState(false);
+  const [deleteMasterTypedName, setDeleteMasterTypedName] = useState("");
+  const [deleteMasterLoading, setDeleteMasterLoading] = useState(false);
   const [undoHistory, setUndoHistory] = useState<UndoSnapshot[]>([]);
   const [importGroupPrompt, setImportGroupPrompt] = useState<{
     rowNumber: number;
@@ -285,35 +308,10 @@ function MappingPageContent() {
   }, [aiPlaceholders, aliasText, fieldCatalog]);
 
   const applyAiSuggestion = useCallback(
-    (payload: { suggestion: Record<string, string>; grouping?: { groupKey: string; repeatKey: string } }) => {
+    (payload: ApplyAiSuggestionPayload) => {
       try {
-        const parsed = JSON.parse(mappingText) as {
-          mappings?: Array<{
-            template_field?: string;
-            sources?: Array<{ source: string; path: string; note?: string }>;
-          }>;
-        };
-        let matched = 0;
-        const nextMappings = (parsed.mappings ?? []).map((item) => {
-          const key = typeof item.template_field === "string" ? item.template_field.trim() : "";
-          const header = key ? payload.suggestion[key] : undefined;
-          if (!header) return item;
-          matched += 1;
-          return {
-            ...item,
-            sources: [{ source: "excel_ai", path: header, note: "AI suggestion accepted" }],
-          };
-        });
-        setMappingText(
-          JSON.stringify(
-            {
-              ...parsed,
-              mappings: nextMappings,
-            },
-            null,
-            2,
-          ),
-        );
+        const { nextMappingText, matched } = applyAiSuggestionPure(mappingText, payload);
+        setMappingText(nextMappingText);
         const groupingMsg = payload.grouping
           ? ` ${t("mapping.aiSuggest.groupingResult")
             .replace("{groupKey}", payload.grouping.groupKey)
@@ -361,6 +359,11 @@ function MappingPageContent() {
     }
   }, [autoProcessJob?.job_id, openAutoProcessOutputFolder, setError]);
 
+  const handleApplyFinancialValues = useCallback((aiValues: Record<string, string>) => {
+    setManualValues((prev) => ({ ...prev, ...aiValues }));
+    setValues((prev) => ({ ...prev, ...aiValues }));
+  }, []);
+
   const runAiSuggestion = useCallback(() => {
     openModal("aiMapping", {
       placeholders: aiPlaceholders,
@@ -373,6 +376,8 @@ function MappingPageContent() {
       autoProcessing,
       onOpenOutputFolder: openAutoProcessResultFolder,
       t,
+      fieldCatalog,
+      onApplyFinancialValues: handleApplyFinancialValues,
     });
   }, [
     aiPlaceholders,
@@ -380,7 +385,9 @@ function MappingPageContent() {
     applyAiSuggestion,
     autoProcessJob,
     autoProcessing,
+    fieldCatalog,
     getAutoProcessAssets,
+    handleApplyFinancialValues,
     openAutoProcessResultFolder,
     openModal,
     runSmartAutoBatchFlow,
@@ -434,6 +441,44 @@ function MappingPageContent() {
     setMessage,
     setError,
   });
+
+  const openDeleteGenericTemplateModal = useCallback(() => {
+    setDeleteMasterTypedName("");
+    setDeleteMasterModalOpen(true);
+  }, []);
+
+  const closeDeleteMasterModal = useCallback(() => {
+    setDeleteMasterModalOpen(false);
+    setDeleteMasterTypedName("");
+  }, []);
+
+  const confirmDeleteMasterTemplate = useCallback(async () => {
+    if (!editingFieldTemplateId || !editingFieldTemplateName.trim()) return;
+    setDeleteMasterLoading(true);
+    setError("");
+    try {
+      const res = await fetch(`/api/report/master-templates/${editingFieldTemplateId}`, { method: "DELETE" });
+      const data = (await res.json()) as { ok: boolean; error?: string };
+      if (!data.ok) throw new Error(data.error ?? "Xóa thất bại.");
+      setMessage(t("mapping.msg.templateDeleted").replace("{name}", editingFieldTemplateName));
+      closeDeleteMasterModal();
+      stopEditingFieldTemplate();
+      await loadAllFieldTemplates();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Xóa thất bại.");
+    } finally {
+      setDeleteMasterLoading(false);
+    }
+  }, [
+    closeDeleteMasterModal,
+    editingFieldTemplateId,
+    editingFieldTemplateName,
+    loadAllFieldTemplates,
+    setError,
+    setMessage,
+    stopEditingFieldTemplate,
+    t,
+  ]);
 
   const openCreateMasterTemplateModal = useCallback(
     (initialName = "") => {
@@ -1106,20 +1151,45 @@ function MappingPageContent() {
         pushOcrLog("error", "OCR thất bại: thiếu context mapping/template.");
         return;
       }
+      const fileName = (file.name ?? "").toLowerCase();
+      const mimeType = (file.type ?? "").toLowerCase();
+      const isDocx =
+        fileName.endsWith(".docx") ||
+        mimeType === "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+      const modeLabel = isDocx ? "DOCX Extract" : "OCR";
+      const fallbackProcessUrl = isDocx ? "/api/report/mapping/docx-process" : "/api/report/mapping/ocr-process";
+      const fallbackEnabled =
+        String(process.env.NEXT_PUBLIC_EXTRACT_FALLBACK_ENABLED ?? "").toLowerCase() === "true" ||
+        process.env.NODE_ENV === "development";
+
       setOcrProcessing(true);
       setError("");
-      pushOcrLog("system", `Bắt đầu OCR file: ${file.name}`);
+      pushOcrLog("system", `Bắt đầu ${modeLabel}: ${file.name}`);
       try {
         const form = new FormData();
         form.set("file", file);
         form.set("fieldTemplateId", selectedFieldTemplateId);
-        const res = await fetch("/api/report/mapping/ocr-process", {
+        let res = await fetch("/api/report/mapping/extract-process", {
           method: "POST",
           body: form,
         });
-        const data = (await res.json()) as OcrProcessResponse;
+        let data = (await res.json()) as OcrProcessResponse;
         if (!res.ok || !data.ok) {
-          throw new Error(data.error ?? "OCR process failed.");
+          if (fallbackEnabled) {
+            pushOcrLog("system", `Unified extract lỗi, fallback sang ${isDocx ? "DOCX route" : "OCR route"}...`);
+            res = await fetch(fallbackProcessUrl, {
+              method: "POST",
+              body: form,
+            });
+            data = (await res.json()) as OcrProcessResponse;
+          } else {
+            throw new Error(
+              data.error ?? `${modeLabel} failed on unified extract (fallback disabled).`,
+            );
+          }
+        }
+        if (!res.ok || !data.ok) {
+          throw new Error(data.error ?? `${modeLabel} failed.`);
         }
         const next: OcrSuggestionMap = {};
         for (const item of data.suggestions ?? []) {
@@ -1128,15 +1198,35 @@ function MappingPageContent() {
             proposedValue: item.proposedValue,
             confidenceScore: item.confidenceScore,
             status: "pending",
+            source: item.source ?? (isDocx ? "docx_ai" : "ocr_ai"),
+          };
+        }
+        const repeaterNext: RepeaterSuggestionMap = {};
+        for (const item of data.repeaterSuggestions ?? []) {
+          const typedItem = item as RepeaterSuggestionItem;
+          if (!typedItem.groupPath || !Array.isArray(typedItem.rows) || typedItem.rows.length === 0) continue;
+          repeaterNext[typedItem.groupPath] = {
+            groupPath: typedItem.groupPath,
+            fieldKeys: typedItem.fieldKeys ?? [],
+            rows: typedItem.rows,
+            confidenceScore: typedItem.confidenceScore ?? 0.6,
+            status: typedItem.status ?? "pending",
+            source: "docx_ai",
           };
         }
         setOcrSuggestionsByField(next);
-        pushOcrLog("ai", `OCR thành công, phát hiện ${Object.keys(next).length} trường dữ liệu.`);
+        setRepeaterSuggestionsByGroup(repeaterNext);
+        setLastOcrMeta(data.meta);
+        if (Object.keys(next).length > 0 || Object.keys(repeaterNext).length > 0) setOcrReviewModalOpen(true);
+        pushOcrLog("ai", `${modeLabel} thành công, phát hiện ${Object.keys(next).length} trường dữ liệu.`);
+        if (Object.keys(repeaterNext).length > 0) {
+          pushOcrLog("ai", `${modeLabel} phát hiện ${Object.keys(repeaterNext).length} nhóm repeater.`);
+        }
         pushOcrLog("system", "Đã masking dữ liệu nhạy cảm trước khi AI xử lý.");
       } catch (error) {
-        const msg = error instanceof Error ? error.message : "OCR process failed.";
+        const msg = error instanceof Error ? error.message : `${modeLabel} failed.`;
         setError(msg);
-        pushOcrLog("error", `OCR lỗi: ${msg}`);
+        pushOcrLog("error", `${modeLabel} lỗi: ${msg}`);
       } finally {
         setOcrProcessing(false);
       }
@@ -1164,6 +1254,91 @@ function MappingPageContent() {
     });
   }, [pushOcrLog]);
 
+  const handleAcceptAllOcr = useCallback(() => {
+    setOcrSuggestionsByField((prev) => {
+      const next = { ...prev };
+      let count = 0;
+      for (const [key, item] of Object.entries(next)) {
+        if (item.status !== "pending") continue;
+        setManualValues((mv) => ({ ...mv, [key]: item.proposedValue }));
+        setValues((vv) => ({ ...vv, [key]: item.proposedValue }));
+        next[key] = { ...item, status: "accepted" };
+        count++;
+      }
+      if (count > 0) pushOcrLog("system", `[Bulk Accept] ${count} fields`);
+      return next;
+    });
+  }, [pushOcrLog]);
+
+  const handleDeclineAllOcr = useCallback(() => {
+    setOcrSuggestionsByField((prev) => {
+      const next: OcrSuggestionMap = {};
+      let count = 0;
+      for (const [key, item] of Object.entries(prev)) {
+        if (item.status === "pending") {
+          next[key] = { ...item, status: "declined" };
+          count++;
+        } else {
+          next[key] = item;
+        }
+      }
+      if (count > 0) pushOcrLog("system", `[Bulk Decline] ${count} fields`);
+      return next;
+    });
+  }, [pushOcrLog]);
+
+  const handleAcceptRepeaterSuggestion = useCallback((groupPath: string) => {
+    setRepeaterSuggestionsByGroup((prev) => {
+      const item = prev[groupPath];
+      if (!item || item.status !== "pending") return prev;
+      setValues((current) => ({ ...current, [groupPath]: item.rows }));
+      pushOcrLog("system", `Đã chấp nhận DOCX repeater cho nhóm: ${groupPath} (${item.rows.length} bản ghi)`);
+      return { ...prev, [groupPath]: { ...item, status: "accepted" } };
+    });
+  }, [pushOcrLog]);
+
+  const handleDeclineRepeaterSuggestion = useCallback((groupPath: string) => {
+    setRepeaterSuggestionsByGroup((prev) => {
+      const item = prev[groupPath];
+      if (!item || item.status !== "pending") return prev;
+      pushOcrLog("system", `Đã từ chối DOCX repeater cho nhóm: ${groupPath}`);
+      return { ...prev, [groupPath]: { ...item, status: "declined" } };
+    });
+  }, [pushOcrLog]);
+
+  const handleAcceptAllRepeater = useCallback(() => {
+    setRepeaterSuggestionsByGroup((prev) => {
+      const next = { ...prev };
+      let count = 0;
+      const patchValues: Record<string, unknown> = {};
+      for (const [groupPath, item] of Object.entries(next)) {
+        if (item.status !== "pending") continue;
+        patchValues[groupPath] = item.rows;
+        next[groupPath] = { ...item, status: "accepted" };
+        count += 1;
+      }
+      if (count > 0) {
+        setValues((current) => ({ ...current, ...patchValues }));
+        pushOcrLog("system", `[Bulk Accept Repeater] ${count} nhóm`);
+      }
+      return next;
+    });
+  }, [pushOcrLog]);
+
+  const handleDeclineAllRepeater = useCallback(() => {
+    setRepeaterSuggestionsByGroup((prev) => {
+      const next = { ...prev };
+      let count = 0;
+      for (const [groupPath, item] of Object.entries(next)) {
+        if (item.status !== "pending") continue;
+        next[groupPath] = { ...item, status: "declined" };
+        count += 1;
+      }
+      if (count > 0) pushOcrLog("system", `[Bulk Decline Repeater] ${count} nhóm`);
+      return next;
+    });
+  }, [pushOcrLog]);
+
   useEffect(() => {
     ocrLogEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
   }, [ocrLogs]);
@@ -1179,28 +1354,33 @@ function MappingPageContent() {
     [t],
   );
 
+  const pendingOcrCount = useMemo(
+    () => Object.values(ocrSuggestionsByField).filter((i) => i.status === "pending").length,
+    [ocrSuggestionsByField],
+  );
+
   if (loading) {
     return <p className="text-sm text-coral-tree-600">{t("mapping.loading")}</p>;
   }
 
   return (
     <section className="space-y-4">
-      <div className="space-y-3 rounded-xl border border-zinc-200 bg-white/90 p-3 shadow-sm">
+      <div className="space-y-3 rounded-xl border border-zinc-200 dark:border-white/[0.08] bg-white/90 dark:bg-[#0f1629]/90 p-3 shadow-sm">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <h2 className="text-lg font-semibold">{t("mapping.title")}</h2>
-            <p className="text-sm text-zinc-600">
+            <h2 className="text-lg font-semibold dark:text-slate-100">{t("mapping.title")}</h2>
+            <p className="text-sm text-zinc-600 dark:text-slate-300">
               {t("mapping.activeVersion")}: <span className="font-medium">{activeVersionId || t("mapping.na")}</span> (
               {activeVersion?.status ?? t("mapping.unknown")})
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <div className="flex flex-wrap items-center gap-2 rounded-lg border border-zinc-200 bg-zinc-50/60 p-1">
+            <div className="flex flex-wrap items-center gap-2 rounded-lg border border-zinc-200 dark:border-white/[0.08] bg-zinc-50/60 dark:bg-[#080c18] p-1">
               <button
                 type="button"
                 onClick={() => void undoLastAction()}
                 disabled={undoHistory.length === 0}
-                className="flex h-9 items-center gap-2 rounded-md border border-zinc-300 bg-white px-3 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-50"
+                className="flex h-9 items-center gap-2 rounded-md border border-zinc-300 dark:border-white/[0.10] bg-white dark:bg-white/[0.05] px-3 text-sm font-medium text-zinc-700 dark:text-slate-200 hover:bg-zinc-50 dark:hover:bg-white/[0.06] disabled:opacity-50"
               >
                 <Undo2 className="h-4 w-4" />
                 {t("mapping.undo")} ({undoHistory.length}/5)
@@ -1208,7 +1388,7 @@ function MappingPageContent() {
               <button
                 type="button"
                 onClick={() => setFunctionListModalOpen(true)}
-                className="flex h-9 items-center gap-2 rounded-md border border-zinc-300 bg-white px-3 text-sm font-medium text-zinc-700 hover:bg-zinc-50"
+                className="flex h-9 items-center gap-2 rounded-md border border-zinc-300 dark:border-white/[0.10] bg-white dark:bg-white/[0.05] px-3 text-sm font-medium text-zinc-700 dark:text-slate-200 hover:bg-zinc-50 dark:hover:bg-white/[0.06]"
               >
                 <BookOpen className="h-4 w-4" />
                 Danh sách hàm
@@ -1260,7 +1440,19 @@ function MappingPageContent() {
           showUnmappedOnly={showUnmappedOnly}
           setShowUnmappedOnly={setShowUnmappedOnly}
           onOpenAddFieldModal={() => void openCreateMasterTemplateModal()}
-          sidebar={<span className="text-xs text-slate-500">{`OCR logs: ${ocrLogs.length}`}</span>}
+          sidebar={
+            pendingOcrCount > 0 ? (
+              <button
+                type="button"
+                onClick={() => setOcrReviewModalOpen(true)}
+                className="rounded-full border border-amber-300 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-500/10 px-2 py-0.5 text-[11px] font-semibold text-amber-700 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-500/20 transition-colors"
+              >
+                {pendingOcrCount} chờ review
+              </button>
+            ) : (
+              <span className="text-xs text-slate-500 dark:text-slate-400">{`OCR: ${ocrLogs.length} log`}</span>
+            )
+          }
           ocrProcessing={ocrProcessing}
           onOcrFileSelected={(file) => void handleOcrFileSelected(file)}
         />
@@ -1282,7 +1474,7 @@ function MappingPageContent() {
         stopEditingFieldTemplate={stopEditingFieldTemplate}
         openImportBackupModal={() => {}}
         openImportGroupModal={openImportGroupModal}
-        openDeleteGenericTemplateModal={() => {}}
+        openDeleteGenericTemplateModal={openDeleteGenericTemplateModal}
         sensors={sensors}
         handleDragEnd={handleDragEnd}
         groupedFieldTree={groupedFieldTree}
@@ -1381,6 +1573,34 @@ function MappingPageContent() {
       />
 
       <ImportGroupPromptModal prompt={importGroupPrompt} onResolve={resolveImportGroupPrompt} />
+      <OcrReviewModal
+        isOpen={ocrReviewModalOpen}
+        onClose={() => setOcrReviewModalOpen(false)}
+        suggestions={ocrSuggestionsByField}
+        repeaterSuggestions={repeaterSuggestionsByGroup}
+        fieldCatalog={fieldCatalog}
+        meta={lastOcrMeta}
+        onAcceptOne={handleAcceptOcrSuggestion}
+        onDeclineOne={handleDeclineOcrSuggestion}
+        onAcceptAll={handleAcceptAllOcr}
+        onDeclineAll={handleDeclineAllOcr}
+        onAcceptRepeaterOne={handleAcceptRepeaterSuggestion}
+        onDeclineRepeaterOne={handleDeclineRepeaterSuggestion}
+        onAcceptRepeaterAll={handleAcceptAllRepeater}
+        onDeclineRepeaterAll={handleDeclineAllRepeater}
+      />
+      <DeleteConfirmModal
+        open={deleteMasterModalOpen}
+        title="Xóa template mẫu"
+        message="Hành động này không thể hoàn tác. Các bản gán (instance) đã tạo từ template này sẽ giữ nguyên dữ liệu đã clone."
+        expectedName={editingFieldTemplateName}
+        typedName={deleteMasterTypedName}
+        setTypedName={setDeleteMasterTypedName}
+        confirmLabel="Xóa template mẫu"
+        loading={deleteMasterLoading}
+        onClose={closeDeleteMasterModal}
+        onConfirm={confirmDeleteMasterTemplate}
+      />
       <ValidationResultPanel t={t} validation={validation} />
 
     </section>

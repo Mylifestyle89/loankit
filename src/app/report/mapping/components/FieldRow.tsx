@@ -11,6 +11,7 @@ import {
     toInternalType,
     TypeLabelMap,
 } from "../helpers";
+import type { ExtractSuggestionSource } from "../types";
 
 export type FieldRowProps = {
     field: FieldCatalogItem;
@@ -42,7 +43,12 @@ export type FieldRowProps = {
     onOpenFormula?: () => void;
     sampleData?: string;
     confidenceScore?: number;
-    ocrSuggestion?: { proposedValue: string; confidenceScore: number; status: "pending" | "accepted" | "declined" };
+    ocrSuggestion?: {
+        proposedValue: string;
+        confidenceScore: number;
+        status: "pending" | "accepted" | "declined";
+        source?: ExtractSuggestionSource;
+    };
     onAcceptOcrSuggestion?: (fieldKey: string) => void;
     onDeclineOcrSuggestion?: (fieldKey: string) => void;
 };
@@ -126,14 +132,14 @@ export const FieldRow = memo(function FieldRow({
     };
 
     const inputClassName =
-        "h-8 w-full rounded border border-transparent bg-transparent px-2 py-1 text-sm transition-colors placeholder:text-coral-tree-700 hover:border-coral-tree-300 focus:border-coral-tree-500 focus:bg-white focus:outline-none focus:ring-1 focus:ring-coral-tree-500";
+        "h-8 w-full rounded border border-transparent bg-transparent px-2 py-1 text-sm transition-colors placeholder:text-coral-tree-700 hover:border-coral-tree-300 focus:border-coral-tree-500 focus:bg-white dark:focus:bg-white/[0.06] focus:outline-none focus:ring-1 focus:ring-coral-tree-500";
 
     const textareaClassName =
-        "min-h-[80px] w-full rounded border border-transparent bg-transparent px-2 py-1.5 font-mono text-sm transition-colors whitespace-pre placeholder:text-coral-tree-700 hover:border-coral-tree-300 focus:border-coral-tree-500 focus:bg-white focus:outline-none focus:ring-1 focus:ring-coral-tree-500";
+        "min-h-[80px] w-full rounded border border-transparent bg-transparent px-2 py-1.5 font-mono text-sm transition-colors whitespace-pre placeholder:text-coral-tree-700 hover:border-coral-tree-300 focus:border-coral-tree-500 focus:bg-white dark:focus:bg-white/[0.06] focus:outline-none focus:ring-1 focus:ring-coral-tree-500";
 
     const isReadOnly = valueReadOnly || hasFormula;
     const readOnlyClassName = isReadOnly
-        ? "cursor-not-allowed bg-coral-tree-50 text-coral-tree-600 hover:border-transparent focus:border-transparent focus:ring-0"
+        ? "cursor-not-allowed bg-coral-tree-50 dark:bg-white/[0.04] text-coral-tree-600 hover:border-transparent focus:border-transparent focus:ring-0"
         : "";
 
     const valueInput =
@@ -201,7 +207,7 @@ export const FieldRow = memo(function FieldRow({
     const hasPendingOcr = ocrSuggestion?.status === "pending";
 
     return (
-        <div ref={setNodeRef} style={style} className={`group min-w-0 grid grid-cols-1 gap-2 border-t border-coral-tree-100 px-3 py-2 text-sm transition-colors md:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)_minmax(110px,140px)_auto] ${isDragging ? "bg-coral-tree-50 opacity-80 shadow-md ring-1 ring-coral-tree-300" : hasPendingOcr ? "bg-amber-50/60 hover:bg-amber-50/80" : "bg-white hover:bg-coral-tree-50"}`}>
+        <div ref={setNodeRef} style={style} className={`group min-w-0 grid grid-cols-1 gap-2 border-t border-coral-tree-100 dark:border-white/[0.06] px-3 py-2 text-sm transition-colors md:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)_minmax(110px,140px)_auto] ${isDragging ? "bg-coral-tree-50 dark:bg-white/[0.06] opacity-80 shadow-md ring-1 ring-coral-tree-300" : hasPendingOcr ? "bg-amber-50/60 dark:bg-amber-500/10 hover:bg-amber-50/80 dark:hover:bg-amber-500/15" : "bg-white dark:bg-transparent hover:bg-coral-tree-50 dark:hover:bg-white/[0.04]"}`}>
             <div className="flex min-w-0 items-start gap-2 pt-0.5">
                 <div className="mt-1 flex flex-col gap-0 opacity-0 transition-opacity group-hover:opacity-100">
                     <button
@@ -219,22 +225,22 @@ export const FieldRow = memo(function FieldRow({
                         value={field.label_vi}
                         onChange={(e) => onFieldLabelChange(field.field_key, e.target.value)}
                         aria-label="Tên hiển thị field"
-                        className="w-full truncate rounded border border-transparent bg-transparent px-2 py-1 text-sm font-medium text-coral-tree-800 transition-colors hover:border-coral-tree-300 focus:border-coral-tree-500 focus:bg-white focus:outline-none focus:ring-1 focus:ring-coral-tree-500"
+                        className="w-full truncate rounded border border-transparent bg-transparent px-2 py-1 text-sm font-medium text-coral-tree-800 dark:text-slate-200 transition-colors hover:border-coral-tree-300 focus:border-coral-tree-500 focus:bg-white dark:focus:bg-white/[0.06] focus:outline-none focus:ring-1 focus:ring-coral-tree-500"
                         title={field.label_vi}
                     />
                     {showTechnicalKeys ? (
-                        <p className="mt-0.5 px-2 font-mono text-[10px] text-coral-tree-700">{field.field_key}</p>
+                        <p className="mt-0.5 px-2 font-mono text-[10px] text-coral-tree-700 dark:text-slate-400">{field.field_key}</p>
                     ) : null}
                     <div className="mt-0.5 flex items-center justify-between gap-2 px-2">
-                        <p className="truncate text-[10px] text-zinc-400" title={sampleData || "Chưa có dữ liệu mẫu"}>
+                        <p className="truncate text-[10px] text-zinc-400 dark:text-slate-500" title={sampleData || "Chưa có dữ liệu mẫu"}>
                             Sample Data: {sampleData || "—"}
                         </p>
                         <span
                             className={`inline-flex flex-shrink-0 items-center rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${confidenceScore >= 90
-                                    ? "bg-emerald-100 text-emerald-700"
+                                    ? "bg-emerald-100 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
                                     : confidenceScore >= 60
-                                        ? "bg-amber-100 text-amber-700"
-                                        : "bg-rose-100 text-rose-700"
+                                        ? "bg-amber-100 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400"
+                                        : "bg-rose-100 dark:bg-rose-500/10 text-rose-700 dark:text-rose-400"
                                 }`}
                             title="Confidence Score (heuristic)"
                         >
@@ -247,21 +253,33 @@ export const FieldRow = memo(function FieldRow({
                 {valueInput}
                 {hasPendingOcr ? (
                     <div className="mt-1 flex flex-wrap items-center gap-1.5 px-1">
-                        <span className="rounded-full border border-amber-200 bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-700">
+                        <span className="rounded-full border border-amber-200 dark:border-amber-500/30 bg-amber-100 dark:bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold text-amber-700 dark:text-amber-400">
                             Pending Review ({Math.round((ocrSuggestion?.confidenceScore ?? 0) * 100)}%)
                         </span>
+                        <span
+                            className={`rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${
+                                ocrSuggestion?.source === "docx_ai"
+                                    ? "bg-violet-100 dark:bg-violet-500/10 text-violet-700 dark:text-violet-400"
+                                    : "bg-sky-100 dark:bg-sky-500/10 text-sky-700 dark:text-sky-400"
+                            }`}
+                        >
+                            {ocrSuggestion?.source === "docx_ai" ? "DOCX" : "OCR"}
+                        </span>
+                        <p className="text-[10px] text-amber-700 dark:text-amber-400 px-1 truncate max-w-[200px]" title={ocrSuggestion?.proposedValue}>
+                            → {ocrSuggestion?.proposedValue}
+                        </p>
                         <button
                             type="button"
                             onClick={() => onAcceptOcrSuggestion?.(field.field_key)}
-                            className="inline-flex items-center gap-1 rounded-md border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 transition-colors hover:bg-emerald-100"
+                            className="inline-flex items-center gap-1 rounded-md border border-emerald-200 dark:border-emerald-500/30 bg-emerald-50 dark:bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 dark:text-emerald-400 transition-colors hover:bg-emerald-100 dark:hover:bg-emerald-500/20"
                         >
                             <Check className="h-3 w-3" />
-                            Accept Suggestion
+                            Accept
                         </button>
                         <button
                             type="button"
                             onClick={() => onDeclineOcrSuggestion?.(field.field_key)}
-                            className="inline-flex items-center gap-1 rounded-md border border-rose-200 bg-rose-50 px-2 py-0.5 text-[10px] font-semibold text-rose-700 transition-colors hover:bg-rose-100"
+                            className="inline-flex items-center gap-1 rounded-md border border-rose-200 dark:border-rose-500/30 bg-rose-50 dark:bg-rose-500/10 px-2 py-0.5 text-[10px] font-semibold text-rose-700 dark:text-rose-400 transition-colors hover:bg-rose-100 dark:hover:bg-rose-500/20"
                         >
                             <X className="h-3 w-3" />
                             Decline
@@ -279,7 +297,7 @@ export const FieldRow = memo(function FieldRow({
                         )
                     }
                     aria-label={`Kiểu dữ liệu cho ${field.label_vi}`}
-                    className="cursor-pointer h-8 w-full rounded border border-transparent bg-transparent px-1.5 py-1 text-sm text-coral-tree-800 transition-colors hover:border-coral-tree-300 focus:border-coral-tree-500 focus:bg-white focus:outline-none focus:ring-1 focus:ring-coral-tree-500"
+                    className="cursor-pointer h-8 w-full rounded border border-transparent bg-transparent px-1.5 py-1 text-sm text-coral-tree-800 dark:text-slate-200 transition-colors hover:border-coral-tree-300 focus:border-coral-tree-500 focus:bg-white dark:focus:bg-white/[0.06] focus:outline-none focus:ring-1 focus:ring-coral-tree-500"
                 >
                     <option value="string">{typeLabels.string}</option>
                     <option value="number">{typeLabels.number}</option>

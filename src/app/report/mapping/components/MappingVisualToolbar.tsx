@@ -37,20 +37,20 @@ export function MappingVisualToolbar({
   };
 
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-zinc-200 bg-white/80 p-2 backdrop-blur-sm">
+    <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-zinc-200 dark:border-white/[0.08] bg-white/80 dark:bg-[#0f1629]/90 p-2 backdrop-blur-sm">
       <div className={`flex items-center gap-2 w-full md:w-auto transition-opacity duration-300 ${!hasContext ? "opacity-0 pointer-events-none" : "opacity-100"}`}>
         <input
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full md:w-72 rounded-lg border border-zinc-300 px-3 py-1.5 text-sm text-zinc-900 placeholder:text-zinc-500 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+          className="w-full md:w-72 rounded-lg border border-zinc-300 dark:border-white/[0.10] px-3 py-1.5 text-sm text-zinc-900 dark:text-slate-100 dark:bg-white/[0.05] placeholder:text-zinc-500 dark:placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
           placeholder={t("mapping.searchPlaceholder")}
         />
-        <label className="inline-flex items-center gap-2 rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-xs text-zinc-700">
+        <label className="inline-flex items-center gap-2 rounded-lg border border-zinc-300 dark:border-white/[0.10] bg-white dark:bg-[#0f1629]/90 px-3 py-1.5 text-xs text-zinc-700 dark:text-slate-200">
           <input
             type="checkbox"
             checked={showUnmappedOnly}
             onChange={(e) => setShowUnmappedOnly(e.target.checked)}
-            className="h-3.5 w-3.5 rounded border-zinc-300 text-indigo-600 focus:ring-indigo-500"
+            className="h-3.5 w-3.5 rounded border-zinc-300 dark:border-white/[0.10] text-indigo-600 focus:ring-indigo-500"
           />
           Chưa mapping
         </label>
@@ -71,14 +71,14 @@ export function MappingVisualToolbar({
           onDrop={handleDrop}
           className={`rounded-lg border px-3 py-1.5 text-xs transition-all ${
             isDragActive
-              ? "border-indigo-300 bg-indigo-50 text-indigo-700"
-              : "border-slate-200/60 bg-slate-50/50 text-slate-600 hover:border-indigo-200 hover:bg-indigo-50/30"
+              ? "border-indigo-300 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-400"
+              : "border-slate-200/60 dark:border-white/[0.07] bg-slate-50/50 dark:bg-white/[0.04] text-slate-600 dark:text-slate-300 hover:border-indigo-200 hover:bg-indigo-50/30 dark:hover:bg-white/[0.05]"
           }`}
         >
           <input
             ref={ocrInputRef}
             type="file"
-            accept=".png,.jpg,.jpeg,.webp,.pdf,application/pdf,image/png,image/jpeg,image/webp"
+            accept=".docx,.png,.jpg,.jpeg,.webp,.pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/pdf,image/png,image/jpeg,image/webp"
             className="hidden"
             onChange={(e) => {
               const file = e.target.files?.[0];
@@ -92,13 +92,13 @@ export function MappingVisualToolbar({
             disabled={ocrProcessing || !onOcrFileSelected}
             className="font-medium disabled:opacity-50"
           >
-            {ocrProcessing ? "Đang OCR..." : "Drop/Pick OCR"}
+            {ocrProcessing ? "Đang xử lý..." : "Drop/Pick OCR/DOCX"}
           </button>
         </div>
       </div>
 
       <div className="flex items-center gap-2">
-        <div className="h-6 w-px bg-zinc-200 mx-1" />
+        <div className="h-6 w-px bg-zinc-200 dark:bg-white/[0.08] mx-1" />
         {sidebar}
       </div>
     </div>
