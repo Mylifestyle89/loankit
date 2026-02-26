@@ -191,3 +191,46 @@ export type AutoProcessJobResponse = {
   error?: string;
   job?: AutoProcessJob;
 };
+
+export type FieldEditState = {
+  label_vi: string;
+  group: string;
+  type: "string" | "number" | "percent" | "date" | "table";
+};
+
+export type UndoSnapshot = {
+  fieldCatalog: import("@/lib/report/config-schema").FieldCatalogItem[];
+  values: Record<string, unknown>;
+  manualValues: Record<string, string | number | boolean | null>;
+  formulas: Record<string, string>;
+  customGroups: string[];
+  selectedGroup: string;
+  newField: FieldEditState;
+  mappingText: string;
+  collapsedParentGroups: string[];
+};
+
+export type OcrLogEntry = {
+  id: string;
+  message: string;
+  createdAt: number;
+  type: "ai" | "system" | "error";
+};
+
+export type RepeaterSuggestionMap = Record<
+  string,
+  {
+    groupPath: string;
+    fieldKeys: string[];
+    rows: Array<Record<string, string | number | boolean | null>>;
+    confidenceScore: number;
+    status: "pending" | "accepted" | "declined";
+    source: "docx_ai";
+  }
+>;
+
+export type ImportGroupPrompt = {
+  rowNumber: number;
+  missingPath: string;
+  level: "parent" | "subgroup";
+} | null;

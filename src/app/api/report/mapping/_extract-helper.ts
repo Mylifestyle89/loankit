@@ -2,6 +2,7 @@ import path from "node:path";
 
 import { ValidationError } from "@/core/errors/app-error";
 import { extractFieldsFromReport } from "@/core/use-cases/extract-fields-from-report";
+import { validateFileSize } from "@/lib/report/upload-limits";
 import { reportService } from "@/services/report.service";
 
 type ExtractKind = "ocr" | "docx";
@@ -26,6 +27,7 @@ export async function parseExtractRequestForm(form: FormData): Promise<ExtractRe
 }
 
 export function validateOcrFile(file: File): void {
+  validateFileSize(file, "ocr");
   const supported = new Set([
     "image/png",
     "image/jpeg",
@@ -40,6 +42,7 @@ export function validateOcrFile(file: File): void {
 }
 
 export function validateDocxFile(file: File): void {
+  validateFileSize(file, "docx");
   const ext = path.extname(file.name || "").toLowerCase();
   if (ext !== ".docx") {
     throw new ValidationError(`Unsupported file extension: ${ext || "(empty)"}. Only .docx is allowed.`);

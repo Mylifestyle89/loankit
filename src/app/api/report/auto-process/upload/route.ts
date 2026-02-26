@@ -4,6 +4,7 @@ import path from "node:path";
 import { NextRequest, NextResponse } from "next/server";
 
 import { toHttpError, ValidationError } from "@/core/errors/app-error";
+import { validateFileSize } from "@/lib/report/upload-limits";
 
 export const runtime = "nodejs";
 
@@ -26,6 +27,7 @@ export async function POST(req: NextRequest) {
     const original = sanitizeName(file.name || "upload.bin");
     const ext = path.extname(original).toLowerCase();
     const isTemplate = kind === "template";
+    validateFileSize(file, isTemplate ? "generic_template" : "generic_data");
     const allowed = isTemplate ? TEMPLATE_EXTS : DATA_EXTS;
     if (!allowed.has(ext)) {
       throw new ValidationError(
