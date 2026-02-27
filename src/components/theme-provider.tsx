@@ -30,6 +30,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const saved = window.localStorage.getItem("app_theme") as Theme | null;
     if (saved === "light" || saved === "dark" || saved === "system") {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setThemeState(saved);
     }
   }, []);
@@ -68,7 +69,6 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   const value = useMemo<ThemeContextValue>(
     () => ({ theme, setTheme, resolvedTheme }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     [theme, resolvedTheme],
   );
 

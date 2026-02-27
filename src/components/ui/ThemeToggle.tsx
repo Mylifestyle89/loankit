@@ -2,7 +2,6 @@
 
 import { Moon, Sun } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
-import { useEffect, useState } from "react";
 
 import { useTheme } from "@/components/theme-provider";
 
@@ -12,10 +11,10 @@ type ThemeToggleProps = {
 
 export function ThemeToggle({ expanded = false }: ThemeToggleProps) {
   const { resolvedTheme, setTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
 
-  const isDark = mounted && resolvedTheme === "dark";
+  // ThemeProvider starts with theme="system" (resolves to "light") on both
+  // server and client, so no hydration mismatch — no mounted guard needed.
+  const isDark = resolvedTheme === "dark";
 
   return (
     <button

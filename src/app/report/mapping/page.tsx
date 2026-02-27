@@ -1071,6 +1071,7 @@ function MappingPageContent() {
 
   const handleOcrFileSelected = useCallback(async (file: File) => {
     const { selectedFieldTemplateId: tplId } = useFieldTemplateStore.getState();
+    const { selectedCustomerId } = useCustomerStore.getState();
     const {
       setOcrProcessing,
       setOcrSuggestionsByField,
@@ -1106,7 +1107,13 @@ function MappingPageContent() {
     try {
       const form = new FormData();
       form.set("file", file);
-      form.set("fieldTemplateId", tplId);
+      // Khi có khách hàng, tplId là MappingInstance ID → gửi làm mappingInstanceId.
+      // Khi không có khách hàng, tplId là MasterTemplate ID → gửi làm fieldTemplateId.
+      if (selectedCustomerId) {
+        form.set("mappingInstanceId", tplId);
+      } else {
+        form.set("fieldTemplateId", tplId);
+      }
       let res = await fetch("/api/report/mapping/extract-process", { method: "POST", body: form });
       let data = (await res.json()) as OcrProcessResponse;
 

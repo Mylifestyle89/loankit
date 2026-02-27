@@ -1,79 +1,128 @@
-/**
- * API route helpers — Zod body validation, error handling, and rate limiting.
- */
-import { NextRequest, NextResponse } from "next/server";
-import type { ZodType } from "zod";
-
-import { toHttpError } from "@/core/errors/app-error";
-import { checkRateLimit, getClientIp } from "@/lib/rate-limiter";
-
-type NextHandler = (req: NextRequest) => Promise<NextResponse>;
-type BodyHandler<T> = (body: T, req: NextRequest) => Promise<NextResponse>;
+import { NextResponse, type NextRequest, type NextResponse as NextResponseType } from "next/server";
+import { type ZodType } from "zod";
 
 /**
- * Wraps a route handler with Zod body validation.
- * Returns 400 with field-level errors if the JSON body is missing or invalid.
+ * Security headers để áp dụng cho tất cả API responses
  */
-export function withValidatedBody<T>(
-  schema: ZodType<T>,
-  handler: BodyHandler<T>,
-): NextHandler {
-  return async (req: NextRequest) => {
-    let raw: unknown;
-    try {
-      raw = await req.json();
-    } catch {
-      return NextResponse.json({ ok: false, error: "Invalid JSON body." }, { status: 400 });
-    }
-    const result = schema.safeParse(raw);
-    if (!result.success) {
-      return NextResponse.json(
-        { ok: false, error: "Validation failed.", details: result.error.flatten((i) => i.message).fieldErrors },
-        { status: 400 },
-      );
-    }
-    return handler(result.data, req);
-  };
+export const SECURITY_HEADERS = {
+  "X-Content-Type-Options": "nosniff",
+  "X-Frame-Options": "DENY",
+  "X-XSS-Protection": "1; mode=block",
+  "Referrer-Policy": "strict-origin-when-cross-origin",
+} as const;
+
+/**
+ * Apply security headers vào NextResponse
+ */
+export function applySecurityHeaders(response: NextResponseType): NextResponseType {
+  Object.entries(SECURITY_HEADERS).forEach(([key, value]) => {
+    response.headers.set(key, value);
+  });
+  return response;
 }
 
 /**
- * Wraps a route handler with try/catch using toHttpError for standardised error responses.
- * Compose with withValidatedBody:
- *   export const PUT = withErrorHandling(withValidatedBody(schema, handler), "fallback message");
+ * Validate request body với Zod schema
+ * Usage: withValidatedBody(schema, async (validatedBody) => { return NextResponse.json(...) })
+ * Returns a function that accepts NextRequest
  */
-export function withErrorHandling(handler: NextHandler, fallbackMessage = "Internal server error."): NextHandler {
-  return async (req: NextRequest) => {
+export function withValidatedBody<T extends ZodType>(
+  schema: T,
+  handler: (data: T["_output"]) => Promise<NextResponseType>
+) {
+  return async (req: NextRequest): Promise<NextResponseType> => {
     try {
-      return await handler(req);
+      const body = await req.json();
+      const validated = schema.parse(body);
+      return applySecurityHeaders(await handler(validated));
     } catch (error) {
-      const httpError = toHttpError(error, fallbackMessage);
-      return NextResponse.json(
-        { ok: false, error: httpError.message, details: httpError.details },
-        { status: httpError.status },
+      const response = NextResponse.json(
+        {
+          error: error instanceof Error ? error.message : "Invalid request body",
+        },
+        { status: 400 }
       );
+      return applySecurityHeaders(response);
     }
   };
 }
 
 /**
- * Wraps a route handler with in-memory rate limiting (fixed window, per IP + routeKey).
- * Returns 429 with Retry-After header when the limit is exceeded.
- * Usage: export const POST = withRateLimit("suggest")(withErrorHandling(...));
+ * Wrap route handler với error handling và security headers
+ * Usage: withErrorHandling(async (req) => { return NextResponse.json(...) }, "error message")
  */
-export function withRateLimit(routeKey: string, maxPerMinute = 60) {
-  return (handler: NextHandler): NextHandler =>
-    async (req: NextRequest) => {
-      const ip = getClientIp(req);
-      const result = checkRateLimit(`${routeKey}:${ip}`, maxPerMinute);
-      if (!result.allowed) {
-        return NextResponse.json(
-          { ok: false, error: "Rate limit exceeded. Please try again later." },
-          {
-            status: 429,
-            headers: { "Retry-After": String(Math.ceil((result.resetAt - Date.now()) / 1000)) },
-          },
-        );
+export function withErrorHandling(
+  handler: (req: NextRequest) => Promise<NextResponseType>,
+  errorMessage?: string
+) {
+  return async (req: NextRequest): Promise<NextResponseType> => {
+    try {
+      return applySecurityHeaders(await handler(req));
+    } catch (error) {
+      const response = NextResponse.json(
+        {
+          error: errorMessage || (error instanceof Error ? error.message : "Internal server error"),
+        },
+        { status: 500 }
+      );
+      return applySecurityHeaders(response);
+    }
+  };
+}
+
+/**
+ * In-memory rate limiter state (per route key)
+ * In production, consider using Redis or external service
+ */
+const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
+
+const RATE_LIMIT_CONFIG = {
+  windowMs: 60 * 1000, // 1 minute
+  maxRequests: 60, // 60 requests per minute per key
+};
+
+/**
+ * Rate limiting middleware for API routes
+ * Usage: export const POST = withRateLimit("route-key")(async (req) => { ... })
+ */
+export function withRateLimit(key: string) {
+  return (
+    handler: (req: NextRequest) => Promise<NextResponseType>
+  ): ((req: NextRequest) => Promise<NextResponseType>) => {
+    return async (req: NextRequest) => {
+      const now = Date.now();
+      const rateLimitEntry = rateLimitStore.get(key);
+
+      // Initialize or reset if window expired
+      if (!rateLimitEntry || now >= rateLimitEntry.resetTime) {
+        rateLimitStore.set(key, {
+          count: 1,
+          resetTime: now + RATE_LIMIT_CONFIG.windowMs,
+        });
+        return applySecurityHeaders(await handler(req));
       }
-      return handler(req);
+
+      // Check if limit exceeded
+      if (rateLimitEntry.count >= RATE_LIMIT_CONFIG.maxRequests) {
+        const response = NextResponse.json(
+          {
+            error: "Rate limit exceeded",
+            retryAfter: Math.ceil(
+              (rateLimitEntry.resetTime - now) / 1000
+            ),
+          },
+          { status: 429 }
+        );
+        response.headers.set(
+          "Retry-After",
+          String(Math.ceil((rateLimitEntry.resetTime - now) / 1000))
+        );
+        return applySecurityHeaders(response);
+      }
+
+      // Increment counter
+      rateLimitEntry.count++;
+      return applySecurityHeaders(await handler(req));
     };
+  };
 }

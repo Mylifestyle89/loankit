@@ -6,7 +6,7 @@ import type { FieldCatalogItem } from "@/lib/report/config-schema";
 import type { RepeaterSuggestionItem } from "@/app/report/mapping/types";
 import { aiMappingService } from "@/services/ai-mapping.service";
 import { securityService } from "@/services/security.service";
-import { extractParagraphs } from "@/services/auto-tagging.service";
+import { extractParagraphs, type DocxParagraph } from "@/services/auto-tagging.service";
 
 export type DocxFieldSuggestion = {
   fieldKey: string;
@@ -47,6 +47,26 @@ function normalizeText(input: string): string {
     .replace(/[^a-z0-9\s]/g, " ")
     .replace(/\s+/g, " ")
     .trim();
+}
+
+/* ── Fuzzy token matching (local copy from ai-mapping.service) ── */
+
+function tokenize(input: string): string[] {
+  return normalizeText(input)
+    .split(" ")
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
+function scoreTokenOverlap(a: string, b: string): number {
+  const aTokens = new Set(tokenize(a));
+  const bTokens = new Set(tokenize(b));
+  if (aTokens.size === 0 || bTokens.size === 0) return 0;
+  let overlap = 0;
+  for (const token of aTokens) {
+    if (bTokens.has(token)) overlap += 1;
+  }
+  return overlap / Math.max(aTokens.size, bTokens.size);
 }
 
 function decodeXmlText(input: string): string {
@@ -219,6 +239,154 @@ async function parseXmlTablesFromDocx(buffer: Buffer): Promise<ParsedTable[]> {
   return parsedTables;
 }
 
+/* ── Raw table parsing (all rows, no header assumption) ── */
+
+type RawParsedTable = { columnCount: number; rows: string[][] };
+
+async function parseXmlTablesRaw(buffer: Buffer): Promise<RawParsedTable[]> {
+  let zip: JSZip;
+  try {
+    zip = await JSZip.loadAsync(buffer);
+  } catch {
+    return [];
+  }
+  const xmlParts = Object.keys(zip.files)
+    .filter((name) => XML_PARTS_RE.test(name))
+    .sort();
+  const tables: RawParsedTable[] = [];
+
+  for (const xmlPath of xmlParts) {
+    const xml = await zip.file(xmlPath)?.async("string");
+    if (!xml) continue;
+    for (const tableMatch of xml.matchAll(W_TABLE_RE)) {
+      const tableXml = tableMatch[0];
+      const allRows = [...tableXml.matchAll(W_ROW_RE)]
+        .map((rowMatch) =>
+          [...rowMatch[0].matchAll(W_CELL_RE)].map((cellMatch) => extractCellText(cellMatch[0])),
+        )
+        .filter((cells) => cells.some((c) => c.trim().length > 0));
+      if (allRows.length === 0) continue;
+      const columnCount = allRows[0].length;
+      if (columnCount < 2) continue;
+      const normalizedRows = allRows
+        .map((cells) => cells.map((c) => c.trim()))
+        .filter((cells) => cells.length === columnCount);
+      if (normalizedRows.length === 0) continue;
+      tables.push({ columnCount, rows: normalizedRows });
+    }
+  }
+  return tables;
+}
+
+/* ── Scalar field extraction from 2-column info tables ── */
+
+const TABLE_SCALAR_THRESHOLD = 0.4;
+const TABLE_SCALAR_CONFIDENCE = 0.75;
+
+function extractScalarFieldsFromTables(
+  tables: RawParsedTable[],
+  scalarCatalog: FieldCatalogItem[],
+): DocxFieldSuggestion[] {
+  const suggestions: DocxFieldSuggestion[] = [];
+  const matchedKeys = new Set<string>();
+
+  for (const table of tables) {
+    if (table.columnCount !== 2) continue;
+    for (const row of table.rows) {
+      const cellLabel = row[0];
+      const cellValue = row[1];
+      if (!cellLabel.trim() || !cellValue.trim()) continue;
+
+      let bestField: FieldCatalogItem | null = null;
+      let bestScore = 0;
+      for (const field of scalarCatalog) {
+        if (matchedKeys.has(field.field_key)) continue;
+        const score = scoreTokenOverlap(cellLabel, field.label_vi);
+        if (score > bestScore && score >= TABLE_SCALAR_THRESHOLD) {
+          bestScore = score;
+          bestField = field;
+        }
+      }
+
+      if (bestField) {
+        const typedValue = toTypedValue(cellValue, bestField.type);
+        const proposedValue =
+          typedValue === null || typedValue === "" ? cellValue : String(typedValue);
+        suggestions.push({
+          fieldKey: bestField.field_key,
+          proposedValue: securityService.scrubSensitiveData(proposedValue),
+          confidenceScore: TABLE_SCALAR_CONFIDENCE,
+          source: "docx_ai",
+        });
+        matchedKeys.add(bestField.field_key);
+      }
+    }
+  }
+  return suggestions;
+}
+
+/* ── Adjacent paragraph extraction (label on line N, value on line N+1) ── */
+
+const ADJACENT_PARA_THRESHOLD = 0.5;
+const ADJACENT_PARA_CONFIDENCE = 0.65;
+const MAX_LABEL_LENGTH = 120;
+const MAX_VALUE_LENGTH = 500;
+
+function extractFromAdjacentParagraphs(
+  paragraphs: DocxParagraph[],
+  scalarCatalog: FieldCatalogItem[],
+  alreadyMatched: Set<string>,
+): DocxFieldSuggestion[] {
+  const suggestions: DocxFieldSuggestion[] = [];
+  const matchedKeys = new Set<string>(alreadyMatched);
+
+  for (let i = 0; i < paragraphs.length - 1; i++) {
+    const paraText = paragraphs[i].text.trim();
+    if (!paraText || paraText.length > MAX_LABEL_LENGTH) continue;
+    // Skip lines that already have delimiters (handled by buildHeaderValueCandidates)
+    if (/[:\u2013\-]/.test(paraText)) {
+      const parts = paraText.split(/[:\u2013\-]/);
+      if (parts.length >= 2 && parts[0].trim() && parts.slice(1).join("").trim()) continue;
+    }
+
+    let bestField: FieldCatalogItem | null = null;
+    let bestScore = 0;
+    for (const field of scalarCatalog) {
+      if (matchedKeys.has(field.field_key)) continue;
+      const score = scoreTokenOverlap(paraText, field.label_vi);
+      if (score > bestScore && score >= ADJACENT_PARA_THRESHOLD) {
+        bestScore = score;
+        bestField = field;
+      }
+    }
+    if (!bestField) continue;
+
+    const nextText = paragraphs[i + 1].text.trim();
+    if (!nextText || nextText.length > MAX_VALUE_LENGTH) continue;
+    // Guard: if next paragraph also matches a field label, it's a label, not a value
+    let looksLikeLabel = false;
+    for (const field of scalarCatalog) {
+      if (scoreTokenOverlap(nextText, field.label_vi) >= ADJACENT_PARA_THRESHOLD) {
+        looksLikeLabel = true;
+        break;
+      }
+    }
+    if (looksLikeLabel) continue;
+
+    const typedValue = toTypedValue(nextText, bestField.type);
+    const proposedValue =
+      typedValue === null || typedValue === "" ? nextText : String(typedValue);
+    suggestions.push({
+      fieldKey: bestField.field_key,
+      proposedValue: securityService.scrubSensitiveData(proposedValue),
+      confidenceScore: ADJACENT_PARA_CONFIDENCE,
+      source: "docx_ai",
+    });
+    matchedKeys.add(bestField.field_key);
+  }
+  return suggestions;
+}
+
 type RepeaterGroupMeta = {
   groupPath: string;
   fieldKeys: string[];
@@ -356,9 +524,25 @@ export async function extractFieldsFromDocxReport(input: Input): Promise<Output>
 
   const rawText = paragraphs.map((p) => p.text).join("\n");
   const scrubbed = securityService.scrubSensitiveData(rawText);
-  const { headers, valueByHeader } = buildHeaderValueCandidates(scrubbed);
 
-  let suggestions: DocxFieldSuggestion[] = [];
+  // Separate scalar fields from repeater fields
+  const scalarCatalog = input.fieldCatalog.filter((f) => !f.is_repeater);
+
+  // ── Step 1: Table-based scalar extraction (fast, no API calls) ──
+  const rawTables = await parseXmlTablesRaw(input.buffer);
+  const tableSuggestions = extractScalarFieldsFromTables(rawTables, scalarCatalog);
+
+  // ── Step 2: Adjacent paragraph extraction (fast, no API calls) ──
+  const tableMatchedKeys = new Set(tableSuggestions.map((s) => s.fieldKey));
+  const adjacentSuggestions = extractFromAdjacentParagraphs(
+    paragraphs,
+    scalarCatalog,
+    tableMatchedKeys,
+  );
+
+  // ── Step 3: Existing header:value + AI mapping ──
+  const { headers, valueByHeader } = buildHeaderValueCandidates(scrubbed);
+  let aiSuggestions: DocxFieldSuggestion[] = [];
   if (headers.length > 0) {
     const mapped = await aiMappingService.suggestMapping(
       headers,
@@ -366,7 +550,7 @@ export async function extractFieldsFromDocxReport(input: Input): Promise<Output>
       { includeGrouping: false },
     );
     const fieldKeyByLabel = new Map(input.fieldCatalog.map((f) => [f.label_vi, f.field_key]));
-    suggestions = Object.entries(mapped.mapping)
+    aiSuggestions = Object.entries(mapped.mapping)
       .map(([fieldLabel, matchedHeader]) => {
         const fieldKey = fieldKeyByLabel.get(fieldLabel);
         const proposedValue = valueByHeader[matchedHeader];
@@ -381,9 +565,21 @@ export async function extractFieldsFromDocxReport(input: Input): Promise<Output>
       .filter((item): item is DocxFieldSuggestion => Boolean(item));
   }
 
-  if (suggestions.length === 0) {
-    suggestions = extractByHeuristic(scrubbed, input.fieldCatalog);
+  // ── Step 4: Heuristic fallback (only if AI yields nothing) ──
+  let heuristicSuggestions: DocxFieldSuggestion[] = [];
+  if (aiSuggestions.length === 0) {
+    heuristicSuggestions = extractByHeuristic(scrubbed, input.fieldCatalog);
   }
+
+  // ── Step 5: Merge all sources, keep highest confidence per field_key ──
+  const allSuggestions = [
+    ...tableSuggestions,
+    ...adjacentSuggestions,
+    ...aiSuggestions,
+    ...heuristicSuggestions,
+  ];
+
+  // ── Step 6: Repeater extraction (unchanged) ──
   const repeaterSuggestions = await extractRepeaterSuggestions({
     buffer: input.buffer,
     scrubbedText: scrubbed,
@@ -391,7 +587,7 @@ export async function extractFieldsFromDocxReport(input: Input): Promise<Output>
   });
 
   return {
-    suggestions: dedupeByField(suggestions),
+    suggestions: dedupeByField(allSuggestions),
     repeaterSuggestions,
     meta: {
       provider: "docx_ai",
