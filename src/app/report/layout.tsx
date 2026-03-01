@@ -12,6 +12,7 @@ import {
   Play,
   Globe,
   ChevronRight,
+  Settings,
 } from "lucide-react";
 
 import { useLanguage } from "@/components/language-provider";
@@ -35,6 +36,7 @@ export default function ReportLayout({ children }: { children: React.ReactNode }
     { href: "/report/template", label: t("nav.template"), icon: FileText },
     { href: "/report/customers", label: t("nav.customers"), icon: Users },
     { href: "/report/runs", label: t("nav.runs"), icon: Play },
+    { href: "/report/system-operations", label: t("nav.systemOps"), icon: Settings },
   ];
 
   return (

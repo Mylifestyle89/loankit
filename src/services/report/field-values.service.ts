@@ -2,6 +2,7 @@
  * Field-values service — auto/manual field values & formulas.
  */
 import { ValidationError } from "@/core/errors/app-error";
+import { enrichContextWithLabels } from "@/core/use-cases/formula-processor";
 import { docxEngine } from "@/lib/docx-engine";
 import { evaluateFieldFormula } from "@/lib/report/field-calc";
 import { loadFieldFormulas, saveFieldFormulas } from "@/lib/report/field-formulas";
@@ -52,11 +53,13 @@ export const fieldValuesService = {
     }
 
     const [flat, state] = await Promise.all([loadFlatDraftWithBuildFallback(), loadState()]);
-    const fieldTypeMap = new Map((state.field_catalog ?? []).map((f) => [f.field_key, f.type]));
+    const fieldCatalog = state.field_catalog ?? [];
+    const fieldTypeMap = new Map(fieldCatalog.map((f) => [f.field_key, f.type]));
     const toSave = { ...input.manualValues };
     if (input.fieldFormulas && typeof input.fieldFormulas === "object") {
       for (const [key, formula] of Object.entries(input.fieldFormulas)) {
-        const ctx = { ...flat, ...toSave };
+        const baseCtx = { ...flat, ...toSave };
+        const ctx = enrichContextWithLabels(baseCtx, fieldCatalog);
         const fieldType = fieldTypeMap.get(key) ?? "text";
         const v = evaluateFieldFormula(formula, ctx, fieldType);
         if (v !== null) toSave[key] = v;

@@ -1,5 +1,3 @@
-import { FolderOpen } from "lucide-react";
-
 type EditingTemplateBannerProps = {
   t: (key: string) => string;
   editingFieldTemplateId: string;
@@ -8,7 +6,6 @@ type EditingTemplateBannerProps = {
   saveEditedFieldTemplate: () => void;
   savingEditedTemplate: boolean;
   stopEditingFieldTemplate: () => void;
-  openImportBackupModal: () => void;
   openImportGroupModal: () => void;
   openDeleteGenericTemplateModal: () => void;
 };
@@ -21,7 +18,6 @@ export function EditingTemplateBanner({
   saveEditedFieldTemplate,
   savingEditedTemplate,
   stopEditingFieldTemplate,
-  openImportBackupModal,
   openImportGroupModal,
   openDeleteGenericTemplateModal,
 }: EditingTemplateBannerProps) {
@@ -55,10 +51,6 @@ export function EditingTemplateBanner({
         </button>
         <button type="button" onClick={openImportGroupModal} className={secondaryActionClass}>
           Thêm nhóm dữ liệu
-        </button>
-        <button type="button" onClick={openImportBackupModal} className={`inline-flex items-center gap-1.5 ${secondaryActionClass}`}>
-          <FolderOpen className="h-4 w-4" />
-          Import từ backup
         </button>
         <button type="button" onClick={stopEditingFieldTemplate} className={secondaryActionClass}>
           {t("mapping.fieldTemplate.stopEditing")}

@@ -1,7 +1,7 @@
 "use client";
 
 import type { Dispatch, SetStateAction } from "react";
-import { Suspense, useCallback, useEffect, useMemo, useRef } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Save, BookOpen, Undo2 } from "lucide-react";
 
@@ -25,6 +25,7 @@ import { DeleteConfirmModal } from "./components/Modals/DeleteConfirmModal";
 import { ImportGroupPromptModal } from "./components/Modals/ImportGroupPromptModal";
 import { OcrReviewModal } from "./components/Modals/OcrReviewModal";
 import { SystemLogCard } from "./components/SystemLogCard";
+import { FinancialAnalysisModal } from "@/components/FinancialAnalysisModal";
 import { useFieldCatalogImport } from "./hooks/useFieldCatalogImport";
 import { useFieldTemplates } from "./hooks/useFieldTemplates";
 import { useGroupManagement } from "./hooks/useGroupManagement";
@@ -73,6 +74,8 @@ function dispatchify<T>(getVal: () => T, setter: (v: T) => void): Dispatch<SetSt
 function MappingPageContent() {
   const { t } = useLanguage();
   const searchParams = useSearchParams();
+
+  const [financialAnalysisOpen, setFinancialAnalysisOpen] = useState(false);
 
   // ── Reactive store subscriptions ──────────────────────────────────────────
   const mappingText = useMappingDataStore((s) => s.mappingText);
@@ -542,6 +545,59 @@ function MappingPageContent() {
     setValues((prev) => ({ ...prev, ...aiValues }));
   }, []);
 
+  const handleApplyBkImport = useCallback(
+    async (payload: {
+      mode: "data-only" | "template-and-data";
+      values: Record<string, string>;
+      newFields?: FieldCatalogItem[];
+      templateName?: string;
+    }) => {
+      const { setManualValues, setValues, setFieldCatalog } =
+        useMappingDataStore.getState();
+      const ft = useFieldTemplateStore.getState();
+
+      if (payload.mode === "template-and-data" && payload.newFields) {
+        const name = payload.templateName || "BK Import";
+        try {
+          // 1. Create master template via API
+          const res = await fetch("/api/report/master-templates", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name, field_catalog: payload.newFields }),
+          });
+          const data = (await res.json()) as { ok: boolean; master_template?: { id: string; name: string } };
+
+          if (data.ok && data.master_template) {
+            // 2. Set field catalog with normalized entries
+            const normalizedCatalog = normalizeFieldCatalogForSchema(payload.newFields);
+            setFieldCatalog(normalizedCatalog);
+
+            // 3. Enter editing mode → toolbar shows
+            ft.setEditingFieldTemplateId(data.master_template.id);
+            ft.setEditingFieldTemplateName(name);
+            ft.setSelectedFieldTemplateId("");
+
+            // 4. Reload templates → appears in dropdown
+            await loadAllFieldTemplates();
+
+            useUiStore.getState().setStatus({
+              message: `Đã tạo template "${name}" với ${payload.newFields.length} trường.`,
+            });
+          }
+        } catch (e) {
+          useUiStore.getState().setStatus({
+            error: e instanceof Error ? e.message : "Không thể tạo template.",
+          });
+        }
+      }
+
+      // Both modes: fill values into manualValues + values
+      setManualValues((prev) => ({ ...prev, ...payload.values }));
+      setValues((prev) => ({ ...prev, ...payload.values }));
+    },
+    [loadAllFieldTemplates],
+  );
+
   const runAiSuggestion = useCallback(() => {
     const { autoProcessJob, autoProcessing: isAuto } = useOcrStore.getState();
     const { fieldCatalog: cat } = useMappingDataStore.getState();
@@ -558,12 +614,14 @@ function MappingPageContent() {
       t,
       fieldCatalog: cat,
       onApplyFinancialValues: handleApplyFinancialValues,
+      onApplyBkImport: handleApplyBkImport,
     });
   }, [
     aiPlaceholders,
     aiPlaceholderLabels,
     applyAiSuggestion,
     getAutoProcessAssets,
+    handleApplyBkImport,
     handleApplyFinancialValues,
     openAutoProcessResultFolder,
     openModal,
@@ -935,8 +993,9 @@ function MappingPageContent() {
   }, []);
 
   const confirmDeleteMasterTemplate = useCallback(async () => {
-    const { editingFieldTemplateId: tplId, editingFieldTemplateName: tplName } =
+    const { editingFieldTemplateId: tplId, editingFieldTemplateName: tplName, allFieldTemplates } =
       useFieldTemplateStore.getState();
+    const { selectedCustomerId } = useCustomerStore.getState();
     const { setStatus } = useUiStore.getState();
     if (!tplId || !tplName.trim()) return;
     useUiStore
@@ -944,13 +1003,21 @@ function MappingPageContent() {
       .setModals((prev) => ({ deleteMaster: { ...prev.deleteMaster, loading: true } }));
     setStatus({ error: "" });
     try {
-      const res = await fetch(`/api/report/master-templates/${tplId}`, { method: "DELETE" });
+      // Detect master template vs customer instance
+      const isMaster = allFieldTemplates.some((t) => t.id === tplId);
+      const url = isMaster
+        ? `/api/report/master-templates/${tplId}`
+        : `/api/report/mapping-instances/${tplId}`;
+      const res = await fetch(url, { method: "DELETE" });
       const data = (await res.json()) as { ok: boolean; error?: string };
       if (!data.ok) throw new Error(data.error ?? "Xóa thất bại.");
       setStatus({ message: t("mapping.msg.templateDeleted").replace("{name}", tplName) });
       closeDeleteMasterModal();
       stopEditingFieldTemplate();
-      await loadAllFieldTemplates();
+      await Promise.all([
+        loadAllFieldTemplates(),
+        selectedCustomerId ? loadFieldTemplates(selectedCustomerId) : Promise.resolve(),
+      ]);
     } catch (e) {
       setStatus({ error: e instanceof Error ? e.message : "Xóa thất bại." });
     } finally {
@@ -958,7 +1025,7 @@ function MappingPageContent() {
         .getState()
         .setModals((prev) => ({ deleteMaster: { ...prev.deleteMaster, loading: false } }));
     }
-  }, [closeDeleteMasterModal, loadAllFieldTemplates, stopEditingFieldTemplate, t]);
+  }, [closeDeleteMasterModal, loadAllFieldTemplates, loadFieldTemplates, stopEditingFieldTemplate, t]);
 
   const openCreateMasterTemplateModal = useCallback(
     (initialName = "") => {
@@ -1017,51 +1084,50 @@ function MappingPageContent() {
     [loadAllFieldTemplates, loadFieldTemplates, openModal, t],
   );
 
-  async function createTemplateFromImport(params: {
-    templateName: string;
-    fieldCatalog: FieldCatalogItem[];
-  }) {
-    const { selectedCustomerId: cid } = useCustomerStore.getState();
-    const {
-      setSelectedFieldTemplateId,
-      setEditingFieldTemplateId,
-      setEditingFieldTemplateName: setTplName,
-    } = useFieldTemplateStore.getState();
-    const { setFieldCatalog, setValues, setManualValues } = useMappingDataStore.getState();
+  const createTemplateFromImport = useCallback(
+    async (params: {
+      templateName: string;
+      fieldCatalog: FieldCatalogItem[];
+    }) => {
+      const { setFieldCatalog, setValues, setManualValues } = useMappingDataStore.getState();
 
-    const normalizedCatalog = normalizeFieldCatalogForSchema(params.fieldCatalog);
-    const res = await fetch("/api/report/field-templates", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        name: params.templateName,
-        field_catalog: normalizedCatalog,
-        customer_id: cid || undefined,
-      }),
-    });
-    const data = (await res.json()) as {
-      ok: boolean;
-      error?: string;
-      field_template?: { id: string; name: string; field_catalog?: FieldCatalogItem[] };
-    };
-    if (!data.ok) throw new Error(data.error ?? t("mapping.fieldTemplate.errSave"));
+      const normalizedCatalog = normalizeFieldCatalogForSchema(params.fieldCatalog);
+      const res = await fetch("/api/report/master-templates", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: params.templateName,
+          field_catalog: normalizedCatalog,
+        }),
+      });
+      const data = (await res.json()) as {
+        ok: boolean;
+        error?: string;
+        master_template?: { id: string; name: string; field_catalog?: FieldCatalogItem[] };
+      };
+      if (!data.ok) throw new Error(data.error ?? t("mapping.fieldTemplate.errSave"));
 
-    await loadAllFieldTemplates();
-    if (cid) await loadFieldTemplates(cid);
+      if (data.master_template) {
+        const createdCatalog = normalizeFieldCatalogForSchema(
+          data.master_template.field_catalog ?? normalizedCatalog,
+        );
+        setFieldCatalog(createdCatalog);
 
-    if (data.field_template) {
-      const createdCatalog = normalizeFieldCatalogForSchema(
-        data.field_template.field_catalog ?? normalizedCatalog,
-      );
-      setSelectedFieldTemplateId(data.field_template.id);
-      setEditingFieldTemplateId(data.field_template.id);
-      setTplName(data.field_template.name);
-      setFieldCatalog(createdCatalog);
-      const emptyValues = Object.fromEntries(createdCatalog.map((f) => [f.field_key, ""]));
-      setManualValues({});
-      setValues(emptyValues);
-    }
-  }
+        // Enter editing mode → toolbar shows
+        const ft = useFieldTemplateStore.getState();
+        ft.setEditingFieldTemplateId(data.master_template.id);
+        ft.setEditingFieldTemplateName(data.master_template.name);
+
+        // Reload templates → appears in dropdown
+        await loadAllFieldTemplates();
+
+        const emptyValues = Object.fromEntries(createdCatalog.map((f) => [f.field_key, ""]));
+        setManualValues({});
+        setValues(emptyValues);
+      }
+    },
+    [loadAllFieldTemplates, t],
+  );
 
   const { handleImportFieldFile } = useFieldCatalogImport({
     t,
@@ -1107,11 +1173,18 @@ function MappingPageContent() {
     try {
       const form = new FormData();
       form.set("file", file);
-      // Khi có khách hàng, tplId là MappingInstance ID → gửi làm mappingInstanceId.
-      // Khi không có khách hàng, tplId là MasterTemplate ID → gửi làm fieldTemplateId.
-      if (selectedCustomerId) {
+
+      // Xác định loại ID: Mapping Instance hay Master Template
+      // Mapping instances là profiles riêng cho từng customer
+      // Master templates là templates dùng chung (không gán customer cụ thể)
+      const ft = useFieldTemplateStore.getState();
+      const isMappingInstance = ft.fieldTemplates.some((t) => t.id === tplId);
+
+      if (isMappingInstance) {
+        // Đúng là mapping instance → gửi làm mappingInstanceId
         form.set("mappingInstanceId", tplId);
       } else {
+        // Là master template hoặc không xác định → gửi làm fieldTemplateId
         form.set("fieldTemplateId", tplId);
       }
       let res = await fetch("/api/report/mapping/extract-process", { method: "POST", body: form });
@@ -1221,6 +1294,7 @@ function MappingPageContent() {
     // Clear stale data before loading to prevent flash of old customer data
     useFieldTemplateStore.getState().setSelectedFieldTemplateId("");
     useMappingDataStore.getState().setTemplateData([], {}, {});
+    void loadAllFieldTemplates();
     void loadFieldTemplates(selectedCustomerId);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editingFieldTemplateId, selectedCustomerId]);
@@ -1248,13 +1322,18 @@ function MappingPageContent() {
     <section className="space-y-4">
       <div className="space-y-3 rounded-xl border border-zinc-200 dark:border-white/[0.08] bg-white/90 dark:bg-[#0f1629]/90 p-3 shadow-sm">
         <div className="flex flex-wrap items-start justify-between gap-3">
-          <div>
+          <div className="space-y-2">
             <h2 className="text-lg font-semibold dark:text-slate-100">{t("mapping.title")}</h2>
-            <p className="text-sm text-zinc-600 dark:text-slate-300">
-              {t("mapping.activeVersion")}:{" "}
-              <span className="font-medium">{activeVersionId || t("mapping.na")}</span> (
-              {activeVersion?.status ?? t("mapping.unknown")})
-            </p>
+            <div className="flex flex-col gap-1">
+              <p className="text-xs font-medium text-zinc-500 dark:text-slate-400">
+                {customers.find((c) => c.id === selectedCustomerId)?.customer_name || t("mapping.na")}
+              </p>
+              {editingFieldTemplateName && (
+                <p className="text-xs font-medium text-zinc-500 dark:text-slate-400">
+                  {editingFieldTemplateName}
+                </p>
+              )}
+            </div>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <div className="flex flex-wrap items-center gap-2 rounded-lg border border-zinc-200 dark:border-white/[0.08] bg-zinc-50/60 dark:bg-[#080c18] p-1">
@@ -1324,6 +1403,7 @@ function MappingPageContent() {
           showUnmappedOnly={showUnmappedOnly}
           setShowUnmappedOnly={setShowUnmappedOnly}
           onOpenAddFieldModal={() => void openCreateMasterTemplateModal()}
+          onOpenFinancialAnalysis={() => setFinancialAnalysisOpen(true)}
           sidebar={
             pendingOcrCount > 0 ? (
               <button
@@ -1365,7 +1445,6 @@ function MappingPageContent() {
         savingEditedTemplate={savingEditedTemplate}
         saveEditedFieldTemplate={() => void saveEditedFieldTemplate()}
         stopEditingFieldTemplate={stopEditingFieldTemplate}
-        openImportBackupModal={() => {}}
         openImportGroupModal={openImportGroupModal}
         openDeleteGenericTemplateModal={openDeleteGenericTemplateModal}
         sensors={sensors}
@@ -1505,6 +1584,13 @@ function MappingPageContent() {
       />
 
       <ValidationResultPanel t={t} validation={validation} />
+
+      <FinancialAnalysisModal
+        isOpen={financialAnalysisOpen}
+        onClose={() => setFinancialAnalysisOpen(false)}
+        fieldCatalog={fieldCatalog}
+        onApply={handleApplyFinancialValues}
+      />
     </section>
   );
 }

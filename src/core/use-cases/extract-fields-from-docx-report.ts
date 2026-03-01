@@ -5,6 +5,7 @@ import { AiMappingTimeoutError, ValidationError } from "@/core/errors/app-error"
 import type { FieldCatalogItem } from "@/lib/report/config-schema";
 import type { RepeaterSuggestionItem } from "@/app/report/mapping/types";
 import { aiMappingService } from "@/services/ai-mapping.service";
+import { documentExtractionService } from "@/services/document-extraction.service";
 import { securityService } from "@/services/security.service";
 import { extractParagraphs, type DocxParagraph } from "@/services/auto-tagging.service";
 
@@ -312,9 +313,13 @@ function extractScalarFieldsFromTables(
         const typedValue = toTypedValue(cellValue, bestField.type);
         const proposedValue =
           typedValue === null || typedValue === "" ? cellValue : String(typedValue);
+        // Don't mask numeric/financial fields — they need full values for AI quality
+        const scrubbedValue = ["number", "percent"].includes(bestField.type)
+          ? proposedValue
+          : securityService.scrubSensitiveData(proposedValue);
         suggestions.push({
           fieldKey: bestField.field_key,
-          proposedValue: securityService.scrubSensitiveData(proposedValue),
+          proposedValue: scrubbedValue,
           confidenceScore: TABLE_SCALAR_CONFIDENCE,
           source: "docx_ai",
         });
@@ -376,9 +381,13 @@ function extractFromAdjacentParagraphs(
     const typedValue = toTypedValue(nextText, bestField.type);
     const proposedValue =
       typedValue === null || typedValue === "" ? nextText : String(typedValue);
+    // Don't mask numeric/financial fields — they need full values for AI quality
+    const scrubbedValue = ["number", "percent"].includes(bestField.type)
+      ? proposedValue
+      : securityService.scrubSensitiveData(proposedValue);
     suggestions.push({
       fieldKey: bestField.field_key,
-      proposedValue: securityService.scrubSensitiveData(proposedValue),
+      proposedValue: scrubbedValue,
       confidenceScore: ADJACENT_PARA_CONFIDENCE,
       source: "docx_ai",
     });
@@ -449,8 +458,19 @@ async function extractRepeaterSuggestions(input: {
 
     for (const meta of groupMetas) {
       if (usedGroups.has(meta.groupPath)) continue;
+      // Build fieldHints dựa trên label của từng repeater field trong group
+      const repeaterHints = input.fieldCatalog
+        .filter((f) => f.group === meta.groupPath && f.is_repeater)
+        .map((f) => ({
+          key: f.label_vi,
+          label: f.label_vi,
+          type: f.type,
+          examples: f.examples?.length ? f.examples : undefined,
+          isRepeater: true as const,
+        }));
       const mapped = await aiMappingService.suggestMapping(table.headers, meta.fieldLabels, {
         includeGrouping: false,
+        fieldHints: repeaterHints.length > 0 ? repeaterHints : undefined,
       });
       const matchedPairs = Object.entries(mapped.mapping);
       if (matchedPairs.length === 0) continue;
@@ -540,14 +560,22 @@ export async function extractFieldsFromDocxReport(input: Input): Promise<Output>
     tableMatchedKeys,
   );
 
-  // ── Step 3: Existing header:value + AI mapping ──
+  // ── Step 3: Existing header:value + AI mapping (với fieldHints để AI hiểu type) ──
   const { headers, valueByHeader } = buildHeaderValueCandidates(scrubbed);
   let aiSuggestions: DocxFieldSuggestion[] = [];
   if (headers.length > 0) {
+    // wordPlaceholders = label_vi, nên fieldHints.key phải là label_vi
+    const step3Hints = input.fieldCatalog.map((f) => ({
+      key: f.label_vi,
+      label: f.label_vi,
+      type: f.type,
+      examples: f.examples?.length ? f.examples : undefined,
+      isRepeater: f.is_repeater ?? false,
+    }));
     const mapped = await aiMappingService.suggestMapping(
       headers,
       input.fieldCatalog.map((f) => f.label_vi),
-      { includeGrouping: false },
+      { includeGrouping: false, fieldHints: step3Hints },
     );
     const fieldKeyByLabel = new Map(input.fieldCatalog.map((f) => [f.label_vi, f.field_key]));
     aiSuggestions = Object.entries(mapped.mapping)
@@ -571,12 +599,44 @@ export async function extractFieldsFromDocxReport(input: Input): Promise<Output>
     heuristicSuggestions = extractByHeuristic(scrubbed, input.fieldCatalog);
   }
 
+  // ── Step 3b: AI Full-Document Extraction cho field còn thiếu ──
+  // Gửi toàn bộ văn bản + metadata field lên AI để trích xuất các field
+  // chưa được tìm thấy bởi Steps 1–4 (pattern-based).
+  // AI đọc ngữ cảnh toàn bài, không bị giới hạn bởi "label: value" format.
+  const foundKeys = new Set([
+    ...tableSuggestions.map((s) => s.fieldKey),
+    ...adjacentSuggestions.map((s) => s.fieldKey),
+    ...aiSuggestions.map((s) => s.fieldKey),
+    ...heuristicSuggestions.map((s) => s.fieldKey),
+  ]);
+  const missingScalarFields = scalarCatalog.filter((f) => !foundKeys.has(f.field_key));
+
+  let fullDocSuggestions: DocxFieldSuggestion[] = [];
+  if (missingScalarFields.length > 0) {
+    const extractions = await documentExtractionService.extractFields(scrubbed, missingScalarFields);
+    const fieldTypeMap = new Map(missingScalarFields.map((f) => [f.field_key, f.type]));
+    fullDocSuggestions = extractions.map(({ fieldKey, value }) => {
+      // Don't mask numeric/financial fields — they need full values for AI quality
+      const fieldType = fieldTypeMap.get(fieldKey);
+      const scrubbedValue = ["number", "percent"].includes(fieldType ?? "")
+        ? value
+        : securityService.scrubSensitiveData(value);
+      return {
+        fieldKey,
+        proposedValue: scrubbedValue,
+        confidenceScore: 0.78, // AI full-doc: cao hơn heuristic (0.68), thấp hơn table parse (0.75)
+        source: "docx_ai" as const,
+      };
+    });
+  }
+
   // ── Step 5: Merge all sources, keep highest confidence per field_key ──
   const allSuggestions = [
     ...tableSuggestions,
     ...adjacentSuggestions,
     ...aiSuggestions,
     ...heuristicSuggestions,
+    ...fullDocSuggestions,
   ];
 
   // ── Step 6: Repeater extraction (unchanged) ──

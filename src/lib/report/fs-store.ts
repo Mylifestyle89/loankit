@@ -28,6 +28,7 @@ import {
   translateGroupVi,
 } from "@/lib/report/field-labels";
 import { fileLockService } from "@/lib/report/file-lock.service";
+import { FINANCIAL_FIELD_CATALOG } from "@/lib/report/financial-field-catalog";
 
 const nowIso = () => new Date().toISOString();
 
@@ -162,14 +163,35 @@ async function bootstrapState(): Promise<FrameworkState> {
   return frameworkStateSchema.parse(state);
 }
 
+/**
+ * Merge FINANCIAL_FIELD_CATALOG items into the existing catalog.
+ * Idempotent: only adds items whose field_key does not already exist.
+ */
+function mergeFinancialCatalog(catalog: FieldCatalogItem[]): {
+  catalog: FieldCatalogItem[];
+  changed: boolean;
+} {
+  const existing = new Set(catalog.map((item) => item.field_key));
+  const toAdd = FINANCIAL_FIELD_CATALOG.filter((item) => !existing.has(item.field_key));
+  if (toAdd.length === 0) return { catalog, changed: false };
+  return { catalog: [...catalog, ...toAdd], changed: true };
+}
+
 export async function loadState(): Promise<FrameworkState> {
   await ensureDirectories();
   try {
     const stateRaw = await readJsonFile<unknown>(REPORT_STATE_FILE);
     const parsed = frameworkStateSchema.parse(stateRaw);
+
+    // Merge financial catalog items (idempotent)
+    const mergedFinancial = mergeFinancialCatalog(parsed.field_catalog);
+    if (mergedFinancial.changed) {
+      parsed.field_catalog = mergedFinancial.catalog;
+    }
+
     const normalizedLabels = normalizeFieldCatalogLabelsVi(parsed.field_catalog);
     const normalizedGroups = normalizeFieldCatalogGroupsVi(normalizedLabels.catalog);
-    if (normalizedLabels.changed || normalizedGroups.changed) {
+    if (mergedFinancial.changed || normalizedLabels.changed || normalizedGroups.changed) {
       parsed.field_catalog = normalizedGroups.catalog;
       await saveState(parsed);
     }

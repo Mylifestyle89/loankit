@@ -69,7 +69,7 @@ type CellOpts = {
 const PAGE_WIDTH = 9360;
 
 /** Mã số codes that represent totals/sub-totals → rendered bold. */
-const BOLD_CODES = new Set([
+export const BOLD_CODES = new Set([
   // CDKT
   "100", "200", "270", "300", "310", "320", "400", "440",
   // KQKD

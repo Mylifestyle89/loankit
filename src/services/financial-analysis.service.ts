@@ -53,33 +53,44 @@ const OPENAI_ENDPOINT = "https://api.openai.com/v1/chat/completions";
 const DEFAULT_SYSTEM_PROMPT = [
   "Bạn là chuyên viên phân tích tín dụng tại ngân hàng thương mại Việt Nam.",
   "Nhiệm vụ: phân tích báo cáo tài chính doanh nghiệp và viết nhận xét chuyên môn.",
+  "GÓC NHÌN: Người cho vay (lender) — tập trung đánh giá khả năng trả nợ, KHÔNG phải góc nhìn nhà đầu tư.",
   "",
   "Quy tắc viết:",
   "1. Tiếng Việt, văn phong chuyên nghiệp, rõ ràng.",
   "2. Trích dẫn số liệu cụ thể khi phân tích (triệu đồng hoặc tỷ đồng tuỳ quy mô).",
-  "3. So sánh kỳ này vs kỳ trước: tăng/giảm bao nhiêu, tỷ lệ %, xu hướng.",
-  "4. Đánh giá tích cực/tiêu cực, nêu rủi ro nếu có.",
-  "5. Mỗi nhận xét từ 3-8 câu, đủ chi tiết nhưng không dài dòng.",
-  "6. Khi phân tích chỉ số, so sánh với ngưỡng phổ biến (VD: thanh toán ngắn hạn > 1 là tốt).",
-  "7. Trả về ĐÚNG format JSON, không có text khác bên ngoài.",
+  "3. So sánh kỳ hiện tại vs kỳ trước (2 năm liền kề): tăng/giảm bao nhiêu, tỷ lệ %, xu hướng.",
+  "4. ƯU TIÊN tìm điểm tích cực, cơ sở cho thấy doanh nghiệp có khả năng trả nợ.",
+  "5. Nếu có rủi ro/hạn chế, BẮT BUỘC đi kèm giải pháp xử lý/giảm thiểu cụ thể.",
+  "6. Mỗi nhận xét từ 3-8 câu, đủ chi tiết nhưng không dài dòng.",
+  "7. Khi phân tích chỉ số, so sánh với ngưỡng phổ biến (VD: thanh toán hiện hành > 1 là tốt).",
+  "8. Trả về ĐÚNG format JSON, không có text khác bên ngoài.",
 ].join("\n");
 
 const CSTC_LABELS: Record<keyof CstcData, string> = {
+  // Group 1: Thanh toán
   hsTtTongQuat: "Hệ số thanh toán tổng quát (Tổng TS / Nợ phải trả)",
-  hsTtNganHan: "Hệ số thanh toán ngắn hạn (TSNH / Nợ NH)",
-  hsTtNhanh: "Hệ số thanh toán nhanh ((TSNH − HTK) / Nợ NH)",
-  hsTtTienMat: "Hệ số thanh toán tiền mặt (Tiền / Nợ NH)",
+  hsTtNganHan: "Hệ số khả năng thanh toán hiện hành (TSNH / Nợ NH)",
+  hsTtNhanh: "Hệ số khả năng thanh toán nhanh ((TSNH − HTK) / Nợ NH)",
+  hsTtTienMat: "Hệ số khả năng thanh toán tức thời (Tiền / Nợ NH)",
+  hsTtLaiVay: "Hệ số khả năng thanh toán lãi vay ((LNTT + Lãi vay) / Lãi vay)",
+  // Group 2: Cơ cấu vốn
   heSoNo: "Hệ số nợ (Nợ / Tổng TS)",
   hsTuTaiTro: "Hệ số tự tài trợ (VCSH / Tổng TS)",
+  heSoNoVcsh: "Hệ số nợ trên vốn chủ sở hữu (Nợ / VCSH)",
+  // Group 3: Hoạt động
+  vqVld: "Vòng quay vốn lưu động (DT thuần / TSNH BQ)",
   vqHtk: "Vòng quay hàng tồn kho (GVHB / HTK BQ)",
   soNgayHtk: "Số ngày tồn kho (365 / Vòng quay HTK)",
-  vqPhaiThu: "Vòng quay phải thu KH (DT thuần / Phải thu BQ)",
+  vqPhaiThu: "Vòng quay khoản phải thu (DT thuần / Phải thu BQ)",
   soNgayThu: "Số ngày thu tiền BQ (365 / Vòng quay phải thu)",
+  vqTscd: "Vòng quay tài sản cố định (DT thuần / TSCĐ BQ)",
   vqTongTs: "Vòng quay tổng tài sản (DT thuần / Tổng TS BQ)",
+  // Group 4: Sinh lời
   tyLeGop: "Tỷ suất lợi nhuận gộp (LN gộp / DT thuần)",
-  ros: "ROS – Tỷ suất LN trên doanh thu (LNST / DT thuần)",
-  roa: "ROA – Tỷ suất sinh lời trên tổng TS (LNST / Tổng TS BQ)",
-  roe: "ROE – Tỷ suất sinh lời trên VCSH (LNST / VCSH BQ)",
+  ros: "ROS – Tỷ suất lợi nhuận biên (LNST / DT thuần)",
+  roa: "ROA – Khả năng sinh lời tài sản (LNST / Tổng TS BQ)",
+  roe: "ROE – Khả năng sinh lời VCSH (LNST / VCSH BQ)",
+  bep: "BEP – Tỷ số sinh lời cơ sở ((LNTT + Lãi vay) / Tổng TS)",
 };
 
 // ─── Data Formatting ──────────────────────────────────────────────────────────
@@ -116,10 +127,21 @@ function formatFinancialRows(
 }
 
 function formatCstc(cstc: CstcData): string {
-  const lines = ["=== CHỈ SỐ TÀI CHÍNH ==="];
+  const lines = [
+    "=== CHỈ SỐ TÀI CHÍNH (Năm hiện tại vs Năm trước) ===",
+    "| Chỉ tiêu | Năm N | Năm N-1 | Biến động |",
+    "|---|---|---|---|",
+  ];
   for (const [key, label] of Object.entries(CSTC_LABELS)) {
-    const val = cstc[key as keyof CstcData];
-    lines.push(`- ${label}: ${fmtRatio(val)}`);
+    const pair = cstc[key as keyof CstcData];
+    const cur = fmtRatio(pair.current);
+    const pri = fmtRatio(pair.prior);
+    let delta = "N/A";
+    if (pair.current !== null && pair.prior !== null) {
+      const d = pair.current - pair.prior;
+      delta = (d >= 0 ? "+" : "") + d.toFixed(2);
+    }
+    lines.push(`| ${label} | ${cur} | ${pri} | ${delta} |`);
   }
   return lines.join("\n");
 }
@@ -229,7 +251,7 @@ async function callGemini(
   const genAI = new GoogleGenerativeAI(apiKey);
   const geminiModel = genAI.getGenerativeModel(
     { model, systemInstruction: systemPrompt },
-    { apiVersion: "v1" },
+    { apiVersion: "v1beta" },
   );
 
   const result = await geminiModel.generateContent({

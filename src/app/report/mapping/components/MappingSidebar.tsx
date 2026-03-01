@@ -119,6 +119,9 @@ export function MappingSidebar({
   const importInputRef = useRef<HTMLInputElement | null>(null);
   const mergeNoticeTimerRef = useRef<number | null>(null);
   const [portalTarget, setPortalTarget] = useState<HTMLElement | null>(null);
+  const [importNameDialogOpen, setImportNameDialogOpen] = useState(false);
+  const [importNameInput, setImportNameInput] = useState("");
+  const pendingFileEventRef = useRef<React.ChangeEvent<HTMLInputElement> | null>(null);
 
   useEffect(() => { setPortalTarget(document.body); }, []);
 
@@ -131,25 +134,40 @@ export function MappingSidebar({
   }, []);
 
   const innerHandleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let templateName: string | null = null;
     if (importMode === "append") {
       const defaultName =
         (selectedTemplateName && selectedTemplateName !== "field-template"
           ? `${selectedTemplateName} - bản import`
           : "Template import mới");
-      const inputName = window.prompt("Nhập tên field template mới để import:", defaultName);
-      if (!inputName || !inputName.trim()) {
-        e.target.value = "";
-        return;
-      }
-      templateName = inputName.trim();
+      pendingFileEventRef.current = e;
+      setImportNameInput(defaultName);
+      setImportNameDialogOpen(true);
+    } else {
+      handleImportFieldFile(e, { mode: importMode, templateName: null });
+      setIsOpen(false);
     }
-    handleImportFieldFile(e, { mode: importMode, templateName });
+  };
+
+  const handleConfirmImportName = () => {
+    const inputName = importNameInput.trim();
+    if (!inputName || !pendingFileEventRef.current) {
+      setImportNameDialogOpen(false);
+      if (pendingFileEventRef.current) {
+        pendingFileEventRef.current.target.value = "";
+      }
+      pendingFileEventRef.current = null;
+      return;
+    }
+    handleImportFieldFile(pendingFileEventRef.current, { mode: "append", templateName: inputName });
+    setImportNameDialogOpen(false);
+    setImportNameInput("");
+    pendingFileEventRef.current = null;
     setIsOpen(false);
   };
 
   const commonTemplates = useMemo(
-    () => allFieldTemplates.filter((template) => (template.assigned_customer_count ?? 0) === 0),
+    () => allFieldTemplates,
+    // ↑ Mostrar TODAS as templates - biblioteca é compartilhada para todos os clientes
     [allFieldTemplates],
   );
 
@@ -450,7 +468,7 @@ export function MappingSidebar({
                                 <button
                                   type="button"
                                   onClick={() => setTemplatePickerOpen((v) => !v)}
-                                  disabled={!selectedCustomerId || loadingFieldTemplates}
+                                  disabled={loadingFieldTemplates}
                                   className={`flex w-full items-center justify-between rounded-lg border bg-white/90 dark:bg-white/[0.05] px-3 py-2.5 text-left text-sm font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-400/30 dark:focus:ring-indigo-400/20 disabled:opacity-70 ${selectedFieldTemplateId ? "border-indigo-200 dark:border-indigo-500/30 bg-indigo-50/50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 shadow-sm" : "border-slate-200/80 dark:border-white/[0.09] text-slate-800 dark:text-slate-100 hover:bg-slate-100/50 dark:hover:bg-white/[0.06]"}`}
                                 >
                                   <span className="truncate">
@@ -490,7 +508,7 @@ export function MappingSidebar({
                                         </div>
                                       </div>
                                       <div className="max-h-72 overflow-y-auto p-2">
-                                        {filteredInstances.length > 0 ? (
+                                        {selectedCustomerId && filteredInstances.length > 0 ? (
                                           <div className="mb-2">
                                             <p className="px-2 pb-1 text-[10px] font-semibold uppercase tracking-wider text-indigo-500">
                                               Hồ sơ hiện tại
@@ -555,9 +573,7 @@ export function MappingSidebar({
                                             ))
                                           ) : (
                                             <p className="rounded-lg border border-dashed border-slate-200 dark:border-white/[0.10] bg-slate-50 dark:bg-white/[0.04] px-3 py-2 text-xs text-slate-500 dark:text-slate-400">
-                                              {selectedCustomerId
-                                                ? "Không tìm thấy template phù hợp."
-                                                : "Chọn khách hàng trước để tạo hồ sơ."}
+                                              Không tìm thấy template phù hợp.
                                             </p>
                                           )}
                                         </div>
@@ -722,6 +738,73 @@ export function MappingSidebar({
               </motion.div>
             ) : null}
           </AnimatePresence>
+        </>,
+        portalTarget,
+      )}
+
+      {/* Import Name Dialog */}
+      {importNameDialogOpen && portalTarget && createPortal(
+        <>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-[110] bg-black/20 backdrop-blur-sm"
+            onClick={() => setImportNameDialogOpen(false)}
+            aria-hidden="true"
+          />
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-[111] flex items-center justify-center p-4"
+          >
+            <div className="w-full max-w-md rounded-xl border border-slate-200 dark:border-white/[0.07] bg-white dark:bg-[#0f1629]/90 shadow-2xl">
+              <div className="border-b border-slate-200 dark:border-white/[0.07] px-6 py-4">
+                <h3 className="text-base font-semibold text-slate-800 dark:text-slate-200">
+                  Nhập tên template
+                </h3>
+              </div>
+              <div className="px-6 py-4 space-y-4">
+                <div>
+                  <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-2">
+                    Tên field template mới
+                  </label>
+                  <input
+                    type="text"
+                    value={importNameInput}
+                    onChange={(e) => setImportNameInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleConfirmImportName();
+                      if (e.key === "Escape") setImportNameDialogOpen(false);
+                    }}
+                    placeholder="Nhập tên..."
+                    autoFocus
+                    className="w-full rounded-lg border border-slate-200 dark:border-white/[0.09] bg-slate-50 dark:bg-white/[0.04] px-3 py-2.5 text-sm text-slate-900 dark:text-slate-100 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-400/30 dark:focus:ring-indigo-400/20"
+                  />
+                </div>
+              </div>
+              <div className="border-t border-slate-200 dark:border-white/[0.07] px-6 py-3 flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setImportNameDialogOpen(false)}
+                  className="rounded-lg border border-slate-200 dark:border-white/[0.09] bg-white dark:bg-[#0f1629]/90 px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-200 transition-colors hover:bg-slate-100 dark:hover:bg-white/[0.06]"
+                >
+                  Hủy
+                </button>
+                <button
+                  type="button"
+                  onClick={handleConfirmImportName}
+                  className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-700 disabled:opacity-60"
+                  disabled={!importNameInput.trim()}
+                >
+                  Xác nhận
+                </button>
+              </div>
+            </div>
+          </motion.div>
         </>,
         portalTarget,
       )}

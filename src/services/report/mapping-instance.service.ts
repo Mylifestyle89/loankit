@@ -95,6 +95,24 @@ export const mappingInstanceService = {
     return mapMappingInstanceRecordToSummary(updated);
   },
 
+  async updateMappingInstance(instanceId: string, input: { name?: string; fieldCatalog?: unknown }) {
+    const id = instanceId.trim();
+    if (!id) throw new ValidationError("instance_id is required.");
+    await ensureMasterInstanceMigration();
+    const existing = await prisma.mappingInstance.findUnique({ where: { id } });
+    if (!existing) throw new NotFoundError("Mapping instance not found.");
+    const updated = await prisma.mappingInstance.update({
+      where: { id },
+      data: {
+        ...(input.name?.trim() ? { name: input.name.trim() } : {}),
+        ...(input.fieldCatalog !== undefined
+          ? { fieldCatalogJson: JSON.stringify(input.fieldCatalog) }
+          : {}),
+      },
+    });
+    return mapMappingInstanceRecordToSummary(updated);
+  },
+
   async deleteMappingInstance(instanceId: string) {
     const id = instanceId.trim();
     if (!id) throw new ValidationError("instance_id is required.");

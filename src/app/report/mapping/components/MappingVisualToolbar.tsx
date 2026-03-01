@@ -1,4 +1,4 @@
-import { Plus } from "lucide-react";
+import { BarChart3, Plus } from "lucide-react";
 import { useRef, useState, type DragEvent, type ReactNode } from "react";
 
 type MappingVisualToolbarProps = {
@@ -9,6 +9,7 @@ type MappingVisualToolbarProps = {
   showUnmappedOnly: boolean;
   setShowUnmappedOnly: (value: boolean) => void;
   onOpenAddFieldModal: () => void;
+  onOpenFinancialAnalysis?: () => void;
   sidebar: ReactNode;
   ocrProcessing?: boolean;
   onOcrFileSelected?: (file: File) => void;
@@ -22,6 +23,7 @@ export function MappingVisualToolbar({
   showUnmappedOnly,
   setShowUnmappedOnly,
   onOpenAddFieldModal,
+  onOpenFinancialAnalysis,
   sidebar,
   ocrProcessing = false,
   onOcrFileSelected,
@@ -62,6 +64,18 @@ export function MappingVisualToolbar({
           <Plus className="h-4 w-4" />
           {t("mapping.newFieldTitle")}
         </button>
+        {onOpenFinancialAnalysis && (
+          <button
+            type="button"
+            onClick={onOpenFinancialAnalysis}
+            disabled={!hasContext}
+            title="Phân tích Tài chính từ BCTC Excel"
+            className="flex flex-shrink-0 items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-1.5 text-sm text-white shadow-sm transition-colors hover:bg-emerald-700 disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            <BarChart3 className="h-4 w-4" />
+            Phân tích TC
+          </button>
+        )}
         <div
           onDragOver={(e) => {
             e.preventDefault();

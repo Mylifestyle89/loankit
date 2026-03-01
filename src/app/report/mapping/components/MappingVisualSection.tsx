@@ -21,7 +21,6 @@ type MappingVisualSectionProps = {
   saveEditedFieldTemplate: () => void;
   setEditingFieldTemplateName: Dispatch<SetStateAction<string>>;
   stopEditingFieldTemplate: () => void;
-  openImportBackupModal: () => void;
   openImportGroupModal: () => void;
   openDeleteGenericTemplateModal: () => void;
   sensors: SensorDescriptor<SensorOptions>[];
@@ -70,7 +69,6 @@ export function MappingVisualSection({
   savingEditedTemplate,
   saveEditedFieldTemplate,
   stopEditingFieldTemplate,
-  openImportBackupModal,
   openImportGroupModal,
   openDeleteGenericTemplateModal,
   sensors,
@@ -116,7 +114,6 @@ export function MappingVisualSection({
         saveEditedFieldTemplate={saveEditedFieldTemplate}
         savingEditedTemplate={savingEditedTemplate}
         stopEditingFieldTemplate={stopEditingFieldTemplate}
-        openImportBackupModal={openImportBackupModal}
         openImportGroupModal={openImportGroupModal}
         openDeleteGenericTemplateModal={openDeleteGenericTemplateModal}
       />

@@ -3,6 +3,8 @@ import path from "node:path";
 
 import JSZip from "jszip";
 
+export { suggestAliasForPlaceholder } from "./placeholder-utils";
+
 const BRACKET_RE = /\[([^\]\r\n]{1,200})\]/g;
 
 export type PlaceholderInventory = {
@@ -40,13 +42,39 @@ export async function parseDocxPlaceholderInventory(templatePath: string): Promi
   };
 }
 
-export function suggestAliasForPlaceholder(placeholder: string, fieldKeys: string[]): string[] {
-  const normalized = placeholder.trim().toLowerCase();
-  const noPrefix = normalized.includes(".") ? normalized.split(".").slice(1).join(".") : normalized;
-  return fieldKeys
-    .filter((field) => {
-      const key = field.toLowerCase();
-      return key.endsWith(noPrefix.replaceAll(" ", "_")) || key.includes(noPrefix.replaceAll(" ", "_"));
-    })
-    .slice(0, 5);
+function decodeXmlEntities(str: string): string {
+  return str
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&apos;/g, "'");
 }
+
+/**
+ * Parse placeholders from a DOCX buffer directly (no file system access needed).
+ * Joins all <w:t> text fragments before matching to catch placeholders split
+ * across multiple runs by Word's internal formatting.
+ */
+export async function parseDocxPlaceholdersFromBuffer(buffer: Buffer): Promise<string[]> {
+  const zip = await JSZip.loadAsync(buffer);
+  const parts = Object.keys(zip.files).filter((name) =>
+    name === "word/document.xml" ||
+    /^word\/(header|footer|footnotes|endnotes)\d*\.xml$/.test(name),
+  );
+
+  const placeholders = new Set<string>();
+  for (const part of parts) {
+    const xmlText = await zip.file(part)?.async("string");
+    if (!xmlText) continue;
+    const textContent = [...xmlText.matchAll(/<w:t[^>]*>([\s\S]*?)<\/w:t>/g)]
+      .map((m) => decodeXmlEntities(m[1] ?? ""))
+      .join("");
+    for (const match of textContent.matchAll(BRACKET_RE)) {
+      const value = match[1]?.trim();
+      if (value) placeholders.add(value);
+    }
+  }
+  return Array.from(placeholders).sort((a, b) => a.localeCompare(b, "vi"));
+}
+

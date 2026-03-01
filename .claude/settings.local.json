@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install)",
+      "Bash(npm audit fix)",
+      "Bash(npm run build)",
+      "Bash(find . -name \"*.ts\" -type f ! -path \"./node_modules/*\" ! -path \"./.next/*\" -exec grep -l \"listMasterTemplates\" {} ;)",
+      "Bash(npx prisma generate)",
+      "Bash(npm run lint -- src)",
+      "Bash(npx prisma migrate deploy)",
+      "Bash(npx prisma db push --skip-generate)",
+      "Bash(npx prisma db push --accept-data-loss)",
+      "Bash(sqlite3 dev.db \".tables\")",
+      "Bash(python3:*)",
+      "Bash(npx tsc --noEmit)"
+    ]
+  }
+}

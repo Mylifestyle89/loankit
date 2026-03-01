@@ -35,6 +35,7 @@ export function ModalRegistry() {
           t={aiPayload.t}
           fieldCatalog={aiPayload.fieldCatalog}
           onApplyFinancialValues={aiPayload.onApplyFinancialValues}
+          onApplyBkImport={aiPayload.onApplyBkImport}
         />
       ) : null}
       <DeleteGroupConfirmModal />

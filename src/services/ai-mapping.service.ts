@@ -11,6 +11,18 @@ export type MappingSuggestionResult = {
   grouping?: GroupingSuggestion;
 };
 
+/**
+ * Metadata về một field placeholder để AI hiểu ý nghĩa tốt hơn.
+ * Được build từ FieldCatalogItem trước khi gọi API.
+ */
+export type FieldHint = {
+  key: string;        // = field_key / wordPlaceholder
+  label: string;      // label_vi — mô tả tiếng Việt
+  type: string;       // text | number | percent | date | table
+  examples?: string[];
+  isRepeater?: boolean;
+};
+
 const OPENAI_ENDPOINT = "https://api.openai.com/v1/chat/completions";
 
 function normalizeText(input: string): string {
@@ -103,7 +115,7 @@ function fuzzyFallback(excelHeaders: string[], wordPlaceholders: string[]): Mapp
         bestHeader = header;
       }
     }
-    if (bestHeader && bestScore >= 0.25) {
+    if (bestHeader && bestScore >= 0.5) {
       result[placeholder] = bestHeader;
     }
   }
@@ -130,27 +142,54 @@ function fuzzyGroupingFallback(excelHeaders: string[]): GroupingSuggestion | und
   return { groupKey: candidate, repeatKey: "items" };
 }
 
-function buildPrompt(excelHeaders: string[], wordPlaceholders: string[], includeGrouping: boolean): string {
+function buildPrompt(
+  excelHeaders: string[],
+  wordPlaceholders: string[],
+  includeGrouping: boolean,
+  fieldHints?: FieldHint[],
+): string {
+  // Build lookup map hint → metadata
+  const hintMap = new Map<string, FieldHint>();
+  if (fieldHints) {
+    for (const h of fieldHints) hintMap.set(h.key, h);
+  }
+
+  // Nếu có fieldHints, render mô tả chi tiết từng placeholder
+  const hasHints = hintMap.size > 0;
+  const placeholderSection = hasHints
+    ? [
+        "Word placeholders (cần map) — kèm metadata để hỗ trợ nhận diện:",
+        ...wordPlaceholders.map((p) => {
+          const h = hintMap.get(p);
+          if (!h) return `  - "${p}"`;
+          const parts: string[] = [`label: "${h.label}"`, `type: ${h.type}`];
+          if (h.isRepeater) parts.push("repeater: true");
+          if (h.examples && h.examples.length > 0) {
+            const ex = h.examples.slice(0, 2).map((e) => `"${e}"`).join(", ");
+            parts.push(`ví dụ: ${ex}`);
+          }
+          return `  - "${p}": ${parts.join(", ")}`;
+        }),
+      ].join("\n")
+    : `Word placeholders: ${JSON.stringify(wordPlaceholders)}`;
+
   return [
     "Vai trò: Data & Systems Architect cho bài toán mapping biểu mẫu.",
-    "Mục tiêu: ghép cột Excel phù hợp nhất với placeholder Word cho nhiều domain:",
-    "- Tín dụng (hồ sơ vay, HĐTD, TSBD, lịch trả nợ)",
-    "- Nhân sự (nhân viên, phòng ban, hợp đồng, chấm công, lương)",
-    "- Kho bãi (phiếu nhập/xuất, SKU, lô hàng, vị trí kho, tồn kho)",
-    "Nguyên tắc nhận diện:",
-    "1) Ưu tiên semantic tương đương, không cần trùng tuyệt đối.",
+    "Mục tiêu: ghép cột Excel phù hợp nhất với placeholder Word, dựa trên label và type.",
+    "Nguyên tắc:",
+    "1) Ưu tiên semantic dựa vào label tiếng Việt của placeholder, không cần header trùng từng chữ.",
     "2) Nhận diện khóa chính/group key (vd: số HĐTD, mã nhân viên, mã phiếu, mã SKU).",
-    "3) Nhận diện trường thuộc mảng lặp/repeater (vd: item, dòng chi tiết, tài sản, nhân sự con).",
-    "4) Với placeholder thuộc repeater, map vào cột chi tiết tương ứng thay vì cột header tổng.",
-    "5) Nếu một placeholder không có cột phù hợp rõ ràng, KHÔNG trả về key đó.",
+    "3) Placeholder có repeater:true → map vào cột chi tiết lặp lại (không phải cột tổng).",
+    "4) Nếu confidence < 70% (không chắc), KHÔNG trả về key đó — bỏ trống tốt hơn map sai.",
+    "5) Chỉ dùng header có trong danh sách Excel và placeholder có trong danh sách Word.",
     includeGrouping
-      ? "Trả về DUY NHẤT JSON object theo dạng {\"mapping\":{\"wordPlaceholder\":\"excelHeader\"},\"grouping\":{\"groupKey\":\"...\",\"repeatKey\":\"items\"}}."
-      : "Trả về DUY NHẤT JSON object theo dạng {\"mapping\":{\"wordPlaceholder\":\"excelHeader\"}}.",
-    "Chỉ dùng header có trong danh sách Excel và placeholder có trong danh sách Word.",
+      ? "Trả về DUY NHẤT JSON: {\"mapping\":{\"wordPlaceholder\":\"excelHeader\"},\"grouping\":{\"groupKey\":\"...\",\"repeatKey\":\"items\"}}."
+      : "Trả về DUY NHẤT JSON: {\"mapping\":{\"wordPlaceholder\":\"excelHeader\"}}.",
     "Không thêm giải thích, không markdown.",
     "",
     `Excel headers: ${JSON.stringify(excelHeaders)}`,
-    `Word placeholders: ${JSON.stringify(wordPlaceholders)}`,
+    "",
+    placeholderSection,
   ].join("\n");
 }
 
@@ -179,11 +218,12 @@ async function suggestViaOpenAI(
   excelHeaders: string[],
   wordPlaceholders: string[],
   includeGrouping: boolean,
+  fieldHints?: FieldHint[],
 ): Promise<MappingSuggestionResult> {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) throw new ValidationError("OPENAI_API_KEY is not configured.");
   const model = process.env.OPENAI_MODEL ?? "gpt-4o-mini";
-  const prompt = buildPrompt(excelHeaders, wordPlaceholders, includeGrouping);
+  const prompt = buildPrompt(excelHeaders, wordPlaceholders, includeGrouping, fieldHints);
 
   const res = await fetch(OPENAI_ENDPOINT, {
     method: "POST",
@@ -223,11 +263,12 @@ async function suggestViaGemini(
   excelHeaders: string[],
   wordPlaceholders: string[],
   includeGrouping: boolean,
+  fieldHints?: FieldHint[],
 ): Promise<MappingSuggestionResult> {
   const apiKey = process.env.GEMINI_API_KEY ?? process.env.GOOGLE_API_KEY;
   if (!apiKey) throw new ValidationError("GEMINI_API_KEY/GOOGLE_API_KEY is not configured.");
   const model = process.env.GEMINI_MODEL ?? "gemini-1.5-flash";
-  const prompt = buildPrompt(excelHeaders, wordPlaceholders, includeGrouping);
+  const prompt = buildPrompt(excelHeaders, wordPlaceholders, includeGrouping, fieldHints);
 
   const genAI = new GoogleGenerativeAI(apiKey);
   const geminiModel = genAI.getGenerativeModel(
@@ -265,7 +306,7 @@ export const aiMappingService = {
   async suggestMapping(
     excelHeaders: string[],
     wordPlaceholders: string[],
-    options?: { includeGrouping?: boolean },
+    options?: { includeGrouping?: boolean; fieldHints?: FieldHint[] },
   ): Promise<MappingSuggestionResult> {
     if (!Array.isArray(excelHeaders) || excelHeaders.length === 0) {
       throw new ValidationError("excelHeaders is required and must not be empty.");
@@ -277,6 +318,8 @@ export const aiMappingService = {
     const uniqueHeaders = [...new Set(excelHeaders.map((h) => String(h).trim()).filter(Boolean))];
     const uniquePlaceholders = [...new Set(wordPlaceholders.map((p) => String(p).trim()).filter(Boolean))];
     const includeGrouping = Boolean(options?.includeGrouping);
+    const fieldHints = options?.fieldHints;
+
     if (uniqueHeaders.length === 0 || uniquePlaceholders.length === 0) {
       throw new ValidationError("excelHeaders/wordPlaceholders contains only empty values.");
     }
@@ -284,16 +327,16 @@ export const aiMappingService = {
     const provider = (process.env.AI_MAPPING_PROVIDER ?? "").toLowerCase();
     try {
       if (provider === "openai") {
-        return await suggestViaOpenAI(uniqueHeaders, uniquePlaceholders, includeGrouping);
+        return await suggestViaOpenAI(uniqueHeaders, uniquePlaceholders, includeGrouping, fieldHints);
       }
       if (provider === "gemini") {
-        return await suggestViaGemini(uniqueHeaders, uniquePlaceholders, includeGrouping);
+        return await suggestViaGemini(uniqueHeaders, uniquePlaceholders, includeGrouping, fieldHints);
       }
       if (process.env.OPENAI_API_KEY) {
-        return await suggestViaOpenAI(uniqueHeaders, uniquePlaceholders, includeGrouping);
+        return await suggestViaOpenAI(uniqueHeaders, uniquePlaceholders, includeGrouping, fieldHints);
       }
       if (process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY) {
-        return await suggestViaGemini(uniqueHeaders, uniquePlaceholders, includeGrouping);
+        return await suggestViaGemini(uniqueHeaders, uniquePlaceholders, includeGrouping, fieldHints);
       }
       const mapping = fuzzyFallback(uniqueHeaders, uniquePlaceholders);
       const grouping = includeGrouping ? fuzzyGroupingFallback(uniqueHeaders) : undefined;

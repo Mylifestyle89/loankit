@@ -44,20 +44,25 @@ function fmtRatio(v: number | null): string {
 
 const CSTC_LABELS: Record<keyof CstcData, string> = {
   hsTtTongQuat: "HS thanh toán tổng quát",
-  hsTtNganHan: "HS thanh toán ngắn hạn",
+  hsTtNganHan: "HS thanh toán hiện hành",
   hsTtNhanh: "HS thanh toán nhanh",
-  hsTtTienMat: "HS thanh toán tiền mặt",
+  hsTtTienMat: "HS thanh toán tức thời",
+  hsTtLaiVay: "HS thanh toán lãi vay",
   heSoNo: "Hệ số nợ",
   hsTuTaiTro: "HS tự tài trợ",
+  heSoNoVcsh: "Nợ / VCSH",
+  vqVld: "Vòng quay VLĐ",
   vqHtk: "Vòng quay HTK",
   soNgayHtk: "Số ngày tồn kho",
   vqPhaiThu: "Vòng quay phải thu",
   soNgayThu: "Số ngày thu tiền",
+  vqTscd: "Vòng quay TSCĐ",
   vqTongTs: "Vòng quay tổng TS",
   tyLeGop: "Tỷ suất LN gộp",
   ros: "ROS",
   roa: "ROA",
   roe: "ROE",
+  bep: "BEP",
 };
 
 const STEP_TITLES = ["Upload BCTC", "Xem dữ liệu", "Thông tin bổ sung", "Phân tích AI"];
@@ -469,7 +474,7 @@ export function FinancialAnalysisModal({ isOpen, onClose, fieldCatalog, onApplyV
 
                     <CollapsibleSection
                       title="Chỉ số Tài chính"
-                      badge={`${Object.values(bctcData.cstc).filter((v) => v !== null).length}`}
+                      badge={`${Object.values(bctcData.cstc).filter((v) => v.current !== null).length}`}
                       expanded={expandedSection === "cstc"}
                       onToggle={() => setExpandedSection(expandedSection === "cstc" ? null : "cstc")}
                     >
@@ -477,7 +482,7 @@ export function FinancialAnalysisModal({ isOpen, onClose, fieldCatalog, onApplyV
                         {(Object.entries(CSTC_LABELS) as [keyof CstcData, string][]).map(([key, label]) => (
                           <div key={key} className="flex items-center justify-between py-0.5 text-xs">
                             <span className="text-slate-600 dark:text-slate-400">{label}</span>
-                            <span className="font-medium text-slate-800 dark:text-slate-200 tabular-nums">{fmtRatio(bctcData.cstc[key])}</span>
+                            <span className="font-medium text-slate-800 dark:text-slate-200 tabular-nums">{fmtRatio(bctcData.cstc[key].current)}</span>
                           </div>
                         ))}
                       </div>

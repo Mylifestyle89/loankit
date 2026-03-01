@@ -1,0 +1,2899 @@
+{
+  "field_catalog": [
+    {
+      "field_key": "A.general.customer_name",
+      "label_vi": "Tên khách hàng",
+      "group": "Thông tin chung",
+      "type": "text",
+      "required": true,
+      "examples": [
+        "data_bk:Clients[0].ClientAttributes['Tên khách hàng']"
+      ]
+    },
+    {
+      "field_key": "A.general.customer_code",
+      "label_vi": "Mã khách hàng",
+      "group": "Thông tin chung",
+      "type": "text",
+      "required": true,
+      "examples": [
+        "data_bk:Clients[0].ClientAttributes['Mã khách hàng']"
+      ]
+    },
+    {
+      "field_key": "A.general.address",
+      "label_vi": "Địa chỉ",
+      "group": "Thông tin chung",
+      "type": "text",
+      "required": true,
+      "examples": [
+        "data_bk:Clients[0].ClientAttributes['Địa chỉ']"
+      ]
+    },
+    {
+      "field_key": "A.general.main_business",
+      "label_vi": "Ngành nghề kinh doanh chính",
+      "group": "Thông tin chung",
+      "type": "text",
+      "required": true,
+      "examples": [
+        "data_bk:Clients[0].ClientAttributes['Ngành nghề SXKD']"
+      ]
+    },
+    {
+      "field_key": "A.general.charter_capital",
+      "label_vi": "Vốn điều lệ",
+      "group": "Thông tin chung",
+      "type": "number",
+      "required": true,
+      "normalizer": "currency_vnd",
+      "examples": [
+        "data_bk:Clients[0].ClientAttributes['Vốn điều lệ']"
+      ]
+    },
+    {
+      "field_key": "A.general.legal_representative_name",
+      "label_vi": "Người đại diện pháp luật",
+      "group": "Thông tin chung",
+      "type": "text",
+      "required": true,
+      "examples": [
+        "data_bk:Clients[0].ClientAttributes['Người đại diện theo pháp luật']"
+      ]
+    },
+    {
+      "field_key": "A.general.legal_representative_title",
+      "label_vi": "Chức vụ người đại diện",
+      "group": "Thông tin chung",
+      "type": "text",
+      "required": true,
+      "examples": [
+        "data_bk:Clients[0].ClientAttributes['Chức vụ']"
+      ]
+    },
+    {
+      "field_key": "A.general.organization_type",
+      "label_vi": "Loại hình tổ chức",
+      "group": "Thông tin chung",
+      "type": "text",
+      "required": true,
+      "examples": [
+        "data_bk:Clients[0].ClientAttributes['Loại hình tổ chức']"
+      ]
+    },
+    {
+      "field_key": "A.general.total_assets_latest",
+      "label_vi": "Tổng tài sản kỳ gần nhất",
+      "group": "Thông tin chung",
+      "type": "number",
+      "required": true,
+      "normalizer": "currency_vnd",
+      "examples": [
+        "xlsm_hmtd:DL-IPCAS['TỔNG CỘNG TÀI SẢN (270)'][year=latest]",
+        "data_bk:Clients[0].ClientAssets[Code='HĐTD'].AssetProperties['Tài sản dài hạn']"
+      ]
+    },
+    {
+      "field_key": "A.general.owner_equity_latest",
+      "label_vi": "Vốn chủ sở hữu kỳ gần nhất",
+      "group": "Thông tin chung",
+      "type": "number",
+      "required": true,
+      "normalizer": "currency_vnd",
+      "examples": [
+        "xlsm_hmtd:DL-IPCAS['VỐN CHỦ SỞ HỮU (400)'][year=latest]",
+        "data_bk:Clients[0].ClientAssets[Code='HĐTD'].AssetProperties['Vốn chủ sở hữu']"
+      ]
+    },
+    {
+      "field_key": "A.credit.current_credit_relationship",
+      "label_vi": "Quan hệ tín dụng hiện tại",
+      "group": "Thông tin tín dụng",
+      "type": "text",
+      "required": true,
+      "examples": [
+        "data_bk:Clients[0].ClientAssets[Code='HĐTD'].AssetProperties['Đang QH t.dụng tại TCTD']"
+      ]
+    },
+    {
+      "field_key": "A.credit.outstanding_agri",
+      "label_vi": "Dư nợ tại Agribank",
+      "group": "Thông tin tín dụng",
+      "type": "number",
+      "required": true,
+      "normalizer": "currency_vnd",
+      "examples": [
+        "data_bk:Clients[0].ClientAssets[Code='HĐTD'].AssetProperties['Dư nợ tại Agribank']"
+      ]
+    },
+    {
+      "field_key": "A.credit.outstanding_other_banks",
+      "label_vi": "Dư nợ tại tổ chức tín dụng khác",
+      "group": "Thông tin tín dụng",
+      "type": "number",
+      "required": true,
+      "normalizer": "currency_vnd",
+      "examples": [
+        "data_bk:Clients[0].ClientAssets[Code='HĐTD'].AssetProperties['Dư nợ tại TCTD khác']"
+      ]
+    },
+    {
+      "field_key": "A.credit.debt_group_latest",
+      "label_vi": "Nhóm nợ gần nhất",
+      "group": "Thông tin tín dụng",
+      "type": "text",
+      "required": true,
+      "examples": [
+        "data_bk:Clients[0].ClientAssets[Code='HĐTD'].AssetProperties['Nhóm nợ']"
+      ]
+    },
+    {
+      "field_key": "A.credit.rating_agribank",
+      "label_vi": "Xếp hạng tại Agribank",
+      "group": "Thông tin tín dụng",
+      "type": "text",
+      "required": true,
+      "examples": [
+        "data_bk:Clients[0].ClientAssets[Code='HĐTD'].AssetProperties['Xếp hạng KH theo Agribank']"
+      ]
+    },
+    {
+      "field_key": "A.credit.rating_cic",
+      "label_vi": "Xếp hạng CIC",
+      "group": "Thông tin tín dụng",
+      "type": "text",
+      "required": true,
+      "examples": [
+        "data_bk:Clients[0].ClientAssets[Code='HĐTD'].AssetProperties['Xếp hạng KH theo CIC']"
+      ]
+    },
+    {
+      "field_key": "A.proposal.loan_purpose",
+      "label_vi": "Mục đích vay",
+      "group": "Đề xuất vay vốn",
+      "type": "text",
+      "required": true,
+      "examples": [
+        "data_bk:Clients[0].ClientAssets[Code='HĐTD'].AssetProperties['Mục đích vay']"
+      ]
+    },
+    {
+      "field_key": "A.proposal.loan_tenor_or_limit_term",
+      "label_vi": "Thời hạn vay/hạn mức",
+      "group": "Đề xuất vay vốn",
+      "type": "text",
+      "required": true,
+      "examples": [
+        "data_bk:Clients[0].ClientAssets[Code='HĐTD'].AssetProperties['Thời hạn duy trì HMTD']",
+        "data_bk:Clients[0].ClientAssets[Code='HĐTD'].AssetProperties['Thời hạn vay']"
+      ]
+    },
+    {
+      "field_key": "A.proposal.loan_amount_agribank",
+      "label_vi": "Số tiền vay tại Agribank",
+      "group": "Đề xuất vay vốn",
+      "type": "number",
+      "required": true,
+      "normalizer": "currency_vnd",
+      "examples": [
+        "data_bk:Clients[0].ClientAssets[Code='HĐTD'].AssetProperties['Số tiền vay']"
+      ]
+    },
+    {
+      "field_key": "A.proposal.total_credit_demand",
+      "label_vi": "Tổng nhu cầu cấp tín dụng",
+      "group": "Đề xuất vay vốn",
+      "type": "number",
+      "required": true,
+      "normalizer": "currency_vnd",
+      "examples": [
+        "data_bk:Clients[0].ClientAssets[Code='HĐTD'].AssetProperties['Tổng nhu cầu cấp TD']"
+      ]
+    },
+    {
+      "field_key": "A.economic_docs.invoices",
+      "label_vi": "Hóa đơn",
+      "group": "Hồ sơ kinh tế",
+      "type": "text",
+      "required": true,
+      "examples": [
+        "data_bk:Clients[0].ClientAssets[Code='HD'][]"
+      ]
+    },
+    {
+      "field_key": "A.economic_docs.payment_beneficiaries",
+      "label_vi": "Bên thụ hưởng thanh toán",
+      "group": "Hồ sơ kinh tế",
+      "type": "text",
+      "required": true,
+      "examples": [
+        "data_bk:Clients[0].ClientAssets[Code='UNC'][]"
+      ]
+    },
+    {
+      "field_key": "A.economic_docs.invoice_total_for_disbursement",
+      "label_vi": "Tổng giá trị hóa đơn giải ngân",
+      "group": "Hồ sơ kinh tế",
+      "type": "number",
+      "required": true,
+      "normalizer": "currency_vnd",
+      "examples": [
+        "data_bk:Clients[0].ClientAssets[Code='GN'].AssetProperties['Tổng giá trị hóa đơn']"
+      ]
+    },
+    {
+      "field_key": "B.financial.balance_sheet.short_term_assets",
+      "label_vi": "Tài sản ngắn hạn",
+      "group": "Phân tích tài chính",
+      "type": "number",
+      "required": true,
+      "normalizer": "currency_vnd",
+      "examples": [
+        "xlsm_hmtd:DL-IPCAS['TÀI SẢN NGẮN HẠN (100)'][year=latest]"
+      ]
+    },
+    {
+      "field_key": "B.financial.balance_sheet.long_term_assets",
+      "label_vi": "Tài sản dài hạn",
+      "group": "Phân tích tài chính",
+      "type": "number",
+      "required": true,
+      "normalizer": "currency_vnd",
+      "examples": [
+        "xlsm_hmtd:DL-IPCAS['TÀI SẢN DÀI HẠN (200)'][year=latest]"
+      ]
+    },
+    {
+      "field_key": "B.financial.balance_sheet.short_term_liabilities",
+      "label_vi": "Nợ ngắn hạn",
+      "group": "Phân tích tài chính",
+      "type": "number",
+      "required": true,
+      "normalizer": "currency_vnd",
+      "examples": [
+        "xlsm_hmtd:DL-IPCAS['Nợ ngắn hạn (310)'][year=latest]"
+      ]
+    },
+    {
+      "field_key": "B.financial.income_statement.revenue",
+      "label_vi": "Doanh thu thuần",
+      "group": "Phân tích tài chính",
+      "type": "number",
+      "required": true,
+      "normalizer": "currency_vnd",
+      "examples": [
+        "xlsm_hmtd:DL-IPCAS['Doanh thu thuần (10)'][year=latest]"
+      ]
+    },
+    {
+      "field_key": "B.financial.income_statement.gross_profit",
+      "label_vi": "Lợi nhuận gộp",
+      "group": "Phân tích tài chính",
+      "type": "number",
+      "required": true,
+      "normalizer": "currency_vnd",
+      "examples": [
+        "xlsm_hmtd:DL-IPCAS['Lợi nhuận gộp (20)'][year=latest]"
+      ]
+    },
+    {
+      "field_key": "B.financial.income_statement.profit_before_tax",
+      "label_vi": "Lợi nhuận trước thuế",
+      "group": "Phân tích tài chính",
+      "type": "number",
+      "required": true,
+      "normalizer": "currency_vnd",
+      "examples": [
+        "xlsm_hmtd:DL-IPCAS['Tổng lợi nhuận trước thuế (50)'][year=latest]"
+      ]
+    },
+    {
+      "field_key": "B.financial.ratios.current_ratio",
+      "label_vi": "Hệ số thanh toán hiện hành",
+      "group": "Phân tích tài chính",
+      "type": "text",
+      "required": true,
+      "examples": [
+        "xlsm_hmtd:CSTC['Hệ số khả năng thanh toán hiện hành (lần)'][year=latest]"
+      ]
+    },
+    {
+      "field_key": "B.financial.ratios.quick_ratio",
+      "label_vi": "Hệ số thanh toán nhanh",
+      "group": "Phân tích tài chính",
+      "type": "text",
+      "required": true,
+      "examples": [
+        "xlsm_hmtd:CSTC['Hệ số khả năng thanh toán nhanh (lần)'][year=latest]"
+      ]
+    },
+    {
+      "field_key": "B.financial.ratios.debt_to_equity",
+      "label_vi": "Hệ số nợ trên vốn chủ sở hữu",
+      "group": "Phân tích tài chính",
+      "type": "text",
+      "required": true,
+      "examples": [
+        "xlsm_hmtd:CSTC['Hệ số nợ trên vốn chủ sở hữu (lần)'][year=latest]"
+      ]
+    },
+    {
+      "field_key": "B.financial.ratios.roe",
+      "label_vi": "ROE",
+      "group": "Phân tích tài chính",
+      "type": "text",
+      "required": true,
+      "examples": [
+        "xlsm_hmtd:CSTC['Khả năng sinh lời của vốn chủ sở hữu (ROE)'][year=latest]",
+        "xlsm_hmtd:P.tích Dupont['ROE'][year=latest]"
+      ]
+    },
+    {
+      "field_key": "B.plan.hmtd.working_capital_plan",
+      "label_vi": "Vốn lưu động kế hoạch",
+      "group": "Kế hoạch hạn mức",
+      "type": "number",
+      "required": true,
+      "normalizer": "currency_vnd",
+      "examples": [
+        "xlsm_hmtd:HMTD['Vốn lưu động kỳ kế hoạch (I)']"
+      ]
+    },
+    {
+      "field_key": "B.plan.hmtd.counterpart_capital",
+      "label_vi": "Vốn đối ứng",
+      "group": "Kế hoạch hạn mức",
+      "type": "number",
+      "required": true,
+      "normalizer": "currency_vnd",
+      "examples": [
+        "xlsm_hmtd:HMTD['Vốn đối ứng (II)']"
+      ]
+    },
+    {
+      "field_key": "B.plan.hmtd.other_bank_loans",
+      "label_vi": "Vốn vay tại tổ chức tín dụng khác",
+      "group": "Kế hoạch hạn mức",
+      "type": "number",
+      "required": true,
+      "normalizer": "currency_vnd",
+      "examples": [
+        "xlsm_hmtd:HMTD['Vốn vay tại các TCTD khác (III)']"
+      ]
+    },
+    {
+      "field_key": "B.plan.hmtd.recommended_limit",
+      "label_vi": "Hạn mức đề xuất",
+      "group": "Kế hoạch hạn mức",
+      "type": "number",
+      "required": true,
+      "normalizer": "currency_vnd",
+      "examples": [
+        "xlsm_hmtd:HMTD['Hạn mức vay vốn = (I)-(II)-(III)']",
+        "data_bk:Clients[0].ClientAssets[Code='HĐTD'].AssetProperties['Hạn mức tín dụng']"
+      ]
+    },
+    {
+      "field_key": "A.collateral.assets",
+      "label_vi": "Danh mục tài sản bảo đảm",
+      "group": "Tài sản bảo đảm",
+      "type": "text",
+      "required": true,
+      "examples": [
+        "data_bk:Clients[0].ClientAssets[Code='SĐ'][]"
+      ]
+    },
+    {
+      "field_key": "A.collateral.total_collateral_value",
+      "label_vi": "Tổng giá trị tài sản bảo đảm",
+      "group": "Tài sản bảo đảm",
+      "type": "number",
+      "required": true,
+      "normalizer": "currency_vnd",
+      "examples": [
+        "data_bk:Clients[0].ClientAssets[Code='HĐTD'].AssetProperties['Tổng giá trị TSBĐ']"
+      ]
+    },
+    {
+      "field_key": "A.collateral.secured_obligation_total",
+      "label_vi": "Tổng nghĩa vụ được bảo đảm",
+      "group": "Tài sản bảo đảm",
+      "type": "number",
+      "required": true,
+      "normalizer": "currency_vnd",
+      "examples": [
+        "data_bk:Clients[0].ClientAssets[Code='HĐTD'].AssetProperties['Tổng nghĩa vụ bảo đảm']"
+      ]
+    },
+    {
+      "field_key": "A.collateral.insurance_status",
+      "label_vi": "Tình trạng bảo hiểm tài sản bảo đảm",
+      "group": "Tài sản bảo đảm",
+      "type": "text",
+      "required": true,
+      "examples": [
+        "data_bk:Clients[0].ClientAssets[Code='SĐ'][*].AssetProperties['Mua bảo hiểm TSBĐ']"
+      ]
+    },
+    {
+      "field_key": "B.risk.market_input_output_assessment",
+      "label_vi": "Đánh giá đầu vào đầu ra thị trường",
+      "group": "Đánh giá rủi ro",
+      "type": "text",
+      "required": false,
+      "examples": []
+    },
+    {
+      "field_key": "B.risk.mitigation_plan",
+      "label_vi": "Phương án giảm thiểu rủi ro",
+      "group": "Đánh giá rủi ro",
+      "type": "text",
+      "required": false,
+      "examples": []
+    },
+    {
+      "field_key": "custom.ban_lanh_dao.bld_chuc_danh",
+      "label_vi": "BLĐ.Chức danh",
+      "group": "Ban lãnh đạo",
+      "type": "text",
+      "required": false,
+      "normalizer": "",
+      "examples": []
+    },
+    {
+      "field_key": "custom.ban_lanh_dao.bld_ho_va_ten",
+      "label_vi": "BLĐ.Họ và tên",
+      "group": "Ban lãnh đạo",
+      "type": "text",
+      "required": false,
+      "normalizer": "",
+      "examples": []
+    },
+    {
+      "field_key": "custom.ban_lanh_dao.bld_linh_vuc_quan_ly",
+      "label_vi": "BLĐ.Lĩnh vực quản lý",
+      "group": "Ban lãnh đạo",
+      "type": "text",
+      "required": false,
+      "normalizer": "",
+      "examples": []
+    },
+    {
+      "field_key": "custom.ban_lanh_dao.bld_nam_sinh",
+      "label_vi": "BLĐ.Năm sinh",
+      "group": "Ban lãnh đạo",
+      "type": "text",
+      "required": false,
+      "normalizer": "",
+      "examples": []
+    },
+    {
+      "field_key": "custom.ban_lanh_dao.bld_so_nam_cong_tac",
+      "label_vi": "BLĐ.Số năm công tác",
+      "group": "Ban lãnh đạo",
+      "type": "number",
+      "required": false,
+      "normalizer": "",
+      "examples": []
+    },
+    {
+      "field_key": "custom.ban_lanh_dao.bld_thoi_gian_bo_nhiem",
+      "label_vi": "BLĐ.Thời gian bổ nhiệm",
+      "group": "Ban lãnh đạo",
+      "type": "number",
+      "required": false,
+      "normalizer": "",
+      "examples": []
+    },
+    {
+      "field_key": "custom.ban_lanh_dao.bld_trinh_do",
+      "label_vi": "BLĐ.Trình độ",
+      "group": "Ban lãnh đạo",
+      "type": "text",
+      "required": false,
+      "normalizer": "",
+      "examples": []
+    },
+    {
+      "field_key": "custom.khoan_vay.hdtd_bo_sung_bcdx_cho_vay",
+      "label_vi": "HĐTD.Bổ sung BCĐX cho vay",
+      "group": "Khoản vay",
+      "type": "text",
+      "required": false,
+      "normalizer": "",
+      "examples": []
+    },
+    {
+      "field_key": "custom.thong_tin_tin_dung.hdtd_du_no_cua_kh_va_nlq_tai_agribank",
+      "label_vi": "Dư nợ của KH và NLQ tại Agribank",
+      "group": "Người có liên quan",
+      "type": "number",
+      "required": false,
+      "normalizer": "",
+      "examples": []
+    },
+    {
+      "field_key": "custom.thong_tin_tin_dung.hdtd_du_no_tai_agribank",
+      "label_vi": "Dư nợ tại Agribank",
+      "group": "Người có liên quan",
+      "type": "number",
+      "required": false,
+      "normalizer": "",
+      "examples": []
+    },
+    {
+      "field_key": "custom.thong_tin_tin_dung.hdtd_du_no_tai_tctd_khac",
+      "label_vi": "Dư nợ tại TCTD khác",
+      "group": "Người có liên quan",
+      "type": "number",
+      "required": false,
+      "normalizer": "",
+      "examples": []
+    },
+    {
+      "field_key": "custom.thong_tin_tin_dung.hdtd_dang_qh_t_dung_tai_tctd",
+      "label_vi": "Đang QH t.dụng tại TCTD",
+      "group": "Thông tin tín dụng",
+      "type": "text",
+      "required": false,
+      "normalizer": "",
+      "examples": []
+    },
+    {
+      "field_key": "custom.khoan_vay.hdtd_dinh_ky_tra_goc",
+      "label_vi": "HĐTD.Định kỳ trả gốc",
+      "group": "Khoản vay",
+      "type": "text",
+      "required": false,
+      "normalizer": "",
+      "examples": []
+    },
+    {
+      "field_key": "custom.khoan_vay.hdtd_dinh_ky_tra_lai",
+      "label_vi": "HĐTD.Định kỳ trả lãi",
+      "group": "Khoản vay",
+      "type": "text",
+      "required": false,
+      "normalizer": "",
+      "examples": []
+    },
+    {
+      "field_key": "custom.khoan_vay.hdtd_dong_tien_cho_vay",
+      "label_vi": "HĐTD.Đồng tiền cho vay",
+      "group": "Khoản vay",
+      "type": "text",
+      "required": false,
+      "normalizer": "",
+      "examples": []
+    },
+    {
+      "field_key": "custom.thong_tin_tin_dung.hdtd_ky_cham_diem",
+      "label_vi": "Kỳ chấm điểm",
+      "group": "Thông tin tín dụng",
+      "type": "date",
+      "required": false,
+      "normalizer": "",
+      "examples": []
+    },
+    {
+      "field_key": "custom.khoan_vay.hdtd_loi_nhuan_du_kien",
+      "label_vi": "HĐTD.Lợi nhuận dự kiến",
+      "group": "Khoản vay",
+      "type": "number",
+      "required": false,
+      "normalizer": "",
+      "examples": []
+    },
+    {
+      "field_key": "custom.khoan_vay.hdtd_ly_do_dap_ung_khong_dap_ung_tcmblm",
+      "label_vi": "HĐTD.Lý do đáp ứng/không đáp ứng TCMBLM",
+      "group": "Khoản vay",
+      "type": "text",
+      "required": false,
+      "normalizer": "",
+      "examples": []
+    },
+    {
+      "field_key": "custom.khoan_vay.hdtd_muc_dich_vay",
+      "label_vi": "HĐTD.Mục đích vay",
+      "group": "Khoản vay",
+      "type": "text",
+      "required": false,
+      "normalizer": "",
+      "examples": []
+    },
+    {
+      "field_key": "custom.khoan_vay.hdtd_nhom_no",
+      "label_vi": "HĐTD.Nhóm nợ",
+      "group": "Khoản vay",
+      "type": "text",
+      "required": false,
+      "normalizer": "",
+      "examples": []
+    },
+    {
+      "field_key": "custom.khoan_vay.hdtd_nhu_cau_mo_l_c",
+      "label_vi": "HĐTD.Nhu cầu mở L/C",
+      "group": "Khoản vay",
+      "type": "number",
+      "required": false,
+      "normalizer": "",
+      "examples": []
+    },
+    {
+      "field_key": "custom.khoan_vay.hdtd_nhu_cau_phat_hanh_bao_lanh",
+      "label_vi": "HĐTD.Nhu cầu phát hành bảo lãnh",
+      "group": "Khoản vay",
+      "type": "number",
+      "required": false,
+      "normalizer": "",
+      "examples": []
+    },
+    {
+      "field_key": "custom.khoan_vay.hdtd_phuong_thuc_cho_vay",
+      "label_vi": "HĐTD.Phương thức cho vay",
+      "group": "Khoản vay",
+      "type": "text",
+      "required": false,
+      "normalizer": "",
+      "examples": []
+    },
+    {
+      "field_key": "custom.khoan_vay.hdtd_so_tien_vay",
+      "label_vi": "HĐTD.Số tiền vay",
+      "group": "Khoản vay",
+      "type": "number",
+      "required": false,
+      "normalizer": "",
+      "examples": []
+    },
+    {
+      "field_key": "custom.khoan_vay.hdtd_tong_chi_phi_du_kien",
+      "label_vi": "HĐTD.Tổng chi phí dự kiến",
+      "group": "Khoản vay",
+      "type": "number",
+      "required": false,
+      "normalizer": "",
+      "examples": []
+    },
+    {
+      "field_key": "custom.khoan_vay.hdtd_tong_doanh_thu_du_kien",
+      "label_vi": "HĐTD.Tổng doanh thu dự kiến",
+      "group": "Khoản vay",
+      "type": "number",
+      "required": false,
+      "normalizer": "",
+      "examples": []
+    },
+    {
+      "field_key": "custom.tai_san_bao_dam.hdtd_tong_nghia_vu_bao_dam",
+      "label_vi": "HĐTD.Tổng nghĩa vụ bảo đảm",
+      "group": "Tài sản bảo đảm",
+      "type": "number",
+      "required": false,
+      "normalizer": "",
+      "examples": []
+    },
+    {
+      "field_key": "custom.khoan_vay.hdtd_tong_nghia_vu_bao_dam_bang_chu",
+      "label_vi": "HĐTD.Tổng nghĩa vụ bảo đảm bằng chữ",
+      "group": "Khoản vay",
+      "type": "text",
+      "required": false,
+      "normalizer": "",
+      "examples": []
+    },
+    {
+      "field_key": "custom.khoan_vay.hdtd_tong_nhu_cau_cap_td",
+      "label_vi": "HĐTD.Tổng nhu cầu cấp TD",
+      "group": "Khoản vay",
+      "type": "number",
+      "required": false,
+      "normalizer": "",
+      "examples": []
+    },
+    {
+      "field_key": "custom.khoan_vay.hdtd_tong_nhu_cau_von",
+      "label_vi": "HĐTD.Tổng nhu cầu vốn",
+      "group": "Khoản vay",
+      "type": "number",
+      "required": false,
+      "normalizer": "",
+      "examples": []
+    },
+    {
+      "field_key": "custom.khoan_vay.hdtd_thoi_han_vay",
+      "label_vi": "HĐTD.Thời hạn vay",
+      "group": "Khoản vay",
+      "type": "number",
+      "required": false,
+      "normalizer": "",
+      "examples": []
+    },
+    {
+      "field_key": "custom.khoan_vay.hdtd_von_chu_so_huu",
+      "label_vi": "HĐTD.Vốn chủ sở hữu",
+      "group": "Khoản vay",
+      "type": "number",
+      "required": false,
+      "normalizer": "",
+      "examples": []
+    },
+    {
+      "field_key": "custom.khoan_vay.hdtd_von_doi_ung",
+      "label_vi": "HĐTD.Vốn đối ứng",
+      "group": "Khoản vay",
+      "type": "number",
+      "required": false,
+      "normalizer": "",
+      "examples": []
+    },
+    {
+      "field_key": "custom.khoan_vay.hdtd_von_khac",
+      "label_vi": "HĐTD.Vốn khác",
+      "group": "Khoản vay",
+      "type": "number",
+      "required": false,
+      "normalizer": "",
+      "examples": []
+    },
+    {
+      "field_key": "custom.khoan_vay.hdtd_von_luu_dong_rong",
+      "label_vi": "HĐTD.Vốn lưu động ròng",
+      "group": "Khoản vay",
+      "type": "number",
+      "required": false,
+      "normalizer": "",
+      "examples": []
+    },
+    {
+      "field_key": "custom.khoan_vay.hdtd_von_vay_tctd_khac",
+      "label_vi": "HĐTD.Vốn vay TCTD khác",
+      "group": "Khoản vay",
+      "type": "number",
+      "required": false,
+      "normalizer": "",
+      "examples": []
+    },
+    {
+      "field_key": "custom.khoan_vay.hdtd_xep_hang_kh_theo_agribank",
+      "label_vi": "HĐTD.Xếp hạng KH theo Agribank",
+      "group": "Khoản vay",
+      "type": "text",
+      "required": false,
+      "normalizer": "",
+      "examples": []
+    },
+    {
+      "field_key": "custom.khoan_vay.hdtd_xep_hang_kh_theo_cic",
+      "label_vi": "HĐTD.Xếp hạng KH theo CIC",
+      "group": "Khoản vay",
+      "type": "text",
+      "required": false,
+      "normalizer": "",
+      "examples": []
+    },
+    {
+      "field_key": "custom.thanh_vien_hdtv.hdtv_cmnd_ma_so_dn",
+      "label_vi": "HĐTV.CMND/Mã số DN",
+      "group": "Thành viên HĐTV",
+      "type": "text",
+      "required": false,
+      "normalizer": "",
+      "examples": []
+    },
+    {
+      "field_key": "custom.thanh_vien_hdtv.hdtv_dia_chi",
+      "label_vi": "HĐTV.Địa chỉ",
+      "group": "Thành viên HĐTV",
+      "type": "number",
+      "required": false,
+      "normalizer": "",
+      "examples": []
+    },
+    {
+      "field_key": "custom.thanh_vien_hdtv.hdtv_gia_tri_co_phan_von_gop",
+      "label_vi": "HĐTV.Giá trị cổ phần, vốn góp",
+      "group": "Thành viên HĐTV",
+      "type": "number",
+      "required": false,
+      "normalizer": "",
+      "examples": []
+    },
+    {
+      "field_key": "custom.thanh_vien_hdtv.hdtv_ten_co_dong_thanh_vien",
+      "label_vi": "HĐTV.Tên cổ đông/Thành viên",
+      "group": "Thành viên HĐTV",
+      "type": "text",
+      "required": false,
+      "normalizer": "",
+      "examples": []
+    },
+    {
+      "field_key": "custom.thanh_vien_hdtv.hdtv_tong_gia_tri_co_phan_von_gop",
+      "label_vi": "HĐTV.Tổng Giá trị cổ phần, vốn góp",
+      "group": "Thành viên HĐTV",
+      "type": "number",
+      "required": false,
+      "normalizer": "",
+      "examples": []
+    },
+    {
+      "field_key": "custom.thong_tin_chung.ttc_loai_giay_to_phap_ly",
+      "label_vi": "TTC.Loại giấy tờ pháp lý",
+      "group": "Thông tin chung",
+      "type": "text",
+      "required": false,
+      "normalizer": "",
+      "examples": []
+    },
+    {
+      "field_key": "custom.thong_tin_chung.ttc_loai_giay_to_tuy_than",
+      "label_vi": "TTC.Loại giấy tờ tùy thân",
+      "group": "Thông tin chung",
+      "type": "text",
+      "required": false,
+      "normalizer": "",
+      "examples": []
+    },
+    {
+      "field_key": "custom.thong_tin_chung.ttc_loai_hinh_to_chuc",
+      "label_vi": "TTC.Loại hình tổ chức",
+      "group": "Thông tin chung",
+      "type": "text",
+      "required": false,
+      "normalizer": "",
+      "examples": []
+    },
+    {
+      "field_key": "custom.thong_tin_chung.ttc_ma_khach_hang",
+      "label_vi": "TTC.Mã khách hàng",
+      "group": "Thông tin chung",
+      "type": "text",
+      "required": false,
+      "normalizer": "",
+      "examples": []
+    },
+    {
+      "field_key": "custom.nguoi_co_lien_quan.nlq_du_no_ngan_han",
+      "label_vi": "NLQ.Dư nợ ngắn hạn",
+      "group": "Người có liên quan",
+      "type": "number",
+      "required": false,
+      "normalizer": "",
+      "examples": []
+    },
+    {
+      "field_key": "custom.nguoi_co_lien_quan.nlq_du_no_trung_dai_han",
+      "label_vi": "NLQ.Dư nợ trung dài hạn",
+      "group": "Người có liên quan",
+      "type": "number",
+      "required": false,
+      "normalizer": "",
+      "examples": []
+    },
+    {
+      "field_key": "custom.nguoi_co_lien_quan.nlq_moi_lien_quan",
+      "label_vi": "NLQ.Mối liên quan",
+      "group": "Người có liên quan",
+      "type": "text",
+      "required": false,
+      "normalizer": "",
+      "examples": []
+    },
+    {
+      "field_key": "custom.nguoi_co_lien_quan.nlq_so_dkkd_cmnd",
+      "label_vi": "NLQ.Số ĐKKD/CMND",
+      "group": "Người có liên quan",
+      "type": "text",
+      "required": false,
+      "normalizer": "",
+      "examples": []
+    },
+    {
+      "field_key": "custom.nguoi_co_lien_quan.nlq_ten_to_chuc_ca_nhan",
+      "label_vi": "NLQ.Tên tổ chức/Cá nhân",
+      "group": "Người có liên quan",
+      "type": "text",
+      "required": false,
+      "normalizer": "",
+      "examples": []
+    },
+    {
+      "field_key": "custom.nguoi_co_lien_quan.nlq_tong_so_du_cap_tin_dung",
+      "label_vi": "NLQ.Tổng số dư cấp tín dụng",
+      "group": "Người có liên quan",
+      "type": "number",
+      "required": false,
+      "normalizer": "",
+      "examples": []
+    },
+    {
+      "field_key": "custom.nguoi_co_lien_quan.nlq_xep_hang_tin_dung",
+      "label_vi": "NLQ.Xếp hạng tín dụng",
+      "group": "Người có liên quan",
+      "type": "text",
+      "required": false,
+      "normalizer": "",
+      "examples": []
+    },
+    {
+      "field_key": "custom.thong_tin_chung.ttc_noi_cap_cccd_cc",
+      "label_vi": "TTC.Nơi cấp CCCD/CC",
+      "group": "Thông tin chung",
+      "type": "text",
+      "required": false,
+      "normalizer": "",
+      "examples": []
+    },
+    {
+      "field_key": "custom.thong_tin_chung.ttc_noi_cap_dkkd",
+      "label_vi": "TTC.Nơi cấp ĐKKD",
+      "group": "Thông tin chung",
+      "type": "text",
+      "required": false,
+      "normalizer": "",
+      "examples": []
+    },
+    {
+      "field_key": "custom.thong_tin_chung.ttc_nganh_nghe_sxkd",
+      "label_vi": "TTC.Ngành nghề SXKD",
+      "group": "Thông tin chung",
+      "type": "text",
+      "required": false,
+      "normalizer": "",
+      "examples": []
+    },
+    {
+      "field_key": "custom.thong_tin_chung.ttc_ngay_cap_cccd_cc",
+      "label_vi": "TTC.Ngày cấp CCCD/CC",
+      "group": "Thông tin chung",
+      "type": "text",
+      "required": false,
+      "normalizer": "",
+      "examples": []
+    },
+    {
+      "field_key": "custom.thong_tin_chung.ttc_ngay_cap_dkkd",
+      "label_vi": "TTC.Ngày cấp ĐKKD",
+      "group": "Thông tin chung",
+      "type": "text",
+      "required": false,
+      "normalizer": "",
+      "examples": []
+    },
+    {
+      "field_key": "custom.thong_tin_chung.ttc_nguoi_dai_dien",
+      "label_vi": "TTC.Người đại diện",
+      "group": "Thông tin chung",
+      "type": "text",
+      "required": false,
+      "normalizer": "",
+      "examples": []
+    },
+    {
+      "field_key": "custom.thong_tin_chung.ttc_nguoi_dai_dien_theo_phap_luat",
+      "label_vi": "TTC.Người đại diện theo pháp luật",
+      "group": "Thông tin chung",
+      "type": "text",
+      "required": false,
+      "normalizer": "",
+      "examples": []
+    },
+    {
+      "field_key": "custom.bat_dong_san.sd_nghia_vu_bao_dam",
+      "label_vi": "SĐ.Nghĩa vụ bảo đảm",
+      "group": "Bất động sản",
+      "type": "number",
+      "required": false,
+      "normalizer": "",
+      "examples": []
+    },
+    {
+      "field_key": "custom.bat_dong_san.sd_so_seri",
+      "label_vi": "SĐ.Số seri",
+      "group": "Bất động sản",
+      "type": "text",
+      "required": false,
+      "normalizer": "",
+      "examples": []
+    },
+    {
+      "field_key": "custom.bat_dong_san.sd_ten_tsbd",
+      "label_vi": "SĐ.Tên TSBĐ",
+      "group": "Bất động sản",
+      "type": "text",
+      "required": false,
+      "normalizer": "",
+      "examples": []
+    },
+    {
+      "field_key": "custom.bat_dong_san.sd_tong_gia_tri_ts",
+      "label_vi": "SĐ.Tổng giá trị TS",
+      "group": "Bất động sản",
+      "type": "number",
+      "required": false,
+      "normalizer": "",
+      "examples": []
+    },
+    {
+      "field_key": "custom.thong_tin_chung.ttc_so_dkkd",
+      "label_vi": "TTC.Số ĐKKD",
+      "group": "Thông tin chung",
+      "type": "text",
+      "required": false,
+      "normalizer": "",
+      "examples": []
+    },
+    {
+      "field_key": "custom.thong_tin_nguoi_dung.nd_ten_chi_nhanh_pgd",
+      "label_vi": "ND.Tên chi nhánh/PGD",
+      "group": "Thông tin người dùng",
+      "type": "text",
+      "required": false,
+      "normalizer": "",
+      "examples": []
+    },
+    {
+      "field_key": "custom.thong_tin_chung.nd_ten_goi_hoi_dong",
+      "label_vi": "ND.Tên gọi Hội đồng",
+      "group": "Thông tin chung",
+      "type": "text",
+      "required": false,
+      "normalizer": "",
+      "examples": []
+    },
+    {
+      "field_key": "custom.thong_tin_chung.nd_ten_goi_in_hoa",
+      "label_vi": "ND.Tên gọi in hoa",
+      "group": "Thông tin chung",
+      "type": "text",
+      "required": false,
+      "normalizer": "",
+      "examples": []
+    },
+    {
+      "field_key": "custom.thong_tin_chung.nd_ten_khach_hang",
+      "label_vi": "ND.Tên khách hàng",
+      "group": "Thông tin chung",
+      "type": "text",
+      "required": false,
+      "normalizer": "",
+      "examples": []
+    },
+    {
+      "field_key": "custom.thong_tin_nguoi_dung.nd_ten_nguoi_dung",
+      "label_vi": "ND.Tên người dùng",
+      "group": "Thông tin người dùng",
+      "type": "text",
+      "required": false,
+      "normalizer": "",
+      "examples": []
+    },
+    {
+      "field_key": "custom.tai_san_bao_dam.tsbd_gia_tri_dong_san",
+      "label_vi": "TSBĐ.Giá trị động sản",
+      "group": "Tài sản bảo đảm",
+      "type": "number",
+      "required": false,
+      "normalizer": "",
+      "examples": []
+    },
+    {
+      "field_key": "custom.tai_san_bao_dam.tsbd_loai_dong_san",
+      "label_vi": "TSBĐ.Loại động sản",
+      "group": "Tài sản bảo đảm",
+      "type": "text",
+      "required": false,
+      "normalizer": "",
+      "examples": []
+    },
+    {
+      "field_key": "custom.tai_san_bao_dam.tsbd_nghia_vu_bao_dam_cua_dong_san",
+      "label_vi": "TSBĐ.Nghĩa vụ bảo đảm của động sản",
+      "group": "Tài sản bảo đảm",
+      "type": "number",
+      "required": false,
+      "normalizer": "",
+      "examples": []
+    },
+    {
+      "field_key": "custom.tai_san_bao_dam.tsbd_nhan_hieu_dong_san",
+      "label_vi": "TSBĐ.Nhãn hiệu động sản",
+      "group": "Tài sản bảo đảm",
+      "type": "text",
+      "required": false,
+      "normalizer": "",
+      "examples": []
+    },
+    {
+      "field_key": "custom.tai_san_bao_dam.tsbd_tong_gia_tri_tai_san_bang_chu",
+      "label_vi": "TSBĐ.Tổng giá trị tài sản bằng chữ",
+      "group": "Tài sản bảo đảm",
+      "type": "text",
+      "required": false,
+      "normalizer": "",
+      "examples": []
+    },
+    {
+      "field_key": "custom.tai_san_bao_dam.tsbd_tong_gia_tri_tsbd",
+      "label_vi": "TSBĐ.Tổng giá trị TSBĐ",
+      "group": "Tài sản bảo đảm",
+      "type": "number",
+      "required": false,
+      "normalizer": "",
+      "examples": []
+    },
+    {
+      "field_key": "custom.thong_tin_chung.ttc_cccd_cc_nguoi_dai_dien",
+      "label_vi": "TTC.CCCD/CC người đại diện",
+      "group": "Thông tin chung",
+      "type": "text",
+      "required": false,
+      "normalizer": "",
+      "examples": []
+    },
+    {
+      "field_key": "custom.thong_tin_chung.ttc_dia_chi_tru_so",
+      "label_vi": "TTC.Địa chỉ trụ sở",
+      "group": "Thông tin chung",
+      "type": "text",
+      "required": false,
+      "normalizer": "",
+      "examples": []
+    },
+    {
+      "field_key": "custom.thong_tin_chung.ttc_giay_to_uy_quyen",
+      "label_vi": "TTC.Giấy tờ ủy quyền",
+      "group": "Thông tin chung",
+      "type": "text",
+      "required": false,
+      "normalizer": "",
+      "examples": []
+    },
+    {
+      "field_key": "custom.thong_tin_tai_chinh.tc_doanh_so_bao_lanh",
+      "label_vi": "TC.Doanh số bảo lãnh",
+      "group": "Thông tin tài chính",
+      "type": "number",
+      "required": false,
+      "normalizer": "",
+      "examples": []
+    },
+    {
+      "field_key": "custom.thong_tin_tai_chinh.tc_doanh_so_bao_lanh_2",
+      "label_vi": "TC.Doanh số bảo lãnh:",
+      "group": "Thông tin tài chính",
+      "type": "number",
+      "required": false,
+      "normalizer": "",
+      "examples": []
+    },
+    {
+      "field_key": "custom.thong_tin_tai_chinh.tc_doanh_so_cho_vay_nh",
+      "label_vi": "TC.Doanh số cho vay NH",
+      "group": "Thông tin tài chính",
+      "type": "number",
+      "required": false,
+      "normalizer": "",
+      "examples": []
+    },
+    {
+      "field_key": "custom.thong_tin_tai_chinh.tc_doanh_so_cho_vay_nh_2",
+      "label_vi": "TC.Doanh số cho vay NH:",
+      "group": "Thông tin tài chính",
+      "type": "number",
+      "required": false,
+      "normalizer": "",
+      "examples": []
+    },
+    {
+      "field_key": "custom.thong_tin_tai_chinh.tc_doanh_so_cho_vay_tdh",
+      "label_vi": "TC.Doanh số cho vay TDH",
+      "group": "Thông tin tài chính",
+      "type": "number",
+      "required": false,
+      "normalizer": "",
+      "examples": []
+    },
+    {
+      "field_key": "custom.thong_tin_tai_chinh.tc_doanh_so_cho_vay_tdh_2",
+      "label_vi": "TC.Doanh số cho vay TDH:",
+      "group": "Thông tin tài chính",
+      "type": "number",
+      "required": false,
+      "normalizer": "",
+      "examples": []
+    },
+    {
+      "field_key": "custom.thong_tin_tai_chinh.tc_doanh_so_chuyen_tien_den",
+      "label_vi": "TC.Doanh số chuyển tiền đến",
+      "group": "Thông tin tài chính",
+      "type": "number",
+      "required": false,
+      "normalizer": "",
+      "examples": []
+    },
+    {
+      "field_key": "custom.thong_tin_tai_chinh.tc_doanh_so_chuyen_tien_den_2",
+      "label_vi": "TC.Doanh số chuyển tiền đến:",
+      "group": "Thông tin tài chính",
+      "type": "number",
+      "required": false,
+      "normalizer": "",
+      "examples": []
+    },
+    {
+      "field_key": "custom.thong_tin_tai_chinh.tc_doanh_so_chuyen_tien_di",
+      "label_vi": "TC.Doanh số chuyển tiền đi",
+      "group": "Thông tin tài chính",
+      "type": "number",
+      "required": false,
+      "normalizer": "",
+      "examples": []
+    },
+    {
+      "field_key": "custom.thong_tin_tai_chinh.tc_doanh_so_chuyen_tien_di_2",
+      "label_vi": "TC.Doanh số chuyển tiền đi:",
+      "group": "Thông tin tài chính",
+      "type": "number",
+      "required": false,
+      "normalizer": "",
+      "examples": []
+    },
+    {
+      "field_key": "custom.thong_tin_tai_chinh.tc_doanh_so_thu_lai_nh",
+      "label_vi": "TC.Doanh số thu lãi NH",
+      "group": "Thông tin tài chính",
+      "type": "number",
+      "required": false,
+      "normalizer": "",
+      "examples": []
+    },
+    {
+      "field_key": "custom.thong_tin_tai_chinh.tc_doanh_so_thu_lai_nh_2",
+      "label_vi": "TC.Doanh số thu lãi NH:",
+      "group": "Thông tin tài chính",
+      "type": "number",
+      "required": false,
+      "normalizer": "",
+      "examples": []
+    },
+    {
+      "field_key": "custom.thong_tin_tai_chinh.tc_doanh_so_thu_lai_tdh",
+      "label_vi": "TC.Doanh số thu lãi TDH",
+      "group": "Thông tin tài chính",
+      "type": "number",
+      "required": false,
+      "normalizer": "",
+      "examples": []
+    },
+    {
+      "field_key": "custom.thong_tin_tai_chinh.tc_doanh_so_thu_lai_tdh_2",
+      "label_vi": "TC.Doanh số thu lãi TDH:",
+      "group": "Thông tin tài chính",
+      "type": "number",
+      "required": false,
+      "normalizer": "",
+      "examples": []
+    },
+    {
+      "field_key": "custom.thong_tin_tai_chinh.tc_doanh_so_thu_no_nh",
+      "label_vi": "TC.Doanh số thu nợ NH",
+      "group": "Thông tin tài chính",
+      "type": "number",
+      "required": false,
+      "normalizer": "",
+      "examples": []
+    },
+    {
+      "field_key": "custom.thong_tin_tai_chinh.tc_doanh_so_thu_no_nh_2",
+      "label_vi": "TC.Doanh số thu nợ NH:",
+      "group": "Thông tin tài chính",
+      "type": "number",
+      "required": false,
+      "normalizer": "",
+      "examples": []
+    },
+    {
+      "field_key": "custom.thong_tin_tai_chinh.tc_doanh_so_thu_no_tdh",
+      "label_vi": "TC.Doanh số thu nợ TDH",
+      "group": "Thông tin tài chính",
+      "type": "number",
+      "required": false,
+      "normalizer": "",
+      "examples": []
+    },
+    {
+      "field_key": "custom.thong_tin_tai_chinh.tc_doanh_so_thu_no_tdh_2",
+      "label_vi": "TC.Doanh số thu nợ TDH:",
+      "group": "Thông tin tài chính",
+      "type": "number",
+      "required": false,
+      "normalizer": "",
+      "examples": []
+    },
+    {
+      "field_key": "custom.thong_tin_tai_chinh.tc_du_no_cuoi_ky_nh",
+      "label_vi": "TC.Dư nợ cuối kỳ NH",
+      "group": "Thông tin tài chính",
+      "type": "number",
+      "required": false,
+      "normalizer": "",
+      "examples": []
+    },
+    {
+      "field_key": "custom.thong_tin_tai_chinh.tc_du_no_cuoi_ky_nh_2",
+      "label_vi": "TC.Dư nợ cuối kỳ NH:",
+      "group": "Thông tin tài chính",
+      "type": "number",
+      "required": false,
+      "normalizer": "",
+      "examples": []
+    },
+    {
+      "field_key": "custom.thong_tin_tai_chinh.tc_du_no_cuoi_ky_tdh",
+      "label_vi": "TC.Dư nợ cuối kỳ TDH",
+      "group": "Thông tin tài chính",
+      "type": "number",
+      "required": false,
+      "normalizer": "",
+      "examples": []
+    },
+    {
+      "field_key": "custom.thong_tin_tai_chinh.tc_du_no_cuoi_ky_tdh_2",
+      "label_vi": "TC.Dư nợ cuối kỳ TDH:",
+      "group": "Thông tin tài chính",
+      "type": "number",
+      "required": false,
+      "normalizer": "",
+      "examples": []
+    },
+    {
+      "field_key": "custom.thong_tin_tai_chinh.tc_phi_bao_lanh_da_thu",
+      "label_vi": "TC.Phí bảo lãnh đã thu",
+      "group": "Thông tin tài chính",
+      "type": "number",
+      "required": false,
+      "normalizer": "",
+      "examples": []
+    },
+    {
+      "field_key": "custom.thong_tin_tai_chinh.tc_phi_bao_lanh_da_thu_2",
+      "label_vi": "TC.Phí bảo lãnh đã thu:",
+      "group": "Thông tin tài chính",
+      "type": "number",
+      "required": false,
+      "normalizer": "",
+      "examples": []
+    },
+    {
+      "field_key": "custom.thong_tin_tai_chinh.tc_so_du_bao_lanh_cuoi_ky",
+      "label_vi": "TC.Số dư bảo lãnh cuối kỳ",
+      "group": "Thông tin tài chính",
+      "type": "number",
+      "required": false,
+      "normalizer": "",
+      "examples": []
+    },
+    {
+      "field_key": "custom.thong_tin_tai_chinh.tc_so_du_bao_lanh_cuoi_ky_2",
+      "label_vi": "TC.Số dư bảo lãnh cuối kỳ:",
+      "group": "Thông tin tài chính",
+      "type": "number",
+      "required": false,
+      "normalizer": "",
+      "examples": []
+    }
+  ],
+  "field_templates": [
+    {
+      "id": "field-template-1771602881592",
+      "name": "Pháp nhân ngắn hạn hạn mức",
+      "created_at": "2026-02-20T15:54:41.592Z",
+      "field_catalog": [
+        {
+          "field_key": "A.general.customer_name",
+          "label_vi": "Tên khách hàng",
+          "group": "Thông tin chung",
+          "type": "text",
+          "required": true,
+          "examples": [
+            "data_bk:Clients[0].ClientAttributes['Tên khách hàng']"
+          ]
+        },
+        {
+          "field_key": "A.general.customer_code",
+          "label_vi": "Mã khách hàng",
+          "group": "Thông tin chung",
+          "type": "text",
+          "required": true,
+          "examples": [
+            "data_bk:Clients[0].ClientAttributes['Mã khách hàng']"
+          ]
+        },
+        {
+          "field_key": "A.general.address",
+          "label_vi": "Địa chỉ",
+          "group": "Thông tin chung",
+          "type": "text",
+          "required": true,
+          "examples": [
+            "data_bk:Clients[0].ClientAttributes['Địa chỉ']"
+          ]
+        },
+        {
+          "field_key": "A.general.main_business",
+          "label_vi": "Ngành nghề kinh doanh chính",
+          "group": "Thông tin chung",
+          "type": "text",
+          "required": true,
+          "examples": [
+            "data_bk:Clients[0].ClientAttributes['Ngành nghề SXKD']"
+          ]
+        },
+        {
+          "field_key": "A.general.charter_capital",
+          "label_vi": "Vốn điều lệ",
+          "group": "Thông tin chung",
+          "type": "number",
+          "required": true,
+          "normalizer": "currency_vnd",
+          "examples": [
+            "data_bk:Clients[0].ClientAttributes['Vốn điều lệ']"
+          ]
+        },
+        {
+          "field_key": "A.general.legal_representative_name",
+          "label_vi": "Người đại diện pháp luật",
+          "group": "Thông tin chung",
+          "type": "text",
+          "required": true,
+          "examples": [
+            "data_bk:Clients[0].ClientAttributes['Người đại diện theo pháp luật']"
+          ]
+        },
+        {
+          "field_key": "A.general.legal_representative_title",
+          "label_vi": "Chức vụ người đại diện",
+          "group": "Thông tin chung",
+          "type": "text",
+          "required": true,
+          "examples": [
+            "data_bk:Clients[0].ClientAttributes['Chức vụ']"
+          ]
+        },
+        {
+          "field_key": "A.general.organization_type",
+          "label_vi": "Loại hình tổ chức",
+          "group": "Thông tin chung",
+          "type": "text",
+          "required": true,
+          "examples": [
+            "data_bk:Clients[0].ClientAttributes['Loại hình tổ chức']"
+          ]
+        },
+        {
+          "field_key": "A.general.total_assets_latest",
+          "label_vi": "Tổng tài sản kỳ gần nhất",
+          "group": "Thông tin chung",
+          "type": "number",
+          "required": true,
+          "normalizer": "currency_vnd",
+          "examples": [
+            "xlsm_hmtd:DL-IPCAS['TỔNG CỘNG TÀI SẢN (270)'][year=latest]",
+            "data_bk:Clients[0].ClientAssets[Code='HĐTD'].AssetProperties['Tài sản dài hạn']"
+          ]
+        },
+        {
+          "field_key": "A.general.owner_equity_latest",
+          "label_vi": "Vốn chủ sở hữu kỳ gần nhất",
+          "group": "Thông tin chung",
+          "type": "number",
+          "required": true,
+          "normalizer": "currency_vnd",
+          "examples": [
+            "xlsm_hmtd:DL-IPCAS['VỐN CHỦ SỞ HỮU (400)'][year=latest]",
+            "data_bk:Clients[0].ClientAssets[Code='HĐTD'].AssetProperties['Vốn chủ sở hữu']"
+          ]
+        },
+        {
+          "field_key": "A.credit.current_credit_relationship",
+          "label_vi": "Quan hệ tín dụng hiện tại",
+          "group": "Thông tin tín dụng",
+          "type": "text",
+          "required": true,
+          "examples": [
+            "data_bk:Clients[0].ClientAssets[Code='HĐTD'].AssetProperties['Đang QH t.dụng tại TCTD']"
+          ]
+        },
+        {
+          "field_key": "A.credit.outstanding_agri",
+          "label_vi": "Dư nợ tại Agribank",
+          "group": "Thông tin tín dụng",
+          "type": "number",
+          "required": true,
+          "normalizer": "currency_vnd",
+          "examples": [
+            "data_bk:Clients[0].ClientAssets[Code='HĐTD'].AssetProperties['Dư nợ tại Agribank']"
+          ]
+        },
+        {
+          "field_key": "A.credit.outstanding_other_banks",
+          "label_vi": "Dư nợ tại tổ chức tín dụng khác",
+          "group": "Thông tin tín dụng",
+          "type": "number",
+          "required": true,
+          "normalizer": "currency_vnd",
+          "examples": [
+            "data_bk:Clients[0].ClientAssets[Code='HĐTD'].AssetProperties['Dư nợ tại TCTD khác']"
+          ]
+        },
+        {
+          "field_key": "A.credit.debt_group_latest",
+          "label_vi": "Nhóm nợ gần nhất",
+          "group": "Thông tin tín dụng",
+          "type": "text",
+          "required": true,
+          "examples": [
+            "data_bk:Clients[0].ClientAssets[Code='HĐTD'].AssetProperties['Nhóm nợ']"
+          ]
+        },
+        {
+          "field_key": "A.credit.rating_agribank",
+          "label_vi": "Xếp hạng tại Agribank",
+          "group": "Thông tin tín dụng",
+          "type": "text",
+          "required": true,
+          "examples": [
+            "data_bk:Clients[0].ClientAssets[Code='HĐTD'].AssetProperties['Xếp hạng KH theo Agribank']"
+          ]
+        },
+        {
+          "field_key": "A.credit.rating_cic",
+          "label_vi": "Xếp hạng CIC",
+          "group": "Thông tin tín dụng",
+          "type": "text",
+          "required": true,
+          "examples": [
+            "data_bk:Clients[0].ClientAssets[Code='HĐTD'].AssetProperties['Xếp hạng KH theo CIC']"
+          ]
+        },
+        {
+          "field_key": "A.proposal.loan_purpose",
+          "label_vi": "Mục đích vay",
+          "group": "Đề xuất vay vốn",
+          "type": "text",
+          "required": true,
+          "examples": [
+            "data_bk:Clients[0].ClientAssets[Code='HĐTD'].AssetProperties['Mục đích vay']"
+          ]
+        },
+        {
+          "field_key": "A.proposal.loan_tenor_or_limit_term",
+          "label_vi": "Thời hạn vay/hạn mức",
+          "group": "Đề xuất vay vốn",
+          "type": "text",
+          "required": true,
+          "examples": [
+            "data_bk:Clients[0].ClientAssets[Code='HĐTD'].AssetProperties['Thời hạn duy trì HMTD']",
+            "data_bk:Clients[0].ClientAssets[Code='HĐTD'].AssetProperties['Thời hạn vay']"
+          ]
+        },
+        {
+          "field_key": "A.proposal.loan_amount_agribank",
+          "label_vi": "Số tiền vay tại Agribank",
+          "group": "Đề xuất vay vốn",
+          "type": "number",
+          "required": true,
+          "normalizer": "currency_vnd",
+          "examples": [
+            "data_bk:Clients[0].ClientAssets[Code='HĐTD'].AssetProperties['Số tiền vay']"
+          ]
+        },
+        {
+          "field_key": "A.proposal.total_credit_demand",
+          "label_vi": "Tổng nhu cầu cấp tín dụng",
+          "group": "Đề xuất vay vốn",
+          "type": "number",
+          "required": true,
+          "normalizer": "currency_vnd",
+          "examples": [
+            "data_bk:Clients[0].ClientAssets[Code='HĐTD'].AssetProperties['Tổng nhu cầu cấp TD']"
+          ]
+        },
+        {
+          "field_key": "A.economic_docs.invoices",
+          "label_vi": "Hóa đơn",
+          "group": "Hồ sơ kinh tế",
+          "type": "text",
+          "required": true,
+          "examples": [
+            "data_bk:Clients[0].ClientAssets[Code='HD'][]"
+          ]
+        },
+        {
+          "field_key": "A.economic_docs.payment_beneficiaries",
+          "label_vi": "Bên thụ hưởng thanh toán",
+          "group": "Hồ sơ kinh tế",
+          "type": "text",
+          "required": true,
+          "examples": [
+            "data_bk:Clients[0].ClientAssets[Code='UNC'][]"
+          ]
+        },
+        {
+          "field_key": "A.economic_docs.invoice_total_for_disbursement",
+          "label_vi": "Tổng giá trị hóa đơn giải ngân",
+          "group": "Hồ sơ kinh tế",
+          "type": "number",
+          "required": true,
+          "normalizer": "currency_vnd",
+          "examples": [
+            "data_bk:Clients[0].ClientAssets[Code='GN'].AssetProperties['Tổng giá trị hóa đơn']"
+          ]
+        },
+        {
+          "field_key": "B.financial.balance_sheet.short_term_assets",
+          "label_vi": "Tài sản ngắn hạn",
+          "group": "Phân tích tài chính",
+          "type": "number",
+          "required": true,
+          "normalizer": "currency_vnd",
+          "examples": [
+            "xlsm_hmtd:DL-IPCAS['TÀI SẢN NGẮN HẠN (100)'][year=latest]"
+          ]
+        },
+        {
+          "field_key": "B.financial.balance_sheet.long_term_assets",
+          "label_vi": "Tài sản dài hạn",
+          "group": "Phân tích tài chính",
+          "type": "number",
+          "required": true,
+          "normalizer": "currency_vnd",
+          "examples": [
+            "xlsm_hmtd:DL-IPCAS['TÀI SẢN DÀI HẠN (200)'][year=latest]"
+          ]
+        },
+        {
+          "field_key": "B.financial.balance_sheet.short_term_liabilities",
+          "label_vi": "Nợ ngắn hạn",
+          "group": "Phân tích tài chính",
+          "type": "number",
+          "required": true,
+          "normalizer": "currency_vnd",
+          "examples": [
+            "xlsm_hmtd:DL-IPCAS['Nợ ngắn hạn (310)'][year=latest]"
+          ]
+        },
+        {
+          "field_key": "B.financial.income_statement.revenue",
+          "label_vi": "Doanh thu thuần",
+          "group": "Phân tích tài chính",
+          "type": "number",
+          "required": true,
+          "normalizer": "currency_vnd",
+          "examples": [
+            "xlsm_hmtd:DL-IPCAS['Doanh thu thuần (10)'][year=latest]"
+          ]
+        },
+        {
+          "field_key": "B.financial.income_statement.gross_profit",
+          "label_vi": "Lợi nhuận gộp",
+          "group": "Phân tích tài chính",
+          "type": "number",
+          "required": true,
+          "normalizer": "currency_vnd",
+          "examples": [
+            "xlsm_hmtd:DL-IPCAS['Lợi nhuận gộp (20)'][year=latest]"
+          ]
+        },
+        {
+          "field_key": "B.financial.income_statement.profit_before_tax",
+          "label_vi": "Lợi nhuận trước thuế",
+          "group": "Phân tích tài chính",
+          "type": "number",
+          "required": true,
+          "normalizer": "currency_vnd",
+          "examples": [
+            "xlsm_hmtd:DL-IPCAS['Tổng lợi nhuận trước thuế (50)'][year=latest]"
+          ]
+        },
+        {
+          "field_key": "B.financial.ratios.current_ratio",
+          "label_vi": "Hệ số thanh toán hiện hành",
+          "group": "Phân tích tài chính",
+          "type": "text",
+          "required": true,
+          "examples": [
+            "xlsm_hmtd:CSTC['Hệ số khả năng thanh toán hiện hành (lần)'][year=latest]"
+          ]
+        },
+        {
+          "field_key": "B.financial.ratios.quick_ratio",
+          "label_vi": "Hệ số thanh toán nhanh",
+          "group": "Phân tích tài chính",
+          "type": "text",
+          "required": true,
+          "examples": [
+            "xlsm_hmtd:CSTC['Hệ số khả năng thanh toán nhanh (lần)'][year=latest]"
+          ]
+        },
+        {
+          "field_key": "B.financial.ratios.debt_to_equity",
+          "label_vi": "Hệ số nợ trên vốn chủ sở hữu",
+          "group": "Phân tích tài chính",
+          "type": "text",
+          "required": true,
+          "examples": [
+            "xlsm_hmtd:CSTC['Hệ số nợ trên vốn chủ sở hữu (lần)'][year=latest]"
+          ]
+        },
+        {
+          "field_key": "B.financial.ratios.roe",
+          "label_vi": "ROE",
+          "group": "Phân tích tài chính",
+          "type": "text",
+          "required": true,
+          "examples": [
+            "xlsm_hmtd:CSTC['Khả năng sinh lời của vốn chủ sở hữu (ROE)'][year=latest]",
+            "xlsm_hmtd:P.tích Dupont['ROE'][year=latest]"
+          ]
+        },
+        {
+          "field_key": "B.plan.hmtd.working_capital_plan",
+          "label_vi": "Vốn lưu động kế hoạch",
+          "group": "Kế hoạch hạn mức",
+          "type": "number",
+          "required": true,
+          "normalizer": "currency_vnd",
+          "examples": [
+            "xlsm_hmtd:HMTD['Vốn lưu động kỳ kế hoạch (I)']"
+          ]
+        },
+        {
+          "field_key": "B.plan.hmtd.counterpart_capital",
+          "label_vi": "Vốn đối ứng",
+          "group": "Kế hoạch hạn mức",
+          "type": "number",
+          "required": true,
+          "normalizer": "currency_vnd",
+          "examples": [
+            "xlsm_hmtd:HMTD['Vốn đối ứng (II)']"
+          ]
+        },
+        {
+          "field_key": "B.plan.hmtd.other_bank_loans",
+          "label_vi": "Vốn vay tại tổ chức tín dụng khác",
+          "group": "Kế hoạch hạn mức",
+          "type": "number",
+          "required": true,
+          "normalizer": "currency_vnd",
+          "examples": [
+            "xlsm_hmtd:HMTD['Vốn vay tại các TCTD khác (III)']"
+          ]
+        },
+        {
+          "field_key": "B.plan.hmtd.recommended_limit",
+          "label_vi": "Hạn mức đề xuất",
+          "group": "Kế hoạch hạn mức",
+          "type": "number",
+          "required": true,
+          "normalizer": "currency_vnd",
+          "examples": [
+            "xlsm_hmtd:HMTD['Hạn mức vay vốn = (I)-(II)-(III)']",
+            "data_bk:Clients[0].ClientAssets[Code='HĐTD'].AssetProperties['Hạn mức tín dụng']"
+          ]
+        },
+        {
+          "field_key": "A.collateral.assets",
+          "label_vi": "Danh mục tài sản bảo đảm",
+          "group": "Tài sản bảo đảm",
+          "type": "text",
+          "required": true,
+          "examples": [
+            "data_bk:Clients[0].ClientAssets[Code='SĐ'][]"
+          ]
+        },
+        {
+          "field_key": "A.collateral.total_collateral_value",
+          "label_vi": "Tổng giá trị tài sản bảo đảm",
+          "group": "Tài sản bảo đảm",
+          "type": "number",
+          "required": true,
+          "normalizer": "currency_vnd",
+          "examples": [
+            "data_bk:Clients[0].ClientAssets[Code='HĐTD'].AssetProperties['Tổng giá trị TSBĐ']"
+          ]
+        },
+        {
+          "field_key": "A.collateral.secured_obligation_total",
+          "label_vi": "Tổng nghĩa vụ được bảo đảm",
+          "group": "Tài sản bảo đảm",
+          "type": "number",
+          "required": true,
+          "normalizer": "currency_vnd",
+          "examples": [
+            "data_bk:Clients[0].ClientAssets[Code='HĐTD'].AssetProperties['Tổng nghĩa vụ bảo đảm']"
+          ]
+        },
+        {
+          "field_key": "A.collateral.insurance_status",
+          "label_vi": "Tình trạng bảo hiểm tài sản bảo đảm",
+          "group": "Tài sản bảo đảm",
+          "type": "text",
+          "required": true,
+          "examples": [
+            "data_bk:Clients[0].ClientAssets[Code='SĐ'][*].AssetProperties['Mua bảo hiểm TSBĐ']"
+          ]
+        },
+        {
+          "field_key": "B.risk.market_input_output_assessment",
+          "label_vi": "Đánh giá đầu vào đầu ra thị trường",
+          "group": "Đánh giá rủi ro",
+          "type": "text",
+          "required": false,
+          "examples": []
+        },
+        {
+          "field_key": "B.risk.mitigation_plan",
+          "label_vi": "Phương án giảm thiểu rủi ro",
+          "group": "Đánh giá rủi ro",
+          "type": "text",
+          "required": false,
+          "examples": []
+        },
+        {
+          "field_key": "custom.ban_lanh_dao.bld_chuc_danh",
+          "label_vi": "BLĐ.Chức danh",
+          "group": "Ban lãnh đạo",
+          "type": "text",
+          "required": false,
+          "normalizer": "",
+          "examples": []
+        },
+        {
+          "field_key": "custom.ban_lanh_dao.bld_ho_va_ten",
+          "label_vi": "BLĐ.Họ và tên",
+          "group": "Ban lãnh đạo",
+          "type": "text",
+          "required": false,
+          "normalizer": "",
+          "examples": []
+        },
+        {
+          "field_key": "custom.ban_lanh_dao.bld_linh_vuc_quan_ly",
+          "label_vi": "BLĐ.Lĩnh vực quản lý",
+          "group": "Ban lãnh đạo",
+          "type": "text",
+          "required": false,
+          "normalizer": "",
+          "examples": []
+        },
+        {
+          "field_key": "custom.ban_lanh_dao.bld_nam_sinh",
+          "label_vi": "BLĐ.Năm sinh",
+          "group": "Ban lãnh đạo",
+          "type": "text",
+          "required": false,
+          "normalizer": "",
+          "examples": []
+        },
+        {
+          "field_key": "custom.ban_lanh_dao.bld_so_nam_cong_tac",
+          "label_vi": "BLĐ.Số năm công tác",
+          "group": "Ban lãnh đạo",
+          "type": "number",
+          "required": false,
+          "normalizer": "",
+          "examples": []
+        },
+        {
+          "field_key": "custom.ban_lanh_dao.bld_thoi_gian_bo_nhiem",
+          "label_vi": "BLĐ.Thời gian bổ nhiệm",
+          "group": "Ban lãnh đạo",
+          "type": "number",
+          "required": false,
+          "normalizer": "",
+          "examples": []
+        },
+        {
+          "field_key": "custom.ban_lanh_dao.bld_trinh_do",
+          "label_vi": "BLĐ.Trình độ",
+          "group": "Ban lãnh đạo",
+          "type": "text",
+          "required": false,
+          "normalizer": "",
+          "examples": []
+        },
+        {
+          "field_key": "custom.khoan_vay.hdtd_bo_sung_bcdx_cho_vay",
+          "label_vi": "HĐTD.Bổ sung BCĐX cho vay",
+          "group": "Khoản vay",
+          "type": "text",
+          "required": false,
+          "normalizer": "",
+          "examples": []
+        },
+        {
+          "field_key": "custom.thong_tin_tin_dung.hdtd_du_no_cua_kh_va_nlq_tai_agribank",
+          "label_vi": "Dư nợ của KH và NLQ tại Agribank",
+          "group": "Người có liên quan",
+          "type": "number",
+          "required": false,
+          "normalizer": "",
+          "examples": []
+        },
+        {
+          "field_key": "custom.thong_tin_tin_dung.hdtd_du_no_tai_agribank",
+          "label_vi": "Dư nợ tại Agribank",
+          "group": "Người có liên quan",
+          "type": "number",
+          "required": false,
+          "normalizer": "",
+          "examples": []
+        },
+        {
+          "field_key": "custom.thong_tin_tin_dung.hdtd_du_no_tai_tctd_khac",
+          "label_vi": "Dư nợ tại TCTD khác",
+          "group": "Người có liên quan",
+          "type": "number",
+          "required": false,
+          "normalizer": "",
+          "examples": []
+        },
+        {
+          "field_key": "custom.thong_tin_tin_dung.hdtd_dang_qh_t_dung_tai_tctd",
+          "label_vi": "Đang QH t.dụng tại TCTD",
+          "group": "Thông tin tín dụng",
+          "type": "text",
+          "required": false,
+          "normalizer": "",
+          "examples": []
+        },
+        {
+          "field_key": "custom.khoan_vay.hdtd_dinh_ky_tra_goc",
+          "label_vi": "HĐTD.Định kỳ trả gốc",
+          "group": "Khoản vay",
+          "type": "text",
+          "required": false,
+          "normalizer": "",
+          "examples": []
+        },
+        {
+          "field_key": "custom.khoan_vay.hdtd_dinh_ky_tra_lai",
+          "label_vi": "HĐTD.Định kỳ trả lãi",
+          "group": "Khoản vay",
+          "type": "text",
+          "required": false,
+          "normalizer": "",
+          "examples": []
+        },
+        {
+          "field_key": "custom.khoan_vay.hdtd_dong_tien_cho_vay",
+          "label_vi": "HĐTD.Đồng tiền cho vay",
+          "group": "Khoản vay",
+          "type": "text",
+          "required": false,
+          "normalizer": "",
+          "examples": []
+        },
+        {
+          "field_key": "custom.thong_tin_tin_dung.hdtd_ky_cham_diem",
+          "label_vi": "Kỳ chấm điểm",
+          "group": "Thông tin tín dụng",
+          "type": "date",
+          "required": false,
+          "normalizer": "",
+          "examples": []
+        },
+        {
+          "field_key": "custom.khoan_vay.hdtd_loi_nhuan_du_kien",
+          "label_vi": "HĐTD.Lợi nhuận dự kiến",
+          "group": "Khoản vay",
+          "type": "number",
+          "required": false,
+          "normalizer": "",
+          "examples": []
+        },
+        {
+          "field_key": "custom.khoan_vay.hdtd_ly_do_dap_ung_khong_dap_ung_tcmblm",
+          "label_vi": "HĐTD.Lý do đáp ứng/không đáp ứng TCMBLM",
+          "group": "Khoản vay",
+          "type": "text",
+          "required": false,
+          "normalizer": "",
+          "examples": []
+        },
+        {
+          "field_key": "custom.khoan_vay.hdtd_muc_dich_vay",
+          "label_vi": "HĐTD.Mục đích vay",
+          "group": "Khoản vay",
+          "type": "text",
+          "required": false,
+          "normalizer": "",
+          "examples": []
+        },
+        {
+          "field_key": "custom.khoan_vay.hdtd_nhom_no",
+          "label_vi": "HĐTD.Nhóm nợ",
+          "group": "Khoản vay",
+          "type": "text",
+          "required": false,
+          "normalizer": "",
+          "examples": []
+        },
+        {
+          "field_key": "custom.khoan_vay.hdtd_nhu_cau_mo_l_c",
+          "label_vi": "HĐTD.Nhu cầu mở L/C",
+          "group": "Khoản vay",
+          "type": "number",
+          "required": false,
+          "normalizer": "",
+          "examples": []
+        },
+        {
+          "field_key": "custom.khoan_vay.hdtd_nhu_cau_phat_hanh_bao_lanh",
+          "label_vi": "HĐTD.Nhu cầu phát hành bảo lãnh",
+          "group": "Khoản vay",
+          "type": "number",
+          "required": false,
+          "normalizer": "",
+          "examples": []
+        },
+        {
+          "field_key": "custom.khoan_vay.hdtd_phuong_thuc_cho_vay",
+          "label_vi": "HĐTD.Phương thức cho vay",
+          "group": "Khoản vay",
+          "type": "text",
+          "required": false,
+          "normalizer": "",
+          "examples": []
+        },
+        {
+          "field_key": "custom.khoan_vay.hdtd_so_tien_vay",
+          "label_vi": "HĐTD.Số tiền vay",
+          "group": "Khoản vay",
+          "type": "number",
+          "required": false,
+          "normalizer": "",
+          "examples": []
+        },
+        {
+          "field_key": "custom.khoan_vay.hdtd_tong_chi_phi_du_kien",
+          "label_vi": "HĐTD.Tổng chi phí dự kiến",
+          "group": "Khoản vay",
+          "type": "number",
+          "required": false,
+          "normalizer": "",
+          "examples": []
+        },
+        {
+          "field_key": "custom.khoan_vay.hdtd_tong_doanh_thu_du_kien",
+          "label_vi": "HĐTD.Tổng doanh thu dự kiến",
+          "group": "Khoản vay",
+          "type": "number",
+          "required": false,
+          "normalizer": "",
+          "examples": []
+        },
+        {
+          "field_key": "custom.tai_san_bao_dam.hdtd_tong_nghia_vu_bao_dam",
+          "label_vi": "HĐTD.Tổng nghĩa vụ bảo đảm",
+          "group": "Tài sản bảo đảm",
+          "type": "number",
+          "required": false,
+          "normalizer": "",
+          "examples": []
+        },
+        {
+          "field_key": "custom.khoan_vay.hdtd_tong_nghia_vu_bao_dam_bang_chu",
+          "label_vi": "HĐTD.Tổng nghĩa vụ bảo đảm bằng chữ",
+          "group": "Khoản vay",
+          "type": "text",
+          "required": false,
+          "normalizer": "",
+          "examples": []
+        },
+        {
+          "field_key": "custom.khoan_vay.hdtd_tong_nhu_cau_cap_td",
+          "label_vi": "HĐTD.Tổng nhu cầu cấp TD",
+          "group": "Khoản vay",
+          "type": "number",
+          "required": false,
+          "normalizer": "",
+          "examples": []
+        },
+        {
+          "field_key": "custom.khoan_vay.hdtd_tong_nhu_cau_von",
+          "label_vi": "HĐTD.Tổng nhu cầu vốn",
+          "group": "Khoản vay",
+          "type": "number",
+          "required": false,
+          "normalizer": "",
+          "examples": []
+        },
+        {
+          "field_key": "custom.khoan_vay.hdtd_thoi_han_vay",
+          "label_vi": "HĐTD.Thời hạn vay",
+          "group": "Khoản vay",
+          "type": "number",
+          "required": false,
+          "normalizer": "",
+          "examples": []
+        },
+        {
+          "field_key": "custom.khoan_vay.hdtd_von_chu_so_huu",
+          "label_vi": "HĐTD.Vốn chủ sở hữu",
+          "group": "Khoản vay",
+          "type": "number",
+          "required": false,
+          "normalizer": "",
+          "examples": []
+        },
+        {
+          "field_key": "custom.khoan_vay.hdtd_von_doi_ung",
+          "label_vi": "HĐTD.Vốn đối ứng",
+          "group": "Khoản vay",
+          "type": "number",
+          "required": false,
+          "normalizer": "",
+          "examples": []
+        },
+        {
+          "field_key": "custom.khoan_vay.hdtd_von_khac",
+          "label_vi": "HĐTD.Vốn khác",
+          "group": "Khoản vay",
+          "type": "number",
+          "required": false,
+          "normalizer": "",
+          "examples": []
+        },
+        {
+          "field_key": "custom.khoan_vay.hdtd_von_luu_dong_rong",
+          "label_vi": "HĐTD.Vốn lưu động ròng",
+          "group": "Khoản vay",
+          "type": "number",
+          "required": false,
+          "normalizer": "",
+          "examples": []
+        },
+        {
+          "field_key": "custom.khoan_vay.hdtd_von_vay_tctd_khac",
+          "label_vi": "HĐTD.Vốn vay TCTD khác",
+          "group": "Khoản vay",
+          "type": "number",
+          "required": false,
+          "normalizer": "",
+          "examples": []
+        },
+        {
+          "field_key": "custom.khoan_vay.hdtd_xep_hang_kh_theo_agribank",
+          "label_vi": "HĐTD.Xếp hạng KH theo Agribank",
+          "group": "Khoản vay",
+          "type": "text",
+          "required": false,
+          "normalizer": "",
+          "examples": []
+        },
+        {
+          "field_key": "custom.khoan_vay.hdtd_xep_hang_kh_theo_cic",
+          "label_vi": "HĐTD.Xếp hạng KH theo CIC",
+          "group": "Khoản vay",
+          "type": "text",
+          "required": false,
+          "normalizer": "",
+          "examples": []
+        },
+        {
+          "field_key": "custom.thanh_vien_hdtv.hdtv_cmnd_ma_so_dn",
+          "label_vi": "HĐTV.CMND/Mã số DN",
+          "group": "Thành viên HĐTV",
+          "type": "text",
+          "required": false,
+          "normalizer": "",
+          "examples": []
+        },
+        {
+          "field_key": "custom.thanh_vien_hdtv.hdtv_dia_chi",
+          "label_vi": "HĐTV.Địa chỉ",
+          "group": "Thành viên HĐTV",
+          "type": "number",
+          "required": false,
+          "normalizer": "",
+          "examples": []
+        },
+        {
+          "field_key": "custom.thanh_vien_hdtv.hdtv_gia_tri_co_phan_von_gop",
+          "label_vi": "HĐTV.Giá trị cổ phần, vốn góp",
+          "group": "Thành viên HĐTV",
+          "type": "number",
+          "required": false,
+          "normalizer": "",
+          "examples": []
+        },
+        {
+          "field_key": "custom.thanh_vien_hdtv.hdtv_ten_co_dong_thanh_vien",
+          "label_vi": "HĐTV.Tên cổ đông/Thành viên",
+          "group": "Thành viên HĐTV",
+          "type": "text",
+          "required": false,
+          "normalizer": "",
+          "examples": []
+        },
+        {
+          "field_key": "custom.thanh_vien_hdtv.hdtv_tong_gia_tri_co_phan_von_gop",
+          "label_vi": "HĐTV.Tổng Giá trị cổ phần, vốn góp",
+          "group": "Thành viên HĐTV",
+          "type": "number",
+          "required": false,
+          "normalizer": "",
+          "examples": []
+        },
+        {
+          "field_key": "custom.thong_tin_chung.ttc_loai_giay_to_phap_ly",
+          "label_vi": "TTC.Loại giấy tờ pháp lý",
+          "group": "Thông tin chung",
+          "type": "text",
+          "required": false,
+          "normalizer": "",
+          "examples": []
+        },
+        {
+          "field_key": "custom.thong_tin_chung.ttc_loai_giay_to_tuy_than",
+          "label_vi": "TTC.Loại giấy tờ tùy thân",
+          "group": "Thông tin chung",
+          "type": "text",
+          "required": false,
+          "normalizer": "",
+          "examples": []
+        },
+        {
+          "field_key": "custom.thong_tin_chung.ttc_loai_hinh_to_chuc",
+          "label_vi": "TTC.Loại hình tổ chức",
+          "group": "Thông tin chung",
+          "type": "text",
+          "required": false,
+          "normalizer": "",
+          "examples": []
+        },
+        {
+          "field_key": "custom.thong_tin_chung.ttc_ma_khach_hang",
+          "label_vi": "TTC.Mã khách hàng",
+          "group": "Thông tin chung",
+          "type": "text",
+          "required": false,
+          "normalizer": "",
+          "examples": []
+        },
+        {
+          "field_key": "custom.nguoi_co_lien_quan.nlq_du_no_ngan_han",
+          "label_vi": "NLQ.Dư nợ ngắn hạn",
+          "group": "Người có liên quan",
+          "type": "number",
+          "required": false,
+          "normalizer": "",
+          "examples": []
+        },
+        {
+          "field_key": "custom.nguoi_co_lien_quan.nlq_du_no_trung_dai_han",
+          "label_vi": "NLQ.Dư nợ trung dài hạn",
+          "group": "Người có liên quan",
+          "type": "number",
+          "required": false,
+          "normalizer": "",
+          "examples": []
+        },
+        {
+          "field_key": "custom.nguoi_co_lien_quan.nlq_moi_lien_quan",
+          "label_vi": "NLQ.Mối liên quan",
+          "group": "Người có liên quan",
+          "type": "text",
+          "required": false,
+          "normalizer": "",
+          "examples": []
+        },
+        {
+          "field_key": "custom.nguoi_co_lien_quan.nlq_so_dkkd_cmnd",
+          "label_vi": "NLQ.Số ĐKKD/CMND",
+          "group": "Người có liên quan",
+          "type": "text",
+          "required": false,
+          "normalizer": "",
+          "examples": []
+        },
+        {
+          "field_key": "custom.nguoi_co_lien_quan.nlq_ten_to_chuc_ca_nhan",
+          "label_vi": "NLQ.Tên tổ chức/Cá nhân",
+          "group": "Người có liên quan",
+          "type": "text",
+          "required": false,
+          "normalizer": "",
+          "examples": []
+        },
+        {
+          "field_key": "custom.nguoi_co_lien_quan.nlq_tong_so_du_cap_tin_dung",
+          "label_vi": "NLQ.Tổng số dư cấp tín dụng",
+          "group": "Người có liên quan",
+          "type": "number",
+          "required": false,
+          "normalizer": "",
+          "examples": []
+        },
+        {
+          "field_key": "custom.nguoi_co_lien_quan.nlq_xep_hang_tin_dung",
+          "label_vi": "NLQ.Xếp hạng tín dụng",
+          "group": "Người có liên quan",
+          "type": "text",
+          "required": false,
+          "normalizer": "",
+          "examples": []
+        },
+        {
+          "field_key": "custom.thong_tin_chung.ttc_noi_cap_cccd_cc",
+          "label_vi": "TTC.Nơi cấp CCCD/CC",
+          "group": "Thông tin chung",
+          "type": "text",
+          "required": false,
+          "normalizer": "",
+          "examples": []
+        },
+        {
+          "field_key": "custom.thong_tin_chung.ttc_noi_cap_dkkd",
+          "label_vi": "TTC.Nơi cấp ĐKKD",
+          "group": "Thông tin chung",
+          "type": "text",
+          "required": false,
+          "normalizer": "",
+          "examples": []
+        },
+        {
+          "field_key": "custom.thong_tin_chung.ttc_nganh_nghe_sxkd",
+          "label_vi": "TTC.Ngành nghề SXKD",
+          "group": "Thông tin chung",
+          "type": "text",
+          "required": false,
+          "normalizer": "",
+          "examples": []
+        },
+        {
+          "field_key": "custom.thong_tin_chung.ttc_ngay_cap_cccd_cc",
+          "label_vi": "TTC.Ngày cấp CCCD/CC",
+          "group": "Thông tin chung",
+          "type": "text",
+          "required": false,
+          "normalizer": "",
+          "examples": []
+        },
+        {
+          "field_key": "custom.thong_tin_chung.ttc_ngay_cap_dkkd",
+          "label_vi": "TTC.Ngày cấp ĐKKD",
+          "group": "Thông tin chung",
+          "type": "text",
+          "required": false,
+          "normalizer": "",
+          "examples": []
+        },
+        {
+          "field_key": "custom.thong_tin_chung.ttc_nguoi_dai_dien",
+          "label_vi": "TTC.Người đại diện",
+          "group": "Thông tin chung",
+          "type": "text",
+          "required": false,
+          "normalizer": "",
+          "examples": []
+        },
+        {
+          "field_key": "custom.thong_tin_chung.ttc_nguoi_dai_dien_theo_phap_luat",
+          "label_vi": "TTC.Người đại diện theo pháp luật",
+          "group": "Thông tin chung",
+          "type": "text",
+          "required": false,
+          "normalizer": "",
+          "examples": []
+        },
+        {
+          "field_key": "custom.bat_dong_san.sd_nghia_vu_bao_dam",
+          "label_vi": "SĐ.Nghĩa vụ bảo đảm",
+          "group": "Bất động sản",
+          "type": "number",
+          "required": false,
+          "normalizer": "",
+          "examples": []
+        },
+        {
+          "field_key": "custom.bat_dong_san.sd_so_seri",
+          "label_vi": "SĐ.Số seri",
+          "group": "Bất động sản",
+          "type": "text",
+          "required": false,
+          "normalizer": "",
+          "examples": []
+        },
+        {
+          "field_key": "custom.bat_dong_san.sd_ten_tsbd",
+          "label_vi": "SĐ.Tên TSBĐ",
+          "group": "Bất động sản",
+          "type": "text",
+          "required": false,
+          "normalizer": "",
+          "examples": []
+        },
+        {
+          "field_key": "custom.bat_dong_san.sd_tong_gia_tri_ts",
+          "label_vi": "SĐ.Tổng giá trị TS",
+          "group": "Bất động sản",
+          "type": "number",
+          "required": false,
+          "normalizer": "",
+          "examples": []
+        },
+        {
+          "field_key": "custom.thong_tin_chung.ttc_so_dkkd",
+          "label_vi": "TTC.Số ĐKKD",
+          "group": "Thông tin chung",
+          "type": "text",
+          "required": false,
+          "normalizer": "",
+          "examples": []
+        },
+        {
+          "field_key": "custom.thong_tin_nguoi_dung.nd_ten_chi_nhanh_pgd",
+          "label_vi": "ND.Tên chi nhánh/PGD",
+          "group": "Thông tin người dùng",
+          "type": "text",
+          "required": false,
+          "normalizer": "",
+          "examples": []
+        },
+        {
+          "field_key": "custom.thong_tin_chung.nd_ten_goi_hoi_dong",
+          "label_vi": "ND.Tên gọi Hội đồng",
+          "group": "Thông tin chung",
+          "type": "text",
+          "required": false,
+          "normalizer": "",
+          "examples": []
+        },
+        {
+          "field_key": "custom.thong_tin_chung.nd_ten_goi_in_hoa",
+          "label_vi": "ND.Tên gọi in hoa",
+          "group": "Thông tin chung",
+          "type": "text",
+          "required": false,
+          "normalizer": "",
+          "examples": []
+        },
+        {
+          "field_key": "custom.thong_tin_chung.nd_ten_khach_hang",
+          "label_vi": "ND.Tên khách hàng",
+          "group": "Thông tin chung",
+          "type": "text",
+          "required": false,
+          "normalizer": "",
+          "examples": []
+        },
+        {
+          "field_key": "custom.thong_tin_nguoi_dung.nd_ten_nguoi_dung",
+          "label_vi": "ND.Tên người dùng",
+          "group": "Thông tin người dùng",
+          "type": "text",
+          "required": false,
+          "normalizer": "",
+          "examples": []
+        },
+        {
+          "field_key": "custom.tai_san_bao_dam.tsbd_gia_tri_dong_san",
+          "label_vi": "TSBĐ.Giá trị động sản",
+          "group": "Tài sản bảo đảm",
+          "type": "number",
+          "required": false,
+          "normalizer": "",
+          "examples": []
+        },
+        {
+          "field_key": "custom.tai_san_bao_dam.tsbd_loai_dong_san",
+          "label_vi": "TSBĐ.Loại động sản",
+          "group": "Tài sản bảo đảm",
+          "type": "text",
+          "required": false,
+          "normalizer": "",
+          "examples": []
+        },
+        {
+          "field_key": "custom.tai_san_bao_dam.tsbd_nghia_vu_bao_dam_cua_dong_san",
+          "label_vi": "TSBĐ.Nghĩa vụ bảo đảm của động sản",
+          "group": "Tài sản bảo đảm",
+          "type": "number",
+          "required": false,
+          "normalizer": "",
+          "examples": []
+        },
+        {
+          "field_key": "custom.tai_san_bao_dam.tsbd_nhan_hieu_dong_san",
+          "label_vi": "TSBĐ.Nhãn hiệu động sản",
+          "group": "Tài sản bảo đảm",
+          "type": "text",
+          "required": false,
+          "normalizer": "",
+          "examples": []
+        },
+        {
+          "field_key": "custom.tai_san_bao_dam.tsbd_tong_gia_tri_tai_san_bang_chu",
+          "label_vi": "TSBĐ.Tổng giá trị tài sản bằng chữ",
+          "group": "Tài sản bảo đảm",
+          "type": "text",
+          "required": false,
+          "normalizer": "",
+          "examples": []
+        },
+        {
+          "field_key": "custom.tai_san_bao_dam.tsbd_tong_gia_tri_tsbd",
+          "label_vi": "TSBĐ.Tổng giá trị TSBĐ",
+          "group": "Tài sản bảo đảm",
+          "type": "number",
+          "required": false,
+          "normalizer": "",
+          "examples": []
+        },
+        {
+          "field_key": "custom.thong_tin_chung.ttc_cccd_cc_nguoi_dai_dien",
+          "label_vi": "TTC.CCCD/CC người đại diện",
+          "group": "Thông tin chung",
+          "type": "text",
+          "required": false,
+          "normalizer": "",
+          "examples": []
+        },
+        {
+          "field_key": "custom.thong_tin_chung.ttc_dia_chi_tru_so",
+          "label_vi": "TTC.Địa chỉ trụ sở",
+          "group": "Thông tin chung",
+          "type": "text",
+          "required": false,
+          "normalizer": "",
+          "examples": []
+        },
+        {
+          "field_key": "custom.thong_tin_chung.ttc_giay_to_uy_quyen",
+          "label_vi": "TTC.Giấy tờ ủy quyền",
+          "group": "Thông tin chung",
+          "type": "text",
+          "required": false,
+          "normalizer": "",
+          "examples": []
+        },
+        {
+          "field_key": "custom.thong_tin_tai_chinh.tc_doanh_so_bao_lanh",
+          "label_vi": "TC.Doanh số bảo lãnh",
+          "group": "Thông tin tài chính",
+          "type": "number",
+          "required": false,
+          "normalizer": "",
+          "examples": []
+        },
+        {
+          "field_key": "custom.thong_tin_tai_chinh.tc_doanh_so_bao_lanh_2",
+          "label_vi": "TC.Doanh số bảo lãnh:",
+          "group": "Thông tin tài chính",
+          "type": "number",
+          "required": false,
+          "normalizer": "",
+          "examples": []
+        },
+        {
+          "field_key": "custom.thong_tin_tai_chinh.tc_doanh_so_cho_vay_nh",
+          "label_vi": "TC.Doanh số cho vay NH",
+          "group": "Thông tin tài chính",
+          "type": "number",
+          "required": false,
+          "normalizer": "",
+          "examples": []
+        },
+        {
+          "field_key": "custom.thong_tin_tai_chinh.tc_doanh_so_cho_vay_nh_2",
+          "label_vi": "TC.Doanh số cho vay NH:",
+          "group": "Thông tin tài chính",
+          "type": "number",
+          "required": false,
+          "normalizer": "",
+          "examples": []
+        },
+        {
+          "field_key": "custom.thong_tin_tai_chinh.tc_doanh_so_cho_vay_tdh",
+          "label_vi": "TC.Doanh số cho vay TDH",
+          "group": "Thông tin tài chính",
+          "type": "number",
+          "required": false,
+          "normalizer": "",
+          "examples": []
+        },
+        {
+          "field_key": "custom.thong_tin_tai_chinh.tc_doanh_so_cho_vay_tdh_2",
+          "label_vi": "TC.Doanh số cho vay TDH:",
+          "group": "Thông tin tài chính",
+          "type": "number",
+          "required": false,
+          "normalizer": "",
+          "examples": []
+        },
+        {
+          "field_key": "custom.thong_tin_tai_chinh.tc_doanh_so_chuyen_tien_den",
+          "label_vi": "TC.Doanh số chuyển tiền đến",
+          "group": "Thông tin tài chính",
+          "type": "number",
+          "required": false,
+          "normalizer": "",
+          "examples": []
+        },
+        {
+          "field_key": "custom.thong_tin_tai_chinh.tc_doanh_so_chuyen_tien_den_2",
+          "label_vi": "TC.Doanh số chuyển tiền đến:",
+          "group": "Thông tin tài chính",
+          "type": "number",
+          "required": false,
+          "normalizer": "",
+          "examples": []
+        },
+        {
+          "field_key": "custom.thong_tin_tai_chinh.tc_doanh_so_chuyen_tien_di",
+          "label_vi": "TC.Doanh số chuyển tiền đi",
+          "group": "Thông tin tài chính",
+          "type": "number",
+          "required": false,
+          "normalizer": "",
+          "examples": []
+        },
+        {
+          "field_key": "custom.thong_tin_tai_chinh.tc_doanh_so_chuyen_tien_di_2",
+          "label_vi": "TC.Doanh số chuyển tiền đi:",
+          "group": "Thông tin tài chính",
+          "type": "number",
+          "required": false,
+          "normalizer": "",
+          "examples": []
+        },
+        {
+          "field_key": "custom.thong_tin_tai_chinh.tc_doanh_so_thu_lai_nh",
+          "label_vi": "TC.Doanh số thu lãi NH",
+          "group": "Thông tin tài chính",
+          "type": "number",
+          "required": false,
+          "normalizer": "",
+          "examples": []
+        },
+        {
+          "field_key": "custom.thong_tin_tai_chinh.tc_doanh_so_thu_lai_nh_2",
+          "label_vi": "TC.Doanh số thu lãi NH:",
+          "group": "Thông tin tài chính",
+          "type": "number",
+          "required": false,
+          "normalizer": "",
+          "examples": []
+        },
+        {
+          "field_key": "custom.thong_tin_tai_chinh.tc_doanh_so_thu_lai_tdh",
+          "label_vi": "TC.Doanh số thu lãi TDH",
+          "group": "Thông tin tài chính",
+          "type": "number",
+          "required": false,
+          "normalizer": "",
+          "examples": []
+        },
+        {
+          "field_key": "custom.thong_tin_tai_chinh.tc_doanh_so_thu_lai_tdh_2",
+          "label_vi": "TC.Doanh số thu lãi TDH:",
+          "group": "Thông tin tài chính",
+          "type": "number",
+          "required": false,
+          "normalizer": "",
+          "examples": []
+        },
+        {
+          "field_key": "custom.thong_tin_tai_chinh.tc_doanh_so_thu_no_nh",
+          "label_vi": "TC.Doanh số thu nợ NH",
+          "group": "Thông tin tài chính",
+          "type": "number",
+          "required": false,
+          "normalizer": "",
+          "examples": []
+        },
+        {
+          "field_key": "custom.thong_tin_tai_chinh.tc_doanh_so_thu_no_nh_2",
+          "label_vi": "TC.Doanh số thu nợ NH:",
+          "group": "Thông tin tài chính",
+          "type": "number",
+          "required": false,
+          "normalizer": "",
+          "examples": []
+        },
+        {
+          "field_key": "custom.thong_tin_tai_chinh.tc_doanh_so_thu_no_tdh",
+          "label_vi": "TC.Doanh số thu nợ TDH",
+          "group": "Thông tin tài chính",
+          "type": "number",
+          "required": false,
+          "normalizer": "",
+          "examples": []
+        },
+        {
+          "field_key": "custom.thong_tin_tai_chinh.tc_doanh_so_thu_no_tdh_2",
+          "label_vi": "TC.Doanh số thu nợ TDH:",
+          "group": "Thông tin tài chính",
+          "type": "number",
+          "required": false,
+          "normalizer": "",
+          "examples": []
+        },
+        {
+          "field_key": "custom.thong_tin_tai_chinh.tc_du_no_cuoi_ky_nh",
+          "label_vi": "TC.Dư nợ cuối kỳ NH",
+          "group": "Thông tin tài chính",
+          "type": "number",
+          "required": false,
+          "normalizer": "",
+          "examples": []
+        },
+        {
+          "field_key": "custom.thong_tin_tai_chinh.tc_du_no_cuoi_ky_nh_2",
+          "label_vi": "TC.Dư nợ cuối kỳ NH:",
+          "group": "Thông tin tài chính",
+          "type": "number",
+          "required": false,
+          "normalizer": "",
+          "examples": []
+        },
+        {
+          "field_key": "custom.thong_tin_tai_chinh.tc_du_no_cuoi_ky_tdh",
+          "label_vi": "TC.Dư nợ cuối kỳ TDH",
+          "group": "Thông tin tài chính",
+          "type": "number",
+          "required": false,
+          "normalizer": "",
+          "examples": []
+        },
+        {
+          "field_key": "custom.thong_tin_tai_chinh.tc_du_no_cuoi_ky_tdh_2",
+          "label_vi": "TC.Dư nợ cuối kỳ TDH:",
+          "group": "Thông tin tài chính",
+          "type": "number",
+          "required": false,
+          "normalizer": "",
+          "examples": []
+        },
+        {
+          "field_key": "custom.thong_tin_tai_chinh.tc_phi_bao_lanh_da_thu",
+          "label_vi": "TC.Phí bảo lãnh đã thu",
+          "group": "Thông tin tài chính",
+          "type": "number",
+          "required": false,
+          "normalizer": "",
+          "examples": []
+        },
+        {
+          "field_key": "custom.thong_tin_tai_chinh.tc_phi_bao_lanh_da_thu_2",
+          "label_vi": "TC.Phí bảo lãnh đã thu:",
+          "group": "Thông tin tài chính",
+          "type": "number",
+          "required": false,
+          "normalizer": "",
+          "examples": []
+        },
+        {
+          "field_key": "custom.thong_tin_tai_chinh.tc_so_du_bao_lanh_cuoi_ky",
+          "label_vi": "TC.Số dư bảo lãnh cuối kỳ",
+          "group": "Thông tin tài chính",
+          "type": "number",
+          "required": false,
+          "normalizer": "",
+          "examples": []
+        },
+        {
+          "field_key": "custom.thong_tin_tai_chinh.tc_so_du_bao_lanh_cuoi_ky_2",
+          "label_vi": "TC.Số dư bảo lãnh cuối kỳ:",
+          "group": "Thông tin tài chính",
+          "type": "number",
+          "required": false,
+          "normalizer": "",
+          "examples": []
+        }
+      ]
+    }
+  ],
+  "data_migration_version": 1,
+  "mapping_versions": [
+    {
+      "id": "draft-1771656779357",
+      "status": "published",
+      "created_by": "web-user",
+      "created_at": "2026-02-21T06:52:59.362Z",
+      "mapping_json_path": "report_assets/config/versions/draft-1771656779357.mapping.json",
+      "alias_json_path": "report_assets/config/versions/draft-1771656779357.alias.json",
+      "notes": "Saved from mapping editor"
+    },
+    {
+      "id": "draft-1771646182944",
+      "status": "draft",
+      "created_by": "web-user",
+      "created_at": "2026-02-21T03:56:22.946Z",
+      "mapping_json_path": "report_assets/config/versions/draft-1771646182944.mapping.json",
+      "alias_json_path": "report_assets/config/versions/draft-1771646182944.alias.json",
+      "notes": "Saved from mapping editor"
+    },
+    {
+      "id": "draft-1771638837701",
+      "status": "draft",
+      "created_by": "web-user",
+      "created_at": "2026-02-21T01:53:57.703Z",
+      "mapping_json_path": "report_assets/config/versions/draft-1771638837701.mapping.json",
+      "alias_json_path": "report_assets/config/versions/draft-1771638837701.alias.json",
+      "notes": "Saved from mapping editor"
+    },
+    {
+      "id": "draft-1771598123527",
+      "status": "draft",
+      "created_by": "web-user",
+      "created_at": "2026-02-20T14:35:23.529Z",
+      "mapping_json_path": "report_assets/config/versions/draft-1771598123527.mapping.json",
+      "alias_json_path": "report_assets/config/versions/draft-1771598123527.alias.json",
+      "notes": "Saved from mapping editor"
+    },
+    {
+      "id": "draft-1771597881111",
+      "status": "draft",
+      "created_by": "web-user",
+      "created_at": "2026-02-20T14:31:21.112Z",
+      "mapping_json_path": "report_assets/config/versions/draft-1771597881111.mapping.json",
+      "alias_json_path": "report_assets/config/versions/draft-1771597881111.alias.json",
+      "notes": "Saved from mapping editor"
+    },
+    {
+      "id": "bootstrap-1771596839483",
+      "status": "published",
+      "created_by": "system",
+      "created_at": "2026-02-20T14:13:59.494Z",
+      "mapping_json_path": "report_assets/config/versions/bootstrap-1771596839483.mapping.json",
+      "alias_json_path": "report_assets/config/versions/bootstrap-1771596839483.alias.json",
+      "notes": "Bootstrap from existing report assets."
+    }
+  ],
+  "template_profiles": [
+    {
+      "id": "template-2268-no-prefix",
+      "template_name": "Mau 2268 (no prefix placeholders)",
+      "docx_path": "report_assets/2268_no_prefix_placeholders.docx",
+      "placeholder_inventory_path": "",
+      "active": true
+    },
+    {
+      "id": "template-2268-original",
+      "template_name": "Mau 2268 (original)",
+      "docx_path": "report_assets/2268.02A.PN BC de xuat cho vay ngan han.docx",
+      "placeholder_inventory_path": "",
+      "active": false
+    }
+  ],
+  "run_logs": [],
+  "active_mapping_version_id": "draft-1771656779357",
+  "active_template_id": "template-2268-no-prefix"
+}

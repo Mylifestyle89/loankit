@@ -1,4 +1,4 @@
-import { memo, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useMemo, useRef, useState } from "react";
 import { Pencil, Trash2, GripVertical, FunctionSquare, Check, X } from "lucide-react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
@@ -131,6 +131,53 @@ export const FieldRow = memo(function FieldRow({
         setIsFocused(true);
     };
 
+    const COLS = ["label", "value", "type"] as const;
+    type NavCol = typeof COLS[number];
+
+    const navigateField = useCallback(
+        (e: React.KeyboardEvent<HTMLElement>, col: NavCol) => {
+            const key = e.key;
+            const colIdx = COLS.indexOf(col);
+
+            // ↑ / ↓ / Enter — di chuyển hàng trong cùng cột
+            if (key === "ArrowUp" || key === "ArrowDown" || key === "Enter") {
+                // Select thì dùng ↑↓ để chọn option, không override
+                if (col === "type" && (key === "ArrowUp" || key === "ArrowDown")) return;
+                e.preventDefault();
+                const all = Array.from(
+                    document.querySelectorAll<HTMLElement>(`[data-field-col="${col}"]`),
+                );
+                const idx = all.indexOf(e.currentTarget as HTMLElement);
+                const target = key === "ArrowUp" ? all[idx - 1] : all[idx + 1];
+                target?.focus();
+                return;
+            }
+
+            // ← khi cursor ở đầu — chuyển sang cột trước trong cùng hàng
+            if (key === "ArrowLeft" && colIdx > 0) {
+                const input = e.currentTarget as HTMLInputElement;
+                if ((input.selectionStart ?? 0) === 0 && (input.selectionEnd ?? 0) === 0) {
+                    e.preventDefault();
+                    const row = input.closest("[data-field-row]");
+                    row?.querySelector<HTMLElement>(`[data-field-col="${COLS[colIdx - 1]}"]`)?.focus();
+                }
+                return;
+            }
+
+            // → khi cursor ở cuối — chuyển sang cột tiếp theo trong cùng hàng
+            if (key === "ArrowRight" && colIdx < COLS.length - 1) {
+                const input = e.currentTarget as HTMLInputElement;
+                const len = (input as HTMLInputElement).value?.length ?? 0;
+                if ((input.selectionStart ?? len) === len && (input.selectionEnd ?? len) === len) {
+                    e.preventDefault();
+                    const row = input.closest("[data-field-row]");
+                    row?.querySelector<HTMLElement>(`[data-field-col="${COLS[colIdx + 1]}"]`)?.focus();
+                }
+            }
+        },
+        [],
+    );
+
     const inputClassName =
         "h-8 w-full rounded border border-transparent bg-transparent px-2 py-1 text-sm transition-colors placeholder:text-coral-tree-700 hover:border-coral-tree-300 focus:border-coral-tree-500 focus:bg-white dark:focus:bg-white/[0.06] focus:outline-none focus:ring-1 focus:ring-coral-tree-500";
 
@@ -150,6 +197,8 @@ export const FieldRow = memo(function FieldRow({
                 onChange={handleChange}
                 onBlur={handleBlur}
                 onFocus={handleFocus}
+                onKeyDown={(e) => navigateField(e, "value")}
+                data-field-col="value"
                 aria-label={field.label_vi}
                 className={`${inputClassName} ${readOnlyClassName}`}
                 readOnly={isReadOnly}
@@ -162,6 +211,8 @@ export const FieldRow = memo(function FieldRow({
                 onChange={handleChange}
                 onBlur={handleBlur}
                 onFocus={handleFocus}
+                onKeyDown={(e) => navigateField(e, "value")}
+                data-field-col="value"
                 inputMode="decimal"
                 className={`${inputClassName} ${readOnlyClassName}`}
                 placeholder={typeHintNumber}
@@ -173,6 +224,8 @@ export const FieldRow = memo(function FieldRow({
                 onChange={handleChange}
                 onBlur={handleBlur}
                 onFocus={handleFocus}
+                onKeyDown={(e) => navigateField(e, "value")}
+                data-field-col="value"
                 inputMode="decimal"
                 className={`${inputClassName} ${readOnlyClassName}`}
                 placeholder={typeHintPercent}
@@ -198,6 +251,8 @@ export const FieldRow = memo(function FieldRow({
                 onChange={handleChange}
                 onBlur={handleBlur}
                 onFocus={handleFocus}
+                onKeyDown={(e) => navigateField(e, "value")}
+                data-field-col="value"
                 className={`${inputClassName} ${readOnlyClassName}`}
                 placeholder={columnValuePlaceholder}
                 readOnly={isReadOnly}
@@ -207,7 +262,7 @@ export const FieldRow = memo(function FieldRow({
     const hasPendingOcr = ocrSuggestion?.status === "pending";
 
     return (
-        <div ref={setNodeRef} style={style} className={`group min-w-0 grid grid-cols-1 gap-2 border-t border-coral-tree-100 dark:border-white/[0.06] px-3 py-2 text-sm transition-colors md:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)_minmax(110px,140px)_auto] ${isDragging ? "bg-coral-tree-50 dark:bg-white/[0.06] opacity-80 shadow-md ring-1 ring-coral-tree-300" : hasPendingOcr ? "bg-amber-50/60 dark:bg-amber-500/10 hover:bg-amber-50/80 dark:hover:bg-amber-500/15" : "bg-white dark:bg-transparent hover:bg-coral-tree-50 dark:hover:bg-white/[0.04]"}`}>
+        <div ref={setNodeRef} style={style} data-field-row={field.field_key} className={`group min-w-0 grid grid-cols-1 gap-2 border-t border-coral-tree-100 dark:border-white/[0.06] px-3 py-2 text-sm transition-colors md:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)_minmax(110px,140px)_auto] ${isDragging ? "bg-coral-tree-50 dark:bg-white/[0.06] opacity-80 shadow-md ring-1 ring-coral-tree-300" : hasPendingOcr ? "bg-amber-50/60 dark:bg-amber-500/10 hover:bg-amber-50/80 dark:hover:bg-amber-500/15" : "bg-white dark:bg-transparent hover:bg-coral-tree-50 dark:hover:bg-white/[0.04]"}`}>
             <div className="flex min-w-0 items-start gap-2 pt-0.5">
                 <div className="mt-1 flex flex-col gap-0 opacity-0 transition-opacity group-hover:opacity-100">
                     <button
@@ -224,6 +279,8 @@ export const FieldRow = memo(function FieldRow({
                     <input
                         value={field.label_vi}
                         onChange={(e) => onFieldLabelChange(field.field_key, e.target.value)}
+                        onKeyDown={(e) => navigateField(e, "label")}
+                        data-field-col="label"
                         aria-label="Tên hiển thị field"
                         className="w-full truncate rounded border border-transparent bg-transparent px-2 py-1 text-sm font-medium text-coral-tree-800 dark:text-slate-200 transition-colors hover:border-coral-tree-300 focus:border-coral-tree-500 focus:bg-white dark:focus:bg-white/[0.06] focus:outline-none focus:ring-1 focus:ring-coral-tree-500"
                         title={field.label_vi}
@@ -296,6 +353,8 @@ export const FieldRow = memo(function FieldRow({
                             toInternalType(e.target.value as "string" | "number" | "percent" | "date" | "table")
                         )
                     }
+                    onKeyDown={(e) => navigateField(e, "type")}
+                    data-field-col="type"
                     aria-label={`Kiểu dữ liệu cho ${field.label_vi}`}
                     className="cursor-pointer h-8 w-full rounded border border-transparent bg-transparent px-1.5 py-1 text-sm text-coral-tree-800 dark:text-slate-200 transition-colors hover:border-coral-tree-300 focus:border-coral-tree-500 focus:bg-white dark:focus:bg-white/[0.06] focus:outline-none focus:ring-1 focus:ring-coral-tree-500"
                 >

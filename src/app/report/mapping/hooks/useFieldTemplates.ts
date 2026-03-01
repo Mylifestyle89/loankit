@@ -79,6 +79,8 @@ export function useFieldTemplates({ t }: { t: (key: string) => string }) {
     const md = useMappingDataStore.getState();
     if (!templateId) {
       ft.setSelectedFieldTemplateId("");
+      ft.setEditingFieldTemplateId("");
+      ft.setEditingFieldTemplateName("");
       return;
     }
     const template =
@@ -86,8 +88,6 @@ export function useFieldTemplates({ t }: { t: (key: string) => string }) {
       ft.allFieldTemplates.find((i) => i.id === templateId);
     if (!template) return;
 
-    ft.setEditingFieldTemplateId("");
-    ft.setEditingFieldTemplateName("");
     const normalizedCatalog = normalizeFieldCatalogForSchema(template.field_catalog ?? []);
     // Single store update — avoids triple re-render
     md.setTemplateData(
@@ -96,6 +96,9 @@ export function useFieldTemplates({ t }: { t: (key: string) => string }) {
       {},
     );
     ft.setSelectedFieldTemplateId(templateId);
+    // Enter editing mode → toolbar shows
+    ft.setEditingFieldTemplateId(templateId);
+    ft.setEditingFieldTemplateName(template.name);
   }
 
   function startEditingExistingTemplate(templateId: string) {
@@ -131,6 +134,7 @@ export function useFieldTemplates({ t }: { t: (key: string) => string }) {
     const md = useMappingDataStore.getState();
     ft.setEditingFieldTemplateId("");
     ft.setEditingFieldTemplateName("");
+    ft.setSelectedFieldTemplateId("");
     if (!selectedCustomerId) {
       md.setTemplateData([], {}, {});
     }
@@ -168,20 +172,36 @@ export function useFieldTemplates({ t }: { t: (key: string) => string }) {
     const nextName = ft.editingFieldTemplateName.trim();
     if (!nextName) return useUiStore.getState().setStatus({ error: t("mapping.fieldTemplate.errName") });
 
+    // Detect: master template (in allFieldTemplates) or customer instance (in fieldTemplates only)
+    const isMaster = ft.allFieldTemplates.some((t) => t.id === ft.editingFieldTemplateId);
+
     ft.setSavingEditedTemplate(true);
     useUiStore.getState().setStatus({ error: "" });
     try {
-      const res = await fetch("/api/report/master-templates", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          master_id: ft.editingFieldTemplateId,
-          name: nextName,
-          field_catalog: normalizeFieldCatalogForSchema(fieldCatalog),
-        }),
-      });
-      const data = (await res.json()) as { ok: boolean; error?: string };
-      if (!data.ok) throw new Error(data.error ?? t("mapping.fieldTemplate.errSave"));
+      const normalizedCatalog = normalizeFieldCatalogForSchema(fieldCatalog);
+
+      if (isMaster) {
+        const res = await fetch("/api/report/master-templates", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            master_id: ft.editingFieldTemplateId,
+            name: nextName,
+            field_catalog: normalizedCatalog,
+          }),
+        });
+        const data = (await res.json()) as { ok: boolean; error?: string };
+        if (!data.ok) throw new Error(data.error ?? t("mapping.fieldTemplate.errSave"));
+      } else {
+        // Customer-specific instance
+        const res = await fetch(`/api/report/mapping-instances/${ft.editingFieldTemplateId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: nextName, field_catalog: normalizedCatalog }),
+        });
+        const data = (await res.json()) as { ok: boolean; error?: string };
+        if (!data.ok) throw new Error(data.error ?? t("mapping.fieldTemplate.errSave"));
+      }
 
       await Promise.all([
         loadAllFieldTemplates(),

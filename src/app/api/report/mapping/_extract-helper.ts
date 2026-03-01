@@ -59,7 +59,7 @@ async function resolveFieldCatalog(input: {
   }
 
   const masters = await reportService.listMasterTemplates({ withUsage: false });
-  const selected = masters.find((item) => item.id === input.fieldTemplateId);
+  const selected = masters.find((item: { id: string }) => item.id === input.fieldTemplateId);
   if (!selected) throw new ValidationError("fieldTemplateId not found.");
   return selected.field_catalog;
 }

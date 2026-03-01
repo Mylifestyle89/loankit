@@ -1,6 +1,7 @@
 "use client";
 
 import { create } from "zustand";
+import { persist } from "zustand/middleware";
 import type { FieldCatalogItem } from "@/lib/report/config-schema";
 import type { MappingApiResponse, ValidationResponse } from "../types";
 
@@ -49,38 +50,66 @@ type MappingDataState = {
     values: Record<string, unknown>,
     manualValues: Record<string, string | number | boolean | null>,
   ) => void;
+  /** True once Zustand has finished reading from localStorage (Next.js SSR-safe). */
+  _hasHydrated: boolean;
+  _setHasHydrated: (v: boolean) => void;
 };
 
-export const useMappingDataStore = create<MappingDataState>((set) => ({
-  mappingText: "",
-  aliasText: "",
-  validation: undefined,
-  activeVersionId: "",
-  versions: [],
-  fieldCatalog: [],
-  autoValues: {},
-  values: {},
-  manualValues: {},
-  formulas: {},
-  setMappingText: (text) =>
-    set((s) => ({ mappingText: typeof text === "function" ? text(s.mappingText) : text })),
-  setAliasText: (aliasText) => set({ aliasText }),
-  setValidation: (v) =>
-    set((s) => ({ validation: typeof v === "function" ? v(s.validation) : v })),
-  setActiveVersionId: (activeVersionId) => set({ activeVersionId }),
-  setVersions: (versions) => set({ versions }),
-  setFieldCatalog: (catalog) =>
-    set((s) => ({
-      fieldCatalog: typeof catalog === "function" ? catalog(s.fieldCatalog) : catalog,
-    })),
-  setAutoValues: (autoValues) => set({ autoValues }),
-  setValues: (values) =>
-    set((s) => ({ values: typeof values === "function" ? values(s.values) : values })),
-  setManualValues: (values) =>
-    set((s) => ({
-      manualValues: typeof values === "function" ? values(s.manualValues) : values,
-    })),
-  setFormulas: (formulas) =>
-    set((s) => ({ formulas: typeof formulas === "function" ? formulas(s.formulas) : formulas })),
-  setTemplateData: (catalog, values, manualValues) => set({ fieldCatalog: catalog, values, manualValues }),
-}));
+export const useMappingDataStore = create<MappingDataState>()(
+  persist(
+    (set) => ({
+      mappingText: "",
+      aliasText: "",
+      validation: undefined,
+      activeVersionId: "",
+      versions: [],
+      fieldCatalog: [],
+      autoValues: {},
+      values: {},
+      manualValues: {},
+      formulas: {},
+      _hasHydrated: false,
+      setMappingText: (text) =>
+        set((s) => ({ mappingText: typeof text === "function" ? text(s.mappingText) : text })),
+      setAliasText: (aliasText) => set({ aliasText }),
+      setValidation: (v) =>
+        set((s) => ({ validation: typeof v === "function" ? v(s.validation) : v })),
+      setActiveVersionId: (activeVersionId) => set({ activeVersionId }),
+      setVersions: (versions) => set({ versions }),
+      setFieldCatalog: (catalog) =>
+        set((s) => ({
+          fieldCatalog: typeof catalog === "function" ? catalog(s.fieldCatalog) : catalog,
+        })),
+      setAutoValues: (autoValues) => set({ autoValues }),
+      setValues: (values) =>
+        set((s) => ({ values: typeof values === "function" ? values(s.values) : values })),
+      setManualValues: (values) =>
+        set((s) => ({
+          manualValues: typeof values === "function" ? values(s.manualValues) : values,
+        })),
+      setFormulas: (formulas) =>
+        set((s) => ({ formulas: typeof formulas === "function" ? formulas(s.formulas) : formulas })),
+      setTemplateData: (catalog, values, manualValues) => set({ fieldCatalog: catalog, values, manualValues }),
+      _setHasHydrated: (v) => set({ _hasHydrated: v }),
+    }),
+    {
+      name: "mapping-data-draft",
+      // Persist user-entered data that would be lost on hot-reload
+      partialize: (s) => ({
+        manualValues: s.manualValues,
+        values: s.values,
+        formulas: s.formulas,
+        fieldCatalog: s.fieldCatalog,
+        autoValues: s.autoValues,
+      }),
+      onRehydrateStorage: () => (state) => {
+        state?._setHasHydrated(true);
+      },
+    },
+  ),
+);
+
+/** True after Zustand has finished reading draft from localStorage. */
+export function useIsMappingDataHydrated(): boolean {
+  return useMappingDataStore((s) => s._hasHydrated);
+}

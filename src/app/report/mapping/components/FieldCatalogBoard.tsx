@@ -211,6 +211,13 @@ export function FieldCatalogBoard({
 
         {groupedFieldTree.map((node) => (
           <div key={node.parent} className={collapsedParentGroups.includes(node.parent) ? "hidden" : "space-y-3"}>
+            {/* Parent group header */}
+            <div className="flex items-center gap-2.5 pt-1 pb-0.5">
+              <span className="shrink-0 text-[13px] font-bold tracking-wide text-indigo-700 dark:text-indigo-400">
+                {node.parent}
+              </span>
+              <div className="flex-1 border-t border-indigo-200/60 dark:border-indigo-500/25" />
+            </div>
             {!collapsedParentGroups.includes(node.parent)
               ? node.children.map((child) => (
                   <div key={child.fullPath} className="space-y-2">

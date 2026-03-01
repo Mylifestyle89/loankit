@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import type { FieldCatalogItem } from "@/lib/report/config-schema";
+import { toNumber } from "@/lib/report/field-calc";
 import { buildInternalFieldKey } from "../helpers";
 import { useMappingDataStore } from "../stores/use-mapping-data-store";
 import { useGroupUiStore } from "../stores/use-group-ui-store";
@@ -19,8 +20,8 @@ type UseGroupManagementParams = {
 /** Safe numeric parse: returns a number when parseable, otherwise the original string. */
 function parseNumericValue(val: string, type: FieldCatalogItem["type"]): unknown {
   if (type === "number" || type === "percent") {
-    const num = parseFloat(val.replace(/,/g, ""));
-    return isNaN(num) ? val : num;
+    const num = toNumber(val);
+    return num !== null ? num : val;
   }
   return val;
 }

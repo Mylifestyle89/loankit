@@ -514,8 +514,12 @@ function resolveFormulaArg(rawArg: string, context: Record<string, unknown>): un
   const fromContext = context[arg] ?? context[arg.replace(/_/g, " ")];
   if (fromContext !== undefined) return fromContext;
 
-  const n = evaluateExpression(arg, context);
-  if (n !== null) return n;
+  // Only try expression evaluation if arg has no spaces — tokenizer strips spaces
+  // which mangles multi-word field names like "Tổng giá trị TSBĐ" into garbage
+  if (!arg.includes(" ")) {
+    const n = evaluateExpression(arg, context);
+    if (n !== null) return n;
+  }
 
   const numericLiteral = toNumber(arg);
   if (numericLiteral !== null) return numericLiteral;
@@ -550,6 +554,32 @@ function evaluateWordFormula(
   return null;
 }
 
+/**
+ * Evaluate aggregate functions: SUM, AVERAGE, MIN, MAX
+ * Parse bằng regex để giữ nguyên tên field có dấu cách (ví dụ: "Giá trị tài sản bảo đảm")
+ */
+function evaluateAggregateFormula(
+  expression: string,
+  context: Record<string, unknown>,
+): number | null {
+  const match = expression.trim().match(/^(sum|average|min|max)\s*\(\s*(.*?)\s*\)$/iu);
+  if (!match) return null;
+
+  const fn = match[1].toUpperCase();
+  const argName = match[2].trim();
+  if (!argName) return null;
+
+  // Resolve argument: tìm array value trong context
+  const resolved = context[argName] ?? context[argName.replace(/_/g, " ")];
+  if (!Array.isArray(resolved)) return null;
+
+  if (fn === "SUM") return sum(resolved);
+  if (fn === "AVERAGE") return average(resolved);
+  if (fn === "MIN") return min(resolved);
+  if (fn === "MAX") return max(resolved);
+  return null;
+}
+
 export function evaluateFieldFormula(
   expression: string,
   context: Record<string, unknown>,
@@ -561,6 +591,9 @@ export function evaluateFieldFormula(
   if (fieldType === "text") {
     return evaluateWordFormula(expression, context);
   }
+  // Thử aggregate functions trước (SUM, AVERAGE, MIN, MAX)
+  const aggregate = evaluateAggregateFormula(expression, context);
+  if (aggregate !== null) return aggregate;
   const numeric = evaluateExpression(expression, context);
   if (numeric !== null) return numeric;
   // Cho phép field số nhận kết quả "date - date" theo số ngày

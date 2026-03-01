@@ -36,6 +36,12 @@ export type AiMappingPayload = {
   t: (key: string) => string;
   fieldCatalog?: FieldCatalogItem[];
   onApplyFinancialValues?: (values: Record<string, string>) => void;
+  onApplyBkImport?: (payload: {
+    mode: "data-only" | "template-and-data";
+    values: Record<string, string>;
+    newFields?: FieldCatalogItem[];
+    templateName?: string;
+  }) => void;
 };
 
 export type ModalPayloadMap = {
