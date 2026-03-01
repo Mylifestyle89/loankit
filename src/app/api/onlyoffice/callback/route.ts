@@ -2,6 +2,7 @@ import path from "node:path";
 
 import { NextRequest, NextResponse } from "next/server";
 import { reportService } from "@/services/report.service";
+import { verifyToken, ONLYOFFICE_URL } from "@/lib/onlyoffice/config";
 
 export const runtime = "nodejs";
 
@@ -31,6 +32,20 @@ type CallbackBody = {
 export async function POST(req: NextRequest) {
   try {
     const relPath = req.nextUrl.searchParams.get("path") ?? "";
+    const token = req.nextUrl.searchParams.get("token") ?? "";
+
+    // Verify JWT token
+    if (!token) {
+      return NextResponse.json({ error: 1 }, { status: 401 });
+    }
+    try {
+      const payload = verifyToken(token);
+      if (payload.action !== "callback" || payload.path !== relPath) {
+        return NextResponse.json({ error: 1 }, { status: 403 });
+      }
+    } catch {
+      return NextResponse.json({ error: 1 }, { status: 403 });
+    }
 
     const resolved = path.resolve(process.cwd(), relPath);
     const withinBase = resolved.startsWith(allowedBase + path.sep) || resolved === allowedBase;
@@ -43,7 +58,14 @@ export async function POST(req: NextRequest) {
 
     // Save on status 2 (all users closed) or 6 (force save)
     if ((status === 2 || status === 6) && url) {
-      // Download the saved file from OnlyOffice server
+      // Validate download URL: must come from OnlyOffice server
+      const parsedUrl = new URL(url);
+      const allowedHost = new URL(ONLYOFFICE_URL).hostname;
+      if (parsedUrl.hostname !== allowedHost && parsedUrl.hostname !== "localhost") {
+        console.error(`[onlyoffice/callback] Rejected download URL from untrusted host: ${parsedUrl.hostname}`);
+        return NextResponse.json({ error: 1 });
+      }
+
       const fileRes = await fetch(url);
       if (!fileRes.ok) {
         console.error(`[onlyoffice/callback] Failed to download from OnlyOffice: ${fileRes.status}`);

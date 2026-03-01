@@ -33,6 +33,12 @@ export function OnlyOfficeEditorModal({ docxPath, onClose, onSaved }: Props) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+  // Stable refs for callbacks to avoid useEffect re-triggers
+  const onCloseRef = useRef(onClose);
+  const onSavedRef = useRef(onSaved);
+  onCloseRef.current = onClose;
+  onSavedRef.current = onSaved;
+
   const destroy = useCallback(() => {
     try {
       editorInstanceRef.current?.destroyEditor();
@@ -44,9 +50,9 @@ export function OnlyOfficeEditorModal({ docxPath, onClose, onSaved }: Props) {
 
   const handleClose = useCallback(() => {
     destroy();
-    onSaved?.();
-    onClose();
-  }, [destroy, onClose, onSaved]);
+    onSavedRef.current?.();
+    onCloseRef.current();
+  }, [destroy]);
 
   useEffect(() => {
     let cancelled = false;
@@ -67,14 +73,26 @@ export function OnlyOfficeEditorModal({ docxPath, onClose, onSaved }: Props) {
 
         // 2. Load OnlyOffice API script if not already loaded
         if (!window.DocsAPI) {
-          await new Promise<void>((resolve, reject) => {
-            const script = document.createElement("script");
-            script.src = `${documentServerUrl}/web-apps/apps/api/documents/api.js`;
-            script.onload = () => resolve();
-            script.onerror = () =>
-              reject(new Error("Failed to load OnlyOffice API script."));
-            document.head.appendChild(script);
-          });
+          const scriptId = "onlyoffice-api-script";
+          const existing = document.getElementById(scriptId);
+          if (existing) {
+            // Script tag exists but DocsAPI not ready yet — wait for it
+            await new Promise<void>((resolve) => {
+              const check = () =>
+                window.DocsAPI ? resolve() : setTimeout(check, 100);
+              check();
+            });
+          } else {
+            await new Promise<void>((resolve, reject) => {
+              const script = document.createElement("script");
+              script.id = scriptId;
+              script.src = `${documentServerUrl}/web-apps/apps/api/documents/api.js`;
+              script.onload = () => resolve();
+              script.onerror = () =>
+                reject(new Error("Failed to load OnlyOffice API script."));
+              document.head.appendChild(script);
+            });
+          }
         }
         if (cancelled) return;
 

@@ -328,7 +328,11 @@ export default function TemplatePage() {
             <button
               type="button"
               onClick={openEditor}
-              disabled={!docxPath || availableFieldCatalog.length === 0 || openingEditor}
+              disabled={
+                !docxPath ||
+                (editorType === "eigenpal" && availableFieldCatalog.length === 0) ||
+                openingEditor
+              }
               className="rounded-md bg-coral-tree-600 px-4 py-2 text-sm text-white disabled:opacity-50 hover:bg-coral-tree-700"
             >
               {openingEditor ? t("template.editor.modal.loading") : t("template.editor.openEditor")}
