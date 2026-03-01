@@ -1,0 +1,188 @@
+"use client";
+
+import { useCallback, useEffect, useRef, useState } from "react";
+import { X, Loader2 } from "lucide-react";
+import { useLanguage } from "@/components/language-provider";
+
+type Props = {
+  docxPath: string;
+  onClose: () => void;
+  onSaved?: () => void;
+};
+
+type EditorConfig = {
+  config: Record<string, unknown> & { token?: string };
+  documentServerUrl: string;
+};
+
+declare global {
+  interface Window {
+    DocsAPI?: {
+      DocEditor: new (
+        containerId: string,
+        config: Record<string, unknown>,
+      ) => { destroyEditor: () => void };
+    };
+  }
+}
+
+export function OnlyOfficeEditorModal({ docxPath, onClose, onSaved }: Props) {
+  const { t } = useLanguage();
+  const editorInstanceRef = useRef<{ destroyEditor: () => void } | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  const destroy = useCallback(() => {
+    try {
+      editorInstanceRef.current?.destroyEditor();
+    } catch {
+      // ignore
+    }
+    editorInstanceRef.current = null;
+  }, []);
+
+  const handleClose = useCallback(() => {
+    destroy();
+    onSaved?.();
+    onClose();
+  }, [destroy, onClose, onSaved]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function init() {
+      try {
+        // 1. Fetch editor config from our API
+        const res = await fetch(
+          `/api/onlyoffice/config?path=${encodeURIComponent(docxPath)}`,
+        );
+        const data = (await res.json()) as { ok?: boolean; error?: string } & EditorConfig;
+        if (!data.ok || !data.config) {
+          throw new Error(data.error || "Failed to get OnlyOffice config.");
+        }
+        if (cancelled) return;
+
+        const { config, documentServerUrl } = data;
+
+        // 2. Load OnlyOffice API script if not already loaded
+        if (!window.DocsAPI) {
+          await new Promise<void>((resolve, reject) => {
+            const script = document.createElement("script");
+            script.src = `${documentServerUrl}/web-apps/apps/api/documents/api.js`;
+            script.onload = () => resolve();
+            script.onerror = () =>
+              reject(new Error("Failed to load OnlyOffice API script."));
+            document.head.appendChild(script);
+          });
+        }
+        if (cancelled) return;
+
+        if (!window.DocsAPI) {
+          throw new Error("DocsAPI not available after script load.");
+        }
+
+        // 3. Initialize editor
+        const editorConfig = {
+          ...config,
+          width: "100%",
+          height: "100%",
+          type: "desktop",
+          events: {
+            onDocumentReady: () => {
+              if (!cancelled) setLoading(false);
+            },
+            onError: (event: { data?: { errorCode?: number } }) => {
+              console.error("[OnlyOffice] Error:", event);
+              if (!cancelled) {
+                setError(
+                  `OnlyOffice error: ${event?.data?.errorCode ?? "unknown"}`,
+                );
+                setLoading(false);
+              }
+            },
+            onRequestClose: () => {
+              handleClose();
+            },
+          },
+        };
+
+        editorInstanceRef.current = new window.DocsAPI.DocEditor(
+          "onlyoffice-editor-container",
+          editorConfig,
+        );
+      } catch (e) {
+        if (!cancelled) {
+          setError(e instanceof Error ? e.message : "Failed to initialize editor.");
+          setLoading(false);
+        }
+      }
+    }
+
+    void init();
+
+    return () => {
+      cancelled = true;
+      destroy();
+    };
+  }, [docxPath, destroy, handleClose]);
+
+  return (
+    <div className="fixed inset-0 z-50 flex flex-col bg-black/60 backdrop-blur-sm">
+      <div className="flex h-full w-full flex-col overflow-hidden bg-white dark:bg-[#0f1629]">
+        {/* Header */}
+        <div className="flex items-center justify-between border-b border-slate-200/70 px-4 py-2 dark:border-white/[0.08]">
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+              OnlyOffice Editor
+            </p>
+            <p className="truncate text-xs text-slate-500 dark:text-slate-400">
+              {docxPath}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={handleClose}
+            className="flex items-center gap-1.5 rounded-lg border border-slate-300 px-3 py-1.5 text-sm text-slate-700 transition-colors hover:bg-slate-50 dark:border-white/[0.10] dark:text-slate-300 dark:hover:bg-white/[0.06]"
+          >
+            <X className="h-4 w-4" />
+            {t("template.editor.modal.close")}
+          </button>
+        </div>
+
+        {/* Editor area */}
+        <div ref={containerRef} className="relative flex-1">
+          {loading && (
+            <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/80 dark:bg-[#0f1629]/80">
+              <div className="flex flex-col items-center gap-3">
+                <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
+                <p className="text-sm text-slate-600 dark:text-slate-400">
+                  {t("template.editor.onlyofficeLoading")}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {error && (
+            <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/90 dark:bg-[#0f1629]/90">
+              <div className="max-w-md rounded-xl border border-red-200 bg-red-50 p-6 text-center dark:border-red-500/30 dark:bg-red-500/10">
+                <p className="text-sm font-medium text-red-700 dark:text-red-300">
+                  {error}
+                </p>
+                <button
+                  type="button"
+                  onClick={handleClose}
+                  className="mt-4 rounded-lg bg-red-600 px-4 py-2 text-sm text-white hover:bg-red-700"
+                >
+                  {t("template.editor.modal.close")}
+                </button>
+              </div>
+            </div>
+          )}
+
+          <div id="onlyoffice-editor-container" className="h-full w-full" />
+        </div>
+      </div>
+    </div>
+  );
+}

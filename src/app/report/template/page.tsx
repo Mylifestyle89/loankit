@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { DocxTemplateEditorModal } from "@/components/docx-template-editor-modal";
+import { OnlyOfficeEditorModal } from "@/components/onlyoffice-editor-modal";
 import { useLanguage } from "@/components/language-provider";
 
 type TemplateProfile = {
@@ -58,6 +59,11 @@ export default function TemplatePage() {
   const [localDocxName, setLocalDocxName] = useState("");
   const localDocxInputRef = useRef<HTMLInputElement | null>(null);
 
+  // OnlyOffice integration
+  const [onlyofficeAvailable, setOnlyofficeAvailable] = useState<boolean | null>(null);
+  const [editorType, setEditorType] = useState<"onlyoffice" | "eigenpal">("onlyoffice");
+  const [showOnlyofficeEditor, setShowOnlyofficeEditor] = useState(false);
+
   const loadTemplates = useCallback(async () => {
     setLoading(true);
     const res = await fetch("/api/report/template", { cache: "no-store" });
@@ -93,6 +99,20 @@ export default function TemplatePage() {
     if (templates.length > 0) void loadFieldTemplates();
   }, [templates.length, loadFieldTemplates]);
 
+  // Check OnlyOffice availability on mount
+  useEffect(() => {
+    fetch("/api/onlyoffice/health")
+      .then((r) => r.json() as Promise<{ available: boolean }>)
+      .then((d) => {
+        setOnlyofficeAvailable(d.available);
+        if (!d.available) setEditorType("eigenpal");
+      })
+      .catch(() => {
+        setOnlyofficeAvailable(false);
+        setEditorType("eigenpal");
+      });
+  }, []);
+
   const selectedTemplate = templates.find((t) => t.id === activeTemplateId);
   const docxPath = selectedTemplate?.docx_path ?? "";
 
@@ -104,11 +124,19 @@ export default function TemplatePage() {
 
   function openEditor() {
     if (!docxPath) return;
+    setError("");
+    setMessage("");
+
+    // OnlyOffice mode: open directly (no need to fetch buffer)
+    if (editorType === "onlyoffice" && onlyofficeAvailable) {
+      setShowOnlyofficeEditor(true);
+      return;
+    }
+
+    // Eigenpal mode: fetch buffer as before
     setOpeningEditor(true);
     setEditorSource("managed");
     setLocalDocxName("");
-    setError("");
-    setMessage("");
     void (async () => {
       try {
         const res = await fetch(`/api/report/file?path=${encodeURIComponent(docxPath)}&download=1&ts=${Date.now()}`);
@@ -321,6 +349,39 @@ export default function TemplatePage() {
             >
               {openingEditor ? "Đang mở..." : "Chọn mẫu từ folder để chỉnh sửa"}
             </button>
+
+            {/* Editor type toggle */}
+            {onlyofficeAvailable && (
+              <div className="flex items-center rounded-lg border border-slate-200 dark:border-white/[0.10] overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() => setEditorType("onlyoffice")}
+                  className={`px-3 py-2 text-xs font-medium transition-colors ${
+                    editorType === "onlyoffice"
+                      ? "bg-indigo-600 text-white"
+                      : "bg-white text-slate-600 hover:bg-slate-50 dark:bg-white/[0.05] dark:text-slate-400 dark:hover:bg-white/[0.08]"
+                  }`}
+                >
+                  {t("template.editor.onlyoffice")}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setEditorType("eigenpal")}
+                  className={`px-3 py-2 text-xs font-medium transition-colors ${
+                    editorType === "eigenpal"
+                      ? "bg-indigo-600 text-white"
+                      : "bg-white text-slate-600 hover:bg-slate-50 dark:bg-white/[0.05] dark:text-slate-400 dark:hover:bg-white/[0.08]"
+                  }`}
+                >
+                  {t("template.editor.eigenpal")}
+                </button>
+              </div>
+            )}
+            {onlyofficeAvailable === false && (
+              <span className="text-xs text-slate-400 dark:text-slate-500">
+                {t("template.editor.onlyofficeUnavailable")}
+              </span>
+            )}
           </div>
           <div className="mt-4">
             <p className="mb-2 text-sm font-medium text-coral-tree-700">{t("template.editor.injectHint")}</p>
@@ -391,7 +452,7 @@ export default function TemplatePage() {
         </div>
       ) : null}
 
-      {/* DOCX Editor Modal */}
+      {/* Eigenpal DOCX Editor Modal */}
       {showEditor && editorBuffer && availableFieldCatalog.length > 0 ? (
         <DocxTemplateEditorModal
           docxPath={editorSource === "local" ? localDocxName || "local-template.docx" : docxPath}
@@ -404,6 +465,15 @@ export default function TemplatePage() {
           onSaveDocx={saveEditorDocx}
           enableAutoBackup={editorSource === "managed"}
           autoBackupIntervalMs={60_000}
+        />
+      ) : null}
+
+      {/* OnlyOffice Editor Modal */}
+      {showOnlyofficeEditor && docxPath ? (
+        <OnlyOfficeEditorModal
+          docxPath={docxPath}
+          onClose={() => setShowOnlyofficeEditor(false)}
+          onSaved={() => void loadTemplates()}
         />
       ) : null}
     </section>
