@@ -122,6 +122,12 @@ export default function RunsPage() {
         }),
       });
 
+      if (!res.ok) {
+        const text = await res.text();
+        console.error(`[Runs] HTTP ${res.status}:`, text);
+        throw new Error(`Server error ${res.status}: ${text.slice(0, 200)}`);
+      }
+
       const data = (await res.json()) as ExportResponse & { details?: string };
       if (!data.ok) {
         const errorMsg = data.details || data.error || t("runs.err.export");

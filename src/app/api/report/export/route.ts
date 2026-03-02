@@ -62,7 +62,10 @@ export async function POST(req: NextRequest) {
       ...result,
     });
   } catch (error) {
-    console.error("[Export API] Error:", error);
+    console.error("[Export API] Caught error:", error);
+    console.error("[Export API] Error type:", error?.constructor?.name);
+    console.error("[Export API] Error message:", error instanceof Error ? error.message : String(error));
+
     if (error instanceof z.ZodError) {
       const validationError = new ValidationError("Dữ liệu request không hợp lệ.", error.flatten().fieldErrors);
       return NextResponse.json(
@@ -71,9 +74,23 @@ export async function POST(req: NextRequest) {
       );
     }
     const httpError = toHttpError(error, "Export failed.");
-    console.error("[Export API] HTTP Error:", httpError.message);
+    console.error("[Export API] HTTP Error status:", httpError.status);
+    console.error("[Export API] HTTP Error message:", httpError.message);
+
+    // Extract detailed error info
+    let detailsStr = error instanceof Error ? error.message : String(error);
+    if (error && typeof error === "object" && "details" in error) {
+      const details = (error as any).details;
+      if (details && typeof details === "object") {
+        detailsStr = JSON.stringify(details, null, 2).slice(0, 500);
+      } else if (typeof details === "string") {
+        detailsStr = details;
+      }
+    }
+    console.error("[Export API] Details:", detailsStr);
+
     return NextResponse.json(
-      { ok: false, error: httpError.message, details: error instanceof Error ? error.message : String(error) },
+      { ok: false, error: httpError.message, details: detailsStr },
       { status: httpError.status },
     );
   }

@@ -217,11 +217,21 @@ export const docxEngine = {
     }
 
     const renderData = toEngineData(data);
-    const doc = new Docxtemplater(zip, {
-      paragraphLoop: true,
-      linebreaks: true,
-      delimiters: { start: "[", end: "]" },
-    });
+    let doc: InstanceType<typeof Docxtemplater>;
+    try {
+      doc = new Docxtemplater(zip, {
+        paragraphLoop: true,
+        linebreaks: true,
+        delimiters: { start: "[", end: "]" },
+      });
+    } catch (error) {
+      const details =
+        error && typeof error === "object" && "properties" in error
+          ? (error as { properties?: { errors?: unknown } }).properties?.errors ?? error
+          : error;
+      console.error("[DOCX Engine] Docxtemplater init error:", details);
+      throw new DataPlaceholderMismatchError(templatePath, details);
+    }
 
     try {
       doc.render(renderData);
@@ -230,6 +240,7 @@ export const docxEngine = {
         error && typeof error === "object" && "properties" in error
           ? (error as { properties?: { errors?: unknown } }).properties?.errors ?? error
           : error;
+      console.error("[DOCX Engine] Render error:", details);
       throw new DataPlaceholderMismatchError(templatePath, details);
     }
 
