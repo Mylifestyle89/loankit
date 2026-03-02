@@ -17,9 +17,12 @@ export async function GET() {
   }
 }
 
+const snapshotRepeaterItem = z.record(z.string(), z.unknown());
+const snapshotScalarOrArray = z.union([z.string(), z.number(), z.boolean(), z.null(), z.array(snapshotRepeaterItem)]);
+
 const createSnapshotSchema = z.object({
   source: z.enum(["auto", "manual"]).default("auto"),
-  manualValues: z.record(z.string(), z.union([z.string(), z.number(), z.boolean(), z.null()])).default({}),
+  manualValues: z.record(z.string(), snapshotScalarOrArray).default({}),
   formulas: z.record(z.string(), z.string()).default({}),
   mappingText: z.string().default("{}"),
   aliasText: z.string().default("{}"),

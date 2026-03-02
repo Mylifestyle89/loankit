@@ -15,9 +15,16 @@ export function useAutoSaveSnapshot() {
   const takeSnapshot = useCallback(async (source: "auto" | "manual" = "auto") => {
     const md = useMappingDataStore.getState();
 
+    // Include repeater arrays from values in the snapshot
+    const repeaterData: Record<string, unknown> = {};
+    for (const [key, val] of Object.entries(md.values)) {
+      if (Array.isArray(val)) repeaterData[key] = val;
+    }
+    const mergedManual = { ...md.manualValues, ...repeaterData };
+
     // Build a quick hash to detect changes
     const hash = JSON.stringify({
-      mv: md.manualValues,
+      mv: mergedManual,
       f: md.formulas,
       fc: md.fieldCatalog.length,
     });
@@ -29,7 +36,7 @@ export function useAutoSaveSnapshot() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           source,
-          manualValues: md.manualValues,
+          manualValues: mergedManual,
           formulas: md.formulas,
           mappingText: md.mappingText,
           aliasText: md.aliasText,

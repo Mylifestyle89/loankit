@@ -48,6 +48,11 @@ function normalizeRelPath(relPath: string): string {
 }
 
 function resolveWorkspacePath(relPath: string): string {
+  // If relPath is already absolute, return it as-is (converted to native path separators)
+  if (path.isAbsolute(relPath)) {
+    return relPath;
+  }
+  // Otherwise, join with process.cwd()
   return path.join(process.cwd(), normalizeRelPath(relPath));
 }
 

@@ -26,8 +26,11 @@ export async function GET() {
   }
 }
 
+const repeaterItem = z.record(z.string(), z.union([z.string(), z.number(), z.boolean(), z.null(), z.undefined()]));
+const scalarOrArray = z.union([z.string(), z.number(), z.boolean(), z.null(), z.array(repeaterItem)]);
+
 const valuesPutSchema = z.object({
-  manual_values: z.record(z.string(), z.union([z.string(), z.number(), z.boolean(), z.null()])).optional(),
+  manual_values: z.record(z.string(), scalarOrArray).optional(),
   field_formulas: z.record(z.string(), z.string()).optional(),
 });
 

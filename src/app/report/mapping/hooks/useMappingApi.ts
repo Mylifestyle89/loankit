@@ -177,10 +177,18 @@ export function useMappingApi({ t, selectedMappingInstanceId }: UseMappingApiPar
       if (!mappingData.ok) throw new Error(mappingData.error ?? t("mapping.err.saveDraft"));
 
       // 3. Save field values (depends on mapping save succeeding)
+      // Include repeater arrays from values — they are stored in values[groupPath] as arrays
+      const repeaterData: Record<string, unknown> = {};
+      for (const [key, val] of Object.entries(md.values)) {
+        if (Array.isArray(val)) repeaterData[key] = val;
+      }
       await fetch("/api/report/values", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ manual_values: md.manualValues, field_formulas: md.formulas }),
+        body: JSON.stringify({
+          manual_values: { ...md.manualValues, ...repeaterData },
+          field_formulas: md.formulas,
+        }),
       });
 
       // 4. Compute effective values with formulas for customer sync

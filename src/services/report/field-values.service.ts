@@ -45,7 +45,7 @@ export const fieldValuesService = {
   },
 
   async saveFieldValues(input: {
-    manualValues?: Record<string, string | number | boolean | null>;
+    manualValues?: Record<string, string | number | boolean | null | Record<string, unknown>[]>;
     fieldFormulas?: Record<string, string>;
   }) {
     if (!input.manualValues || typeof input.manualValues !== "object") {

@@ -220,7 +220,13 @@ export function useFieldTemplates({ t }: { t: (key: string) => string }) {
         fetch("/api/report/values", {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ manual_values: md.manualValues, field_formulas: md.formulas }),
+          body: JSON.stringify({
+            manual_values: {
+              ...md.manualValues,
+              ...Object.fromEntries(Object.entries(md.values).filter(([, v]) => Array.isArray(v))),
+            },
+            field_formulas: md.formulas,
+          }),
         }),
       ]);
 
@@ -299,7 +305,13 @@ export function useFieldTemplates({ t }: { t: (key: string) => string }) {
         fetch("/api/report/values", {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ manual_values: md.manualValues, field_formulas: md.formulas }),
+          body: JSON.stringify({
+            manual_values: {
+              ...md.manualValues,
+              ...Object.fromEntries(Object.entries(md.values).filter(([, v]) => Array.isArray(v))),
+            },
+            field_formulas: md.formulas,
+          }),
         }),
       ]);
 

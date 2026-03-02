@@ -62,6 +62,7 @@ export async function POST(req: NextRequest) {
       ...result,
     });
   } catch (error) {
+    console.error("[Export API] Error:", error);
     if (error instanceof z.ZodError) {
       const validationError = new ValidationError("Dữ liệu request không hợp lệ.", error.flatten().fieldErrors);
       return NextResponse.json(
@@ -70,8 +71,9 @@ export async function POST(req: NextRequest) {
       );
     }
     const httpError = toHttpError(error, "Export failed.");
+    console.error("[Export API] HTTP Error:", httpError.message);
     return NextResponse.json(
-      { ok: false, error: httpError.message },
+      { ok: false, error: httpError.message, details: error instanceof Error ? error.message : String(error) },
       { status: httpError.status },
     );
   }

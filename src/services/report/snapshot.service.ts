@@ -18,7 +18,7 @@ const SNAPSHOT_DIR = path.join(REPORT_ASSETS_DIR, "backups", "editor-snapshots")
 const MAX_SNAPSHOTS = 120; // ~2 hours of 60s intervals
 
 export type SnapshotData = {
-  manualValues: Record<string, string | number | boolean | null>;
+  manualValues: Record<string, string | number | boolean | null | Record<string, unknown>[]>;
   formulas: Record<string, string>;
   mappingText: string;
   aliasText: string;

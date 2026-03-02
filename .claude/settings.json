@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node -e \"const p = require\\(''pdf-parse''\\); console.log\\(typeof p, Object.keys\\(p\\)\\)\")",
+      "Bash(node -e \"const { PDFParse } = require\\(''pdf-parse''\\); const p = new PDFParse\\(\\); console.log\\(typeof p.getText, typeof p.getMetadata, Object.getOwnPropertyNames\\(Object.getPrototypeOf\\(p\\)\\)\\)\")",
+      "Bash(npx prisma:*)",
+      "Bash(docker exec onlyoffice printenv JWT_SECRET)",
+      "Bash(docker exec onlyoffice env)"
+    ]
+  }
+}

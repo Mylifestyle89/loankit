@@ -6,9 +6,19 @@ import { z } from "zod";
 import { REPORT_MANUAL_VALUES_FILE } from "@/lib/report/constants";
 import { fileLockService } from "@/lib/report/file-lock.service";
 
-const manualValuesSchema = z.record(z.string(), z.union([z.string(), z.number(), z.boolean(), z.null()]));
+/** Scalar value for regular fields */
+const scalarValue = z.union([z.string(), z.number(), z.boolean(), z.null()]);
 
-export type ManualValues = z.infer<typeof manualValuesSchema>;
+/** Repeater item: a record of field_key → any value */
+const repeaterItem = z.record(z.string(), z.unknown());
+
+/** Manual values can contain scalars (regular fields) or arrays (repeater groups) */
+const manualValuesSchema = z.record(
+  z.string(),
+  z.union([scalarValue, z.array(repeaterItem)]),
+);
+
+export type ManualValues = Record<string, string | number | boolean | null | Record<string, unknown>[]>;
 
 export async function loadManualValues(): Promise<ManualValues> {
   try {

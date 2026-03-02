@@ -96,7 +96,7 @@ export function useGroupManagement({ t, groupedFieldTree, parentGroups }: UseGro
   // ── Repeater group ───────────────────────────────────────────────────────────
 
   function toggleRepeaterGroup(groupPath: string) {
-    const { setFieldCatalog } = useMappingDataStore.getState();
+    const { setFieldCatalog, setValues } = useMappingDataStore.getState();
     const isRepeater = groupedFieldTree
       .flatMap((p) => p.children)
       .find((c) => c.fullPath === groupPath)
@@ -127,6 +127,15 @@ export function useGroupManagement({ t, groupedFieldTree, parentGroups }: UseGro
         ? [...toggled, sttField]
         : [...toggled.slice(0, insertIndex), sttField, ...toggled.slice(insertIndex)];
     });
+
+    // Initialize values[groupPath] as empty array when turning on,
+    // or clean up when turning off
+    if (turningOn) {
+      setValues((prev) => {
+        if (Array.isArray(prev[groupPath])) return prev; // already initialized
+        return { ...prev, [groupPath]: [] };
+      });
+    }
   }
 
   function addRepeaterItem(groupPath: string) {

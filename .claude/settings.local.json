@@ -12,7 +12,11 @@
       "Bash(npx prisma db push --accept-data-loss)",
       "Bash(sqlite3 dev.db \".tables\")",
       "Bash(python3:*)",
-      "Bash(npx tsc --noEmit)"
+      "Bash(npx tsc --noEmit)",
+      "Bash(npm install jsonwebtoken)",
+      "Bash(npm install -D @types/jsonwebtoken)",
+      "Bash(docker run -d --name onlyoffice -p 8080:80 onlyoffice/documentserver)",
+      "Bash(docker exec onlyoffice bash -c 'cat /etc/onlyoffice/documentserver/local.json 2>/dev/null | python3 -m json.tool 2>/dev/null || cat /etc/onlyoffice/documentserver/local.json 2>/dev/null || echo \"\"File not found\"\"')"
     ]
   }
 }

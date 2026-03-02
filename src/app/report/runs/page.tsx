@@ -1,10 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Play, Eye } from "lucide-react";
+import { Play, Eye, Download } from "lucide-react";
 
 import { useLanguage } from "@/components/language-provider";
-import { DocxPreviewModal } from "@/components/docx-preview-modal";
+import { OnlyOfficeEditorModal } from "@/components/onlyoffice-editor-modal";
 
 type RunLog = {
   run_id: string;
@@ -51,9 +51,8 @@ export default function RunsPage() {
   const [buildResult, setBuildResult] = useState<unknown>(null);
   const [freshness, setFreshness] = useState<FreshnessPayload | null>(null);
   
-  // Preview Modal states
-  const [previewBuffer, setPreviewBuffer] = useState<ArrayBuffer | null>(null);
-  const [previewFilePath, setPreviewFilePath] = useState<string>("");
+  // OnlyOffice Preview states
+  const [onlyOfficePreviewPath, setOnlyOfficePreviewPath] = useState<string>("");
 
   const loadRuns = useCallback(async () => {
     setLoading(true);
@@ -113,7 +112,7 @@ export default function RunsPage() {
     try {
       const output = `report_assets/report_preview_${Date.now()}.docx`;
       const report = `report_assets/template_export_report_${Date.now()}.json`;
-      
+
       const res = await fetch("/api/report/export", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -122,51 +121,47 @@ export default function RunsPage() {
           report_path: report,
         }),
       });
-      
-      const data = (await res.json()) as ExportResponse;
+
+      const data = (await res.json()) as ExportResponse & { details?: string };
       if (!data.ok) {
-        throw new Error(data.error ?? t("runs.err.export"));
+        const errorMsg = data.details || data.error || t("runs.err.export");
+        console.error("[Runs] Export error:", data);
+        throw new Error(errorMsg);
       }
-      
+
       const filePath = data.output_path;
-      
-      // Fetch the generated DOCX for preview
-      const fileRes = await fetch(`/api/report/file?path=${encodeURIComponent(filePath)}&download=0&ts=${Date.now()}`);
-      if (!fileRes.ok) {
-        throw new Error("Không thể tải file preview từ máy chủ.");
-      }
-      
-      const buffer = await fileRes.arrayBuffer();
-      setPreviewFilePath(filePath);
-      setPreviewBuffer(buffer);
+      setOnlyOfficePreviewPath(filePath);
       setMessage(
         data.auto_build_triggered
           ? `Đã tự động chạy Build trước khi export${data.stale_reasons?.length ? ` (${data.stale_reasons.join(", ")})` : ""}.`
-          : "Đã tạo bản xem trước thành công.",
+          : "Đã tạo báo cáo thành công. Mở OnlyOffice để xem chi tiết.",
       );
       await loadRuns();
       await loadFreshness();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Đã có lỗi xảy ra khi tạo preview.");
+      setError(err instanceof Error ? err.message : "Đã có lỗi xảy ra khi tạo báo cáo.");
     } finally {
       setRunningExport(false);
     }
   }
 
   function handleDownloadDocx() {
-    if (!previewFilePath) return;
-    const url = `/api/report/file?path=${encodeURIComponent(previewFilePath)}&download=1`;
+    if (!onlyOfficePreviewPath) return;
+    const url = `/api/report/file?path=${encodeURIComponent(onlyOfficePreviewPath)}&download=1`;
     window.open(url, "_blank");
   }
 
   return (
     <section className="space-y-4">
-      {previewBuffer && (
-        <DocxPreviewModal
-          documentBuffer={previewBuffer}
-          fileName={previewFilePath.split('/').pop() || "Preview"}
-          onClose={() => setPreviewBuffer(null)}
-          onDownload={handleDownloadDocx}
+      {onlyOfficePreviewPath && (
+        <OnlyOfficeEditorModal
+          docxPath={onlyOfficePreviewPath}
+          onClose={() => setOnlyOfficePreviewPath("")}
+          onSaved={() => {
+            // Refresh runs list if user saves changes in OnlyOffice
+            void loadRuns();
+            void loadFreshness();
+          }}
         />
       )}
 
@@ -190,23 +185,32 @@ export default function RunsPage() {
         {error ? <p className="mt-2 text-sm text-red-700">{error}</p> : null}
       </div>
 
-      <div className="flex gap-3">
+      <div className="flex flex-wrap gap-3">
         <button
           onClick={runBuildValidate}
           disabled={runningBuild}
-          className="flex items-center gap-2 rounded-md border border-blue-chill-300 bg-white dark:bg-[#0f1629]/90 px-4 py-2 text-sm font-medium text-blue-chill-800 hover:bg-blue-chill-50 disabled:opacity-60 transition-colors"
+          className="flex items-center gap-2 rounded-md border border-slate-300 bg-white dark:bg-[#0f1629]/90 px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/[0.06] disabled:opacity-60 transition-colors"
         >
           <Play className="h-4 w-4" />
-          {runningBuild ? t("runs.running") : "Chạy Build dữ liệu (Background)"}
+          {runningBuild ? t("runs.running") : "Chạy Build Dữ Liệu"}
         </button>
         <button
           onClick={runExportPreview}
-          disabled={runningExport}
-          className="flex items-center gap-2 rounded-md bg-blue-chill-700 px-5 py-2 text-sm font-medium text-white hover:bg-blue-chill-800 disabled:opacity-60 transition-colors shadow-sm"
+          disabled={runningExport || runningBuild}
+          className="flex items-center gap-2 rounded-md bg-emerald-600 px-5 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-60 transition-colors shadow-sm"
         >
           <Eye className="h-4 w-4" />
-          {runningExport ? "Đang chuẩn bị bản xem trước..." : "Tạo & Xem trước Báo Cáo"}
+          {runningExport ? "Đang tạo báo cáo..." : "Tạo & Xem Báo Cáo trong OnlyOffice"}
         </button>
+        {onlyOfficePreviewPath && (
+          <button
+            onClick={handleDownloadDocx}
+            className="flex items-center gap-2 rounded-md border border-slate-300 bg-white dark:bg-[#0f1629]/90 px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/[0.06] transition-colors"
+          >
+            <Download className="h-4 w-4" />
+            Tải về DOCX
+          </button>
+        )}
       </div>
       <p className="text-xs text-blue-chill-600 dark:text-blue-chill-300">
         Nếu thiếu dữ liệu build, hệ thống sẽ tự chạy Build trước khi export.
