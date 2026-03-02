@@ -8,6 +8,9 @@ type EditingTemplateBannerProps = {
   stopEditingFieldTemplate: () => void;
   openImportGroupModal: () => void;
   openDeleteGenericTemplateModal: () => void;
+  isEditingMaster: boolean;
+  promoteToMasterTemplate: () => void;
+  promotingToMaster: boolean;
 };
 
 export function EditingTemplateBanner({
@@ -20,6 +23,9 @@ export function EditingTemplateBanner({
   stopEditingFieldTemplate,
   openImportGroupModal,
   openDeleteGenericTemplateModal,
+  isEditingMaster,
+  promoteToMasterTemplate,
+  promotingToMaster,
 }: EditingTemplateBannerProps) {
   if (!editingFieldTemplateId) return null;
   const secondaryActionClass =
@@ -31,6 +37,11 @@ export function EditingTemplateBanner({
         <span className="rounded-xl bg-indigo-50 dark:bg-indigo-500/10 px-2.5 py-1 text-sm font-semibold text-indigo-700 dark:text-indigo-400">
           {t("mapping.fieldTemplate.editing")}
         </span>
+        {!isEditingMaster && (
+          <span className="rounded-lg bg-amber-50 dark:bg-amber-500/10 px-2 py-0.5 text-xs font-medium text-amber-700 dark:text-amber-400">
+            Khách hàng
+          </span>
+        )}
         <input
           value={editingFieldTemplateName}
           onChange={(e) => setEditingFieldTemplateName(e.target.value)}
@@ -49,19 +60,31 @@ export function EditingTemplateBanner({
         >
           {savingEditedTemplate ? t("mapping.fieldTemplate.saving") : t("mapping.fieldTemplate.update")}
         </button>
+        {!isEditingMaster && (
+          <button
+            type="button"
+            onClick={promoteToMasterTemplate}
+            disabled={promotingToMaster}
+            className="rounded-xl border border-emerald-500 bg-emerald-500 px-3 py-2 text-sm font-semibold text-white shadow-[0_2px_8px_rgba(16,185,129,0.35)] transition-all hover:bg-emerald-600 hover:shadow-[0_4px_12px_rgba(16,185,129,0.4)] active:scale-95 disabled:pointer-events-none disabled:opacity-50 dark:border-emerald-500 dark:shadow-[0_2px_8px_rgba(16,185,129,0.25)] dark:hover:bg-emerald-600"
+          >
+            {promotingToMaster ? "Đang lưu..." : "Lưu thành template mẫu"}
+          </button>
+        )}
         <button type="button" onClick={openImportGroupModal} className={secondaryActionClass}>
           Thêm nhóm dữ liệu
         </button>
         <button type="button" onClick={stopEditingFieldTemplate} className={secondaryActionClass}>
           {t("mapping.fieldTemplate.stopEditing")}
         </button>
-        <button
-          type="button"
-          onClick={openDeleteGenericTemplateModal}
-          className="rounded-xl border border-rose-600 bg-rose-500 px-3 py-2 text-sm font-semibold text-white shadow-[0_2px_8px_rgba(244,63,94,0.35)] transition-all hover:bg-rose-600 hover:shadow-[0_4px_12px_rgba(244,63,94,0.4)] active:scale-95 dark:border-rose-500 dark:bg-rose-500 dark:text-white dark:shadow-[0_2px_8px_rgba(244,63,94,0.25)] dark:hover:bg-rose-600 dark:hover:shadow-[0_4px_14px_rgba(244,63,94,0.35)]"
-        >
-          Xóa template mẫu
-        </button>
+        {isEditingMaster && (
+          <button
+            type="button"
+            onClick={openDeleteGenericTemplateModal}
+            className="rounded-xl border border-rose-600 bg-rose-500 px-3 py-2 text-sm font-semibold text-white shadow-[0_2px_8px_rgba(244,63,94,0.35)] transition-all hover:bg-rose-600 hover:shadow-[0_4px_12px_rgba(244,63,94,0.4)] active:scale-95 dark:border-rose-500 dark:bg-rose-500 dark:text-white dark:shadow-[0_2px_8px_rgba(244,63,94,0.25)] dark:hover:bg-rose-600 dark:hover:shadow-[0_4px_14px_rgba(244,63,94,0.35)]"
+          >
+            Xóa template mẫu
+          </button>
+        )}
       </div>
     </div>
   );

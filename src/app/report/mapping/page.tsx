@@ -24,12 +24,14 @@ import { MappingSidebar } from "./components/MappingSidebar";
 import { DeleteConfirmModal } from "./components/Modals/DeleteConfirmModal";
 import { ImportGroupPromptModal } from "./components/Modals/ImportGroupPromptModal";
 import { OcrReviewModal } from "./components/Modals/OcrReviewModal";
+import { SnapshotRestoreModal } from "./components/Modals/SnapshotRestoreModal";
 import { SystemLogCard } from "./components/SystemLogCard";
 import { FinancialAnalysisModal } from "@/components/FinancialAnalysisModal";
 import { useFieldCatalogImport } from "./hooks/useFieldCatalogImport";
 import { useFieldTemplates } from "./hooks/useFieldTemplates";
 import { useGroupManagement } from "./hooks/useGroupManagement";
 import { useMappingApi } from "./hooks/useMappingApi";
+import { useAutoSaveSnapshot } from "./hooks/useAutoSaveSnapshot";
 import type {
   OcrProcessResponse,
   OcrSuggestionMap,
@@ -76,6 +78,8 @@ function MappingPageContent() {
   const searchParams = useSearchParams();
 
   const [financialAnalysisOpen, setFinancialAnalysisOpen] = useState(false);
+  const [snapshotRestoreOpen, setSnapshotRestoreOpen] = useState(false);
+  useAutoSaveSnapshot();
 
   // ── Reactive store subscriptions ──────────────────────────────────────────
   const mappingText = useMappingDataStore((s) => s.mappingText);
@@ -126,6 +130,7 @@ function MappingPageContent() {
   const editingFieldTemplateId = useFieldTemplateStore((s) => s.editingFieldTemplateId);
   const editingFieldTemplateName = useFieldTemplateStore((s) => s.editingFieldTemplateName);
   const savingEditedTemplate = useFieldTemplateStore((s) => s.savingEditedTemplate);
+  const promotingToMaster = useFieldTemplateStore((s) => s.promotingToMaster);
 
   const editingGroup = useGroupUiStore((s) => s.editingGroup);
   const editingGroupValue = useGroupUiStore((s) => s.editingGroupValue);
@@ -257,6 +262,7 @@ function MappingPageContent() {
     stopEditingFieldTemplate,
     assignSelectedFieldTemplate,
     saveEditedFieldTemplate,
+    promoteToMasterTemplate,
   } = useFieldTemplates({ t });
 
   // ── Computed values ───────────────────────────────────────────────────────
@@ -1404,6 +1410,7 @@ function MappingPageContent() {
           setShowUnmappedOnly={setShowUnmappedOnly}
           onOpenAddFieldModal={() => void openCreateMasterTemplateModal()}
           onOpenFinancialAnalysis={() => setFinancialAnalysisOpen(true)}
+          onOpenSnapshotRestore={() => setSnapshotRestoreOpen(true)}
           sidebar={
             pendingOcrCount > 0 ? (
               <button
@@ -1447,6 +1454,9 @@ function MappingPageContent() {
         stopEditingFieldTemplate={stopEditingFieldTemplate}
         openImportGroupModal={openImportGroupModal}
         openDeleteGenericTemplateModal={openDeleteGenericTemplateModal}
+        isEditingMaster={allFieldTemplates.some((i) => i.id === editingFieldTemplateId)}
+        promoteToMasterTemplate={() => void promoteToMasterTemplate()}
+        promotingToMaster={promotingToMaster}
         sensors={sensors}
         handleDragEnd={handleDragEnd}
         groupedFieldTree={groupedFieldTree}
@@ -1590,6 +1600,11 @@ function MappingPageContent() {
         onClose={() => setFinancialAnalysisOpen(false)}
         fieldCatalog={fieldCatalog}
         onApply={handleApplyFinancialValues}
+      />
+
+      <SnapshotRestoreModal
+        open={snapshotRestoreOpen}
+        onClose={() => setSnapshotRestoreOpen(false)}
       />
     </section>
   );

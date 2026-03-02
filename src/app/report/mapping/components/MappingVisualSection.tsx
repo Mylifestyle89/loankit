@@ -23,6 +23,9 @@ type MappingVisualSectionProps = {
   stopEditingFieldTemplate: () => void;
   openImportGroupModal: () => void;
   openDeleteGenericTemplateModal: () => void;
+  isEditingMaster: boolean;
+  promoteToMasterTemplate: () => void;
+  promotingToMaster: boolean;
   sensors: SensorDescriptor<SensorOptions>[];
   handleDragEnd: (event: DragEndEvent) => void;
   groupedFieldTree: GroupedTreeNode[];
@@ -71,6 +74,9 @@ export function MappingVisualSection({
   stopEditingFieldTemplate,
   openImportGroupModal,
   openDeleteGenericTemplateModal,
+  isEditingMaster,
+  promoteToMasterTemplate,
+  promotingToMaster,
   sensors,
   handleDragEnd,
   groupedFieldTree,
@@ -116,6 +122,9 @@ export function MappingVisualSection({
         stopEditingFieldTemplate={stopEditingFieldTemplate}
         openImportGroupModal={openImportGroupModal}
         openDeleteGenericTemplateModal={openDeleteGenericTemplateModal}
+        isEditingMaster={isEditingMaster}
+        promoteToMasterTemplate={promoteToMasterTemplate}
+        promotingToMaster={promotingToMaster}
       />
 
       <FieldCatalogBoard

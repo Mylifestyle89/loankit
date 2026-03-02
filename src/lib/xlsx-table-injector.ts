@@ -71,7 +71,7 @@ const PAGE_WIDTH = 9360;
 /** Mã số codes that represent totals/sub-totals → rendered bold. */
 export const BOLD_CODES = new Set([
   // CDKT
-  "100", "200", "270", "300", "310", "320", "400", "440",
+  "100", "200", "250", "270", "300", "310", "320", "400", "440",
   // KQKD
   "10", "20", "30", "50", "60",
 ]);

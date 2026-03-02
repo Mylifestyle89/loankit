@@ -9,6 +9,7 @@ import { masterTemplateService } from "./report/master-template.service";
 import { mappingInstanceService } from "./report/mapping-instance.service";
 import { buildService } from "./report/build.service";
 import { dataIoService } from "./report/data-io.service";
+import { snapshotService } from "./report/snapshot.service";
 
 // ---------------------------------------------------------------------------
 // Facade
@@ -22,4 +23,5 @@ export const reportService = {
   ...mappingInstanceService,
   ...buildService,
   ...dataIoService,
+  ...snapshotService,
 };

@@ -1,4 +1,4 @@
-import { BarChart3, Plus } from "lucide-react";
+import { BarChart3, History, Plus } from "lucide-react";
 import { useRef, useState, type DragEvent, type ReactNode } from "react";
 
 type MappingVisualToolbarProps = {
@@ -10,6 +10,7 @@ type MappingVisualToolbarProps = {
   setShowUnmappedOnly: (value: boolean) => void;
   onOpenAddFieldModal: () => void;
   onOpenFinancialAnalysis?: () => void;
+  onOpenSnapshotRestore?: () => void;
   sidebar: ReactNode;
   ocrProcessing?: boolean;
   onOcrFileSelected?: (file: File) => void;
@@ -24,6 +25,7 @@ export function MappingVisualToolbar({
   setShowUnmappedOnly,
   onOpenAddFieldModal,
   onOpenFinancialAnalysis,
+  onOpenSnapshotRestore,
   sidebar,
   ocrProcessing = false,
   onOcrFileSelected,
@@ -74,6 +76,17 @@ export function MappingVisualToolbar({
           >
             <BarChart3 className="h-4 w-4" />
             Phân tích TC
+          </button>
+        )}
+        {onOpenSnapshotRestore && (
+          <button
+            type="button"
+            onClick={onOpenSnapshotRestore}
+            title="Khôi phục dữ liệu từ bản lưu tự động"
+            className="flex flex-shrink-0 items-center gap-1.5 rounded-lg border border-slate-200/60 dark:border-white/[0.07] bg-slate-50/50 dark:bg-white/[0.04] px-3 py-1.5 text-sm font-medium text-slate-700 dark:text-slate-200 transition-colors hover:bg-indigo-50/30 dark:hover:bg-indigo-500/10"
+          >
+            <History className="h-4 w-4" />
+            Backup
           </button>
         )}
         <div

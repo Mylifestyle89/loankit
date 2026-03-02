@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { DocxTemplateEditorModal } from "@/components/docx-template-editor-modal";
 import { OnlyOfficeEditorModal } from "@/components/onlyoffice-editor-modal";
+import { SegmentedControl } from "@/components/ui/segmented-control";
 import { useLanguage } from "@/components/language-provider";
 
 type TemplateProfile = {
@@ -354,32 +355,36 @@ export default function TemplatePage() {
               {openingEditor ? "Đang mở..." : "Chọn mẫu từ folder để chỉnh sửa"}
             </button>
 
-            {/* Editor type toggle */}
+            {/* Editor type — segmented control */}
             {onlyofficeAvailable && (
-              <div className="flex items-center rounded-lg border border-slate-200 dark:border-white/[0.10] overflow-hidden">
-                <button
-                  type="button"
-                  onClick={() => setEditorType("onlyoffice")}
-                  className={`px-3 py-2 text-xs font-medium transition-colors ${
-                    editorType === "onlyoffice"
-                      ? "bg-indigo-600 text-white"
-                      : "bg-white text-slate-600 hover:bg-slate-50 dark:bg-white/[0.05] dark:text-slate-400 dark:hover:bg-white/[0.08]"
-                  }`}
-                >
-                  {t("template.editor.onlyoffice")}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setEditorType("eigenpal")}
-                  className={`px-3 py-2 text-xs font-medium transition-colors ${
-                    editorType === "eigenpal"
-                      ? "bg-indigo-600 text-white"
-                      : "bg-white text-slate-600 hover:bg-slate-50 dark:bg-white/[0.05] dark:text-slate-400 dark:hover:bg-white/[0.08]"
-                  }`}
-                >
-                  {t("template.editor.eigenpal")}
-                </button>
-              </div>
+              <SegmentedControl
+                value={editorType}
+                onChange={(v) => setEditorType(v as "onlyoffice" | "eigenpal")}
+                options={[
+                  {
+                    value: "onlyoffice",
+                    label: "OnlyOffice",
+                    icon: (
+                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                        <rect x="1" y="1" width="6" height="6" rx="1.2" stroke="currentColor" strokeWidth="1.5" />
+                        <rect x="9" y="1" width="6" height="6" rx="1.2" stroke="currentColor" strokeWidth="1.5" />
+                        <rect x="1" y="9" width="6" height="6" rx="1.2" stroke="currentColor" strokeWidth="1.5" />
+                        <rect x="9" y="9" width="6" height="6" rx="1.2" stroke="currentColor" strokeWidth="1.5" />
+                      </svg>
+                    ),
+                  },
+                  {
+                    value: "eigenpal",
+                    label: t("template.editor.eigenpal"),
+                    icon: (
+                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                        <path d="M11.5 1.5L14.5 4.5L5 14H2V11L11.5 1.5Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+                        <path d="M9.5 3.5L12.5 6.5" stroke="currentColor" strokeWidth="1.5" />
+                      </svg>
+                    ),
+                  },
+                ]}
+              />
             )}
             {onlyofficeAvailable === false && (
               <span className="text-xs text-slate-400 dark:text-slate-500">
@@ -478,6 +483,7 @@ export default function TemplatePage() {
           docxPath={docxPath}
           onClose={() => setShowOnlyofficeEditor(false)}
           onSaved={() => void loadTemplates()}
+          fieldCatalog={availableFieldCatalog}
         />
       ) : null}
     </section>

@@ -550,7 +550,7 @@ export function FinancialAnalysisModal({
 
               {/* Summary cards */}
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                <SummaryCard label="Tổng tài sản" value={fmtNum(bctcData.cdkt.byCode["270"]?.current ?? null)} sub="Mã 270" />
+                <SummaryCard label="Tổng tài sản" value={fmtNum(bctcData.cdkt.byCode["270"]?.current ?? bctcData.cdkt.byCode["250"]?.current ?? null)} sub={bctcData.cdkt.byCode["270"] ? "Mã 270" : "Mã 250"} />
                 <SummaryCard label="VCSH" value={fmtNum(bctcData.cdkt.byCode["400"]?.current ?? null)} sub="Mã 400" />
                 <SummaryCard label="Doanh thu thuần" value={fmtNum(bctcData.kqkd.byCode["10"]?.current ?? null)} sub="Mã 10" />
                 <SummaryCard label="LNST" value={fmtNum(bctcData.kqkd.byCode["60"]?.current ?? null)} sub="Mã 60" />

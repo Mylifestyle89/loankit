@@ -3,11 +3,20 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { X, Loader2 } from "lucide-react";
 import { useLanguage } from "@/components/language-provider";
+import { PlaceholderSidebar } from "@/components/placeholder-sidebar";
+
+type FieldCatalogItem = {
+  field_key: string;
+  label_vi: string;
+  group: string;
+  type: string;
+};
 
 type Props = {
   docxPath: string;
   onClose: () => void;
   onSaved?: () => void;
+  fieldCatalog?: FieldCatalogItem[];
 };
 
 type EditorConfig = {
@@ -26,7 +35,7 @@ declare global {
   }
 }
 
-export function OnlyOfficeEditorModal({ docxPath, onClose, onSaved }: Props) {
+export function OnlyOfficeEditorModal({ docxPath, onClose, onSaved, fieldCatalog }: Props) {
   const { t } = useLanguage();
   const editorInstanceRef = useRef<{ destroyEditor: () => void } | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -168,37 +177,45 @@ export function OnlyOfficeEditorModal({ docxPath, onClose, onSaved }: Props) {
           </button>
         </div>
 
-        {/* Editor area */}
-        <div ref={containerRef} className="relative flex-1">
-          {loading && (
-            <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/80 dark:bg-[#0f1629]/80">
-              <div className="flex flex-col items-center gap-3">
-                <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
-                <p className="text-sm text-slate-600 dark:text-slate-400">
-                  {t("template.editor.onlyofficeLoading")}
-                </p>
+        {/* Editor area + Placeholder sidebar */}
+        <div className="relative flex flex-1 overflow-hidden">
+          {/* Main editor */}
+          <div ref={containerRef} className="relative flex-1">
+            {loading && (
+              <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/80 dark:bg-[#0f1629]/80">
+                <div className="flex flex-col items-center gap-3">
+                  <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
+                  <p className="text-sm text-slate-600 dark:text-slate-400">
+                    {t("template.editor.onlyofficeLoading")}
+                  </p>
+                </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {error && (
-            <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/90 dark:bg-[#0f1629]/90">
-              <div className="max-w-md rounded-xl border border-red-200 bg-red-50 p-6 text-center dark:border-red-500/30 dark:bg-red-500/10">
-                <p className="text-sm font-medium text-red-700 dark:text-red-300">
-                  {error}
-                </p>
-                <button
-                  type="button"
-                  onClick={handleClose}
-                  className="mt-4 rounded-lg bg-red-600 px-4 py-2 text-sm text-white hover:bg-red-700"
-                >
-                  {t("template.editor.modal.close")}
-                </button>
+            {error && (
+              <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/90 dark:bg-[#0f1629]/90">
+                <div className="max-w-md rounded-xl border border-red-200 bg-red-50 p-6 text-center dark:border-red-500/30 dark:bg-red-500/10">
+                  <p className="text-sm font-medium text-red-700 dark:text-red-300">
+                    {error}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={handleClose}
+                    className="mt-4 rounded-lg bg-red-600 px-4 py-2 text-sm text-white hover:bg-red-700"
+                  >
+                    {t("template.editor.modal.close")}
+                  </button>
+                </div>
               </div>
-            </div>
-          )}
+            )}
 
-          <div id="onlyoffice-editor-container" className="h-full w-full" />
+            <div id="onlyoffice-editor-container" className="h-full w-full" />
+          </div>
+
+          {/* Placeholder sidebar */}
+          {fieldCatalog && fieldCatalog.length > 0 && (
+            <PlaceholderSidebar fieldCatalog={fieldCatalog} />
+          )}
         </div>
       </div>
     </div>

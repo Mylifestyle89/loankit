@@ -13,6 +13,7 @@ type FieldTemplateState = {
   editingFieldTemplateId: string;
   editingFieldTemplateName: string;
   savingEditedTemplate: boolean;
+  promotingToMaster: boolean;
   setFieldTemplates: (templates: FieldTemplateItem[]) => void;
   setAllFieldTemplates: (templates: FieldTemplateItem[]) => void;
   setLoadingFieldTemplates: (loading: boolean) => void;
@@ -22,6 +23,7 @@ type FieldTemplateState = {
   setEditingFieldTemplateId: (id: string) => void;
   setEditingFieldTemplateName: (name: string) => void;
   setSavingEditedTemplate: (saving: boolean) => void;
+  setPromotingToMaster: (promoting: boolean) => void;
 };
 
 export const useFieldTemplateStore = create<FieldTemplateState>((set) => ({
@@ -34,6 +36,7 @@ export const useFieldTemplateStore = create<FieldTemplateState>((set) => ({
   editingFieldTemplateId: "",
   editingFieldTemplateName: "",
   savingEditedTemplate: false,
+  promotingToMaster: false,
   setFieldTemplates: (fieldTemplates) => set({ fieldTemplates }),
   setAllFieldTemplates: (allFieldTemplates) => set({ allFieldTemplates }),
   setLoadingFieldTemplates: (loadingFieldTemplates) => set({ loadingFieldTemplates }),
@@ -44,4 +47,5 @@ export const useFieldTemplateStore = create<FieldTemplateState>((set) => ({
   setEditingFieldTemplateId: (editingFieldTemplateId) => set({ editingFieldTemplateId }),
   setEditingFieldTemplateName: (editingFieldTemplateName) => set({ editingFieldTemplateName }),
   setSavingEditedTemplate: (savingEditedTemplate) => set({ savingEditedTemplate }),
+  setPromotingToMaster: (promotingToMaster) => set({ promotingToMaster }),
 }));

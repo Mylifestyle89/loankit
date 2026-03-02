@@ -53,18 +53,16 @@ async function extractWithTesseract(buffer: Buffer): Promise<OcrExtractResult> {
 
 const PDF_MAX_BYTES = 20 * 1024 * 1024; // 20 MB
 
-async function extractPdfText(buffer: Buffer): Promise<string> {
+async function extractPdfText(buffer: Buffer): Promise<string | null> {
   if (buffer.length > PDF_MAX_BYTES) {
     throw new ValidationError("PDF vượt quá giới hạn 20MB.");
   }
-  const parser = new PDFParse({ data: buffer });
   try {
+    const parser = new PDFParse({ data: buffer });
     const parsed = await parser.getText();
-    return (parsed.text ?? "").trim();
-  } catch (error) {
-    throw new OcrProcessError("PDF parsing failed.", error);
-  } finally {
-    await parser.destroy().catch(() => undefined);
+    return (parsed.text ?? "").trim() || null;
+  } catch {
+    return null;
   }
 }
 
@@ -73,9 +71,9 @@ async function extractWithVision(buffer: Buffer, mimeType: string): Promise<OcrE
   if (!apiKey) {
     throw new ValidationError("GEMINI_API_KEY/GOOGLE_API_KEY is not configured for OCR fallback.");
   }
-  const modelName = process.env.GEMINI_VISION_MODEL ?? "gemini-1.5-flash";
+  const modelName = process.env.GEMINI_VISION_MODEL ?? process.env.GEMINI_MODEL ?? "gemini-2.5-flash";
   const genAI = new GoogleGenerativeAI(apiKey);
-  const model = genAI.getGenerativeModel({ model: modelName }, { apiVersion: "v1" });
+  const model = genAI.getGenerativeModel({ model: modelName }, { apiVersion: "v1beta" });
   try {
     const response = await model.generateContent([
       {
@@ -110,17 +108,19 @@ export const ocrService = {
       return extractWithVision(input.buffer, mime);
     }
 
-    try {
-      const local = await extractWithTesseract(input.buffer);
-      if (local.confidence !== undefined && local.confidence >= 0.45) {
-        return local;
+    // Vision-first strategy: Gemini handles tables/structured content far better
+    // than Tesseract, which often produces garbled text with misleadingly high confidence.
+    const hasVisionKey = !!(process.env.GEMINI_API_KEY ?? process.env.GOOGLE_API_KEY);
+    if (hasVisionKey) {
+      try {
+        return await extractWithVision(input.buffer, mime);
+      } catch {
+        // Vision failed — fall back to Tesseract
+        return extractWithTesseract(input.buffer);
       }
-      return await extractWithVision(input.buffer, mime);
-    } catch (error) {
-      return extractWithVision(input.buffer, mime).catch((visionError) => {
-        throw new OcrProcessError("Hybrid OCR failed.", { localError: error, visionError });
-      });
     }
+    // No Vision API key — Tesseract only
+    return extractWithTesseract(input.buffer);
   },
 };
 

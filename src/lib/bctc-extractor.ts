@@ -212,7 +212,7 @@ function parseFinancialSheet(ws: XLSX.WorkSheet): SheetParseResult {
 
   const hdr = raw[headerIdx];
   const maSoCol = findCol(hdr, ["ma so"]);
-  const chiTieuCol = findCol(hdr, ["chi tieu", "khoan muc", "dien giai", "noi dung"]);
+  const chiTieuCol = findCol(hdr, ["chi tieu", "khoan muc", "dien giai", "noi dung", "ten tai khoan"]);
   let currentCol = findCol(hdr, [
     "so ky nay",
     "cuoi nam",
@@ -220,6 +220,7 @@ function parseFinancialSheet(ws: XLSX.WorkSheet): SheetParseResult {
     "so cuoi nam",
     "so cuoi ky",
     "ky nay",
+    "nam nay",
   ]);
   let priorCol = findCol(hdr, [
     "so ky truoc",
@@ -228,6 +229,7 @@ function parseFinancialSheet(ws: XLSX.WorkSheet): SheetParseResult {
     "so dau nam",
     "so dau ky",
     "ky truoc",
+    "nam truoc",
   ]);
 
   // Fallback: detect year-based column headers (e.g. "31/12/2024", "Năm 2024")
@@ -351,22 +353,28 @@ function computeCstc(
   cdktN2?: Record<string, number | null>,
   kqkdN2?: Record<string, number | null>,
 ): CstcData {
-  const c = (map: CodeMap, code: string): YearPair =>
-    map[code] ?? { current: null, prior: null };
+  const nil: YearPair = { current: null, prior: null };
+  /** Look up a code, with optional fallback code (TT200 → TT133 compat). */
+  const c = (map: CodeMap, code: string, fallback?: string): YearPair => {
+    const v = map[code];
+    if (v && (v.current !== null || v.prior !== null)) return v;
+    return fallback ? (map[fallback] ?? nil) : (v ?? nil);
+  };
   /** Get N-2 value for a code from CDKT or KQKD N-2 maps. */
-  const n2 = (map: Record<string, number | null> | undefined, code: string): number | null =>
-    map?.[code] ?? null;
+  const n2 = (map: Record<string, number | null> | undefined, code: string, fallback?: string): number | null =>
+    map?.[code] ?? (fallback ? (map?.[fallback] ?? null) : null);
 
   // ── CĐKT items ──
-  const tsng = c(cdkt, "270");   // Tổng tài sản
-  const tsnh = c(cdkt, "100");   // Tài sản ngắn hạn
-  const no = c(cdkt, "300");     // Nợ phải trả
-  const noNH = c(cdkt, "310");   // Nợ ngắn hạn
-  const htk = c(cdkt, "140");    // Hàng tồn kho
-  const tien = c(cdkt, "110");   // Tiền và tương đương tiền
-  const phaiThu = c(cdkt, "130"); // Phải thu ngắn hạn
-  const vcsh = c(cdkt, "400");   // Vốn chủ sở hữu
-  const tscd = c(cdkt, "220");   // Tài sản cố định
+  // TT200 uses 270 for Tổng TS, TT133 uses 250; similarly 220 vs 210 for TSCĐ
+  const tsng = c(cdkt, "270", "250");   // Tổng tài sản
+  const tsnh = c(cdkt, "100");          // Tài sản ngắn hạn
+  const no = c(cdkt, "300");            // Nợ phải trả
+  const noNH = c(cdkt, "310");          // Nợ ngắn hạn
+  const htk = c(cdkt, "140");           // Hàng tồn kho
+  const tien = c(cdkt, "110");          // Tiền và tương đương tiền
+  const phaiThu = c(cdkt, "130");       // Phải thu ngắn hạn
+  const vcsh = c(cdkt, "400");          // Vốn chủ sở hữu
+  const tscd = c(cdkt, "220", "210");   // Tài sản cố định (TT200: 220, TT133: 210)
 
   // ── KQKD items ──
   const dtThuan = c(kqkd, "10"); // Doanh thu thuần
@@ -436,8 +444,8 @@ function computeCstc(
   const tsnhN2 = n2(cdktN2, "100");
   const htkN2 = n2(cdktN2, "140");
   const phaiThuN2 = n2(cdktN2, "130");
-  const tscdN2 = n2(cdktN2, "220");
-  const tsngN2 = n2(cdktN2, "270");
+  const tscdN2 = n2(cdktN2, "220", "210");
+  const tsngN2 = n2(cdktN2, "270", "250");
   const vcshN2 = n2(cdktN2, "400");
 
   // Vòng quay VLĐ = DT thuần / TSNH bình quân
