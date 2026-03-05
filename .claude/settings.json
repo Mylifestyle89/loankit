@@ -13,7 +13,13 @@
       "Bash(PYTHONIOENCODING=utf-8 python3 -c \":*)",
       "WebFetch(domain:www.pedroalonso.net)",
       "Bash(node -e \":*)",
-      "Bash(.claude/skills/.venv/Scripts/python.exe .claude/skills/ui-ux-pro-max/scripts/search.py \"finance banking loan invoice dashboard professional\" --design-system -p \"Invoice Tracking\")"
+      "Bash(.claude/skills/.venv/Scripts/python.exe .claude/skills/ui-ux-pro-max/scripts/search.py \"finance banking loan invoice dashboard professional\" --design-system -p \"Invoice Tracking\")",
+      "Bash(node .claude/scripts/set-active-plan.cjs \"plans/260305-2343-disbursement-report-templates\")",
+      "Bash(node -e ':*)",
+      "Bash(node scripts/fix-giay-nhan-no-template.cjs)"
+    ],
+    "additionalDirectories": [
+      "c:\\Users\\Quan\\cong-cu-tao-bcdxcv\\src\\app\\api\\loans\\[id]\\disbursements\\[disbursementId]"
     ]
   },
   "hooks": {
