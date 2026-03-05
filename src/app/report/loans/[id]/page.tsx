@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams } from "next/navigation";
-import { Eye, FileText, Pencil, Plus } from "lucide-react";
 
 import { useLanguage } from "@/components/language-provider";
 import { LoanStatusBadge } from "@/components/invoice-tracking/loan-status-badge";
@@ -13,17 +12,8 @@ import { BeneficiaryModal } from "@/components/invoice-tracking/beneficiary-moda
 import { DisbursementReportModal } from "@/components/invoice-tracking/disbursement-report-modal";
 import { AddInvoiceFromLoanModal } from "@/components/invoice-tracking/add-invoice-from-loan-modal";
 import { PaginationControls } from "@/components/invoice-tracking/pagination-controls";
+import { DisbursementTable, type DisbursementRow } from "@/components/invoice-tracking/loan-detail-disbursement-table";
 import { fmtDisplay as fmt, fmtDateDisplay as fmtDate } from "@/lib/invoice-tracking-format-helpers";
-
-type Disbursement = {
-  id: string;
-  amount: number;
-  disbursementDate: string;
-  description: string | null;
-  status: string;
-  _count: { invoices: number };
-  beneficiaryLines: { id: string; beneficiaryName: string; amount: number; invoiceStatus: string; invoiceAmount: number }[];
-};
 
 type DisbursementSummary = {
   totalDisbursed: number;
@@ -49,53 +39,6 @@ type Loan = {
 
 const PAGE_SIZE = 20;
 
-const badgeCls = {
-  green: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
-  yellow: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400",
-  red: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
-} as const;
-const badgeBase = "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium";
-
-function DisbursementActions({ d, onEdit, onReport, t, rowSpan }: { d: Disbursement; onEdit: (id: string) => void; onReport: (id: string) => void; t: (k: string) => string | undefined; rowSpan?: number }) {
-  return (
-    <td className="px-4 py-2 align-middle" rowSpan={rowSpan}>
-      <div className="flex items-center gap-1">
-        <button
-          type="button"
-          onClick={() => onEdit(d.id)}
-          title={t("common.edit") ?? "Sửa"}
-          className="cursor-pointer rounded p-1.5 text-zinc-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:text-indigo-400 dark:hover:bg-indigo-900/20 transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/50"
-        >
-          <Pencil className="h-4 w-4" />
-        </button>
-        <button
-          type="button"
-          onClick={() => onReport(d.id)}
-          title={t("disbursements.generateReport") ?? "Tạo báo cáo"}
-          className="cursor-pointer rounded p-1.5 text-zinc-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:text-amber-400 dark:hover:bg-amber-900/20 transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/50"
-        >
-          <FileText className="h-4 w-4" />
-        </button>
-        <Link href={`/report/disbursements/${d.id}`}
-          title={t("common.view") ?? "Xem"}
-          className="cursor-pointer rounded p-1.5 text-zinc-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:text-emerald-400 dark:hover:bg-emerald-900/20 transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/50">
-          <Eye className="h-4 w-4" />
-        </Link>
-      </div>
-    </td>
-  );
-}
-
-function BeneficiaryInvoiceBadge({ line }: { line: { invoiceStatus: string; invoiceAmount: number } }) {
-  if (line.invoiceStatus === "has_invoice") {
-    return <span className={`${badgeBase} ${badgeCls.green}`}>Đã bổ sung</span>;
-  }
-  if (line.invoiceAmount > 0) {
-    return <span className={`${badgeBase} ${badgeCls.yellow}`}>Đã bổ sung một phần</span>;
-  }
-  return <span className={`${badgeBase} ${badgeCls.red}`}>Cần bổ sung</span>;
-}
-
 export default function LoanDetailPage() {
   const { t } = useLanguage();
   const { id } = useParams<{ id: string }>();
@@ -106,7 +49,7 @@ export default function LoanDetailPage() {
   const [error, setError] = useState("");
 
   // Disbursements (paginated)
-  const [disbursements, setDisbursements] = useState<Disbursement[]>([]);
+  const [disbursements, setDisbursements] = useState<DisbursementRow[]>([]);
   const [summary, setSummary] = useState<DisbursementSummary | null>(null);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -142,30 +85,40 @@ export default function LoanDetailPage() {
   // Load loan info (once)
   const loadLoan = useCallback(async () => {
     setLoading(true);
-    const res = await fetch(`/api/loans/${id}`, { cache: "no-store" });
-    const data = await res.json();
-    if (!data.ok) { setError(data.error ?? "Failed"); setLoading(false); return; }
-    setLoan(data.loan);
-    setLoading(false);
+    try {
+      const res = await fetch(`/api/loans/${id}`, { cache: "no-store" });
+      const data = await res.json();
+      if (!data.ok) { setError(data.error ?? "Failed"); return; }
+      setLoan(data.loan);
+    } catch {
+      setError("Không thể tải thông tin khoản vay");
+    } finally {
+      setLoading(false);
+    }
   }, [id]);
 
   // Load disbursements (paginated)
   const loadDisbursements = useCallback(async () => {
     setDisbLoading(true);
-    const params = new URLSearchParams();
-    params.set("page", String(page));
-    params.set("pageSize", String(PAGE_SIZE));
-    if (statusFilter) params.set("status", statusFilter);
-    if (debouncedSearch.trim()) params.set("search", debouncedSearch.trim());
+    try {
+      const params = new URLSearchParams();
+      params.set("page", String(page));
+      params.set("pageSize", String(PAGE_SIZE));
+      if (statusFilter) params.set("status", statusFilter);
+      if (debouncedSearch.trim()) params.set("search", debouncedSearch.trim());
 
-    const res = await fetch(`/api/loans/${id}/disbursements?${params}`, { cache: "no-store" });
-    const data = await res.json();
-    if (data.ok) {
-      setDisbursements(data.disbursements ?? []);
-      setTotal(data.total ?? 0);
-      setSummary(data.summary ?? null);
+      const res = await fetch(`/api/loans/${id}/disbursements?${params}`, { cache: "no-store" });
+      const data = await res.json();
+      if (data.ok) {
+        setDisbursements(data.disbursements ?? []);
+        setTotal(data.total ?? 0);
+        setSummary(data.summary ?? null);
+      }
+    } catch {
+      // Network error — keep existing data, silently fail
+    } finally {
+      setDisbLoading(false);
     }
-    setDisbLoading(false);
   }, [id, page, statusFilter, debouncedSearch]);
 
   useEffect(() => { void loadLoan(); }, [loadLoan]);
@@ -302,64 +255,14 @@ export default function LoanDetailPage() {
 
       {/* Disbursement table */}
       <div className="rounded-xl border border-coral-tree-200 dark:border-white/[0.08] bg-white dark:bg-[#141414]/90 overflow-hidden">
-        {disbLoading ? (
-          <p className="p-6 text-sm text-zinc-500 dark:text-slate-400">{t("loans.loading")}</p>
-        ) : disbursements.length === 0 ? (
-          <p className="p-6 text-sm text-zinc-500 dark:text-slate-400">{t("disbursements.noData")}</p>
-        ) : (
-          <div className="overflow-x-auto"><table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-coral-tree-200 dark:border-white/[0.07] bg-coral-tree-100 dark:bg-white/[0.05] text-left">
-                <th className="px-4 py-2 font-semibold">{t("disbursements.date")}</th>
-                <th className="px-4 py-2 font-semibold">{t("disbursements.amount")}</th>
-                <th className="px-4 py-2 font-semibold">{t("disbursements.beneficiary")}</th>
-                <th className="px-4 py-2 font-semibold">{t("disbursements.invoiceStatus")}</th>
-                <th className="px-4 py-2 font-semibold w-20" />
-              </tr>
-            </thead>
-            <tbody>
-              {disbursements.map((d) => {
-                const lines = d.beneficiaryLines;
-                const rowSpan = Math.max(lines.length, 1);
-                return lines.length === 0 ? (
-                  <tr key={d.id} className="border-t border-coral-tree-200 dark:border-white/[0.07] transition-colors duration-150 hover:bg-coral-tree-50 dark:hover:bg-white/[0.04]">
-                    <td className="px-4 py-2">{fmtDate(d.disbursementDate)}</td>
-                    <td className="px-4 py-2 font-medium tabular-nums">{fmt(d.amount)}</td>
-                    <td className="px-4 py-2 text-zinc-400 dark:text-slate-500">—</td>
-                    <td className="px-4 py-2"><span className={`${badgeBase} ${badgeCls.red}`}>Cần bổ sung</span></td>
-                    <DisbursementActions d={d} onEdit={setEditingDisbursementId} onReport={setReportDisbursementId} t={t} />
-                  </tr>
-                ) : (
-                  lines.map((b, i) => (
-                    <tr key={`${d.id}-${i}`} className={`${i === 0 ? "border-t border-coral-tree-200 dark:border-white/[0.07]" : ""} transition-colors duration-150 hover:bg-coral-tree-50 dark:hover:bg-white/[0.04]`}>
-                      {i === 0 && (
-                        <>
-                          <td className="px-4 py-2 align-middle" rowSpan={rowSpan}>{fmtDate(d.disbursementDate)}</td>
-                          <td className="px-4 py-2 align-middle font-medium tabular-nums" rowSpan={rowSpan}>{fmt(d.amount)}</td>
-                        </>
-                      )}
-                      <td className="px-4 py-2 text-zinc-700 dark:text-slate-300">{b.beneficiaryName}</td>
-                      <td className="px-4 py-2">
-                        <div className="flex items-center gap-1.5">
-                          <BeneficiaryInvoiceBadge line={b} />
-                          <button
-                            type="button"
-                            onClick={() => setInvoiceTarget({ disbursementId: d.id, lineId: b.id, name: b.beneficiaryName, amount: b.amount })}
-                            title="Bổ sung hóa đơn"
-                            className="cursor-pointer rounded p-1 text-zinc-400 hover:text-coral-tree-600 hover:bg-coral-tree-50 dark:hover:text-coral-tree-400 dark:hover:bg-coral-tree-900/20 transition-colors"
-                          >
-                            <Plus className="h-3.5 w-3.5" />
-                          </button>
-                        </div>
-                      </td>
-                      {i === 0 && <DisbursementActions d={d} onEdit={setEditingDisbursementId} onReport={setReportDisbursementId} t={t} rowSpan={rowSpan} />}
-                    </tr>
-                  ))
-                );
-              })}
-            </tbody>
-          </table></div>
-        )}
+        <DisbursementTable
+          disbursements={disbursements}
+          loading={disbLoading}
+          t={t}
+          onEdit={setEditingDisbursementId}
+          onReport={setReportDisbursementId}
+          onAddInvoice={setInvoiceTarget}
+        />
         <PaginationControls page={page} pageSize={PAGE_SIZE} total={total} onPageChange={setPage} />
       </div>
 

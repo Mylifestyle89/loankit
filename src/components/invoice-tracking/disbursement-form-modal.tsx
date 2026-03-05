@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { ChevronDown, ChevronUp, Plus, Trash2, X } from "lucide-react";
 import { useLanguage } from "@/components/language-provider";
 import { fmtNumber, parseNumber, formatDateInput, dmy2iso, fmtDisplay } from "@/lib/invoice-tracking-format-helpers";
-import { numberToVietnameseText } from "@/lib/number-to-vietnamese-text";
+import { numberToVietnameseWords } from "@/lib/number-to-vietnamese-words";
 
 /* ── Types ── */
 type Beneficiary = { id: string; name: string; accountNumber: string | null; bankName: string | null };
@@ -332,7 +332,7 @@ export function DisbursementFormModal({ loanId, loanAmount = 0, editDisbursement
               </label>
               <label className="block">
                 <span className={labelCls}>Bằng chữ</span>
-                <input type="text" readOnly value={debtNum > 0 ? numberToVietnameseText(debtNum) : ""} className={readonlyCls} />
+                <input type="text" readOnly value={debtNum > 0 ? numberToVietnameseWords(debtNum) : ""} className={readonlyCls} />
               </label>
             </div>
             <div className="grid grid-cols-2 gap-3 mt-3">
@@ -342,7 +342,7 @@ export function DisbursementFormModal({ loanId, loanAmount = 0, editDisbursement
               </label>
               <label className="block">
                 <span className={labelCls}>Bằng chữ</span>
-                <input type="text" readOnly value={totalOutstanding > 0 ? numberToVietnameseText(totalOutstanding) : ""} className={readonlyCls} />
+                <input type="text" readOnly value={totalOutstanding > 0 ? numberToVietnameseWords(totalOutstanding) : ""} className={readonlyCls} />
               </label>
             </div>
             {loanAmount > 0 && totalOutstanding > loanAmount && (
@@ -504,7 +504,7 @@ function BeneficiarySection({ line, index, savedBeneficiaries, canRemove, onUpda
             </label>
             <label className="block">
               <span className={labelCls}>Bằng chữ</span>
-              <input type="text" readOnly value={amtNum > 0 ? numberToVietnameseText(amtNum) : ""} className={readonlyCls} />
+              <input type="text" readOnly value={amtNum > 0 ? numberToVietnameseWords(amtNum) : ""} className={readonlyCls} />
             </label>
           </div>
           <div className="grid grid-cols-2 gap-3 mt-3">

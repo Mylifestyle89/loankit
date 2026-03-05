@@ -64,11 +64,11 @@ describe("toHttpError", () => {
     expect(result.message).toBe("invalid field");
   });
 
-  it("maps plain Error to status 500", () => {
+  it("maps plain Error to status 500 with fallback (security: no raw leak)", () => {
     const err = new Error("something broke");
     const result = toHttpError(err, "fallback");
     expect(result.status).toBe(500);
-    expect(result.message).toBe("something broke");
+    expect(result.message).toBe("fallback");
   });
 
   it("uses fallback message for non-Error unknowns", () => {

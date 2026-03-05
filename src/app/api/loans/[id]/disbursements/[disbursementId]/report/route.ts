@@ -19,12 +19,12 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     const body = await req.json();
     const { templateKey, overrides } = bodySchema.parse(body);
 
-    const { buffer, filename } = await generateReport(disbursementId, templateKey, overrides as Record<string, string> | undefined);
+    const { buffer, filename, contentType } = await generateReport(disbursementId, templateKey, overrides as Record<string, string> | undefined);
 
     return new NextResponse(new Uint8Array(buffer), {
       status: 200,
       headers: {
-        "Content-Type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "Content-Type": contentType,
         "Content-Disposition": `attachment; filename="${encodeURIComponent(filename)}"`,
         "Content-Length": String(buffer.length),
       },

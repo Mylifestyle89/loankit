@@ -1,39 +1,23 @@
 /**
- * Disbursement report service — maps DB data to template placeholders
- * and generates DOCX reports using docxEngine.
+ * Disbursement report service — generates DOCX reports from template + DB data.
+ * Template config: ./disbursement-report-template-config.ts
  */
 import fs from "node:fs/promises";
 import path from "node:path";
+
+import JSZip from "jszip";
 
 import { NotFoundError } from "@/core/errors/app-error";
 import { docxEngine } from "@/lib/docx-engine";
 import { numberToVietnameseWords } from "@/lib/number-to-vietnamese-words";
 import { prisma } from "@/lib/prisma";
+import {
+  DISBURSEMENT_TEMPLATES,
+  ALLOWED_OVERRIDE_KEYS,
+  type TemplateKey,
+} from "./disbursement-report-template-config";
 
-// ---------------------------------------------------------------------------
-// Template registry
-// ---------------------------------------------------------------------------
-
-export const DISBURSEMENT_TEMPLATES = {
-  bcdx: {
-    label: "Báo cáo đề xuất giải ngân",
-    path: "report_assets/Disbursement templates/2268.09.PN BCDX giai ngan HMTD.docx",
-  },
-  giay_nhan_no: {
-    label: "Giấy nhận nợ",
-    path: "report_assets/Disbursement templates/2268.10.PN Giay nhan no HMTD.docx",
-  },
-  danh_muc_ho_so: {
-    label: "Danh mục hồ sơ vay vốn",
-    path: "report_assets/Disbursement templates/2899.01.CV Danh muc ho so vay von.docx",
-  },
-  in_unc: {
-    label: "In UNC",
-    path: "report_assets/Disbursement templates/in UNC.docx",
-  },
-} as const;
-
-export type TemplateKey = keyof typeof DISBURSEMENT_TEMPLATES;
+export { DISBURSEMENT_TEMPLATES, type TemplateKey } from "./disbursement-report-template-config";
 
 // ---------------------------------------------------------------------------
 // Date helpers
@@ -95,6 +79,7 @@ async function loadFullDisbursement(disbursementId: string) {
 export async function buildReportData(
   disbursementId: string,
   overrides?: Record<string, string>,
+  templateKey?: TemplateKey,
 ): Promise<Record<string, unknown>> {
   const d = await loadFullDisbursement(disbursementId);
   const loan = d.loan;
@@ -172,10 +157,11 @@ export async function buildReportData(
     })),
   };
 
-  // Merge manual overrides (e.g., Mã CN, Tên chi nhánh, CMND, etc.)
-  if (overrides) {
+  // Merge manual overrides — only whitelisted keys per template (security)
+  if (overrides && templateKey) {
+    const allowed = new Set(ALLOWED_OVERRIDE_KEYS[templateKey] ?? []);
     for (const [key, val] of Object.entries(overrides)) {
-      if (val !== undefined && val !== "") {
+      if (val !== undefined && val !== "" && allowed.has(key)) {
         data[key] = val;
       }
     }
@@ -218,36 +204,63 @@ async function generateSingleDocx(
   return { buffer, filename };
 }
 
+export type ReportResult = { buffer: Buffer; filename: string; contentType: string };
+
+/** Build per-beneficiary UNC data dict by flattening one line into top-level keys */
+function buildUncDataForLine(baseData: Record<string, unknown>, line: Record<string, unknown>): Record<string, unknown> {
+  return {
+    ...baseData,
+    "UNC.Khách hàng thụ hưởng": line["Khách hàng thụ hưởng"],
+    "UNC.Số tài khoản": line["Số tài khoản"],
+    "UNC.Nơi mở tài khoản": line["Nơi mở tài khoản"],
+    "UNC.Số tiền": line["Số tiền"],
+    "UNC.ST bằng chữ": numberToVietnameseWords(Number(line["Số tiền"]) || 0),
+  };
+}
+
 export async function generateReport(
   disbursementId: string,
   templateKey: TemplateKey,
   overrides?: Record<string, string>,
-): Promise<{ buffer: Buffer; filename: string }> {
+): Promise<ReportResult> {
   const template = DISBURSEMENT_TEMPLATES[templateKey];
   if (!template) throw new NotFoundError("Unknown template key.");
 
-  const data = await buildReportData(disbursementId, overrides);
+  const data = await buildReportData(disbursementId, overrides, templateKey);
+  const docxType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
 
-  // in_unc is a per-beneficiary print form — flatten UNC prefix for single beneficiary
+  // in_unc: one DOCX per beneficiary, zip if multiple
   if (templateKey === "in_unc") {
     const beneficiaryLines = data.UNC as Array<Record<string, unknown>> | undefined;
     if (!beneficiaryLines || beneficiaryLines.length === 0) {
       throw new NotFoundError("No beneficiary lines found for UNC printing.");
     }
 
-    // Generate one file for the first beneficiary (or all combined in a zip could be future work)
-    const line = beneficiaryLines[0];
-    const uncData: Record<string, unknown> = {
-      ...data,
-      "UNC.Khách hàng thụ hưởng": line["Khách hàng thụ hưởng"],
-      "UNC.Số tài khoản": line["Số tài khoản"],
-      "UNC.Nơi mở tài khoản": line["Nơi mở tài khoản"],
-      "UNC.Số tiền": line["Số tiền"],
-      "UNC.ST bằng chữ": numberToVietnameseWords(Number(line["Số tiền"]) || 0),
-    };
+    // Single beneficiary — return single docx
+    if (beneficiaryLines.length === 1) {
+      const uncData = buildUncDataForLine(data, beneficiaryLines[0]);
+      const result = await generateSingleDocx(template.path, uncData, template.label);
+      return { ...result, contentType: docxType };
+    }
 
-    return generateSingleDocx(template.path, uncData, template.label);
+    // Multiple beneficiaries — generate one docx per line, bundle as zip
+    const zip = new JSZip();
+    for (const line of beneficiaryLines) {
+      const uncData = buildUncDataForLine(data, line);
+      const name = String(line["Khách hàng thụ hưởng"] ?? "beneficiary");
+      const { buffer } = await generateSingleDocx(template.path, uncData, template.label);
+      zip.file(`UNC_${name}.docx`, buffer);
+    }
+    const zipBuffer = Buffer.from(await zip.generateAsync({ type: "uint8array" }));
+    const customerName = String(data["Tên khách hàng"] ?? "Report");
+    const dateStr = fmtDateCompact(new Date());
+    return {
+      buffer: zipBuffer,
+      filename: `${customerName}_UNC_${dateStr}.zip`,
+      contentType: "application/zip",
+    };
   }
 
-  return generateSingleDocx(template.path, data, template.label);
+  const result = await generateSingleDocx(template.path, data, template.label);
+  return { ...result, contentType: docxType };
 }
