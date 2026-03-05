@@ -68,11 +68,20 @@ src/
 │   │
 │   └── use-cases/
 │       ├── extract-fields-from-report.ts
-│       ├── extract-fields-from-docx-report.ts
-│       ├── formula-processor.ts      # Formula evaluation engine
+│       ├── extract-fields-from-docx-report.ts    # Main DOCX extraction orchestrator
+│       ├── extract-fields-from-ocr.ts            # OCR extraction with shared helpers
+│       ├── formula-processor.ts                  # Formula evaluation engine
 │       ├── apply-ai-suggestion.ts
 │       ├── grouping-engine.ts
-│       └── __tests__/                # Use case tests
+│       ├── extraction/                           # Modularized extraction helpers (v2)
+│       │   ├── extraction-text-helpers.ts        # Shared text utils (normalize, tokenize, scoring)
+│       │   ├── extraction-docx-xml-parser.ts     # DOCX XML table parsing
+│       │   ├── extraction-docx-table-fields.ts   # Scalar field extraction from tables
+│       │   ├── extraction-docx-paragraph.ts      # Adjacent paragraph extraction
+│       │   ├── extraction-docx-repeater.ts       # Repeater/multi-row extraction
+│       │   ├── extraction-value-validator.ts     # Zod-based field value validation
+│       │   └── (types: FieldSuggestion, ValidationResult)
+│       └── __tests__/                            # Use case tests
 │
 ├── services/
 │   ├── loan.service.ts               # Loan CRUD service
@@ -200,6 +209,25 @@ plans/
 - **field-values.service.ts** - Store/retrieve field values
 - **master-template.service.ts** - Master template inheritance
 
+### Document Extraction Service (`src/services/document-extraction.service.ts`)
+- **Purpose:** Full-document comprehension using Structured AI (OpenAI + Gemini)
+- **Features:**
+  - Extracts field values from DOCX/OCR documents using AI analysis
+  - Supports OpenAI `json_schema` response format (structured outputs)
+  - Supports Gemini `responseSchema` for guaranteed JSON structure
+  - Batches large field sets into multiple API calls (max 80 fields/call)
+  - Document truncation: Head 30K + Tail 10K characters for efficiency
+- **Main Methods:**
+  - `extractFromDocx(docxFilePath, fields, apiProvider)` - Extract from DOCX files
+  - `extractFromOCR(ocrText, fields, apiProvider)` - Extract from OCR text
+- **Related Extraction Pipeline:**
+  - `src/core/use-cases/extract-fields-from-docx-report.ts` - DOCX orchestrator
+  - `src/core/use-cases/extract-fields-from-ocr.ts` - OCR orchestrator
+  - `src/core/use-cases/extraction/` - Modularized helpers (text, validation, parsing, extraction)
+
+### AI Mapping Service (`src/services/ai-mapping.service.ts`)
+- AI-powered field mapping suggestions for template columns → field placeholders
+
 ## Key Classes & Types
 
 ### Error Classes (`src/core/errors/app-error.ts`)
@@ -215,6 +243,17 @@ toHttpError(error, fallback) // Convert to HTTP response
 - Disbursement: loanId, amount, disbursementDate
 - Invoice: disbursementId, invoiceNumber, supplierName, amount, dueDate
 - Notification: type, title, message, metadata
+
+### Extraction Pipeline Types
+**From `src/core/use-cases/extraction/extraction-text-helpers.ts`:**
+- `ExtractionSource` - "ocr_ai" | "docx_ai"
+- `FieldSuggestion` - { fieldKey, proposedValue, confidenceScore, source, validationStatus? }
+
+**From `src/core/use-cases/extraction/extraction-value-validator.ts`:**
+- `ValidationResult` - { valid, status ("valid"|"warning"|"invalid"), normalizedValue? }
+
+**From `src/services/document-extraction.service.ts`:**
+- `DocumentFieldExtraction` - { fieldKey, value }
 
 ### Database Models (Prisma)
 ```

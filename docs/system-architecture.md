@@ -200,6 +200,104 @@ This is a Next.js-based financial reporting and invoice tracking application bui
 
 **Migrations:** Run via `npx prisma migrate dev`
 
+## Document Extraction Pipeline
+
+**Purpose:** Automated field value extraction from financial documents (DOCX/OCR) using structured AI.
+
+### Architecture Overview
+```
+┌──────────────────────────────────────────┐
+│  Document (DOCX/OCR Text)                │
+└────────────┬─────────────────────────────┘
+             │
+             ▼
+┌──────────────────────────────────────────┐
+│  AI Extraction Service                   │
+│  - Batch field requests (max 80/call)    │
+│  - Structured outputs (OpenAI/Gemini)    │
+│  - Document truncation (30K+10K chars)   │
+└────────────┬─────────────────────────────┘
+             │
+             ▼
+┌──────────────────────────────────────────┐
+│  Extraction Pipeline (Modularized)       │
+│  ├─ Text Helpers (normalize, tokenize)   │
+│  ├─ DOCX XML Parser (table extraction)   │
+│  ├─ Value Validator (Zod-based)          │
+│  ├─ Field Extractors (table/paragraph)   │
+│  └─ Repeater Engine (multi-row data)     │
+└────────────┬─────────────────────────────┘
+             │
+             ▼
+┌──────────────────────────────────────────┐
+│  Validated Field Suggestions             │
+│  - Field key, value, confidence score    │
+│  - Validation status (valid/warning)     │
+│  - Confidence adjustment (+0.05/-0.15)   │
+└──────────────────────────────────────────┘
+```
+
+### Key Components
+
+**Document Extraction Service** (`src/services/document-extraction.service.ts`)
+- Manages API calls to OpenAI (gpt-4o-mini) and Gemini (1.5-flash)
+- Implements `json_schema` (OpenAI) and `responseSchema` (Gemini) for structured outputs
+- Supports batching: up to 80 fields per call, auto-splits large requests
+- Truncates documents intelligently: first 30K + last 10K characters
+- Timeout: 28 seconds per API call (40K input text ~10-25s)
+
+**Extraction Modules** (`src/core/use-cases/extraction/`)
+1. **extraction-text-helpers.ts** (~160 lines)
+   - `normalizeText()` - Vietnamese diacritics handling
+   - `tokenize()` - Text splitting for overlap scoring
+   - `scoreTokenOverlap()` - Fuzzy matching (0-1)
+   - Shared `FieldSuggestion` type
+
+2. **extraction-value-validator.ts** (~160 lines)
+   - Zod schemas for Vietnamese date/number formats
+   - Validates: number, date, percent, boolean, text
+   - `ValidationResult`: valid/warning/invalid status
+   - Confidence score adjustments: +0.05 (valid), -0.15 (warning)
+
+3. **extraction-docx-xml-parser.ts** (~140 lines)
+   - Parses DOCX XML structure
+   - Extracts table cells, rows, paragraphs
+   - Handles XML namespaces and complex formatting
+
+4. **extraction-docx-table-fields.ts** (~60 lines)
+   - Scalar field extraction from DOCX tables
+   - Matches headers → values by token overlap
+   - Returns single values per field
+
+5. **extraction-docx-paragraph.ts** (~75 lines)
+   - Extracts values from adjacent paragraphs
+   - Finds label patterns near target fields
+
+6. **extraction-docx-repeater.ts** (~140 lines)
+   - Multi-row/repeater extraction
+   - Detects table patterns for line-item data
+   - Returns arrays of extracted rows
+
+**Orchestrators**
+- `extract-fields-from-docx-report.ts` - DOCX pipeline (uses extraction modules + validation)
+- `extract-fields-from-ocr.ts` - OCR pipeline (uses shared helpers + validation)
+
+### Data Flow
+1. User uploads DOCX/provides OCR text
+2. Service batches fields into requests (max 80/batch)
+3. AI extracts values with structured JSON response
+4. Extraction modules parse and normalize values
+5. Validator checks against expected types (Vietnamese formats)
+6. Confidence score adjusted based on validation status
+7. Field suggestions returned to UI for user review
+
+### Performance Optimizations
+- Document truncation reduces input tokens (~40K chars = ~10K tokens)
+- Batching reduces API calls (80 fields in 1 call vs 80 calls)
+- Shared text helpers avoid duplication across DOCX/OCR pipelines
+- Validation via Zod (fast, compiled schemas)
+- Timeout management prevents hanging requests
+
 ## Security Considerations
 
 - Input validation at API layer (Zod schemas)

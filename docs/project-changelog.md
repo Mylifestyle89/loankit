@@ -4,6 +4,32 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ## [Unreleased]
 
+### Changed - AI Extraction Pipeline Refactor
+
+#### Modularization
+- **extraction/** directory: Split 660-line `extract-fields-from-docx-report.ts` into 6 focused modules
+  - `extraction-text-helpers.ts` (~160 lines) - Shared utilities (normalize, tokenize, scoring)
+  - `extraction-docx-xml-parser.ts` (~140 lines) - DOCX XML table parsing
+  - `extraction-docx-table-fields.ts` (~60 lines) - Scalar field extraction
+  - `extraction-docx-paragraph.ts` (~75 lines) - Adjacent paragraph extraction
+  - `extraction-docx-repeater.ts` (~140 lines) - Repeater/multi-row extraction
+  - `extraction-value-validator.ts` (~160 lines) - Zod-based validation for Vietnamese formats
+
+#### Validation Layer
+- **extraction-value-validator.ts**: Zod schemas for Vietnamese number/date/percent formats
+  - Validates extracted values against declared field types
+  - Confidence score adjustment: +0.05 (valid), -0.15 (warning)
+  - Supports common Vietnamese formats (DD/MM/YYYY, VN thousand separators)
+
+#### Structured AI Outputs
+- **document-extraction.service.ts**: Added OpenAI `json_schema` response format
+- **document-extraction.service.ts**: Added Gemini `responseSchema` support
+- Ensures guaranteed JSON structure for batch field extractions
+
+#### API Improvements
+- `extract-fields-from-ocr.ts`: Updated to use shared extraction helpers and validation
+- Consistent `FieldSuggestion` type across DOCX and OCR pipelines
+
 ## [Phase 48] - 2026-03-05
 
 ### Added - Disbursement Invoice Tracking Feature

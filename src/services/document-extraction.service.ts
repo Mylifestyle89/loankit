@@ -47,6 +47,37 @@ const MAX_FIELDS_PER_CALL = 80;
 /** Timeout cho mỗi API call. 40k ký tự input thường mất 10–25 giây. */
 const API_CALL_TIMEOUT_MS = 28_000;
 
+// ─── Schema builders for structured AI output ────────────────────────────────
+
+/** Build OpenAI json_schema response format from field catalog. */
+function buildOpenAIJsonSchema(fields: FieldCatalogItem[]) {
+  return {
+    type: "json_schema" as const,
+    json_schema: {
+      name: "field_extraction",
+      strict: true,
+      schema: {
+        type: "object",
+        properties: Object.fromEntries(
+          fields.map((f) => [f.field_key, { type: "string", description: f.label_vi }]),
+        ),
+        required: fields.map((f) => f.field_key),
+        additionalProperties: false,
+      },
+    },
+  };
+}
+
+/** Build Gemini responseSchema from field catalog. */
+function buildGeminiResponseSchema(fields: FieldCatalogItem[]) {
+  return {
+    type: "object" as const,
+    properties: Object.fromEntries(
+      fields.map((f) => [f.field_key, { type: "string" as const, description: f.label_vi }]),
+    ),
+  };
+}
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function truncateDocumentText(text: string): string {
@@ -85,7 +116,7 @@ QUY TẮC:
 DANH SÁCH FIELDS CẦN TRÍCH XUẤT:
 ${fieldSummary}
 
-YÊU CẦU ĐẦU RA: JSON phẳng, key là field_key, value là chuỗi. Không markdown, không giải thích.
+YÊU CẦU ĐẦU RA: Trả về giá trị cho mỗi field_key. Nếu không tìm thấy, trả chuỗi rỗng "".
 
 TÀI LIỆU:
 ---
@@ -141,13 +172,13 @@ async function extractViaOpenAI(
     body: JSON.stringify({
       model,
       temperature: 0,
-      // JSON Mode — đảm bảo response luôn là valid JSON, loại bỏ Markdown thừa
-      response_format: { type: "json_object" },
+      // Structured Output — enforce field_key names and string types at API level
+      response_format: buildOpenAIJsonSchema(fields),
       messages: [
         {
           role: "system",
           content:
-            "You are a Vietnamese financial document extraction specialist. Extract field values accurately. Always respond with a valid JSON object only.",
+            "You are a Vietnamese financial document extraction specialist. Extract field values accurately. Return empty string for fields not found in the document.",
         },
         { role: "user", content: prompt },
       ],
@@ -190,8 +221,10 @@ async function extractViaGemini(
   const generatePromise = geminiModel.generateContent({
     generationConfig: {
       temperature: 0,
-      // JSON Mode cho Gemini — loại bỏ markdown thừa
+      // Structured Output — enforce field schema at API level
       responseMimeType: "application/json",
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      responseSchema: buildGeminiResponseSchema(fields) as any,
     },
     contents: [{ role: "user", parts: [{ text: prompt }] }],
   });
