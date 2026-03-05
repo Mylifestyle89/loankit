@@ -2,8 +2,25 @@ import { NotFoundError } from "@/core/errors/app-error";
 import { prisma } from "@/lib/prisma";
 import { notificationService } from "@/services/notification.service";
 
+/** Recalculate invoiceStatus and invoiceAmount on a beneficiary line */
+async function recalcBeneficiaryStatus(beneficiaryLineId: string) {
+  const invoices = await prisma.invoice.findMany({
+    where: { disbursementBeneficiaryId: beneficiaryLineId },
+    select: { amount: true },
+  });
+  const totalAmount = invoices.reduce((s, inv) => s + inv.amount, 0);
+  await prisma.disbursementBeneficiary.update({
+    where: { id: beneficiaryLineId },
+    data: {
+      invoiceStatus: invoices.length > 0 ? "has_invoice" : "pending",
+      invoiceAmount: totalAmount,
+    },
+  });
+}
+
 export type CreateInvoiceInput = {
   disbursementId: string;
+  disbursementBeneficiaryId?: string;
   invoiceNumber: string;
   supplierName: string;
   amount: number;
@@ -134,6 +151,7 @@ export const invoiceService = {
     const invoice = await prisma.invoice.create({
       data: {
         disbursementId: input.disbursementId,
+        disbursementBeneficiaryId: input.disbursementBeneficiaryId ?? null,
         invoiceNumber: input.invoiceNumber,
         supplierName: input.supplierName,
         amount: input.amount,
@@ -143,6 +161,11 @@ export const invoiceService = {
         notes: input.notes ?? null,
       },
     });
+
+    // Auto-recalc beneficiary line status
+    if (input.disbursementBeneficiaryId) {
+      await recalcBeneficiaryStatus(input.disbursementBeneficiaryId);
+    }
 
     return { invoice, duplicateWarning };
   },
@@ -163,13 +186,20 @@ export const invoiceService = {
     if (input.notes !== undefined) data.notes = input.notes;
     if (input.status !== undefined) data.status = input.status;
 
-    return prisma.invoice.update({ where: { id }, data });
+    const updated = await prisma.invoice.update({ where: { id }, data });
+    if (existing.disbursementBeneficiaryId) {
+      await recalcBeneficiaryStatus(existing.disbursementBeneficiaryId);
+    }
+    return updated;
   },
 
   async delete(id: string) {
     const existing = await prisma.invoice.findUnique({ where: { id } });
     if (!existing) throw new NotFoundError("Invoice not found.");
     await prisma.invoice.delete({ where: { id } });
+    if (existing.disbursementBeneficiaryId) {
+      await recalcBeneficiaryStatus(existing.disbursementBeneficiaryId);
+    }
   },
 
   /** Called by scheduler: mark pending invoices past due as overdue */

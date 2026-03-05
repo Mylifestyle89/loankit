@@ -14,6 +14,7 @@ const createSchema = z.object({
   dueDate: z.string().min(1),
   customDeadline: z.string().optional(),
   notes: z.string().optional(),
+  disbursementBeneficiaryId: z.string().optional(),
 });
 
 export async function GET(

@@ -3,11 +3,15 @@
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams } from "next/navigation";
+import { Eye, FileText, Pencil, Plus } from "lucide-react";
 
 import { useLanguage } from "@/components/language-provider";
 import { LoanStatusBadge } from "@/components/invoice-tracking/loan-status-badge";
 import { LoanEditModal } from "@/components/invoice-tracking/loan-edit-modal";
 import { DisbursementFormModal } from "@/components/invoice-tracking/disbursement-form-modal";
+import { BeneficiaryModal } from "@/components/invoice-tracking/beneficiary-modal";
+import { DisbursementReportModal } from "@/components/invoice-tracking/disbursement-report-modal";
+import { AddInvoiceFromLoanModal } from "@/components/invoice-tracking/add-invoice-from-loan-modal";
 import { PaginationControls } from "@/components/invoice-tracking/pagination-controls";
 import { fmtDisplay as fmt, fmtDateDisplay as fmtDate } from "@/lib/invoice-tracking-format-helpers";
 
@@ -18,6 +22,7 @@ type Disbursement = {
   description: string | null;
   status: string;
   _count: { invoices: number };
+  beneficiaryLines: { id: string; beneficiaryName: string; amount: number; invoiceStatus: string; invoiceAmount: number }[];
 };
 
 type DisbursementSummary = {
@@ -37,11 +42,59 @@ type Loan = {
   purpose: string | null;
   collateralValue: number | null;
   securedObligation: number | null;
+  disbursementLimitByAsset: number | null;
   status: string;
   customer: { id: string; customer_name: string };
 };
 
 const PAGE_SIZE = 20;
+
+const badgeCls = {
+  green: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
+  yellow: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400",
+  red: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
+} as const;
+const badgeBase = "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium";
+
+function DisbursementActions({ d, onEdit, onReport, t, rowSpan }: { d: Disbursement; onEdit: (id: string) => void; onReport: (id: string) => void; t: (k: string) => string | undefined; rowSpan?: number }) {
+  return (
+    <td className="px-4 py-2 align-middle" rowSpan={rowSpan}>
+      <div className="flex items-center gap-1">
+        <button
+          type="button"
+          onClick={() => onEdit(d.id)}
+          title={t("common.edit") ?? "Sửa"}
+          className="cursor-pointer rounded p-1.5 text-zinc-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:text-indigo-400 dark:hover:bg-indigo-900/20 transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/50"
+        >
+          <Pencil className="h-4 w-4" />
+        </button>
+        <button
+          type="button"
+          onClick={() => onReport(d.id)}
+          title={t("disbursements.generateReport") ?? "Tạo báo cáo"}
+          className="cursor-pointer rounded p-1.5 text-zinc-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:text-amber-400 dark:hover:bg-amber-900/20 transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/50"
+        >
+          <FileText className="h-4 w-4" />
+        </button>
+        <Link href={`/report/disbursements/${d.id}`}
+          title={t("common.view") ?? "Xem"}
+          className="cursor-pointer rounded p-1.5 text-zinc-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:text-emerald-400 dark:hover:bg-emerald-900/20 transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/50">
+          <Eye className="h-4 w-4" />
+        </Link>
+      </div>
+    </td>
+  );
+}
+
+function BeneficiaryInvoiceBadge({ line }: { line: { invoiceStatus: string; invoiceAmount: number } }) {
+  if (line.invoiceStatus === "has_invoice") {
+    return <span className={`${badgeBase} ${badgeCls.green}`}>Đã bổ sung</span>;
+  }
+  if (line.invoiceAmount > 0) {
+    return <span className={`${badgeBase} ${badgeCls.yellow}`}>Đã bổ sung một phần</span>;
+  }
+  return <span className={`${badgeBase} ${badgeCls.red}`}>Cần bổ sung</span>;
+}
 
 export default function LoanDetailPage() {
   const { t } = useLanguage();
@@ -64,6 +117,10 @@ export default function LoanDetailPage() {
 
   const [showModal, setShowModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showBeneficiaryModal, setShowBeneficiaryModal] = useState(false);
+  const [editingDisbursementId, setEditingDisbursementId] = useState<string | null>(null);
+  const [reportDisbursementId, setReportDisbursementId] = useState<string | null>(null);
+  const [invoiceTarget, setInvoiceTarget] = useState<{ disbursementId: string; lineId: string; name: string; amount: number } | null>(null);
 
   // Debounce search input (400ms)
   const searchTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
@@ -134,11 +191,24 @@ export default function LoanDetailPage() {
             <LoanStatusBadge status={loan.status} />
             <button
               type="button"
+              onClick={() => setShowBeneficiaryModal(true)}
+              className="cursor-pointer rounded-md border border-coral-tree-300 dark:border-white/[0.09] px-3 py-1 text-xs transition-colors duration-150 hover:bg-coral-tree-100 dark:hover:bg-white/[0.06] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/50"
+            >
+              {t("beneficiaries.title") ?? "Đơn vị thụ hưởng"}
+            </button>
+            <button
+              type="button"
               onClick={() => setShowEditModal(true)}
               className="cursor-pointer rounded-md border border-coral-tree-300 dark:border-white/[0.09] px-3 py-1 text-xs transition-colors duration-150 hover:bg-coral-tree-100 dark:hover:bg-white/[0.06] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/50"
             >
               {t("common.edit")}
             </button>
+            <Link
+              href={`/report/invoices?customerId=${loan.customer.id}`}
+              className="rounded-md border border-coral-tree-300 dark:border-white/[0.09] px-3 py-1 text-xs transition-colors duration-150 hover:bg-coral-tree-100 dark:hover:bg-white/[0.06] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/50"
+            >
+              {t("invoices.manage") ?? "Quản lý hóa đơn"}
+            </Link>
           </div>
         </div>
         <div className="mt-3 grid grid-cols-2 gap-4 text-sm md:grid-cols-4">
@@ -159,7 +229,7 @@ export default function LoanDetailPage() {
             <p className="font-medium">{fmtDate(loan.endDate)}</p>
           </div>
         </div>
-        {(loan.collateralValue != null || loan.securedObligation != null) && (
+        {(loan.collateralValue != null || loan.securedObligation != null || loan.disbursementLimitByAsset != null) && (
           <div className="mt-3 grid grid-cols-2 gap-4 text-sm md:grid-cols-4">
             <div>
               <span className="text-zinc-400 dark:text-slate-500">{t("loans.collateralValue")}</span>
@@ -168,6 +238,10 @@ export default function LoanDetailPage() {
             <div>
               <span className="text-zinc-400 dark:text-slate-500">{t("loans.securedObligation")}</span>
               <p className="font-medium">{loan.securedObligation != null ? `${fmt(loan.securedObligation)} VND` : "—"}</p>
+            </div>
+            <div>
+              <span className="text-zinc-400 dark:text-slate-500">{t("loans.disbursementLimitByAsset")}</span>
+              <p className="font-medium">{loan.disbursementLimitByAsset != null ? `${fmt(loan.disbursementLimitByAsset)} VND` : "—"}</p>
             </div>
           </div>
         )}
@@ -236,28 +310,53 @@ export default function LoanDetailPage() {
           <div className="overflow-x-auto"><table className="w-full text-sm">
             <thead>
               <tr className="border-b border-coral-tree-200 dark:border-white/[0.07] bg-coral-tree-100 dark:bg-white/[0.05] text-left">
-                <th className="px-4 py-2 font-semibold">{t("disbursements.amount")}</th>
                 <th className="px-4 py-2 font-semibold">{t("disbursements.date")}</th>
-                <th className="px-4 py-2 font-semibold">{t("disbursements.description")}</th>
-                <th className="px-4 py-2 font-semibold">{t("disbursements.invoiceCount")}</th>
+                <th className="px-4 py-2 font-semibold">{t("disbursements.amount")}</th>
+                <th className="px-4 py-2 font-semibold">{t("disbursements.beneficiary")}</th>
+                <th className="px-4 py-2 font-semibold">{t("disbursements.invoiceStatus")}</th>
                 <th className="px-4 py-2 font-semibold w-20" />
               </tr>
             </thead>
             <tbody>
-              {disbursements.map((d) => (
-                <tr key={d.id} className="border-t border-coral-tree-200 dark:border-white/[0.07] transition-colors duration-150 hover:bg-coral-tree-50 dark:hover:bg-white/[0.04]">
-                  <td className="px-4 py-2 font-medium tabular-nums">{fmt(d.amount)}</td>
-                  <td className="px-4 py-2">{fmtDate(d.disbursementDate)}</td>
-                  <td className="px-4 py-2 text-zinc-500 dark:text-slate-400">{d.description ?? "—"}</td>
-                  <td className="px-4 py-2 text-center">{d._count.invoices}</td>
-                  <td className="px-4 py-2">
-                    <Link href={`/report/disbursements/${d.id}`}
-                      className="cursor-pointer rounded border border-coral-tree-300 dark:border-white/[0.09] px-2 py-1 text-xs transition-colors duration-150 hover:bg-coral-tree-100 dark:hover:bg-white/[0.06] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/50">
-                      {t("common.view")}
-                    </Link>
-                  </td>
-                </tr>
-              ))}
+              {disbursements.map((d) => {
+                const lines = d.beneficiaryLines;
+                const rowSpan = Math.max(lines.length, 1);
+                return lines.length === 0 ? (
+                  <tr key={d.id} className="border-t border-coral-tree-200 dark:border-white/[0.07] transition-colors duration-150 hover:bg-coral-tree-50 dark:hover:bg-white/[0.04]">
+                    <td className="px-4 py-2">{fmtDate(d.disbursementDate)}</td>
+                    <td className="px-4 py-2 font-medium tabular-nums">{fmt(d.amount)}</td>
+                    <td className="px-4 py-2 text-zinc-400 dark:text-slate-500">—</td>
+                    <td className="px-4 py-2"><span className={`${badgeBase} ${badgeCls.red}`}>Cần bổ sung</span></td>
+                    <DisbursementActions d={d} onEdit={setEditingDisbursementId} onReport={setReportDisbursementId} t={t} />
+                  </tr>
+                ) : (
+                  lines.map((b, i) => (
+                    <tr key={`${d.id}-${i}`} className={`${i === 0 ? "border-t border-coral-tree-200 dark:border-white/[0.07]" : ""} transition-colors duration-150 hover:bg-coral-tree-50 dark:hover:bg-white/[0.04]`}>
+                      {i === 0 && (
+                        <>
+                          <td className="px-4 py-2 align-middle" rowSpan={rowSpan}>{fmtDate(d.disbursementDate)}</td>
+                          <td className="px-4 py-2 align-middle font-medium tabular-nums" rowSpan={rowSpan}>{fmt(d.amount)}</td>
+                        </>
+                      )}
+                      <td className="px-4 py-2 text-zinc-700 dark:text-slate-300">{b.beneficiaryName}</td>
+                      <td className="px-4 py-2">
+                        <div className="flex items-center gap-1.5">
+                          <BeneficiaryInvoiceBadge line={b} />
+                          <button
+                            type="button"
+                            onClick={() => setInvoiceTarget({ disbursementId: d.id, lineId: b.id, name: b.beneficiaryName, amount: b.amount })}
+                            title="Bổ sung hóa đơn"
+                            className="cursor-pointer rounded p-1 text-zinc-400 hover:text-coral-tree-600 hover:bg-coral-tree-50 dark:hover:text-coral-tree-400 dark:hover:bg-coral-tree-900/20 transition-colors"
+                          >
+                            <Plus className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                      </td>
+                      {i === 0 && <DisbursementActions d={d} onEdit={setEditingDisbursementId} onReport={setReportDisbursementId} t={t} rowSpan={rowSpan} />}
+                    </tr>
+                  ))
+                );
+              })}
             </tbody>
           </table></div>
         )}
@@ -267,6 +366,7 @@ export default function LoanDetailPage() {
       {showModal && (
         <DisbursementFormModal
           loanId={loan.id}
+          loanAmount={loan.loanAmount}
           onClose={() => setShowModal(false)}
           onCreated={handleCreated}
         />
@@ -277,6 +377,43 @@ export default function LoanDetailPage() {
           loan={loan}
           onClose={() => setShowEditModal(false)}
           onUpdated={() => void loadLoan()}
+        />
+      )}
+
+      {showBeneficiaryModal && (
+        <BeneficiaryModal
+          loanId={loan.id}
+          contractNumber={loan.contractNumber}
+          onClose={() => setShowBeneficiaryModal(false)}
+        />
+      )}
+
+      {editingDisbursementId && (
+        <DisbursementFormModal
+          loanId={loan.id}
+          loanAmount={loan.loanAmount}
+          editDisbursementId={editingDisbursementId}
+          onClose={() => setEditingDisbursementId(null)}
+          onCreated={handleCreated}
+        />
+      )}
+
+      {reportDisbursementId && (
+        <DisbursementReportModal
+          loanId={loan.id}
+          disbursementId={reportDisbursementId}
+          onClose={() => setReportDisbursementId(null)}
+        />
+      )}
+
+      {invoiceTarget && (
+        <AddInvoiceFromLoanModal
+          disbursementId={invoiceTarget.disbursementId}
+          beneficiaryLineId={invoiceTarget.lineId}
+          beneficiaryName={invoiceTarget.name}
+          defaultAmount={invoiceTarget.amount}
+          onClose={() => setInvoiceTarget(null)}
+          onCreated={handleCreated}
         />
       )}
     </section>
