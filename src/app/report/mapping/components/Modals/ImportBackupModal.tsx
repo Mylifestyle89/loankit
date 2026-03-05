@@ -88,7 +88,7 @@ export function ImportBackupModal({ open, onClose, onRestore }: ImportBackupModa
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
       <div
-        className="w-full max-w-lg rounded-2xl border border-slate-200/60 bg-white/90 p-5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] backdrop-blur-md dark:border-white/[0.07] dark:bg-[#0f1629]/90"
+        className="w-full max-w-lg rounded-2xl border border-slate-200/60 bg-white/90 p-5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] backdrop-blur-md dark:border-white/[0.07] dark:bg-[#141414]/90"
         role="dialog"
         aria-labelledby="import-backup-title"
       >
@@ -178,7 +178,7 @@ export function ImportBackupModal({ open, onClose, onRestore }: ImportBackupModa
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg border border-slate-200/60 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50/80 dark:border-white/[0.07] dark:bg-[#0f1629]/90 dark:text-slate-200 dark:hover:bg-white/[0.05]"
+            className="rounded-lg border border-slate-200/60 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50/80 dark:border-white/[0.07] dark:bg-[#141414]/90 dark:text-slate-200 dark:hover:bg-white/[0.05]"
           >
             Hủy
           </button>

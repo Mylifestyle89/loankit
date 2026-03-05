@@ -49,7 +49,7 @@ export function FormulaModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="w-full max-w-md rounded-xl bg-white dark:bg-[#0f1629]/90 shadow-2xl">
+      <div className="w-full max-w-md rounded-xl bg-white dark:bg-[#141414]/90 shadow-2xl">
         <div className="flex items-center justify-between border-b border-blue-chill-200 dark:border-white/[0.07] px-4 py-3">
           <h3 className="text-base font-semibold text-blue-chill-900 dark:text-slate-100">Công thức: {field.label_vi}</h3>
           <button

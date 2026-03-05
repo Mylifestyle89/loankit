@@ -88,7 +88,7 @@ const toneMap: Record<
 export function SystemLogCard({ logs, endRef, title = "Live log", emptyText = "Chờ dữ liệu...", variant = "dark" }: Props) {
   const cardClass =
     variant === "light"
-      ? "rounded-2xl border border-slate-200/60 dark:border-white/[0.07] bg-white/80 dark:bg-[#0f1629]/90 text-xs shadow-[0_8px_30px_rgb(0,0,0,0.04)] backdrop-blur-md"
+      ? "rounded-2xl border border-slate-200/60 dark:border-white/[0.07] bg-white/80 dark:bg-[#141414]/90 text-xs shadow-[0_8px_30px_rgb(0,0,0,0.04)] backdrop-blur-md"
       : "rounded-lg border border-zinc-700 bg-zinc-950 text-xs";
   const headClass =
     variant === "light"

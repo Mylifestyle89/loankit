@@ -89,18 +89,20 @@ export function useMappingApi({ t, selectedMappingInstanceId }: UseMappingApiPar
 
   const loadFieldValues = useCallback(async () => {
     const md = useMappingDataStore.getState();
-    const res = await fetch("/api/report/values", { cache: "no-store" });
+    const query = selectedMappingInstanceId
+      ? `?mapping_instance_id=${encodeURIComponent(selectedMappingInstanceId)}`
+      : "";
+    const res = await fetch(`/api/report/values${query}`, { cache: "no-store" });
     const data = (await res.json()) as ValuesResponse;
     if (!data.ok) {
       updateStatus({ error: data.error ?? t("mapping.err.loadData") });
       return;
     }
-    md.setFieldCatalog(normalizeFieldCatalogForSchema(data.field_catalog ?? []));
     md.setAutoValues(data.auto_values ?? {});
     md.setValues(data.values ?? {});
     md.setManualValues(data.manual_values ?? {});
     md.setFormulas(data.field_formulas ?? {});
-  }, [t]);
+  }, [selectedMappingInstanceId, t]);
 
   const loadData = useCallback(async () => {
     const md = useMappingDataStore.getState();
@@ -122,6 +124,24 @@ export function useMappingApi({ t, selectedMappingInstanceId }: UseMappingApiPar
     updateStatus({ loading: false });
   }, [selectedMappingInstanceId, t, loadFieldValues]);
 
+  const loadCustomers = useCallback(async () => {
+    const { setCustomers, setLoadingCustomers } = useCustomerStore.getState();
+    setLoadingCustomers(true);
+    try {
+      const res = await fetch("/api/customers", { cache: "no-store" });
+      const data = (await res.json()) as {
+        ok: boolean;
+        error?: string;
+        customers?: Array<{ id: string; customer_name: string; customer_code: string }>;
+      };
+      if (data.ok && data.customers) setCustomers(data.customers);
+    } catch (e) {
+      updateStatus({ error: e instanceof Error ? e.message : t("mapping.err.loadData") });
+    } finally {
+      setLoadingCustomers(false);
+    }
+  }, [t]);
+
   const saveDraft = useCallback(async () => {
     updateStatus({ saving: true, error: "", message: "" });
     try {
@@ -139,8 +159,8 @@ export function useMappingApi({ t, selectedMappingInstanceId }: UseMappingApiPar
         if (
           !window.confirm(
             "Cảnh báo: phát hiện alias trùng tên (sau chuẩn hóa).\n\n" +
-              lines.join("\n") +
-              "\n\nBạn vẫn muốn lưu dữ liệu?",
+            lines.join("\n") +
+            "\n\nBạn vẫn muốn lưu dữ liệu?",
           )
         ) {
           updateStatus({ saving: false });
@@ -166,10 +186,10 @@ export function useMappingApi({ t, selectedMappingInstanceId }: UseMappingApiPar
         }),
         selectedCustomerId && selectedFieldTemplateId
           ? fetch("/api/report/master-templates", {
-              method: "PUT",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ master_id: selectedFieldTemplateId, field_catalog: normalizedCatalog }),
-            })
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ master_id: selectedFieldTemplateId, field_catalog: normalizedCatalog }),
+          })
           : Promise.resolve(null),
       ]);
 
@@ -182,14 +202,19 @@ export function useMappingApi({ t, selectedMappingInstanceId }: UseMappingApiPar
       for (const [key, val] of Object.entries(md.values)) {
         if (Array.isArray(val)) repeaterData[key] = val;
       }
-      await fetch("/api/report/values", {
+      const valuesRes = await fetch("/api/report/values", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           manual_values: { ...md.manualValues, ...repeaterData },
           field_formulas: md.formulas,
+          mapping_instance_id: selectedMappingInstanceId || undefined,
         }),
       });
+      const valuesData = (await valuesRes.json()) as { ok?: boolean; error?: string };
+      if (!valuesRes.ok || !valuesData.ok) {
+        throw new Error(valuesData.error ?? t("mapping.err.saveDraft"));
+      }
 
       // 4. Compute effective values with formulas for customer sync
       const payloadValues = { ...md.values };
@@ -310,6 +335,7 @@ export function useMappingApi({ t, selectedMappingInstanceId }: UseMappingApiPar
 
   return {
     loadData,
+    loadCustomers,
     saveDraft,
     suggestMappingFromHeaders,
     getAutoProcessAssets,

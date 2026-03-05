@@ -30,7 +30,7 @@ export function ImportTemplateGroupModal({
 
   return (
     <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-4">
-      <div className="w-full max-w-md space-y-3 rounded-lg bg-white dark:bg-[#0f1629]/90 p-4 shadow-xl">
+      <div className="w-full max-w-md space-y-3 rounded-lg bg-white dark:bg-[#141414]/90 p-4 shadow-xl">
         <h3 className="text-sm font-semibold dark:text-slate-100">Thêm nhóm dữ liệu từ mẫu</h3>
         <div className="space-y-1">
           <label className="text-xs text-coral-tree-600 dark:text-slate-300" htmlFor="import-group-template-select">

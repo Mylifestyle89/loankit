@@ -363,7 +363,7 @@ export function MappingSidebar({
         <Users className="h-6 w-6" />
       </button>
       {showFabHint ? (
-        <div className="fixed bottom-[84px] right-6 z-[95] max-w-[240px] rounded-lg border border-slate-200 bg-white dark:border-white/[0.07] dark:bg-[#0f1629]/90 px-3 py-2 text-xs text-slate-700 dark:text-slate-200 shadow-xl">
+        <div className="fixed bottom-[84px] right-6 z-[95] max-w-[240px] rounded-lg border border-slate-200 bg-white dark:border-white/[0.07] dark:bg-[#141414]/90 px-3 py-2 text-xs text-slate-700 dark:text-slate-200 shadow-xl">
           <button
             type="button"
             onClick={() => setShowFabHint(false)}
@@ -401,7 +401,7 @@ export function MappingSidebar({
                 animate={{ x: 0, width: isCollapsed ? 72 : 400 }}
                 exit={{ x: "100%" }}
                 transition={{ x: { type: "spring", damping: 28, stiffness: 300 }, width: { type: "spring", damping: 28, stiffness: 300 } }}
-                className="fixed inset-y-0 right-0 z-[101] flex h-screen min-h-screen flex-col border-l border-slate-200/60 dark:border-white/[0.07] bg-slate-50/80 dark:bg-[#0f1629]/90 shadow-2xl backdrop-blur-xl"
+                className="fixed inset-y-0 right-0 z-[101] flex h-screen min-h-screen flex-col border-l border-slate-200/60 dark:border-white/[0.07] bg-slate-50/80 dark:bg-[#141414]/90 shadow-2xl backdrop-blur-xl"
               >
                 {/* Header */}
                 <div className="flex shrink-0 items-center justify-between border-b border-slate-200/60 dark:border-white/[0.07] px-4 py-3">
@@ -494,7 +494,7 @@ export function MappingSidebar({
                                       initial={{ opacity: 0, y: -6 }}
                                       animate={{ opacity: 1, y: 0 }}
                                       exit={{ opacity: 0, y: -6 }}
-                                      className="absolute z-20 mt-2 w-full overflow-hidden rounded-xl border border-slate-200 dark:border-white/[0.07] bg-white dark:bg-[#0f1629]/90 shadow-xl"
+                                      className="absolute z-20 mt-2 w-full overflow-hidden rounded-xl border border-slate-200 dark:border-white/[0.07] bg-white dark:bg-[#141414]/90 shadow-xl"
                                     >
                                       <div className="border-b border-slate-200 dark:border-white/[0.07] p-2">
                                         <div className="relative">
@@ -589,9 +589,9 @@ export function MappingSidebar({
                                 </AnimatePresence>
                               </div>
                               <div className="flex flex-wrap items-center gap-2 pt-1">
-                                <button type="button" onClick={() => { openCreateFieldTemplateModal(); setIsOpen(false); }} className="rounded-lg border border-slate-200/80 dark:border-white/[0.09] bg-white dark:bg-[#0f1629]/90 px-3 py-2 text-xs font-medium text-slate-700 dark:text-slate-200 transition-all duration-200 hover:bg-slate-100/50 dark:hover:bg-white/[0.06]">Tạo mẫu mới</button>
-                                <button type="button" onClick={() => { openAttachFieldTemplateModal(); setIsOpen(false); }} disabled={!selectedFieldTemplateId} className={`rounded-lg border px-3 py-2 text-xs font-medium transition-all duration-200 ${!selectedFieldTemplateId ? "cursor-not-allowed border-slate-200/60 dark:border-white/[0.07] bg-slate-50 dark:bg-white/[0.04] text-slate-400 dark:text-slate-500" : "border-slate-200/80 dark:border-white/[0.09] bg-white dark:bg-[#0f1629]/90 text-slate-700 dark:text-slate-200 hover:bg-slate-100/50 dark:hover:bg-white/[0.06]"}`}>Áp dụng mẫu</button>
-                                <button type="button" onClick={() => { openEditFieldTemplatePicker(); setIsOpen(false); }} className="rounded-lg border border-slate-200/80 dark:border-white/[0.09] bg-white dark:bg-[#0f1629]/90 px-3 py-2 text-xs font-medium text-slate-700 dark:text-slate-200 transition-all duration-200 hover:bg-slate-100/50 dark:hover:bg-white/[0.06]">Chỉnh sửa tên mẫu</button>
+                                <button type="button" onClick={() => { openCreateFieldTemplateModal(); setIsOpen(false); }} className="rounded-lg border border-slate-200/80 dark:border-white/[0.09] bg-white dark:bg-[#141414]/90 px-3 py-2 text-xs font-medium text-slate-700 dark:text-slate-200 transition-all duration-200 hover:bg-slate-100/50 dark:hover:bg-white/[0.06]">Tạo mẫu mới</button>
+                                <button type="button" onClick={() => { openAttachFieldTemplateModal(); setIsOpen(false); }} disabled={!selectedFieldTemplateId} className={`rounded-lg border px-3 py-2 text-xs font-medium transition-all duration-200 ${!selectedFieldTemplateId ? "cursor-not-allowed border-slate-200/60 dark:border-white/[0.07] bg-slate-50 dark:bg-white/[0.04] text-slate-400 dark:text-slate-500" : "border-slate-200/80 dark:border-white/[0.09] bg-white dark:bg-[#141414]/90 text-slate-700 dark:text-slate-200 hover:bg-slate-100/50 dark:hover:bg-white/[0.06]"}`}>Áp dụng mẫu</button>
+                                <button type="button" onClick={() => { openEditFieldTemplatePicker(); setIsOpen(false); }} className="rounded-lg border border-slate-200/80 dark:border-white/[0.09] bg-white dark:bg-[#141414]/90 px-3 py-2 text-xs font-medium text-slate-700 dark:text-slate-200 transition-all duration-200 hover:bg-slate-100/50 dark:hover:bg-white/[0.06]">Chỉnh sửa tên mẫu</button>
                               </div>
                             </div>
                           </>
@@ -611,17 +611,17 @@ export function MappingSidebar({
                         </button>
                         {sectionOpen.utility ? (
                           <>
-                            <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-slate-200/60 dark:border-white/[0.07] bg-white/70 dark:bg-[#0f1629]/90 p-3 transition-all duration-200 hover:bg-slate-100/50 dark:hover:bg-white/[0.06]">
+                            <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-slate-200/60 dark:border-white/[0.07] bg-white/70 dark:bg-[#141414]/90 p-3 transition-all duration-200 hover:bg-slate-100/50 dark:hover:bg-white/[0.06]">
                               <input type="checkbox" checked={showTechnicalKeys} onChange={(e) => setShowTechnicalKeys(e.target.checked)} className="mt-0.5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500" />
                               <div>
                                 <span className="block text-sm font-medium text-slate-800 dark:text-slate-200">{t("mapping.showTechnicalKeys")}</span>
                                 <span className="text-xs text-slate-600 dark:text-slate-300">Phục vụ coder gán mapping vào mẫu Docx.</span>
                               </div>
                             </label>
-                            <button type="button" onClick={() => { setIsOpen(false); openMergeGroupsModal(); }} className="flex w-full items-center gap-2 rounded-lg border border-slate-200/60 dark:border-white/[0.07] bg-white/70 dark:bg-[#0f1629]/90 px-3 py-2.5 text-sm font-medium text-slate-700 dark:text-slate-200 transition-all duration-200 hover:bg-slate-100/50 dark:hover:bg-white/[0.06]">
+                            <button type="button" onClick={() => { setIsOpen(false); openMergeGroupsModal(); }} className="flex w-full items-center gap-2 rounded-lg border border-slate-200/60 dark:border-white/[0.07] bg-white/70 dark:bg-[#141414]/90 px-3 py-2.5 text-sm font-medium text-slate-700 dark:text-slate-200 transition-all duration-200 hover:bg-slate-100/50 dark:hover:bg-white/[0.06]">
                               <ChevronsDown className="h-4 w-4 text-slate-600 dark:text-slate-300" />{t("mapping.mergeGroups")}
                             </button>
-                            <div className="space-y-2 rounded-lg border border-slate-200/60 dark:border-white/[0.07] bg-white/70 dark:bg-[#0f1629]/90 p-3">
+                            <div className="space-y-2 rounded-lg border border-slate-200/60 dark:border-white/[0.07] bg-white/70 dark:bg-[#141414]/90 p-3">
                               <p className="text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">Tiện ích nối nhiều DOCX</p>
                               <label className="flex flex-col gap-1 text-xs">
                                 <span className="text-slate-600 dark:text-slate-300">Danh sách file DOCX</span>
@@ -692,7 +692,7 @@ export function MappingSidebar({
                         </button>
                         {sectionOpen.actions ? (
                           <>
-                            <div className="space-y-2 rounded-lg border border-slate-200/60 dark:border-white/[0.07] bg-white/70 dark:bg-[#0f1629]/90 p-3">
+                            <div className="space-y-2 rounded-lg border border-slate-200/60 dark:border-white/[0.07] bg-white/70 dark:bg-[#141414]/90 p-3">
                               <p className="text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">Import</p>
                               <input ref={importInputRef} type="file" accept=".csv,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" aria-label="Import field từ file" className="hidden" onChange={innerHandleImport} />
                               <div className="space-y-1">
@@ -702,7 +702,7 @@ export function MappingSidebar({
                                   <option value="overwrite">{t("mapping.import.mode.overwrite")}</option>
                                 </select>
                               </div>
-                              <button type="button" onClick={() => importInputRef.current?.click()} disabled={importingCatalog} className="flex w-full items-center justify-center gap-2 rounded-lg border border-slate-200/80 dark:border-white/[0.09] bg-white dark:bg-[#0f1629]/90 px-4 py-2.5 text-sm font-medium text-slate-700 dark:text-slate-200 transition-all duration-200 hover:bg-slate-100/50 dark:hover:bg-white/[0.06] disabled:opacity-75">
+                              <button type="button" onClick={() => importInputRef.current?.click()} disabled={importingCatalog} className="flex w-full items-center justify-center gap-2 rounded-lg border border-slate-200/80 dark:border-white/[0.09] bg-white dark:bg-[#141414]/90 px-4 py-2.5 text-sm font-medium text-slate-700 dark:text-slate-200 transition-all duration-200 hover:bg-slate-100/50 dark:hover:bg-white/[0.06] disabled:opacity-75">
                                 <Upload className="h-4 w-4 text-slate-600 dark:text-slate-300" />{importingCatalog ? t("mapping.import.loading") : t("mapping.import.button")}
                               </button>
                             </div>
@@ -723,10 +723,10 @@ export function MappingSidebar({
                               </select>
                               <p className="text-xs text-slate-600 dark:text-slate-300">{t("mapping.export.fieldCount").replace("{count}", String(exportFieldCount))}</p>
                             </div>
-                            <button type="button" onClick={exportCatalogCsv} disabled={exportingCatalog || !exportTemplateId || exportFieldCount === 0} className="flex w-full items-center justify-center gap-2 rounded-lg border border-slate-200/80 dark:border-white/[0.09] bg-white dark:bg-[#0f1629]/90 px-4 py-2.5 text-sm font-medium text-slate-700 dark:text-slate-200 transition-all duration-200 hover:bg-slate-100/50 dark:hover:bg-white/[0.06] disabled:opacity-75">
+                            <button type="button" onClick={exportCatalogCsv} disabled={exportingCatalog || !exportTemplateId || exportFieldCount === 0} className="flex w-full items-center justify-center gap-2 rounded-lg border border-slate-200/80 dark:border-white/[0.09] bg-white dark:bg-[#141414]/90 px-4 py-2.5 text-sm font-medium text-slate-700 dark:text-slate-200 transition-all duration-200 hover:bg-slate-100/50 dark:hover:bg-white/[0.06] disabled:opacity-75">
                               <Download className="h-4 w-4 text-slate-600 dark:text-slate-300" />{t("mapping.export.csv")}
                             </button>
-                            <button type="button" onClick={exportCatalogXlsx} disabled={exportingCatalog || !exportTemplateId || exportFieldCount === 0} className="flex w-full items-center justify-center gap-2 rounded-lg border border-slate-200/80 dark:border-white/[0.09] bg-white dark:bg-[#0f1629]/90 px-4 py-2.5 text-sm font-medium text-slate-700 dark:text-slate-200 transition-all duration-200 hover:bg-slate-100/50 dark:hover:bg-white/[0.06] disabled:opacity-75">
+                            <button type="button" onClick={exportCatalogXlsx} disabled={exportingCatalog || !exportTemplateId || exportFieldCount === 0} className="flex w-full items-center justify-center gap-2 rounded-lg border border-slate-200/80 dark:border-white/[0.09] bg-white dark:bg-[#141414]/90 px-4 py-2.5 text-sm font-medium text-slate-700 dark:text-slate-200 transition-all duration-200 hover:bg-slate-100/50 dark:hover:bg-white/[0.06] disabled:opacity-75">
                               <Download className="h-4 w-4 text-slate-600 dark:text-slate-300" />{t("mapping.export.xlsx")}
                             </button>
                           </>
@@ -761,7 +761,7 @@ export function MappingSidebar({
             transition={{ duration: 0.2 }}
             className="fixed inset-0 z-[111] flex items-center justify-center p-4"
           >
-            <div className="w-full max-w-md rounded-xl border border-slate-200 dark:border-white/[0.07] bg-white dark:bg-[#0f1629]/90 shadow-2xl">
+            <div className="w-full max-w-md rounded-xl border border-slate-200 dark:border-white/[0.07] bg-white dark:bg-[#141414]/90 shadow-2xl">
               <div className="border-b border-slate-200 dark:border-white/[0.07] px-6 py-4">
                 <h3 className="text-base font-semibold text-slate-800 dark:text-slate-200">
                   Nhập tên template
@@ -790,7 +790,7 @@ export function MappingSidebar({
                 <button
                   type="button"
                   onClick={() => setImportNameDialogOpen(false)}
-                  className="rounded-lg border border-slate-200 dark:border-white/[0.09] bg-white dark:bg-[#0f1629]/90 px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-200 transition-colors hover:bg-slate-100 dark:hover:bg-white/[0.06]"
+                  className="rounded-lg border border-slate-200 dark:border-white/[0.09] bg-white dark:bg-[#141414]/90 px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-200 transition-colors hover:bg-slate-100 dark:hover:bg-white/[0.06]"
                 >
                   Hủy
                 </button>

@@ -46,7 +46,7 @@ export function AddFieldModal({
 
     return (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-4">
-            <div className="w-full max-w-xl space-y-4 rounded-xl bg-white dark:bg-[#0f1629]/90 p-5 shadow-2xl">
+            <div className="w-full max-w-xl space-y-4 rounded-xl bg-white dark:bg-[#141414]/90 p-5 shadow-2xl">
                 <h3 className="text-base font-semibold dark:text-slate-100">{t("mapping.newFieldTitle")}</h3>
 
                 <div className="grid gap-3">

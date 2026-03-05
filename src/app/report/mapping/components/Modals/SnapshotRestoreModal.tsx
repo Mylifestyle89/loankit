@@ -121,7 +121,7 @@ export function SnapshotRestoreModal({ open, onClose }: Props) {
 
   return (
     <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/40 p-4">
-      <div className="flex max-h-[80vh] w-full max-w-2xl flex-col rounded-2xl border border-slate-200/60 bg-white/95 shadow-[0_8px_30px_rgb(0,0,0,0.08)] backdrop-blur-md dark:border-white/[0.07] dark:bg-[#0f1629]/95">
+      <div className="flex max-h-[80vh] w-full max-w-2xl flex-col rounded-2xl border border-slate-200/60 bg-white/95 shadow-[0_8px_30px_rgb(0,0,0,0.08)] backdrop-blur-md dark:border-white/[0.07] dark:bg-[#141414]/95">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-slate-200/60 px-5 py-4 dark:border-white/[0.07]">
           <div className="flex items-center gap-2.5">

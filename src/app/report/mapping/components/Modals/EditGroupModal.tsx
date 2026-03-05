@@ -26,7 +26,7 @@ export function EditGroupModal({
 
     return (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-4">
-            <div className="w-full max-w-sm space-y-3 rounded-lg bg-white dark:bg-[#0f1629]/90 p-4 shadow-xl">
+            <div className="w-full max-w-sm space-y-3 rounded-lg bg-white dark:bg-[#141414]/90 p-4 shadow-xl">
                 <h3 className="text-sm font-semibold dark:text-slate-100">{t("mapping.editGroup.modalTitle")}</h3>
                 {editingGroup ? (
                     <p className="text-xs text-coral-tree-600 dark:text-slate-300">

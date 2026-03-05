@@ -98,15 +98,15 @@ export function FieldCatalogBoard({
         initial={{ opacity: 0.35 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.22, ease: "easeOut" }}
-        className="overflow-hidden rounded-xl border border-zinc-200 dark:border-white/[0.08] bg-white/90 dark:bg-[#0f1629]/90 shadow-sm"
+        className="overflow-hidden rounded-xl border border-zinc-200 dark:border-white/[0.08] bg-white/90 dark:bg-[#141414]/90 shadow-sm"
         style={{ height: "calc(100vh - 220px)", minHeight: 420 }}
       >
         <Group orientation="horizontal" className="h-full min-h-0 w-full">
           {/* Left column: Group chips */}
           <Panel defaultSize="230px" minSize="180px" maxSize="42%" className="min-w-0">
-            <div className="min-w-0 h-full min-h-0 flex flex-col border-r border-zinc-200 dark:border-white/[0.08] bg-zinc-50/80 dark:bg-[#080c18]">
+            <div className="min-w-0 h-full min-h-0 flex flex-col border-r border-zinc-200 dark:border-white/[0.08] bg-zinc-50/80 dark:bg-[#0a0a0a]">
               {/* Sticky header */}
-              <div className="shrink-0 flex items-center gap-1.5 border-b border-zinc-200/70 dark:border-white/[0.07] bg-zinc-50/95 dark:bg-[#080c18] px-2.5 py-2 text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-slate-400 backdrop-blur-sm">
+              <div className="shrink-0 flex items-center gap-1.5 border-b border-zinc-200/70 dark:border-white/[0.07] bg-zinc-50/95 dark:bg-[#0a0a0a] px-2.5 py-2 text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-slate-400 backdrop-blur-sm">
                 <span className="flex-1 truncate">{t("mapping.column.field")}</span>
                 <button
                   type="button"
@@ -269,7 +269,7 @@ export function FieldCatalogBoard({
                     {child.fields.some((f) => f.is_repeater) ? (
                       <div className="space-y-4 rounded-lg border border-amber-200/60 bg-amber-50/30 p-4">
                         {((Array.isArray(values[child.fullPath]) ? values[child.fullPath] : []) as Record<string, unknown>[]).map((item, index) => (
-                          <div key={index} className="rounded-xl border border-amber-200/60 bg-white dark:bg-[#0f1629]/90 shadow-sm overflow-hidden">
+                          <div key={index} className="rounded-xl border border-amber-200/60 bg-white dark:bg-[#141414]/90 shadow-sm overflow-hidden">
                             <div className="flex items-center justify-between border-b border-amber-100 bg-amber-50 dark:bg-amber-500/10 px-4 py-2">
                               <span className="text-xs font-semibold text-amber-800">Bản ghi #{index + 1}</span>
                               <button
@@ -341,7 +341,7 @@ export function FieldCatalogBoard({
                             return (
                               <div
                                 key={field.field_key}
-                                className="w-full max-w-full min-w-0 flex-shrink-0 rounded-xl border border-zinc-200 dark:border-white/[0.08] bg-white dark:bg-[#0f1629]/90 p-0 shadow-sm transition-shadow hover:shadow-md"
+                                className="w-full max-w-full min-w-0 flex-shrink-0 rounded-xl border border-zinc-200 dark:border-white/[0.08] bg-white dark:bg-[#141414]/90 p-0 shadow-sm transition-shadow hover:shadow-md"
                               >
                                 <FieldRow
                                   field={field}

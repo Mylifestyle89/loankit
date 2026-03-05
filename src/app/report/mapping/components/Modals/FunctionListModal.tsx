@@ -99,7 +99,7 @@ export function FunctionListModal({ isOpen, onClose, aliasText }: FunctionListMo
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="max-h-[90vh] w-full max-w-2xl overflow-hidden rounded-xl bg-white dark:bg-[#0f1629]/90 shadow-2xl flex flex-col">
+      <div className="max-h-[90vh] w-full max-w-2xl overflow-hidden rounded-xl bg-white dark:bg-[#141414]/90 shadow-2xl flex flex-col">
         <div className="flex items-center justify-between border-b border-blue-chill-200 dark:border-white/[0.07] bg-blue-chill-50 dark:bg-white/[0.04] px-4 py-3">
           <h2 className="text-lg font-semibold text-blue-chill-900 dark:text-slate-100">Danh sách hàm tính toán</h2>
           <button

@@ -75,7 +75,7 @@ export function CreateMasterTemplateModal() {
             type="button"
             onClick={onClose}
             disabled={saving}
-            className="rounded-xl border border-slate-200/60 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition-all hover:bg-slate-50/80 disabled:opacity-60 dark:border-white/[0.07] dark:bg-[#0f1629]/90 dark:text-slate-200 dark:hover:bg-white/[0.05]"
+            className="rounded-xl border border-slate-200/60 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition-all hover:bg-slate-50/80 disabled:opacity-60 dark:border-white/[0.07] dark:bg-[#141414]/90 dark:text-slate-200 dark:hover:bg-white/[0.05]"
           >
             Hủy
           </button>

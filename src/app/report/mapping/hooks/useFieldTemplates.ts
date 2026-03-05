@@ -77,6 +77,7 @@ export function useFieldTemplates({ t }: { t: (key: string) => string }) {
   async function applySelectedFieldTemplate(templateId: string) {
     const ft = useFieldTemplateStore.getState();
     const md = useMappingDataStore.getState();
+    const { selectedCustomerId } = useCustomerStore.getState();
     if (!templateId) {
       ft.setSelectedFieldTemplateId("");
       ft.setEditingFieldTemplateId("");
@@ -89,27 +90,34 @@ export function useFieldTemplates({ t }: { t: (key: string) => string }) {
     if (!template) return;
 
     const normalizedCatalog = normalizeFieldCatalogForSchema(template.field_catalog ?? []);
-    // Set field catalog first, then reload values from disk
-    md.setTemplateData(
-      normalizedCatalog,
-      Object.fromEntries(normalizedCatalog.map((f) => [f.field_key, ""])),
-      {},
-    );
-    ft.setSelectedFieldTemplateId(templateId);
-    // Enter editing mode → toolbar shows
-    ft.setEditingFieldTemplateId(templateId);
-    ft.setEditingFieldTemplateName(template.name);
 
-    // Reload saved values from disk to preserve manually-entered data
+    // Preserve current values/manualValues before switching template
+    const prevValues = { ...md.values };
+    const prevManual = { ...md.manualValues };
+    const prevFormulas = { ...md.formulas };
+
+    // Load saved values from disk FIRST (before resetting state)
+    let diskValues = prevValues;
+    let diskManual: Record<string, string | number | boolean | null> = prevManual;
+    let diskFormulas = prevFormulas;
     try {
-      const res = await fetch("/api/report/values", { cache: "no-store" });
+      const query = selectedCustomerId ? `?mapping_instance_id=${encodeURIComponent(templateId)}` : "";
+      const res = await fetch(`/api/report/values${query}`, { cache: "no-store" });
       const data = (await res.json()) as { ok: boolean; manual_values?: Record<string, string | number | boolean | null>; field_formulas?: Record<string, string>; values?: Record<string, unknown> };
       if (data.ok) {
-        if (data.manual_values) md.setManualValues(data.manual_values);
-        if (data.field_formulas) md.setFormulas(data.field_formulas);
-        if (data.values) md.setValues(data.values as Record<string, unknown>);
+        diskValues = { ...prevValues, ...(data.values ?? {}) };
+        diskManual = { ...prevManual, ...(data.manual_values ?? {}) };
+        diskFormulas = { ...prevFormulas, ...(data.field_formulas ?? {}) };
       }
-    } catch { /* values will stay empty if API fails */ }
+    } catch { /* keep previous values if API fails */ }
+
+    // Now set template data atomically with preserved + disk values
+    md.setTemplateData(normalizedCatalog, diskValues, diskManual);
+    md.setFormulas(diskFormulas);
+
+    ft.setSelectedFieldTemplateId(templateId);
+    ft.setEditingFieldTemplateId(templateId);
+    ft.setEditingFieldTemplateName(template.name);
   }
 
   async function startEditingExistingTemplate(templateId: string) {
@@ -127,38 +135,74 @@ export function useFieldTemplates({ t }: { t: (key: string) => string }) {
     ft.setSelectedFieldTemplateId("");
     ft.setFieldTemplates([]);
     const normalizedCatalog = normalizeFieldCatalogForSchema(template.field_catalog ?? []);
-    // Set field catalog first, then reload values from disk
-    md.setTemplateData(
-      normalizedCatalog,
-      Object.fromEntries(normalizedCatalog.map((f) => [f.field_key, ""])),
-      {},
-    );
-    ft.setEditingFieldTemplateId(template.id);
-    ft.setEditingFieldTemplateName(template.name);
 
-    // Reload saved values from disk to preserve manually-entered data
+    // Preserve current values before switching
+    const prevValues = { ...md.values };
+    const prevManual = { ...md.manualValues };
+    const prevFormulas = { ...md.formulas };
+
+    // Load saved values from disk FIRST (before resetting state)
+    let diskValues = prevValues;
+    let diskManual: Record<string, string | number | boolean | null> = prevManual;
+    let diskFormulas = prevFormulas;
     try {
       const res = await fetch("/api/report/values", { cache: "no-store" });
       const data = (await res.json()) as { ok: boolean; manual_values?: Record<string, string | number | boolean | null>; field_formulas?: Record<string, string>; values?: Record<string, unknown> };
       if (data.ok) {
-        if (data.manual_values) md.setManualValues(data.manual_values);
-        if (data.field_formulas) md.setFormulas(data.field_formulas);
-        if (data.values) md.setValues(data.values as Record<string, unknown>);
+        diskValues = { ...prevValues, ...(data.values ?? {}) };
+        diskManual = { ...prevManual, ...(data.manual_values ?? {}) };
+        diskFormulas = { ...prevFormulas, ...(data.field_formulas ?? {}) };
       }
-    } catch { /* values will stay empty if API fails */ }
+    } catch { /* keep previous values if API fails */ }
+
+    // Set template data atomically with preserved + disk values
+    md.setTemplateData(normalizedCatalog, diskValues, diskManual);
+    md.setFormulas(diskFormulas);
+
+    ft.setEditingFieldTemplateId(template.id);
+    ft.setEditingFieldTemplateName(template.name);
     useUiStore.getState().setStatus({ message: t("mapping.msg.templateEditing").replace("{name}", template.name) });
     closeEditFieldTemplatePicker();
   }
 
-  function stopEditingFieldTemplate() {
+  async function stopEditingFieldTemplate() {
     const ft = useFieldTemplateStore.getState();
     const { selectedCustomerId } = useCustomerStore.getState();
     const md = useMappingDataStore.getState();
+
+    // Auto-save current values to disk before clearing template editing state
+    // This prevents data loss when toggling template off
+    try {
+      const repeaterData: Record<string, unknown> = {};
+      for (const [key, val] of Object.entries(md.values)) {
+        if (Array.isArray(val)) repeaterData[key] = val;
+      }
+      const hasData = Object.keys(md.manualValues).length > 0 || Object.keys(repeaterData).length > 0;
+      if (hasData) {
+        const candidateId = ft.selectedFieldTemplateId || ft.editingFieldTemplateId;
+        const mappingInstanceId =
+          selectedCustomerId && candidateId && ft.fieldTemplates.some((template) => template.id === candidateId)
+            ? candidateId
+            : undefined;
+        await fetch("/api/report/values", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            manual_values: { ...md.manualValues, ...repeaterData },
+            field_formulas: md.formulas,
+            mapping_instance_id: mappingInstanceId,
+          }),
+        });
+      }
+    } catch { /* best-effort save */ }
+
     ft.setEditingFieldTemplateId("");
     ft.setEditingFieldTemplateName("");
     ft.setSelectedFieldTemplateId("");
     if (!selectedCustomerId) {
-      md.setTemplateData([], {}, {});
+      // Only clear the field catalog (UI fields), but preserve values
+      // so data isn't lost when toggling template off/on
+      md.setFieldCatalog([]);
     }
   }
 
@@ -226,6 +270,7 @@ export function useFieldTemplates({ t }: { t: (key: string) => string }) {
               ...Object.fromEntries(Object.entries(md.values).filter(([, v]) => Array.isArray(v))),
             },
             field_formulas: md.formulas,
+            mapping_instance_id: mappingInstanceId,
           }),
         }),
       ]);
@@ -311,6 +356,7 @@ export function useFieldTemplates({ t }: { t: (key: string) => string }) {
               ...Object.fromEntries(Object.entries(md.values).filter(([, v]) => Array.isArray(v))),
             },
             field_formulas: md.formulas,
+            mapping_instance_id: ft.editingFieldTemplateId,
           }),
         }),
       ]);

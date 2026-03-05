@@ -20,7 +20,7 @@ type MappingVisualSectionProps = {
   savingEditedTemplate: boolean;
   saveEditedFieldTemplate: () => void;
   setEditingFieldTemplateName: Dispatch<SetStateAction<string>>;
-  stopEditingFieldTemplate: () => void;
+  stopEditingFieldTemplate: () => void | Promise<void>;
   openImportGroupModal: () => void;
   openDeleteGenericTemplateModal: () => void;
   isEditingMaster: boolean;

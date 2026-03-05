@@ -73,7 +73,7 @@ export function OcrReviewModal({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 24, scale: 0.98 }}
             transition={{ duration: 0.2, ease: "easeOut" }}
-            className="w-full max-w-2xl rounded-2xl border border-slate-200/60 dark:border-white/[0.08] bg-white/95 dark:bg-[#0f1629]/90 shadow-[0_8px_40px_rgb(0,0,0,0.12)] dark:shadow-[0_8px_40px_rgb(0,0,0,0.5)] backdrop-blur-md flex flex-col max-h-[90vh]"
+            className="w-full max-w-2xl rounded-2xl border border-slate-200/60 dark:border-white/[0.08] bg-white/95 dark:bg-[#141414]/90 shadow-[0_8px_40px_rgb(0,0,0,0.12)] dark:shadow-[0_8px_40px_rgb(0,0,0,0.5)] backdrop-blur-md flex flex-col max-h-[90vh]"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}

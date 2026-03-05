@@ -12,6 +12,7 @@ import type { FieldHint } from "@/services/ai-mapping.service";
 import { suggestAliasForPlaceholder } from "@/lib/report/placeholder-utils";
 import { MappingCanvas, type MappingLink } from "../MappingCanvas";
 import { useAutoTagging } from "../../hooks/useAutoTagging";
+import { getSignedFileUrl } from "@/lib/report/signed-file-url";
 import { SystemLogCard, type SystemLogEntry, type SystemLogType } from "../SystemLogCard";
 import { FinancialAnalysisModal } from "./FinancialAnalysisModal";
 
@@ -559,7 +560,7 @@ export function AiMappingModal({
 
           {/* Modal panel – slide up + glassmorphism */}
           <motion.div
-            className="relative flex max-h-[92vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl border border-slate-200/50 bg-white/70 shadow-xl backdrop-blur-xl dark:border-white/[0.07] dark:bg-[#0f1629]/90"
+            className="relative flex max-h-[92vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl border border-slate-200/50 bg-white/70 shadow-xl backdrop-blur-xl dark:border-white/[0.07] dark:bg-[#141414]/90"
             initial={{ opacity: 0, y: 32, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 24, scale: 0.98 }}
@@ -878,7 +879,7 @@ export function AiMappingModal({
                           <select
                             value={selectedExcel}
                             onChange={(e) => setSelectedExcel(e.target.value)}
-                            className="mt-2 w-full rounded-lg border-2 border-indigo-300 bg-white px-2 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200 dark:border-indigo-500/30 dark:bg-[#0f1629]/90 dark:text-slate-100"
+                            className="mt-2 w-full rounded-lg border-2 border-indigo-300 bg-white px-2 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200 dark:border-indigo-500/30 dark:bg-[#141414]/90 dark:text-slate-100"
                             disabled={inputMode !== "assets"}
                           >
                             <option value="">{t("mapping.smartAutoBatch.selectExcel")}</option>
@@ -914,7 +915,7 @@ export function AiMappingModal({
                         <select
                           value={selectedTemplate}
                           onChange={(e) => setSelectedTemplate(e.target.value)}
-                          className="w-full rounded-lg border-2 border-indigo-300 bg-white px-2 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200 dark:border-indigo-500/30 dark:bg-[#0f1629]/90 dark:text-slate-100"
+                          className="w-full rounded-lg border-2 border-indigo-300 bg-white px-2 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200 dark:border-indigo-500/30 dark:bg-[#141414]/90 dark:text-slate-100"
                           disabled={inputMode !== "assets"}
                         >
                           <option value="">{t("mapping.smartAutoBatch.selectTemplate")}</option>
@@ -979,12 +980,17 @@ export function AiMappingModal({
                         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
                           {autoProcessJob.output_paths.map((filePath, idx) => {
                             const basename = filePath.split(/[/\\]/).pop() ?? filePath;
-                            const downloadUrl = `/api/report/file?path=${encodeURIComponent(filePath)}&download=1`;
                             return (
                               <motion.a
                                 key={idx}
-                                href={downloadUrl}
-                                target="_blank"
+                                href="#"
+                                onClick={async (e) => {
+                                  e.preventDefault();
+                                  try {
+                                    const url = await getSignedFileUrl(filePath, true);
+                                    window.open(url, "_blank", "noopener,noreferrer");
+                                  } catch { /* noop */ }
+                                }}
                                 rel="noopener noreferrer"
                                 initial={{ scale: 0.9, opacity: 0 }}
                                 animate={{ scale: 1, opacity: 1 }}
@@ -1521,7 +1527,7 @@ export function AiMappingModal({
 
             {/* Sticky bar: Tải xuống tất cả (.zip) – only in batch tab */}
             {activeSection === "batch" && isOpen && autoProcessJob?.phase === "completed" && autoProcessJob.output_paths.length > 0 ? (
-              <div className="sticky bottom-0 left-0 right-0 border-t border-slate-200/60 bg-slate-50/95 px-4 py-3 backdrop-blur-sm dark:border-white/[0.07] dark:bg-[#0f1629]/90">
+              <div className="sticky bottom-0 left-0 right-0 border-t border-slate-200/60 bg-slate-50/95 px-4 py-3 backdrop-blur-sm dark:border-white/[0.07] dark:bg-[#141414]/90">
                 <button
                   type="button"
                   onClick={() => void handleDownloadAllZip()}
