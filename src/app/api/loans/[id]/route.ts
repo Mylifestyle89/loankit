@@ -17,6 +17,7 @@ const updateSchema = z.object({
   disbursementCount: z.string().optional().nullable(),
   collateralValue: z.number().optional().nullable(),
   securedObligation: z.number().optional().nullable(),
+  disbursementLimitByAsset: z.number().optional().nullable(),
   status: z.enum(TRACKING_STATUSES).optional(),
 });
 

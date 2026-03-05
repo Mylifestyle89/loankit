@@ -21,6 +21,7 @@ type Loan = {
   purpose: string | null;
   collateralValue: number | null;
   securedObligation: number | null;
+  disbursementLimitByAsset: number | null;
   status: string;
 };
 
@@ -56,6 +57,7 @@ export function LoanEditModal({ loan, onClose, onUpdated }: Props) {
   const [purpose, setPurpose] = useState(loan.purpose ?? "");
   const [collateralValue, setCollateralValue] = useState(loan.collateralValue != null ? fmtNumber(String(loan.collateralValue)) : "");
   const [securedObligation, setSecuredObligation] = useState(loan.securedObligation != null ? fmtNumber(String(loan.securedObligation)) : "");
+  const [disbursementLimitByAsset, setDisbursementLimitByAsset] = useState(loan.disbursementLimitByAsset != null ? fmtNumber(String(loan.disbursementLimitByAsset)) : "");
   const [status, setStatus] = useState(loan.status);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -98,6 +100,7 @@ export function LoanEditModal({ loan, onClose, onUpdated }: Props) {
           purpose: purpose || null,
           collateralValue: collateralValue ? Number(parseNumber(collateralValue)) : null,
           securedObligation: securedObligation ? Number(parseNumber(securedObligation)) : null,
+          disbursementLimitByAsset: disbursementLimitByAsset ? Number(parseNumber(disbursementLimitByAsset)) : null,
           status,
         }),
       });
@@ -133,15 +136,21 @@ export function LoanEditModal({ loan, onClose, onUpdated }: Props) {
               <input type="text" required value={contractNumber} onChange={(e) => setContractNumber(e.target.value)} className={inputCls} />
             </label>
             <label className="block">
-              <span className={labelCls}>{t("loans.loanAmount")}</span>
-              <input type="text" required inputMode="numeric" value={loanAmount} onChange={(e) => setLoanAmount(fmtNumber(e.target.value))} className={inputCls} />
+              <span className={labelCls}>{t("loans.interestRate")}</span>
+              <input type="number" step="0.01" value={interestRate} onChange={(e) => setInterestRate(e.target.value)} placeholder="0" className={inputCls} />
             </label>
           </div>
 
-          <label className="block">
-            <span className={labelCls}>{t("loans.interestRate")}</span>
-            <input type="number" step="0.01" value={interestRate} onChange={(e) => setInterestRate(e.target.value)} placeholder="0" className={inputCls} />
-          </label>
+          <div className="grid grid-cols-2 gap-3">
+            <label className="block">
+              <span className={labelCls}>{t("loans.loanAmount")}</span>
+              <input type="text" required inputMode="numeric" value={loanAmount} onChange={(e) => setLoanAmount(fmtNumber(e.target.value))} className={inputCls} />
+            </label>
+            <label className="block">
+              <span className={labelCls}>{t("loans.disbursementLimitByAsset")}</span>
+              <input type="text" inputMode="numeric" value={disbursementLimitByAsset} onChange={(e) => setDisbursementLimitByAsset(fmtNumber(e.target.value))} placeholder="0" className={inputCls} />
+            </label>
+          </div>
 
           <div className="grid grid-cols-2 gap-3">
             <label className="block">

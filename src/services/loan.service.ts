@@ -25,6 +25,7 @@ export type UpdateLoanInput = {
   disbursementCount?: string | null;
   collateralValue?: number | null;
   securedObligation?: number | null;
+  disbursementLimitByAsset?: number | null;
   status?: TrackingStatus;
 };
 
@@ -95,6 +96,7 @@ export const loanService = {
     if (input.disbursementCount !== undefined) data.disbursementCount = input.disbursementCount;
     if (input.collateralValue !== undefined) data.collateralValue = input.collateralValue;
     if (input.securedObligation !== undefined) data.securedObligation = input.securedObligation;
+    if (input.disbursementLimitByAsset !== undefined) data.disbursementLimitByAsset = input.disbursementLimitByAsset;
     if (input.status !== undefined) data.status = input.status;
 
     return prisma.loan.update({ where: { id }, data });

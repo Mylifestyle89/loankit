@@ -6,10 +6,37 @@ import { disbursementService } from "@/services/disbursement.service";
 
 export const runtime = "nodejs";
 
+const invoiceLineSchema = z.object({
+  supplierName: z.string().min(1),
+  invoiceNumber: z.string().min(1),
+  issueDate: z.string().min(1),
+  amount: z.number().positive(),
+});
+
+const beneficiaryLineSchema = z.object({
+  beneficiaryId: z.string().nullish(),
+  beneficiaryName: z.string().min(1),
+  accountNumber: z.string().optional(),
+  bankName: z.string().optional(),
+  amount: z.number().positive(),
+  invoiceStatus: z.enum(["pending", "has_invoice"]).optional(),
+  invoices: z.array(invoiceLineSchema).optional(),
+});
+
 const createSchema = z.object({
   amount: z.number().positive(),
   disbursementDate: z.string().min(1),
   description: z.string().optional(),
+  currentOutstanding: z.number().optional(),
+  debtAmount: z.number().optional(),
+  totalOutstanding: z.number().optional(),
+  purpose: z.string().optional(),
+  supportingDoc: z.string().optional(),
+  loanTerm: z.number().int().optional(),
+  repaymentEndDate: z.string().optional(),
+  principalSchedule: z.string().optional(),
+  interestSchedule: z.string().optional(),
+  beneficiaries: z.array(beneficiaryLineSchema).optional(),
 });
 
 export async function GET(

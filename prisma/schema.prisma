@@ -50,12 +50,30 @@ model Loan {
   disbursementCount    String?
   collateralValue      Float?
   securedObligation    Float?
+  disbursementLimitByAsset Float?
   status               String   @default("active") // active | completed | cancelled
   disbursements     Disbursement[]
+  beneficiaries     Beneficiary[]
 
   @@index([customerId])
   @@index([status])
   @@map("loans")
+}
+
+model Beneficiary {
+  id            String   @id @default(cuid())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  loanId        String
+  loan          Loan     @relation(fields: [loanId], references: [id], onDelete: Cascade)
+  name          String   // Don vi thu huong
+  accountNumber String?  // So tai khoan
+  bankName      String?  // Ngan hang thu huong
+
+  disbursementLines DisbursementBeneficiary[]
+
+  @@index([loanId])
+  @@map("beneficiaries")
 }
 
 model Disbursement {
@@ -68,12 +86,46 @@ model Disbursement {
   disbursementDate DateTime
   description      String?
   status           String   @default("active") // active | completed | cancelled
-  invoices         Invoice[]
+
+  // Expanded fields (Phase P2)
+  currentOutstanding   Float?    // Du no hien tai (snapshot)
+  debtAmount           Float?    // So tien nhan no
+  totalOutstanding     Float?    // Tong du no (snapshot)
+  purpose              String?   // Muc dich
+  supportingDoc        String?   // Tai lieu chung minh
+  loanTerm             Int?      // Thoi han cho vay (months)
+  repaymentEndDate     DateTime? // Han tra cuoi cung
+  principalSchedule    String?   // Dinh ky tra goc
+  interestSchedule     String?   // Dinh ky tra lai
+
+  invoices             Invoice[]
+  beneficiaryLines     DisbursementBeneficiary[]
 
   @@index([loanId])
   @@index([status])
   @@index([loanId, disbursementDate])
   @@map("disbursements")
+}
+
+model DisbursementBeneficiary {
+  id              String       @id @default(cuid())
+  createdAt       DateTime     @default(now())
+  disbursementId  String
+  disbursement    Disbursement @relation(fields: [disbursementId], references: [id], onDelete: Cascade)
+  beneficiaryId   String?
+  beneficiary     Beneficiary? @relation(fields: [beneficiaryId], references: [id], onDelete: SetNull)
+  beneficiaryName String       // snapshot: KH thu huong
+  accountNumber   String?      // snapshot: So TK
+  bankName        String?      // snapshot: Ngan hang
+  amount          Float        // So tien giai ngan cho don vi nay
+  invoiceStatus   String       @default("pending") // pending | has_invoice
+  invoiceAmount   Float        @default(0)
+
+  invoices        Invoice[]
+
+  @@index([disbursementId])
+  @@index([beneficiaryId])
+  @@map("disbursement_beneficiaries")
 }
 
 model Invoice {
@@ -82,6 +134,8 @@ model Invoice {
   updatedAt      DateTime     @updatedAt
   disbursementId String
   disbursement   Disbursement @relation(fields: [disbursementId], references: [id], onDelete: Cascade)
+  disbursementBeneficiaryId String?
+  disbursementBeneficiary   DisbursementBeneficiary? @relation(fields: [disbursementBeneficiaryId], references: [id], onDelete: SetNull)
   invoiceNumber  String
   supplierName   String
   amount         Float
@@ -93,6 +147,7 @@ model Invoice {
 
   @@unique([invoiceNumber, supplierName])
   @@index([disbursementId])
+  @@index([disbursementBeneficiaryId])
   @@index([status])
   @@index([dueDate])
   @@map("invoices")
