@@ -1,0 +1,66 @@
+import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
+
+import { toHttpError, ValidationError } from "@/core/errors/app-error";
+import { TRACKING_STATUSES } from "@/lib/invoice-tracking-format-helpers";
+import { disbursementService } from "@/services/disbursement.service";
+
+export const runtime = "nodejs";
+
+const updateSchema = z.object({
+  amount: z.number().positive().optional(),
+  disbursementDate: z.string().min(1).optional(),
+  description: z.string().optional().nullable(),
+  status: z.enum(TRACKING_STATUSES).optional(),
+});
+
+export async function GET(
+  _req: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  try {
+    const { id } = await params;
+    const [disbursement, surplusDeficit] = await Promise.all([
+      disbursementService.getById(id),
+      disbursementService.getSurplusDeficit(id),
+    ]);
+    return NextResponse.json({ ok: true, disbursement, surplusDeficit });
+  } catch (error) {
+    const httpError = toHttpError(error, "Failed to get disbursement.");
+    return NextResponse.json({ ok: false, error: httpError.message }, { status: httpError.status });
+  }
+}
+
+export async function PATCH(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  try {
+    const { id } = await params;
+    const body = await req.json();
+    const parsed = updateSchema.parse(body);
+    const disbursement = await disbursementService.update(id, parsed);
+    return NextResponse.json({ ok: true, disbursement });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      const ve = new ValidationError("Invalid request body.", error.flatten().fieldErrors);
+      return NextResponse.json({ ok: false, error: ve.message, details: ve.details }, { status: ve.status });
+    }
+    const httpError = toHttpError(error, "Failed to update disbursement.");
+    return NextResponse.json({ ok: false, error: httpError.message }, { status: httpError.status });
+  }
+}
+
+export async function DELETE(
+  _req: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  try {
+    const { id } = await params;
+    await disbursementService.delete(id);
+    return NextResponse.json({ ok: true });
+  } catch (error) {
+    const httpError = toHttpError(error, "Failed to delete disbursement.");
+    return NextResponse.json({ ok: false, error: httpError.message }, { status: httpError.status });
+  }
+}

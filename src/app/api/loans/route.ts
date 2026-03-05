@@ -1,0 +1,45 @@
+import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
+
+import { toHttpError, ValidationError } from "@/core/errors/app-error";
+import { loanService } from "@/services/loan.service";
+
+export const runtime = "nodejs";
+
+const createSchema = z.object({
+  customerId: z.string().min(1),
+  contractNumber: z.string().min(1),
+  loanAmount: z.number().positive(),
+  interestRate: z.number().optional(),
+  startDate: z.string().min(1),
+  endDate: z.string().min(1),
+  purpose: z.string().optional(),
+  disbursementCount: z.string().optional(),
+});
+
+export async function GET(req: NextRequest) {
+  try {
+    const customerId = req.nextUrl.searchParams.get("customerId") ?? undefined;
+    const loans = await loanService.list(customerId);
+    return NextResponse.json({ ok: true, loans });
+  } catch (error) {
+    const httpError = toHttpError(error, "Failed to list loans.");
+    return NextResponse.json({ ok: false, error: httpError.message }, { status: httpError.status });
+  }
+}
+
+export async function POST(req: NextRequest) {
+  try {
+    const body = await req.json();
+    const parsed = createSchema.parse(body);
+    const loan = await loanService.create(parsed);
+    return NextResponse.json({ ok: true, loan });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      const ve = new ValidationError("Invalid request body.", error.flatten().fieldErrors);
+      return NextResponse.json({ ok: false, error: ve.message, details: ve.details }, { status: ve.status });
+    }
+    const httpError = toHttpError(error, "Failed to create loan.");
+    return NextResponse.json({ ok: false, error: httpError.message }, { status: httpError.status });
+  }
+}

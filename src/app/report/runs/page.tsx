@@ -5,6 +5,8 @@ import { Play, Eye, Download } from "lucide-react";
 
 import { useLanguage } from "@/components/language-provider";
 import { OnlyOfficeEditorModal } from "@/components/onlyoffice-editor-modal";
+import { useMappingDataStore } from "@/app/report/mapping/stores/use-mapping-data-store";
+import { getSignedFileUrl } from "@/lib/report/signed-file-url";
 
 type RunLog = {
   run_id: string;
@@ -40,6 +42,27 @@ type ExportResponse = {
   stale_reasons?: string[];
 };
 
+/** Flush Zustand draft (including repeater arrays) to the server before build/export. */
+async function flushZustandDraft(): Promise<void> {
+  const md = useMappingDataStore.getState();
+  const repeaterData: Record<string, unknown> = {};
+  for (const [key, val] of Object.entries(md.values)) {
+    if (Array.isArray(val)) repeaterData[key] = val;
+  }
+  const hasData =
+    Object.keys(md.manualValues).length > 0 || Object.keys(repeaterData).length > 0;
+  if (hasData) {
+    await fetch("/api/report/values", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        manual_values: { ...md.manualValues, ...repeaterData },
+        field_formulas: md.formulas,
+      }),
+    });
+  }
+}
+
 export default function RunsPage() {
   const { t } = useLanguage();
   const [runs, setRuns] = useState<RunLog[]>([]);
@@ -50,7 +73,7 @@ export default function RunsPage() {
   const [error, setError] = useState("");
   const [buildResult, setBuildResult] = useState<unknown>(null);
   const [freshness, setFreshness] = useState<FreshnessPayload | null>(null);
-  
+
   // OnlyOffice Preview states
   const [onlyOfficePreviewPath, setOnlyOfficePreviewPath] = useState<string>("");
 
@@ -88,7 +111,11 @@ export default function RunsPage() {
     setRunningBuild(true);
     setMessage("");
     setError("");
-    const res = await fetch("/api/report/validate", { 
+
+    // Flush Zustand draft (repeater arrays) to server before build
+    try { await flushZustandDraft(); } catch { /* best-effort */ }
+
+    const res = await fetch("/api/report/validate", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ run_build: true }),
@@ -110,6 +137,9 @@ export default function RunsPage() {
     setMessage("");
     setError("");
     try {
+      // Flush Zustand draft (repeater arrays) to server before export
+      try { await flushZustandDraft(); } catch { /* best-effort */ }
+
       const output = `report_assets/report_preview_${Date.now()}.docx`;
       const report = `report_assets/template_export_report_${Date.now()}.json`;
 
@@ -151,10 +181,14 @@ export default function RunsPage() {
     }
   }
 
-  function handleDownloadDocx() {
+  async function handleDownloadDocx() {
     if (!onlyOfficePreviewPath) return;
-    const url = `/api/report/file?path=${encodeURIComponent(onlyOfficePreviewPath)}&download=1`;
-    window.open(url, "_blank");
+    try {
+      const url = await getSignedFileUrl(onlyOfficePreviewPath, true);
+      window.open(url, "_blank");
+    } catch {
+      setError("Failed to generate download URL.");
+    }
   }
 
   return (
@@ -171,7 +205,7 @@ export default function RunsPage() {
         />
       )}
 
-      <div className="rounded-xl border border-blue-chill-200 bg-white dark:bg-[#0f1629]/90 p-4">
+      <div className="rounded-xl border border-blue-chill-200 bg-white dark:bg-[#141414]/90 p-4">
         <h2 className="text-lg font-semibold">{t("runs.title")}</h2>
         <p className="mt-1 text-sm text-blue-chill-600">{t("runs.desc")}</p>
         {freshness?.is_stale ? (
@@ -195,7 +229,7 @@ export default function RunsPage() {
         <button
           onClick={runBuildValidate}
           disabled={runningBuild}
-          className="flex items-center gap-2 rounded-md border border-slate-300 bg-white dark:bg-[#0f1629]/90 px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/[0.06] disabled:opacity-60 transition-colors"
+          className="flex items-center gap-2 rounded-md border border-slate-300 bg-white dark:bg-[#141414]/90 px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/[0.06] disabled:opacity-60 transition-colors"
         >
           <Play className="h-4 w-4" />
           {runningBuild ? t("runs.running") : "Chạy Build Dữ Liệu"}
@@ -211,7 +245,7 @@ export default function RunsPage() {
         {onlyOfficePreviewPath && (
           <button
             onClick={handleDownloadDocx}
-            className="flex items-center gap-2 rounded-md border border-slate-300 bg-white dark:bg-[#0f1629]/90 px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/[0.06] transition-colors"
+            className="flex items-center gap-2 rounded-md border border-slate-300 bg-white dark:bg-[#141414]/90 px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/[0.06] transition-colors"
           >
             <Download className="h-4 w-4" />
             Tải về DOCX
@@ -223,7 +257,7 @@ export default function RunsPage() {
       </p>
 
       {buildResult ? (
-        <div className="rounded-xl border border-blue-chill-200 bg-white dark:bg-[#0f1629]/90 p-4">
+        <div className="rounded-xl border border-blue-chill-200 bg-white dark:bg-[#141414]/90 p-4">
           <h3 className="text-sm font-semibold">{t("runs.buildResult")}</h3>
           <pre className="mt-2 h-56 overflow-auto rounded bg-blue-chill-950 p-3 text-xs text-blue-chill-50">
             {JSON.stringify(buildResult, null, 2)}
@@ -231,7 +265,7 @@ export default function RunsPage() {
         </div>
       ) : null}
 
-      <div className="rounded-xl border border-blue-chill-200 bg-white dark:bg-[#0f1629]/90 p-4">
+      <div className="rounded-xl border border-blue-chill-200 bg-white dark:bg-[#141414]/90 p-4">
         <h3 className="text-sm font-semibold">{t("runs.logs")}</h3>
         {loading ? <p className="mt-2 text-sm text-blue-chill-600">{t("runs.loadingLogs")}</p> : null}
         <ul className="mt-2 space-y-2">

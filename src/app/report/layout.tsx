@@ -13,10 +13,13 @@ import {
   Globe,
   ChevronRight,
   Settings,
+  Banknote,
+  Receipt,
 } from "lucide-react";
 
 import { useLanguage } from "@/components/language-provider";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
+import { NotificationBell } from "@/components/invoice-tracking/notification-bell";
 import { GlobalModalProvider } from "./mapping/components/GlobalModalProvider";
 
 const SIDEBAR_COLLAPSED = 48;
@@ -36,11 +39,13 @@ export default function ReportLayout({ children }: { children: React.ReactNode }
     { href: "/report/template", label: t("nav.template"), icon: FileText },
     { href: "/report/customers", label: t("nav.customers"), icon: Users },
     { href: "/report/runs", label: t("nav.runs"), icon: Play },
+    { href: "/report/loans", label: t("nav.loans"), icon: Banknote },
+    { href: "/report/invoices", label: t("nav.invoices"), icon: Receipt },
     { href: "/report/system-operations", label: t("nav.systemOps"), icon: Settings },
   ];
 
   return (
-    <div className="min-h-screen bg-zinc-50 text-zinc-900 dark:bg-[#080c18] dark:text-slate-100">
+    <div className="min-h-screen bg-zinc-50 text-zinc-900 dark:bg-[#0a0a0a] dark:text-slate-100">
 
       {/* ── Sidebar ── */}
       <motion.aside
@@ -48,7 +53,7 @@ export default function ReportLayout({ children }: { children: React.ReactNode }
         onMouseLeave={() => setHovered(false)}
         animate={{ width: hovered ? SIDEBAR_EXPANDED : SIDEBAR_COLLAPSED }}
         transition={sidebarSpring}
-        className="fixed inset-y-0 left-0 z-40 flex flex-col overflow-hidden border-r border-slate-200/50 bg-white/90 backdrop-blur-xl dark:border-white/[0.08] dark:bg-[#0f1629]/90"
+        className="fixed inset-y-0 left-0 z-40 flex flex-col overflow-hidden border-r border-slate-200/50 bg-white/90 backdrop-blur-xl dark:border-white/[0.08] dark:bg-[#141414]/90"
         style={{ willChange: "width" }}
       >
         {/* Shadow when expanded */}
@@ -173,6 +178,7 @@ export default function ReportLayout({ children }: { children: React.ReactNode }
         <div className="shrink-0 px-1.5 pb-2.5 pt-1">
           <div className="mx-0 mb-1.5 h-px bg-slate-100 dark:bg-white/[0.06]" />
 
+          <NotificationBell expanded={hovered} />
           <ThemeToggle expanded={hovered} />
 
           <button

@@ -30,8 +30,86 @@ model Customer {
   data_json String? @default("{}")
 
   mapping_instances MappingInstance[]
+  loans            Loan[]
 
   @@map("customers")
+}
+
+model Loan {
+  id              String   @id @default(cuid())
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  customerId      String
+  customer        Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  contractNumber  String   @unique
+  loanAmount      Float
+  interestRate    Float?
+  startDate       DateTime
+  endDate         DateTime
+  purpose              String?
+  disbursementCount    String?
+  collateralValue      Float?
+  securedObligation    Float?
+  status               String   @default("active") // active | completed | cancelled
+  disbursements     Disbursement[]
+
+  @@index([customerId])
+  @@index([status])
+  @@map("loans")
+}
+
+model Disbursement {
+  id               String   @id @default(cuid())
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  loanId           String
+  loan             Loan     @relation(fields: [loanId], references: [id], onDelete: Cascade)
+  amount           Float
+  disbursementDate DateTime
+  description      String?
+  status           String   @default("active") // active | completed | cancelled
+  invoices         Invoice[]
+
+  @@index([loanId])
+  @@index([status])
+  @@index([loanId, disbursementDate])
+  @@map("disbursements")
+}
+
+model Invoice {
+  id             String       @id @default(cuid())
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  disbursementId String
+  disbursement   Disbursement @relation(fields: [disbursementId], references: [id], onDelete: Cascade)
+  invoiceNumber  String
+  supplierName   String
+  amount         Float
+  issueDate      DateTime
+  dueDate        DateTime
+  customDeadline DateTime?
+  status         String       @default("pending") // pending | paid | overdue
+  notes          String?
+
+  @@unique([invoiceNumber, supplierName])
+  @@index([disbursementId])
+  @@index([status])
+  @@index([dueDate])
+  @@map("invoices")
+}
+
+model AppNotification {
+  id        String    @id @default(cuid())
+  createdAt DateTime  @default(now())
+  readAt    DateTime?
+  type      String    // invoice_due_soon | invoice_overdue | duplicate_invoice
+  title     String
+  message   String
+  metadata  String?   @default("{}") // JSON: { invoiceId, disbursementId, customerId }
+
+  @@index([readAt])
+  @@index([type])
+  @@map("app_notifications")
 }
 
 model FieldTemplateMaster {

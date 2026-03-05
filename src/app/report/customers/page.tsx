@@ -155,7 +155,7 @@ export default function CustomersPage() {
 
   return (
     <section className="space-y-4">
-      <div className="rounded-xl border border-coral-tree-200 dark:border-white/[0.08] bg-white dark:bg-[#0f1629]/90 p-4">
+      <div className="rounded-xl border border-coral-tree-200 dark:border-white/[0.08] bg-white dark:bg-[#141414]/90 p-4">
         <h2 className="text-lg font-semibold">{t("customers.title")}</h2>
         <p className="mt-1 text-sm text-coral-tree-600 dark:text-slate-400">{t("customers.desc")}</p>
         {error ? (
@@ -171,7 +171,7 @@ export default function CustomersPage() {
           <button
             type="button"
             onClick={openExportModal}
-            className="flex items-center gap-2 rounded-md border border-coral-tree-300 dark:border-white/[0.09] bg-white dark:bg-[#0f1629]/90 px-4 py-2 text-sm text-coral-tree-700 dark:text-slate-300 hover:bg-coral-tree-50 dark:hover:bg-white/[0.06]"
+            className="flex items-center gap-2 rounded-md border border-coral-tree-300 dark:border-white/[0.09] bg-white dark:bg-[#141414]/90 px-4 py-2 text-sm text-coral-tree-700 dark:text-slate-300 hover:bg-coral-tree-50 dark:hover:bg-white/[0.06]"
           >
             <Download className="h-4 w-4" />
             Tải File Cấu Hình (JSON)
@@ -188,7 +188,7 @@ export default function CustomersPage() {
             type="button"
             onClick={() => fileInputRef.current?.click()}
             disabled={importing}
-            className="flex items-center gap-2 rounded-md border border-coral-tree-300 dark:border-white/[0.09] bg-white dark:bg-[#0f1629]/90 px-4 py-2 text-sm text-coral-tree-700 dark:text-slate-300 hover:bg-coral-tree-50 dark:hover:bg-white/[0.06] disabled:opacity-50"
+            className="flex items-center gap-2 rounded-md border border-coral-tree-300 dark:border-white/[0.09] bg-white dark:bg-[#141414]/90 px-4 py-2 text-sm text-coral-tree-700 dark:text-slate-300 hover:bg-coral-tree-50 dark:hover:bg-white/[0.06] disabled:opacity-50"
           >
             <Upload className="h-4 w-4" />
             {importing ? "Đang import..." : "Nạp File Cấu Hình (JSON)"}
@@ -203,7 +203,7 @@ export default function CustomersPage() {
         </Link>
       </div>
 
-      <div className="rounded-xl border border-coral-tree-200 dark:border-white/[0.08] bg-white dark:bg-[#0f1629]/90 overflow-hidden">
+      <div className="rounded-xl border border-coral-tree-200 dark:border-white/[0.08] bg-white dark:bg-[#141414]/90 overflow-hidden">
         {loading ? (
           <p className="p-6 text-sm text-coral-tree-600 dark:text-slate-400">{t("customers.loading")}</p>
         ) : customers.length === 0 ? (
@@ -248,7 +248,7 @@ export default function CustomersPage() {
 
       {exportModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-          <div className="w-full max-w-3xl rounded-xl bg-white dark:bg-[#0f1629]/90 shadow-xl flex flex-col h-[80vh]">
+          <div className="w-full max-w-3xl rounded-xl bg-white dark:bg-[#141414]/90 shadow-xl flex flex-col h-[80vh]">
             <div className="flex items-center justify-between border-b border-coral-tree-100 dark:border-white/[0.07] px-6 py-4">
               <h3 className="text-lg font-semibold text-coral-tree-800 dark:text-slate-200">Tùy chọn xuất dữ liệu</h3>
               <button
