@@ -3,16 +3,19 @@ import path from "node:path";
 import { z } from "zod";
 
 import { toHttpError, ValidationError } from "@/core/errors/app-error";
+import { REPORT_ASSETS_BASE, validatePathUnderBase } from "@/lib/report/path-validation";
 import { reportService } from "@/services/report.service";
 
 export const runtime = "nodejs";
 
-const allowedBase = path.resolve(process.cwd(), "report_assets");
-
 function isAllowedAssetPath(v: string | undefined): boolean {
   if (v === undefined) return true;
-  const resolved = path.resolve(process.cwd(), v);
-  return resolved.startsWith(allowedBase + path.sep) || resolved === allowedBase;
+  try {
+    validatePathUnderBase(v, REPORT_ASSETS_BASE);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 const safePath = z

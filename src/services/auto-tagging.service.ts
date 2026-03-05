@@ -5,6 +5,7 @@ import JSZip from "jszip";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 import { SystemError, ValidationError } from "@/core/errors/app-error";
+import { signFileAccess } from "@/lib/report/file-token";
 import {
   buildSemanticCandidates,
   selectTopSuggestions,
@@ -507,6 +508,6 @@ export async function saveTemplate(
   const relPath = path.relative(process.cwd(), filePath).replace(/\\/g, "/");
   return {
     templatePath: relPath,
-    downloadUrl: `/api/report/file?path=${encodeURIComponent(relPath)}&download=1`,
+    downloadUrl: `/api/report/file?path=${encodeURIComponent(relPath)}&download=1&token=${encodeURIComponent(signFileAccess(relPath))}`,
   };
 }

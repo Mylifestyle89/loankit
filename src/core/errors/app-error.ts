@@ -58,8 +58,11 @@ export function toHttpError(error: unknown, fallbackMessage: string): { status: 
   if (error instanceof AppError) {
     return { status: error.status, message: error.message, details: error.details };
   }
+  // SECURITY: do not expose raw Error.message to clients — it may contain
+  // internal paths, stack traces, or sensitive information.
+  // Log the real error server-side, return the safe fallback to the client.
   if (error instanceof Error) {
-    return { status: 500, message: error.message };
+    console.error("[toHttpError] Unexpected error:", error.message);
   }
   return { status: 500, message: fallbackMessage };
 }

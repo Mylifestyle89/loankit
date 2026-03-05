@@ -126,7 +126,7 @@ export default function SystemOperationsPage() {
   return (
     <section className="space-y-6 p-6 max-w-6xl">
       {/* Header */}
-      <div className="rounded-xl border border-slate-200/60 dark:border-white/[0.08] bg-white/50 dark:bg-[#0f1629]/90 p-6">
+      <div className="rounded-xl border border-slate-200/60 dark:border-white/[0.08] bg-white/50 dark:bg-[#141414]/90 p-6">
         <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">{t("systemOps.title")}</h1>
         <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">{t("systemOps.description")}</p>
       </div>
@@ -182,7 +182,7 @@ export default function SystemOperationsPage() {
       {/* Main Grid */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* Export Section */}
-        <div className="rounded-xl border border-slate-200/60 dark:border-white/[0.08] bg-white/50 dark:bg-[#0f1629]/90 p-6">
+        <div className="rounded-xl border border-slate-200/60 dark:border-white/[0.08] bg-white/50 dark:bg-[#141414]/90 p-6">
           <div className="flex items-center gap-2 mb-4">
             <Download className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
             <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">{t("systemOps.exportSection")}</h2>
@@ -203,7 +203,7 @@ export default function SystemOperationsPage() {
         </div>
 
         {/* Import Section */}
-        <div className="rounded-xl border border-slate-200/60 dark:border-white/[0.08] bg-white/50 dark:bg-[#0f1629]/90 p-6">
+        <div className="rounded-xl border border-slate-200/60 dark:border-white/[0.08] bg-white/50 dark:bg-[#141414]/90 p-6">
           <div className="flex items-center gap-2 mb-4">
             <Upload className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
             <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">{t("systemOps.importSection")}</h2>
@@ -237,7 +237,7 @@ export default function SystemOperationsPage() {
       {/* Import Preview Modal */}
       {showImportPreview && importFileData && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-          <div className="w-full max-w-lg rounded-xl bg-white dark:bg-[#0f1629]/90 shadow-xl">
+          <div className="w-full max-w-lg rounded-xl bg-white dark:bg-[#141414]/90 shadow-xl">
             <div className="border-b border-slate-200 dark:border-white/[0.07] p-6">
               <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
                 {t("systemOps.importPreview.title")}
@@ -282,7 +282,7 @@ export default function SystemOperationsPage() {
                   setImportFileData(null);
                   setPreviewError("");
                 }}
-                className="flex-1 rounded-lg border border-slate-200 dark:border-white/[0.09] bg-white dark:bg-[#0f1629]/90 text-slate-700 dark:text-slate-300 font-medium py-2 px-4 hover:bg-slate-50 dark:hover:bg-white/[0.06] transition-colors"
+                className="flex-1 rounded-lg border border-slate-200 dark:border-white/[0.09] bg-white dark:bg-[#141414]/90 text-slate-700 dark:text-slate-300 font-medium py-2 px-4 hover:bg-slate-50 dark:hover:bg-white/[0.06] transition-colors"
               >
                 {t("systemOps.importPreview.cancel")}
               </button>

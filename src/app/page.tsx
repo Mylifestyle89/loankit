@@ -2,9 +2,9 @@ import Link from "next/link";
 
 export default function Home() {
   return (
-    <main className="relative min-h-screen overflow-hidden bg-[#070b16] text-white">
+    <main className="relative min-h-screen overflow-hidden bg-[#050505] text-white">
       <div className="pointer-events-none absolute inset-0">
-        <div className="landing-gradient-shift absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(99,102,241,0.35),rgba(7,11,22,0.98)_45%)]" />
+        <div className="landing-gradient-shift absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(99,102,241,0.35),rgba(5,5,5,0.98)_45%)]" />
         <div className="landing-gradient-shift absolute inset-0 bg-[radial-gradient(circle_at_78%_72%,rgba(16,185,129,0.2),transparent_34%)] [animation-delay:0.8s]" />
         <div className="landing-gradient-shift absolute inset-0 bg-[radial-gradient(circle_at_24%_80%,rgba(245,158,11,0.12),transparent_32%)] [animation-delay:1.6s]" />
         <div className="landing-line-breathe absolute inset-0 opacity-60 [background:linear-gradient(130deg,transparent_0%,rgba(255,255,255,0.04)_45%,transparent_100%)]" />

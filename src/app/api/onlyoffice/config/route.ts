@@ -4,10 +4,9 @@ import crypto from "node:crypto";
 
 import { NextRequest, NextResponse } from "next/server";
 import { ONLYOFFICE_URL, APP_URL, signToken } from "@/lib/onlyoffice/config";
+import { REPORT_ASSETS_BASE, validatePathUnderBase } from "@/lib/report/path-validation";
 
 export const runtime = "nodejs";
-
-const allowedBase = path.resolve(process.cwd(), "report_assets");
 
 export async function GET(req: NextRequest) {
   try {
@@ -16,13 +15,14 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ ok: false, error: "Missing path param." }, { status: 400 });
     }
 
-    const resolved = path.resolve(process.cwd(), relPath);
-    const withinBase = resolved.startsWith(allowedBase + path.sep) || resolved === allowedBase;
-    if (!withinBase || !relPath.toLowerCase().endsWith(".docx")) {
+    // Path safety — OS-agnostic containment check
+    validatePathUnderBase(relPath, REPORT_ASSETS_BASE);
+    if (!relPath.toLowerCase().endsWith(".docx")) {
       return NextResponse.json({ ok: false, error: "Invalid file path." }, { status: 400 });
     }
 
     // Generate unique key from path + file modification time
+    const resolved = path.resolve(process.cwd(), relPath);
     const stat = await fs.stat(resolved);
     const raw = `${relPath}:${stat.mtimeMs}`;
     const documentKey = crypto.createHash("md5").update(raw).digest("hex").slice(0, 20);

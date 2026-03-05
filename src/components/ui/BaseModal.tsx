@@ -49,7 +49,7 @@ export function BaseModal({
           <motion.div
             role="dialog"
             aria-modal="true"
-            className={`relative w-full ${maxWidthClassName} rounded-2xl border border-slate-200/60 bg-white/80 shadow-[0_8px_30px_rgb(0,0,0,0.04)] backdrop-blur-md dark:border-white/[0.08] dark:bg-[#0f1629]/90 dark:shadow-[0_8px_40px_rgb(0,0,0,0.5)]`}
+            className={`relative w-full ${maxWidthClassName} rounded-2xl border border-slate-200/60 bg-white/80 shadow-[0_8px_30px_rgb(0,0,0,0.04)] backdrop-blur-md dark:border-white/[0.08] dark:bg-[#141414]/90 dark:shadow-[0_8px_40px_rgb(0,0,0,0.5)]`}
             initial={{ opacity: 0, y: 20, scale: 0.99 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 12, scale: 0.99 }}

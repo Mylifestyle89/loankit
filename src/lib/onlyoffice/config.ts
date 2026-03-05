@@ -4,7 +4,14 @@ import jwt from "jsonwebtoken";
 export const ONLYOFFICE_URL = process.env.ONLYOFFICE_URL || "http://localhost:8080";
 
 /** Shared secret for JWT between Next.js and OnlyOffice. */
-export const JWT_SECRET = process.env.ONLYOFFICE_JWT_SECRET || "onlyoffice_secret_key_2026";
+const envSecret = process.env.ONLYOFFICE_JWT_SECRET;
+if (!envSecret) {
+  throw new Error(
+    "ONLYOFFICE_JWT_SECRET environment variable is required. " +
+    "Set it in .env.local or your deployment environment.",
+  );
+}
+export const JWT_SECRET: string = envSecret;
 
 /** URL that OnlyOffice (inside Docker) uses to reach this Next.js app. */
 export const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "http://host.docker.internal:3000";

@@ -3,10 +3,9 @@ import path from "node:path";
 import { NextRequest, NextResponse } from "next/server";
 import { reportService } from "@/services/report.service";
 import { verifyToken, ONLYOFFICE_URL } from "@/lib/onlyoffice/config";
+import { REPORT_ASSETS_BASE, validatePathUnderBase } from "@/lib/report/path-validation";
 
 export const runtime = "nodejs";
-
-const allowedBase = path.resolve(process.cwd(), "report_assets");
 
 type CallbackBody = {
   status: number;
@@ -47,9 +46,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 1 }, { status: 403 });
     }
 
-    const resolved = path.resolve(process.cwd(), relPath);
-    const withinBase = resolved.startsWith(allowedBase + path.sep) || resolved === allowedBase;
-    if (!withinBase || !relPath.toLowerCase().endsWith(".docx")) {
+    // Path safety — OS-agnostic containment check
+    try {
+      validatePathUnderBase(relPath, REPORT_ASSETS_BASE);
+    } catch {
+      return NextResponse.json({ error: 1 }, { status: 400 });
+    }
+    if (!relPath.toLowerCase().endsWith(".docx")) {
       return NextResponse.json({ error: 1 }, { status: 400 });
     }
 
@@ -58,11 +61,16 @@ export async function POST(req: NextRequest) {
 
     // Save on status 2 (all users closed) or 6 (force save)
     if ((status === 2 || status === 6) && url) {
-      // Validate download URL: must come from OnlyOffice server
+      // Validate download URL: must come from the configured OnlyOffice server only.
+      // SECURITY: do NOT allow generic "localhost" — that enables SSRF to other local services.
       const parsedUrl = new URL(url);
-      const allowedHost = new URL(ONLYOFFICE_URL).hostname;
-      if (parsedUrl.hostname !== allowedHost && parsedUrl.hostname !== "localhost") {
-        console.error(`[onlyoffice/callback] Rejected download URL from untrusted host: ${parsedUrl.hostname}`);
+      const onlyOfficeOrigin = new URL(ONLYOFFICE_URL);
+      if (
+        parsedUrl.hostname !== onlyOfficeOrigin.hostname ||
+        parsedUrl.port !== (onlyOfficeOrigin.port || (onlyOfficeOrigin.protocol === "https:" ? "443" : "80")) ||
+        !["http:", "https:"].includes(parsedUrl.protocol)
+      ) {
+        console.error(`[onlyoffice/callback] Rejected download URL from untrusted origin: ${parsedUrl.origin}`);
         return NextResponse.json({ error: 1 });
       }
 

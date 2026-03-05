@@ -24,6 +24,7 @@ export function PlaceholderSidebar({ fieldCatalog }: Props) {
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [width, setWidth] = useState(DEFAULT_WIDTH);
+  const [displayMode, setDisplayMode] = useState<"alias" | "technical">("alias");
 
   // Resize drag state
   const dragging = useRef(false);
@@ -57,11 +58,11 @@ export function PlaceholderSidebar({ fieldCatalog }: Props) {
     const q = search.toLowerCase().trim();
     const filtered = q
       ? fieldCatalog.filter(
-          (f) =>
-            f.field_key.toLowerCase().includes(q) ||
-            f.label_vi.toLowerCase().includes(q) ||
-            f.group.toLowerCase().includes(q),
-        )
+        (f) =>
+          f.field_key.toLowerCase().includes(q) ||
+          f.label_vi.toLowerCase().includes(q) ||
+          f.group.toLowerCase().includes(q),
+      )
       : fieldCatalog;
 
     const groups: Record<string, FieldCatalogItem[]> = {};
@@ -95,12 +96,51 @@ export function PlaceholderSidebar({ fieldCatalog }: Props) {
     setExpandedGroups(new Set(groupNames));
   }
 
-  function copyPlaceholder(fieldKey: string) {
-    const placeholder = `[${fieldKey}]`;
-    void navigator.clipboard.writeText(placeholder).then(() => {
-      setCopiedKey(fieldKey);
+  function copyPlaceholder(field: FieldCatalogItem) {
+    // Copy value based on current mode: user-friendly alias or technical key.
+    const tag = displayMode === "alias" ? (field.label_vi || field.field_key) : field.field_key;
+    const placeholder = `[${tag}]`;
+
+    const handleSuccess = () => {
+      setCopiedKey(field.field_key);
       setTimeout(() => setCopiedKey(null), 1500);
-    });
+    };
+
+    const fallbackCopy = () => {
+      const textArea = document.createElement("textarea");
+      textArea.value = placeholder;
+      // Tránh việc scroll đến textarea
+      textArea.style.position = "fixed";
+      textArea.style.top = "0";
+      textArea.style.left = "0";
+      textArea.style.width = "2em";
+      textArea.style.height = "2em";
+      textArea.style.padding = "0";
+      textArea.style.border = "none";
+      textArea.style.outline = "none";
+      textArea.style.boxShadow = "none";
+      textArea.style.background = "transparent";
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+
+      try {
+        const successful = document.execCommand('copy');
+        if (successful) {
+          handleSuccess();
+        } else {
+          console.error("Fallback copy command was unsuccessful");
+        }
+      } catch (err) {
+        console.error("Fallback copy failed", err);
+      } finally {
+        document.body.removeChild(textArea);
+      }
+    };
+
+    // Bỏ qua navigator.clipboard vì API này đang bị block bởi chính sách permissions policy của iframe/document
+    // và có thể văng lỗi cứng (uncaught) trước khi vào block .catch.
+    fallbackCopy();
   }
 
   if (collapsed) {
@@ -109,7 +149,7 @@ export function PlaceholderSidebar({ fieldCatalog }: Props) {
         type="button"
         onClick={() => setCollapsed(false)}
         title="Mở danh sách placeholder"
-        className="flex h-full w-10 flex-col items-center justify-center border-l border-slate-200/70 bg-slate-50/80 text-slate-500 transition-colors hover:bg-indigo-50 hover:text-indigo-600 dark:border-white/[0.08] dark:bg-[#111827] dark:text-slate-400 dark:hover:bg-indigo-500/10 dark:hover:text-indigo-400"
+        className="flex h-full w-10 flex-col items-center justify-center border-l border-slate-200/70 bg-slate-50/80 text-slate-500 transition-colors hover:bg-indigo-50 hover:text-indigo-600 dark:border-white/[0.08] dark:bg-[#141414] dark:text-slate-400 dark:hover:bg-indigo-500/10 dark:hover:text-indigo-400"
       >
         <PanelRightOpen className="h-4 w-4" />
         <span className="mt-2 text-[10px] font-medium [writing-mode:vertical-rl]">Placeholder</span>
@@ -121,7 +161,7 @@ export function PlaceholderSidebar({ fieldCatalog }: Props) {
   const filteredCount = Object.values(fieldsByGroup).reduce((s, arr) => s + arr.length, 0);
 
   return (
-    <div className="relative flex h-full flex-col border-l border-slate-200/70 bg-white dark:border-white/[0.08] dark:bg-[#0f1629]" style={{ width }}>
+    <div className="relative flex h-full flex-col border-l border-slate-200/70 bg-white dark:border-white/[0.08] dark:bg-[#141414]" style={{ width }}>
       {/* Resize handle */}
       <div
         onPointerDown={onPointerDown}
@@ -167,21 +207,45 @@ export function PlaceholderSidebar({ fieldCatalog }: Props) {
       </div>
 
       {/* Actions */}
-      <div className="flex items-center gap-1 border-b border-slate-200/70 px-3 py-1.5 dark:border-white/[0.08]">
-        <button
-          type="button"
-          onClick={expandAll}
-          className="rounded px-2 py-0.5 text-[11px] font-medium text-indigo-600 transition-colors hover:bg-indigo-50 dark:text-indigo-400 dark:hover:bg-indigo-500/10"
-        >
-          Mở tất cả
-        </button>
-        <button
-          type="button"
-          onClick={() => setExpandedGroups(new Set())}
-          className="rounded px-2 py-0.5 text-[11px] font-medium text-slate-500 transition-colors hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-white/[0.06]"
-        >
-          Thu gọn
-        </button>
+      <div className="flex items-center justify-between gap-1 border-b border-slate-200/70 px-3 py-1.5 dark:border-white/[0.08]">
+        <div className="inline-flex items-center rounded-lg border border-slate-200 bg-slate-50/80 p-0.5 dark:border-white/[0.10] dark:bg-white/[0.04]">
+          <button
+            type="button"
+            onClick={() => setDisplayMode("alias")}
+            className={`rounded-md px-2 py-1 text-[11px] font-medium transition-colors ${displayMode === "alias"
+                ? "bg-indigo-600 text-white"
+                : "text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-white/[0.08]"
+              }`}
+          >
+            Alias
+          </button>
+          <button
+            type="button"
+            onClick={() => setDisplayMode("technical")}
+            className={`rounded-md px-2 py-1 text-[11px] font-medium transition-colors ${displayMode === "technical"
+                ? "bg-indigo-600 text-white"
+                : "text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-white/[0.08]"
+              }`}
+          >
+            Mã kỹ thuật
+          </button>
+        </div>
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            onClick={expandAll}
+            className="rounded px-2 py-0.5 text-[11px] font-medium text-indigo-600 transition-colors hover:bg-indigo-50 dark:text-indigo-400 dark:hover:bg-indigo-500/10"
+          >
+            Mở tất cả
+          </button>
+          <button
+            type="button"
+            onClick={() => setExpandedGroups(new Set())}
+            className="rounded px-2 py-0.5 text-[11px] font-medium text-slate-500 transition-colors hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-white/[0.06]"
+          >
+            Thu gọn
+          </button>
+        </div>
       </div>
 
       {/* Field list */}
@@ -218,20 +282,24 @@ export function PlaceholderSidebar({ fieldCatalog }: Props) {
                 <div className="pb-1">
                   {fields.map((field) => {
                     const isCopied = copiedKey === field.field_key;
+                    const placeholderTag =
+                      displayMode === "alias" ? (field.label_vi || field.field_key) : field.field_key;
+                    const subline =
+                      displayMode === "alias" ? field.field_key : (field.label_vi || field.field_key);
                     return (
                       <button
                         key={field.field_key}
                         type="button"
-                        onClick={() => copyPlaceholder(field.field_key)}
-                        title={`Copy [${field.field_key}]`}
+                        onClick={() => copyPlaceholder(field)}
+                        title={`Copy [${placeholderTag}]`}
                         className="group flex w-full items-center gap-2 px-3 py-1.5 text-left transition-colors hover:bg-indigo-50/60 dark:hover:bg-indigo-500/10"
                       >
                         <div className="min-w-0 flex-1">
                           <p className="truncate text-xs font-medium text-slate-700 dark:text-slate-200">
-                            {field.label_vi || field.field_key}
+                            [{placeholderTag}]
                           </p>
                           <p className="truncate text-[10px] text-slate-400 dark:text-slate-500">
-                            [{field.field_key}]
+                            {subline}
                           </p>
                         </div>
                         <span className="flex-shrink-0">

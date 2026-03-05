@@ -102,23 +102,42 @@ export function OnlyOfficeEditorModal({ docxPath, onClose, onSaved, fieldCatalog
           const scriptId = "onlyoffice-api-script";
           const existing = document.getElementById(scriptId);
           if (existing) {
-            // Script tag exists but DocsAPI not ready yet — wait for it
-            await new Promise<void>((resolve, reject) => {
+            // Script tag exists but DocsAPI not ready yet — wait briefly,
+            // then remove stale tag and reload fresh if it never appears.
+            const ready = await new Promise<boolean>((resolve) => {
               let elapsed = 0;
               const check = () => {
-                if (window.DocsAPI) return resolve();
+                if (window.DocsAPI) return resolve(true);
                 elapsed += 200;
-                if (elapsed > 10_000) return reject(new Error("Timeout chờ OnlyOffice API."));
+                if (elapsed > 3_000) return resolve(false);
                 setTimeout(check, 200);
               };
               check();
             });
-          } else {
+            if (!ready) {
+              existing.remove();
+              // fall through to fresh load below
+            }
+          }
+          if (!window.DocsAPI) {
             await new Promise<void>((resolve, reject) => {
               const script = document.createElement("script");
               script.id = scriptId;
               script.src = `${documentServerUrl}/web-apps/apps/api/documents/api.js`;
-              script.onload = () => resolve();
+              script.onload = () => {
+                // DocsAPI may not be defined synchronously after load
+                let waitElapsed = 0;
+                const waitApi = () => {
+                  if (cancelled) return resolve();
+                  if (window.DocsAPI) return resolve();
+                  waitElapsed += 100;
+                  if (waitElapsed > 10_000) {
+                    return reject(new Error("DocsAPI không khả dụng sau 10 giây chờ."));
+                  }
+                  setTimeout(waitApi, 100);
+                };
+                waitApi();
+              };
               script.onerror = () =>
                 reject(new Error(
                   "Không thể tải OnlyOffice API script.\n" +
@@ -192,7 +211,7 @@ export function OnlyOfficeEditorModal({ docxPath, onClose, onSaved, fieldCatalog
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-black/60 backdrop-blur-sm">
-      <div className="flex h-full w-full flex-col overflow-hidden bg-white dark:bg-[#0f1629]">
+      <div className="flex h-full w-full flex-col overflow-hidden bg-white dark:bg-[#141414]">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-slate-200/70 px-4 py-2 dark:border-white/[0.08]">
           <div className="min-w-0">
@@ -226,7 +245,7 @@ export function OnlyOfficeEditorModal({ docxPath, onClose, onSaved, fieldCatalog
            * caused by React trying to reconcile DOM that OnlyOffice has replaced.
            */}
           {!editorMounted && loading && (
-            <div className="absolute inset-0 z-20 flex items-center justify-center bg-white/80 dark:bg-[#0f1629]/80">
+            <div className="absolute inset-0 z-20 flex items-center justify-center bg-white/80 dark:bg-[#141414]/80">
               <div className="flex flex-col items-center gap-3">
                 <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
                 <p className="text-sm text-slate-600 dark:text-slate-400">
@@ -237,7 +256,7 @@ export function OnlyOfficeEditorModal({ docxPath, onClose, onSaved, fieldCatalog
           )}
 
           {error && (
-            <div className="absolute inset-0 z-20 flex items-center justify-center bg-white/95 dark:bg-[#0f1629]/95">
+            <div className="absolute inset-0 z-20 flex items-center justify-center bg-white/95 dark:bg-[#141414]/95">
               <div className="max-w-lg rounded-xl border border-red-200 bg-red-50 p-6 text-center dark:border-red-500/30 dark:bg-red-500/10">
                 <AlertTriangle className="mx-auto mb-3 h-8 w-8 text-red-500" />
                 <p className="whitespace-pre-line text-sm font-medium text-red-700 dark:text-red-300">

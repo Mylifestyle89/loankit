@@ -1,14 +1,17 @@
 /**
  * Field-values service — auto/manual field values & formulas.
  */
+import path from "node:path";
 import { ValidationError } from "@/core/errors/app-error";
 import { enrichContextWithLabels } from "@/core/use-cases/formula-processor";
 import { docxEngine } from "@/lib/docx-engine";
+import { prisma } from "@/lib/prisma";
 import { evaluateFieldFormula } from "@/lib/report/field-calc";
 import { loadFieldFormulas, saveFieldFormulas } from "@/lib/report/field-formulas";
 import { loadState } from "@/lib/report/fs-store";
 import { loadManualValues, saveManualValues } from "@/lib/report/manual-values";
 import { runBuildAndValidate } from "@/lib/report/pipeline-client";
+import { parseFieldCatalogJson } from "./_shared";
 
 // ---------------------------------------------------------------------------
 // Internal helpers
@@ -23,20 +26,50 @@ async function loadFlatDraftWithBuildFallback(): Promise<Record<string, unknown>
   }
 }
 
+async function resolveScopedStorage(mappingInstanceId?: string): Promise<{
+  fieldCatalog: Awaited<ReturnType<typeof loadState>>["field_catalog"];
+  manualValuesPath?: string;
+  fieldFormulasPath?: string;
+}> {
+  if (!mappingInstanceId) {
+    const state = await loadState();
+    return { fieldCatalog: state.field_catalog };
+  }
+
+  const instance = await prisma.mappingInstance.findUnique({
+    where: { id: mappingInstanceId },
+  });
+  if (!instance) {
+    throw new ValidationError("Mapping instance not found.");
+  }
+
+  const basePath = instance.mappingJsonPath.replace(/\.mapping\.json$/i, "");
+  const fallbackBase = path.join(
+    path.dirname(instance.mappingJsonPath),
+    path.basename(instance.mappingJsonPath, path.extname(instance.mappingJsonPath)),
+  );
+  const stem = basePath === instance.mappingJsonPath ? fallbackBase : basePath;
+  return {
+    fieldCatalog: parseFieldCatalogJson(instance.fieldCatalogJson),
+    manualValuesPath: `${stem}.manual_values.json`,
+    fieldFormulasPath: `${stem}.field_formulas.json`,
+  };
+}
+
 // ---------------------------------------------------------------------------
 // Field-values Service
 // ---------------------------------------------------------------------------
 
 export const fieldValuesService = {
-  async getFieldValues() {
-    const [state, flatValues, manualValues, fieldFormulas] = await Promise.all([
-      loadState(),
+  async getFieldValues(params?: { mappingInstanceId?: string }) {
+    const scope = await resolveScopedStorage(params?.mappingInstanceId);
+    const [flatValues, manualValues, fieldFormulas] = await Promise.all([
       loadFlatDraftWithBuildFallback(),
-      loadManualValues(),
-      loadFieldFormulas(),
+      loadManualValues(scope.manualValuesPath),
+      loadFieldFormulas(scope.fieldFormulasPath),
     ]);
     return {
-      field_catalog: state.field_catalog,
+      field_catalog: scope.fieldCatalog,
       auto_values: flatValues,
       values: { ...flatValues, ...manualValues },
       manual_values: manualValues,
@@ -47,13 +80,15 @@ export const fieldValuesService = {
   async saveFieldValues(input: {
     manualValues?: Record<string, string | number | boolean | null | Record<string, unknown>[]>;
     fieldFormulas?: Record<string, string>;
+    mappingInstanceId?: string;
   }) {
     if (!input.manualValues || typeof input.manualValues !== "object") {
       throw new ValidationError("manual_values is required.");
     }
 
-    const [flat, state] = await Promise.all([loadFlatDraftWithBuildFallback(), loadState()]);
-    const fieldCatalog = state.field_catalog ?? [];
+    const scope = await resolveScopedStorage(input.mappingInstanceId);
+    const flat = await loadFlatDraftWithBuildFallback();
+    const fieldCatalog = scope.fieldCatalog ?? [];
     const fieldTypeMap = new Map(fieldCatalog.map((f) => [f.field_key, f.type]));
     const toSave = { ...input.manualValues };
     if (input.fieldFormulas && typeof input.fieldFormulas === "object") {
@@ -67,9 +102,9 @@ export const fieldValuesService = {
     }
 
     const [savedManual, savedFormulas] = await Promise.all([
-      saveManualValues(toSave),
+      saveManualValues(toSave, scope.manualValuesPath),
       input.fieldFormulas && typeof input.fieldFormulas === "object"
-        ? saveFieldFormulas(input.fieldFormulas)
+        ? saveFieldFormulas(input.fieldFormulas, scope.fieldFormulasPath)
         : Promise.resolve({}),
     ]);
     return { manual_values: savedManual, field_formulas: savedFormulas };

@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest, type NextResponse as NextResponseType } from "next/server";
 import { type ZodType } from "zod";
+import { getClientIp } from "@/lib/rate-limiter";
 
 /**
  * Security headers để áp dụng cho tất cả API responses
@@ -71,18 +72,23 @@ export function withErrorHandling(
 }
 
 /**
- * In-memory rate limiter state (per route key)
+ * In-memory rate limiter state (per route+client key)
  * In production, consider using Redis or external service
  */
 const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
+let lastRLCleanup = Date.now();
 
 const RATE_LIMIT_CONFIG = {
   windowMs: 60 * 1000, // 1 minute
-  maxRequests: 60, // 60 requests per minute per key
+  maxRequests: 60, // 60 requests per minute per client per route
+  cleanupIntervalMs: 5 * 60 * 1000, // purge expired entries every 5 min
 };
 
 /**
- * Rate limiting middleware for API routes
+ * Rate limiting middleware for API routes.
+ * Limits are applied **per client per route** to prevent one client from
+ * blocking all others.
+ *
  * Usage: export const POST = withRateLimit("route-key")(async (req) => { ... })
  */
 export function withRateLimit(key: string) {
@@ -90,12 +96,22 @@ export function withRateLimit(key: string) {
     handler: (req: NextRequest) => Promise<NextResponseType>
   ): ((req: NextRequest) => Promise<NextResponseType>) => {
     return async (req: NextRequest) => {
+      const clientKey = `${key}:${getClientIp(req)}`;
       const now = Date.now();
-      const rateLimitEntry = rateLimitStore.get(key);
+
+      // Periodic cleanup of expired entries to prevent memory leak
+      if (now - lastRLCleanup >= RATE_LIMIT_CONFIG.cleanupIntervalMs) {
+        lastRLCleanup = now;
+        for (const [k, v] of rateLimitStore) {
+          if (now >= v.resetTime) rateLimitStore.delete(k);
+        }
+      }
+
+      const rateLimitEntry = rateLimitStore.get(clientKey);
 
       // Initialize or reset if window expired
       if (!rateLimitEntry || now >= rateLimitEntry.resetTime) {
-        rateLimitStore.set(key, {
+        rateLimitStore.set(clientKey, {
           count: 1,
           resetTime: now + RATE_LIMIT_CONFIG.windowMs,
         });

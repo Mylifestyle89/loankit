@@ -9,17 +9,17 @@ type AliasSpec =
   | string
   | string[]
   | {
-      literal?: unknown;
-      from?: string | string[];
-    };
+    literal?: unknown;
+    from?: string | string[];
+  };
 
 export type FlatTemplateData = Record<string, unknown>;
 export type AliasMap = Record<string, AliasSpec>;
 export type DocxTemplateData<TFlat extends FlatTemplateData = FlatTemplateData> =
   | {
-      flat: TFlat;
-      aliasMap?: AliasMap;
-    }
+    flat: TFlat;
+    aliasMap?: AliasMap;
+  }
   | Record<string, unknown>;
 
 export class TemplateNotFoundError extends Error {
@@ -118,39 +118,15 @@ function deepFormat(value: unknown): unknown {
   return formatScalar(value);
 }
 
-function unflatten(data: Record<string, unknown>): Record<string, unknown> {
-  const result: Record<string, unknown> = {};
-  for (const key of Object.keys(data)) {
-    const parts = key.split(".");
-    let current: Record<string, unknown> | unknown[] = result;
-    for (let i = 0; i < parts.length - 1; i++) {
-      const part = parts[i];
-      const next = parts[i + 1];
-      const nextIsArray = !Number.isNaN(Number(next));
-      if (Array.isArray(current)) {
-        const index = Number(part);
-        if (!current[index]) current[index] = nextIsArray ? [] : {};
-        current = current[index] as Record<string, unknown> | unknown[];
-        continue;
-      }
-      if (!(part in current)) current[part] = nextIsArray ? [] : {};
-      current = current[part] as Record<string, unknown> | unknown[];
-    }
-    const last = parts[parts.length - 1];
-    if (Array.isArray(current)) {
-      current[Number(last)] = data[key];
-    } else {
-      current[last] = data[key];
-    }
-  }
-  return result;
-}
+// Tạm bỏ hàm unflatten vì gây lỗi map key có chứa dấu "." của docxtemplater
 
 function toEngineData<TFlat extends FlatTemplateData>(data: DocxTemplateData<TFlat>): Record<string, unknown> {
   if (data && typeof data === "object" && "flat" in data) {
     const flat = (data.flat ?? {}) as Record<string, unknown>;
     const aliasMap = (data.aliasMap ?? {}) as Record<string, AliasSpec>;
-    return unflatten(deepFormat(applyAliasMap(flat, aliasMap)) as Record<string, unknown>);
+    // Bỏ gọi hàm unflatten vì docxtemplater mặc định KHÔNG hỗ trợ phân giải nested object (nếu k dùng angularParser),
+    // do đó các tag dạng thẻ [custom.abc.xyz] sẽ map trực tiếp với key "custom.abc.xyz" ở dạng flat data root.
+    return deepFormat(applyAliasMap(flat, aliasMap)) as Record<string, unknown>;
   }
   if (data && typeof data === "object") {
     return deepFormat(data) as Record<string, unknown>;
@@ -223,6 +199,10 @@ export const docxEngine = {
         paragraphLoop: true,
         linebreaks: true,
         delimiters: { start: "[", end: "]" },
+        // Return empty string for missing placeholders instead of "undefined"
+        nullGetter() {
+          return "";
+        },
       });
     } catch (error) {
       const details =
@@ -244,7 +224,7 @@ export const docxEngine = {
       throw new DataPlaceholderMismatchError(templatePath, details);
     }
 
-    const buffer = doc.getZip().generate({
+    const buffer = (doc.getZip() as PizZip).generate({
       type: "nodebuffer",
       compression: "DEFLATE",
     });
@@ -261,7 +241,11 @@ export const docxEngine = {
   async readJson<T>(relPath: string): Promise<T> {
     const abs = resolveWorkspacePath(relPath);
     const raw = await fs.readFile(abs, "utf-8");
-    return JSON.parse(raw) as T;
+    try {
+      return JSON.parse(raw) as T;
+    } catch (err) {
+      throw new CorruptedTemplateError(relPath, `Invalid JSON: ${(err as Error).message}`);
+    }
   },
 
   async saveDocxWithBackup(input: { relPath: string; buffer: Buffer; mode: "backup" | "save" }) {

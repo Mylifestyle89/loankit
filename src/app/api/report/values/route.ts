@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
 import { toHttpError } from "@/core/errors/app-error";
@@ -7,9 +7,10 @@ import { reportService } from "@/services/report.service";
 
 export const runtime = "nodejs";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
-    const result = await reportService.getFieldValues();
+    const mappingInstanceId = req.nextUrl.searchParams.get("mapping_instance_id") ?? undefined;
+    const result = await reportService.getFieldValues({ mappingInstanceId });
     return NextResponse.json({
       ok: true,
       ...result,
@@ -26,12 +27,13 @@ export async function GET() {
   }
 }
 
-const repeaterItem = z.record(z.string(), z.union([z.string(), z.number(), z.boolean(), z.null(), z.undefined()]));
+const repeaterItem = z.record(z.string(), z.unknown());
 const scalarOrArray = z.union([z.string(), z.number(), z.boolean(), z.null(), z.array(repeaterItem)]);
 
 const valuesPutSchema = z.object({
   manual_values: z.record(z.string(), scalarOrArray).optional(),
   field_formulas: z.record(z.string(), z.string()).optional(),
+  mapping_instance_id: z.string().optional(),
 });
 
 export const PUT = withErrorHandling(
@@ -39,6 +41,7 @@ export const PUT = withErrorHandling(
     const result = await reportService.saveFieldValues({
       manualValues: body.manual_values,
       fieldFormulas: body.field_formulas,
+      mappingInstanceId: body.mapping_instance_id,
     });
     return NextResponse.json({
       ok: true,

@@ -1,0 +1,37 @@
+{
+  "services": {
+    "CoAuthoring": {
+      "token": {
+        "enable": {
+          "request": {
+            "inbox": true,
+            "outbox": true
+          },
+          "browser": true
+        },
+        "inbox": {
+          "header": "Authorization",
+          "inBody": false
+        },
+        "outbox": {
+          "header": "Authorization",
+          "inBody": false
+        }
+      },
+      "secret": {
+        "browser": {
+          "string": "bcdxcv-onlyoffice-jwt-2026"
+        },
+        "inbox": {
+          "string": "bcdxcv-onlyoffice-jwt-2026"
+        },
+        "outbox": {
+          "string": "bcdxcv-onlyoffice-jwt-2026"
+        },
+        "session": {
+          "string": "bcdxcv-onlyoffice-jwt-2026"
+        }
+      }
+    }
+  }
+}

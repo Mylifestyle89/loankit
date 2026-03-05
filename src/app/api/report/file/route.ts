@@ -4,25 +4,36 @@ import path from "node:path";
 import { NextRequest, NextResponse } from "next/server";
 
 import { toHttpError, NotFoundError, ValidationError } from "@/core/errors/app-error";
+import { REPORT_ASSETS_BASE, validatePathUnderBase } from "@/lib/report/path-validation";
+import { verifyFileAccess } from "@/lib/report/file-token";
 
 export const runtime = "nodejs";
-
-const allowedBase = path.resolve(process.cwd(), "report_assets");
 
 export async function GET(req: NextRequest) {
   try {
     const relPath = req.nextUrl.searchParams.get("path") ?? "";
     const download = req.nextUrl.searchParams.get("download") === "1";
+    const token = req.nextUrl.searchParams.get("token") ?? "";
 
-    const resolved = path.resolve(process.cwd(), relPath);
-    const withinBase = resolved.startsWith(allowedBase + path.sep) || resolved === allowedBase;
-    const isDocx = relPath.toLowerCase().endsWith(".docx");
-    if (!withinBase || !isDocx) {
+    // --- Auth: require a valid HMAC token ---
+    if (!token) {
+      return NextResponse.json({ ok: false, error: "Missing token." }, { status: 401 });
+    }
+    try {
+      verifyFileAccess(relPath, token);
+    } catch {
+      return NextResponse.json({ ok: false, error: "Invalid or expired token." }, { status: 403 });
+    }
+
+    // --- Path safety ---
+    validatePathUnderBase(relPath, REPORT_ASSETS_BASE);
+    if (!relPath.toLowerCase().endsWith(".docx")) {
       throw new ValidationError("Invalid file path.");
     }
 
+    const resolved = path.resolve(process.cwd(), relPath);
     const buffer = await fs.readFile(resolved);
-    const filename = path.basename(resolved);
+    const filename = path.basename(resolved).replace(/["\\\r\n]/g, "_");
 
     return new NextResponse(buffer, {
       status: 200,

@@ -2,6 +2,9 @@ import path from "node:path";
 
 import { ValidationError } from "@/core/errors/app-error";
 
+/** Relative base directory for report assets — use with validatePathUnderBase. */
+export const REPORT_ASSETS_BASE = "report_assets";
+
 /**
  * Validates that a relative path is safe to use for file operations.
  *

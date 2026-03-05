@@ -1,15 +1,29 @@
 services:
   onlyoffice:
-    image: onlyoffice/documentserver:latest
+    image: onlyoffice/documentserver:8.2.2
+    container_name: onlyoffice
     ports:
       - "8080:80"
     environment:
       - JWT_ENABLED=true
-      - JWT_SECRET=${ONLYOFFICE_JWT_SECRET:-onlyoffice_secret_key_2026}
+      - JWT_SECRET=${ONLYOFFICE_JWT_SECRET:?Set ONLYOFFICE_JWT_SECRET in .env}
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 2g
+          cpus: "2.0"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/healthcheck"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
     volumes:
       - onlyoffice_data:/var/www/onlyoffice/Data
       - onlyoffice_logs:/var/log/onlyoffice
+      # NOTE: JWT secret is configured via JWT_SECRET env var above.
+      # Do NOT mount a hardcoded override file — it leaks secrets in source control.
 
 volumes:
   onlyoffice_data:

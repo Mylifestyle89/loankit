@@ -20,21 +20,21 @@ const manualValuesSchema = z.record(
 
 export type ManualValues = Record<string, string | number | boolean | null | Record<string, unknown>[]>;
 
-export async function loadManualValues(): Promise<ManualValues> {
+export async function loadManualValues(filePath = REPORT_MANUAL_VALUES_FILE): Promise<ManualValues> {
   try {
-    const raw = await fs.readFile(REPORT_MANUAL_VALUES_FILE, "utf-8");
+    const raw = await fs.readFile(filePath, "utf-8");
     return manualValuesSchema.parse(JSON.parse(raw));
   } catch {
     return {};
   }
 }
 
-export async function saveManualValues(values: ManualValues): Promise<ManualValues> {
+export async function saveManualValues(values: ManualValues, filePath = REPORT_MANUAL_VALUES_FILE): Promise<ManualValues> {
   const parsed = manualValuesSchema.parse(values);
   await fileLockService.acquireLock("report_assets");
   try {
-  await fs.mkdir(path.dirname(REPORT_MANUAL_VALUES_FILE), { recursive: true });
-  await fs.writeFile(REPORT_MANUAL_VALUES_FILE, JSON.stringify(parsed, null, 2), "utf-8");
+  await fs.mkdir(path.dirname(filePath), { recursive: true });
+  await fs.writeFile(filePath, JSON.stringify(parsed, null, 2), "utf-8");
   } finally {
     await fileLockService.releaseLock("report_assets");
   }

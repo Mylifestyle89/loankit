@@ -6,6 +6,7 @@ import { DocxTemplateEditorModal } from "@/components/docx-template-editor-modal
 import { OnlyOfficeEditorModal } from "@/components/onlyoffice-editor-modal";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import { useLanguage } from "@/components/language-provider";
+import { getSignedFileUrl } from "@/lib/report/signed-file-url";
 
 type TemplateProfile = {
   id: string;
@@ -117,10 +118,14 @@ export default function TemplatePage() {
   const selectedTemplate = templates.find((t) => t.id === activeTemplateId);
   const docxPath = selectedTemplate?.docx_path ?? "";
 
-  function openDocx() {
+  async function openDocx() {
     if (!docxPath) return;
-    const url = `/api/report/file?path=${encodeURIComponent(docxPath)}&download=1&ts=${Date.now()}`;
-    window.open(url, "_blank", "noopener,noreferrer");
+    try {
+      const url = await getSignedFileUrl(docxPath, true);
+      window.open(url, "_blank", "noopener,noreferrer");
+    } catch {
+      setError("Failed to generate download URL.");
+    }
   }
 
   function openEditor() {
@@ -140,7 +145,8 @@ export default function TemplatePage() {
     setLocalDocxName("");
     void (async () => {
       try {
-        const res = await fetch(`/api/report/file?path=${encodeURIComponent(docxPath)}&download=1&ts=${Date.now()}`);
+        const signedUrl = await getSignedFileUrl(docxPath, true);
+        const res = await fetch(signedUrl);
         if (!res.ok) {
           throw new Error("Failed to load DOCX.");
         }
@@ -293,7 +299,7 @@ export default function TemplatePage() {
 
   return (
     <section className="space-y-4">
-      <div className="rounded-xl border border-coral-tree-200 bg-white dark:bg-[#0f1629]/90 p-4">
+      <div className="rounded-xl border border-coral-tree-200 bg-white dark:bg-[#141414]/90 p-4">
         <h2 className="text-lg font-semibold">{t("nav.template")}</h2>
         <p className="mt-1 text-sm text-coral-tree-600">{t("template.desc")}</p>
         {message ? <p className="mt-2 text-sm text-emerald-700">{message}</p> : null}
@@ -302,7 +308,7 @@ export default function TemplatePage() {
 
       {/* Template editor: open DOCX + inject field toolbar */}
       {templates.length > 0 ? (
-        <div className="rounded-xl border border-coral-tree-200 bg-white dark:bg-[#0f1629]/90 p-4">
+        <div className="rounded-xl border border-coral-tree-200 bg-white dark:bg-[#141414]/90 p-4">
           <h3 className="text-base font-semibold">{t("template.editor.title")}</h3>
           <p className="mt-1 text-sm text-coral-tree-600">{t("template.editor.desc")}</p>
           <div className="mt-3 flex flex-wrap items-center gap-3">

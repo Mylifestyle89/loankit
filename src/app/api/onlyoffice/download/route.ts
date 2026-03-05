@@ -3,10 +3,9 @@ import path from "node:path";
 
 import { NextRequest, NextResponse } from "next/server";
 import { verifyToken } from "@/lib/onlyoffice/config";
+import { REPORT_ASSETS_BASE, validatePathUnderBase } from "@/lib/report/path-validation";
 
 export const runtime = "nodejs";
-
-const allowedBase = path.resolve(process.cwd(), "report_assets");
 
 export async function GET(req: NextRequest) {
   try {
@@ -23,14 +22,15 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Invalid token." }, { status: 403 });
     }
 
-    const resolved = path.resolve(process.cwd(), relPath);
-    const withinBase = resolved.startsWith(allowedBase + path.sep) || resolved === allowedBase;
-    if (!withinBase || !relPath.toLowerCase().endsWith(".docx")) {
+    // Path safety — OS-agnostic containment check
+    validatePathUnderBase(relPath, REPORT_ASSETS_BASE);
+    if (!relPath.toLowerCase().endsWith(".docx")) {
       return NextResponse.json({ error: "Invalid file path." }, { status: 400 });
     }
 
+    const resolved = path.resolve(process.cwd(), relPath);
     const buffer = await fs.readFile(resolved);
-    const filename = path.basename(resolved);
+    const filename = path.basename(resolved).replace(/["\\\r\n]/g, "_");
 
     return new NextResponse(buffer, {
       status: 200,

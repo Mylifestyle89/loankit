@@ -48,7 +48,7 @@ export async function POST(req: NextRequest) {
       status: 200,
       headers: {
         "Content-Type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-        "Content-Disposition": `attachment; filename="${encodeURIComponent(fileName)}"`,
+        "Content-Disposition": `attachment; filename="${fileName.replace(/["\\\r\n]/g, "_")}"`,
       },
     });
   } catch (error) {

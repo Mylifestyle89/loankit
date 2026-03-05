@@ -3,6 +3,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 
 import { toHttpError, ValidationError } from "@/core/errors/app-error";
+import { REPORT_ASSETS_BASE, validatePathUnderBase } from "@/lib/report/path-validation";
 import { reverseEngineerTemplate } from "@/services/auto-tagging.service";
 
 export const runtime = "nodejs";
@@ -22,11 +23,8 @@ export async function POST(req: NextRequest) {
     if (!Array.isArray(body.excelRows) || body.excelRows.length === 0) {
       throw new ValidationError("excelRows is required.");
     }
-    const allowedBase = path.resolve(process.cwd(), "report_assets");
+    validatePathUnderBase(body.docxPath, REPORT_ASSETS_BASE);
     const resolvedPath = path.resolve(process.cwd(), body.docxPath);
-    if (!resolvedPath.startsWith(allowedBase + path.sep) && resolvedPath !== allowedBase) {
-      throw new ValidationError("Đường dẫn file không hợp lệ.");
-    }
     const docxBuffer = await fs.readFile(resolvedPath);
     const result = await reverseEngineerTemplate({
       docxBuffer,

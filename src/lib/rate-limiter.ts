@@ -8,12 +8,26 @@ type Window = { count: number; resetAt: number };
 
 const store = new Map<string, Window>();
 
+/** Purge expired entries every 5 minutes to prevent unbounded memory growth. */
+const CLEANUP_INTERVAL_MS = 5 * 60_000;
+let lastCleanup = Date.now();
+
+function purgeExpired(now: number): void {
+  if (now - lastCleanup < CLEANUP_INTERVAL_MS) return;
+  lastCleanup = now;
+  for (const [k, v] of store) {
+    if (now >= v.resetAt) store.delete(k);
+  }
+}
+
 export function checkRateLimit(
   key: string,
   limit = 60,
   windowMs = 60_000,
 ): { allowed: boolean; remaining: number; resetAt: number } {
   const now = Date.now();
+  purgeExpired(now);
+
   const win = store.get(key);
 
   if (!win || now >= win.resetAt) {
@@ -30,10 +44,22 @@ export function checkRateLimit(
   };
 }
 
+/**
+ * Extract client IP for rate-limiting.
+ *
+ * SECURITY: x-forwarded-for / x-real-ip are trivially spoofable by clients.
+ * Only trust them when running behind a reverse proxy that overwrites
+ * the header (set TRUSTED_PROXY=true in that case).
+ * Otherwise fall back to a fixed key so rate-limiting still works globally.
+ */
 export function getClientIp(req: NextRequest): string {
-  return (
-    req.headers.get("x-forwarded-for")?.split(",")[0].trim() ??
-    req.headers.get("x-real-ip") ??
-    "anonymous"
-  );
+  if (process.env.TRUSTED_PROXY === "true") {
+    return (
+      req.headers.get("x-forwarded-for")?.split(",")[0].trim() ??
+      req.headers.get("x-real-ip") ??
+      "anonymous"
+    );
+  }
+  // Direct exposure — client controls forwarded headers, ignore them.
+  return "global";
 }

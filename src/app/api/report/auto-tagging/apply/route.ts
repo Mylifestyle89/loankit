@@ -4,7 +4,7 @@ import path from "node:path";
 import { z } from "zod";
 
 import { withErrorHandling, withValidatedBody } from "@/lib/api-helpers";
-import { validatePathUnderBase } from "@/lib/report/path-validation";
+import { REPORT_ASSETS_BASE, validatePathUnderBase } from "@/lib/report/path-validation";
 import { replaceWithTags, saveTemplate, type TagFormat } from "@/services/auto-tagging.service";
 
 export const runtime = "nodejs";
@@ -25,7 +25,7 @@ const applySchema = z.object({
 
 export const POST = withErrorHandling(
   withValidatedBody(applySchema, async (body) => {
-    const safePath = validatePathUnderBase(body.docxPath, "report_assets");
+    const safePath = validatePathUnderBase(body.docxPath, REPORT_ASSETS_BASE);
     const absolute = path.join(process.cwd(), safePath);
     const docxBuffer = await fs.readFile(absolute);
 
