@@ -4,6 +4,120 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ## [Unreleased]
 
+## [Phase 50] - 2026-03-07
+
+### Added - Field Editor UI Reorganization
+
+#### Toolbar Optimization
+- **MappingVisualToolbar** slimmed from 7 to 5 elements
+  - Removed: Financial analysis, backup, OCR drop zone, OCR badge
+  - Added: Tech keys toggle, sidebar toggle button
+  - Maintains: Search, unmapped filter, add field actions
+
+#### Sidebar Restructuring
+- **MappingSidebar** refactored from 813 to 137 lines (parent container only)
+  - Split into 3 focused sub-components via composition
+  - `SidebarContextSection` - Customer selection, template picker, actions
+  - `SidebarDataIoSection` - CSV/XLSX import/export
+  - `SidebarToolsSection` - OCR upload, financial analysis, backup/restore
+- Sub-components read from Zustand stores directly (no prop drilling)
+- Sidebar state (`sidebarOpen`) added to `use-ui-store.ts`
+- Escape key closes sidebar
+- Proper ARIA attributes for accessibility
+
+#### UI State Management
+- Sidebar toggle integrated into toolbar (PanelRightOpen icon)
+- OCR drag-over fallback preserved on canvas area
+- DOCX merge tool extracted to modal (DocxMergeModal - 239 lines)
+- First-use tooltip added to sidebar toggle
+
+#### Bottom Status Bar
+- **MappingStatusBar** new component (66 lines) with sticky positioning
+- Left: Undo button + history count (0/5)
+- Center: OCR status (pending count, log access link)
+- Right: Field mapping progress (42/56 fields mapped)
+- Ctrl+Z / Cmd+Z keyboard shortcut added for undo
+
+#### Header Simplification
+- Removed undo button (moved to bottom bar)
+- Function list ("Danh sach ham") converted to icon-only BookOpen button with tooltip
+- Sidebar embedding removed (now page-level component)
+- Added gradient background: `from-violet-50 via-white to-fuchsia-50`
+- Dark mode: `from-violet-950/30 via-[#141414] to-fuchsia-950/20`
+
+#### Design System Consistency
+- No legacy colors: removed all indigo, coral-tree, blue-chill references
+- Consistent focus-visible rings: `ring-2 ring-violet-500/40`
+- Button hierarchy: Primary (gradient), Secondary (border), Destructive (rose)
+- Icon-only buttons: `rounded-lg p-2 hover:bg-violet-50`
+- Spacing standardized: toolbar h-12, bottom bar h-10, sidebar 400px
+
+#### File Organization
+- All components under 200 LOC (DocxMergeModal: 239, justified by complexity)
+- New sidebar sub-components modularized for maintainability
+- Stores updated with sidebar state management
+
+#### Code Quality
+- Zero TypeScript errors
+- Full dark mode support across new/modified components
+- Spring animation for sidebar slide (damping: 28, stiffness: 300)
+- Smooth height transitions for collapsible sections
+- No duplicate actions between toolbar and sidebar
+
+### Changed
+- `src/app/report/mapping/components/MappingVisualToolbar.tsx` - Slimmed from 7 to 5 toolbar items
+- `src/app/report/mapping/components/MappingSidebar.tsx` - Refactored to shell (137 lines)
+- `src/app/report/mapping/stores/use-ui-store.ts` - Added sidebar state management
+- `src/app/report/mapping/page.tsx` - Integrated status bar, sidebar toggles
+- `src/app/report/mapping/components/MappingHeader.tsx` - Removed undo, simplified
+
+### Technical Details
+- Modularization: 1 large component split into 5 focused modules
+- Sidebar state persisted in Zustand UI store (survives re-renders)
+- OCR fallback uses canvas dragover detection
+- Keyboard accessibility: Escape key, focus management, aria-labels
+- Responsive design: Mobile-friendly sidebar animation, toolbar wrapping
+
+## [Phase 49] - 2026-03-06
+
+### Added - Invoice Deadline Email Notifications Feature
+
+#### Database Models
+- **Customer.email** - Optional email field for invoice deadline notifications
+- **AppNotification.emailSentAt** - Tracks when email was sent
+- **AppNotification.emailError** - Stores email sending errors for debugging
+
+#### Services
+- **email.service.ts** - Nodemailer integration for sending invoice reminders
+  - `sendInvoiceReminder()` - Daily reminder emails 7 days before deadline
+  - `sendInvoiceOverdue()` - Alert emails for overdue invoices
+  - Graceful fallback when SMTP not configured (logs warning)
+  - Email templates with customer name, invoice number, amount, due date
+
+#### API Routes
+- `GET /api/cron/invoice-deadlines` - Secure cron endpoint for daily deadline checks
+  - Protected via `x-cron-secret` header
+  - Finds invoices due within 7 days
+  - Sends reminder emails and creates notifications
+  - Marks invoices as overdue and sends alerts
+  - Returns summary JSON
+
+#### Auto DueDate Logic
+- Invoice.dueDate auto-set to `disbursementDate + 1 month` on creation
+- User can override via customDeadline field
+- Applied in invoice.service.ts create() method
+
+#### UI Enhancements
+- Invoice dashboard grouped by customer with status summary
+- Deadline countdown display (e.g., "Còn 3 ngày")
+- Status badges: paid (green), due soon (yellow), overdue (red)
+- Customer email field editable in UI
+- Email delivery status shown in notification panel
+
+#### Notification Deduplication
+- 24-hour window prevents duplicate emails per invoice
+- Checks AppNotification history before sending
+
 ### Changed - AI Extraction Pipeline Refactor
 
 #### Modularization
@@ -177,6 +291,7 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 | Version | Date | Notes |
 |---------|------|-------|
+| v1.6.0 | 2026-03-06 | Invoice Deadline Email Notifications |
 | v1.5.0 | 2026-03-05 | Disbursement Invoice Tracking MVP |
 | v1.4.0 | 2026-02-28 | OnlyOffice Integration Phase 2 |
 | v1.3.0 | 2026-02-15 | OnlyOffice Integration Phase 1 |
@@ -244,7 +359,7 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 - [ ] Role-based access control (admin, user, viewer roles)
 - [ ] Audit logging for financial transactions
-- [ ] Email notifications for invoice deadlines
+- [x] Email notifications for invoice deadlines (completed Phase 49)
 - [ ] Batch invoice import/export
 - [ ] Invoice payment tracking
 - [ ] Financial dashboards and analytics

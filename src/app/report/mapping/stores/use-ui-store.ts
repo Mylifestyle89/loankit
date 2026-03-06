@@ -43,6 +43,9 @@ type UiState = {
   filters: UiFilters;
   modals: UiModals;
   context: UiContext;
+  sidebarOpen: boolean;
+  setSidebarOpen: (open: boolean) => void;
+  toggleSidebar: () => void;
   setStatus: (v: Partial<UiStatus> | ((prev: UiStatus) => Partial<UiStatus>)) => void;
   setFilters: (v: Partial<UiFilters> | ((prev: UiFilters) => Partial<UiFilters>)) => void;
   setModals: (v: Partial<UiModals> | ((prev: UiModals) => Partial<UiModals>)) => void;
@@ -70,10 +73,13 @@ const initialState = {
     importGroupPath: "",
     importGroupPrompt: null,
   },
-} satisfies Omit<UiState, "setStatus" | "setFilters" | "setModals" | "setContext" | "resetUi">;
+  sidebarOpen: false,
+} satisfies Omit<UiState, "setSidebarOpen" | "toggleSidebar" | "setStatus" | "setFilters" | "setModals" | "setContext" | "resetUi">;
 
 export const useUiStore = create<UiState>((set) => ({
   ...initialState,
+  setSidebarOpen: (open) => set({ sidebarOpen: open }),
+  toggleSidebar: () => set((s) => ({ sidebarOpen: !s.sidebarOpen })),
   setStatus: (v) => set((s) => ({ status: { ...s.status, ...resolvePartial(v, s.status) } })),
   setFilters: (v) => set((s) => ({ filters: { ...s.filters, ...resolvePartial(v, s.filters) } })),
   setModals: (v) => set((s) => ({ modals: { ...s.modals, ...resolvePartial(v, s.modals) } })),

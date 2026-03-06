@@ -1,12 +1,8 @@
 "use client";
 
-import type { Dispatch, SetStateAction } from "react";
-import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { Save, BookOpen, Undo2 } from "lucide-react";
-
 import { useLanguage } from "@/components/language-provider";
-import type { FieldCatalogItem } from "@/lib/report/config-schema";
 
 
 import { ValidationResultPanel } from "./components/ValidationResultPanel";
@@ -14,6 +10,7 @@ import { MappingModals } from "./components/MappingModals";
 import { MappingVisualSection } from "./components/MappingVisualSection";
 import { MappingVisualToolbar } from "./components/MappingVisualToolbar";
 import { MappingHeader } from "./components/MappingHeader";
+import { MappingStatusBar } from "./components/MappingStatusBar";
 import { MappingSidebar } from "./components/MappingSidebar";
 import { DeleteConfirmModal } from "./components/Modals/DeleteConfirmModal";
 import { ImportGroupPromptModal } from "./components/Modals/ImportGroupPromptModal";
@@ -67,6 +64,8 @@ function MappingPageContent() {
 
   const [financialAnalysisOpen, setFinancialAnalysisOpen] = useState(false);
   const [snapshotRestoreOpen, setSnapshotRestoreOpen] = useState(false);
+  const sidebarOpen = useUiStore((s) => s.sidebarOpen);
+  const toggleSidebar = useUiStore((s) => s.toggleSidebar);
   useAutoSaveSnapshot();
 
   // ── Reactive store subscriptions ──────────────────────────────────────────
@@ -322,40 +321,38 @@ function MappingPageContent() {
     ocrLogEndRef,
   });
 
+  // ── Ctrl+Z undo shortcut ──────────────────────────────────────────────────
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === "z" && !e.shiftKey) {
+        e.preventDefault();
+        undoLastAction();
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [undoLastAction]);
+
+  const mappedFieldCount = useMemo(() => {
+    if (!fieldCatalog.length) return 0;
+    return fieldCatalog.filter((f) => {
+      return f.field_key && effectiveValues[f.field_key] != null && effectiveValues[f.field_key] !== "";
+    }).length;
+  }, [fieldCatalog, effectiveValues]);
+
   // ── Render ────────────────────────────────────────────────────────────────
   if (loading) {
-    return <p className="text-sm text-coral-tree-600">{t("mapping.loading")}</p>;
+    return (
+      <div className="flex items-center justify-center py-16">
+        <div className="h-6 w-6 animate-spin rounded-full border-2 border-violet-200 border-t-violet-600 dark:border-violet-800 dark:border-t-violet-400" />
+      </div>
+    );
   }
 
   return (
     <section className="space-y-4">
       <div className="space-y-3 rounded-xl border border-zinc-200 dark:border-white/[0.08] bg-white/90 dark:bg-[#141414]/90 p-3 shadow-sm">
-        <MappingHeader
-          saving={saving}
-          saveDraft={saveDraft}
-          undoLastAction={undoLastAction}
-          undoHistoryLength={undoHistory.length}
-          t={t}
-          loading={loading}
-          fieldCatalog={fieldCatalog}
-          fieldTemplates={fieldTemplates}
-          allFieldTemplates={allFieldTemplates}
-          selectedFieldTemplateId={selectedFieldTemplateId}
-          editingFieldTemplateId={editingFieldTemplateId}
-          applySelectedFieldTemplate={applySelectedFieldTemplate}
-          loadingFieldTemplates={loadingFieldTemplates}
-          openCreateFieldTemplateModal={() => openCreateMasterTemplateModal()}
-          openAttachFieldTemplateModal={() => void assignSelectedFieldTemplate()}
-          openEditFieldTemplatePicker={() => void openEditFieldTemplatePicker()}
-          showTechnicalKeys={showTechnicalKeys}
-          setShowTechnicalKeys={setShowTechnicalKeys}
-          importingCatalog={importingCatalog}
-          handleImportFieldFile={handleImportFieldFile}
-          openMergeGroupsModal={openMergeGroupsModal}
-          setEditingFieldTemplateId={useFieldTemplateStore.getState().setEditingFieldTemplateId}
-          setEditingFieldTemplateName={setEditingFieldTemplateName}
-          isMappingValid={Boolean(validation?.is_valid)}
-        />
+        <MappingHeader saving={saving} saveDraft={saveDraft} />
 
         <MappingVisualToolbar
           t={t}
@@ -364,26 +361,11 @@ function MappingPageContent() {
           setSearchTerm={setSearchTerm}
           showUnmappedOnly={showUnmappedOnly}
           setShowUnmappedOnly={setShowUnmappedOnly}
+          showTechnicalKeys={showTechnicalKeys}
+          setShowTechnicalKeys={setShowTechnicalKeys}
           onOpenAddFieldModal={() => void openCreateMasterTemplateModal()}
-          onOpenFinancialAnalysis={() => setFinancialAnalysisOpen(true)}
-          onOpenSnapshotRestore={() => setSnapshotRestoreOpen(true)}
-          sidebar={
-            pendingOcrCount > 0 ? (
-              <button
-                type="button"
-                onClick={() => useUiStore.getState().setModals({ ocrReview: true })}
-                className="rounded-full border border-amber-300 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-500/10 px-2 py-0.5 text-[11px] font-semibold text-amber-700 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-500/20 transition-colors"
-              >
-                {pendingOcrCount} chờ review
-              </button>
-            ) : (
-              <span className="text-xs text-slate-500 dark:text-slate-400">
-                {`OCR: ${ocrLogs.length} log`}
-              </span>
-            )
-          }
-          ocrProcessing={ocrProcessing}
-          onOcrFileSelected={(file) => void handleOcrFileSelected(file)}
+          onToggleSidebar={toggleSidebar}
+          sidebarOpen={sidebarOpen}
         />
 
         <SystemLogCard
@@ -395,6 +377,16 @@ function MappingPageContent() {
         />
         {message ? <p className="text-sm text-emerald-700">{message}</p> : null}
         {error ? <p className="text-sm text-rose-700">{error}</p> : null}
+
+        <MappingStatusBar
+          undoLastAction={undoLastAction}
+          undoHistoryLength={undoHistory.length}
+          pendingOcrCount={pendingOcrCount}
+          ocrLogCount={ocrLogs.length}
+          onOpenOcrReview={() => useUiStore.getState().setModals({ ocrReview: true })}
+          fieldCount={fieldCatalog.length}
+          mappedFieldCount={mappedFieldCount}
+        />
       </div>
 
       <MappingVisualSection
@@ -562,13 +554,26 @@ function MappingPageContent() {
         open={snapshotRestoreOpen}
         onClose={() => setSnapshotRestoreOpen(false)}
       />
+
+      <MappingSidebar
+        applySelectedFieldTemplate={applySelectedFieldTemplate}
+        openCreateFieldTemplateModal={() => openCreateMasterTemplateModal()}
+        openAttachFieldTemplateModal={() => void assignSelectedFieldTemplate()}
+        openEditFieldTemplatePicker={() => void openEditFieldTemplatePicker()}
+        openMergeGroupsModal={openMergeGroupsModal}
+        handleImportFieldFile={handleImportFieldFile}
+        onOcrFileSelected={(file) => void handleOcrFileSelected(file)}
+        ocrProcessing={ocrProcessing}
+        onOpenFinancialAnalysis={() => setFinancialAnalysisOpen(true)}
+        onOpenSnapshotRestore={() => setSnapshotRestoreOpen(true)}
+      />
     </section>
   );
 }
 
 export default function MappingPage() {
   return (
-    <Suspense fallback={<p className="text-sm text-coral-tree-600">Loading mapping...</p>}>
+    <Suspense fallback={<div className="flex items-center justify-center py-16"><div className="h-6 w-6 animate-spin rounded-full border-2 border-violet-200 border-t-violet-600 dark:border-violet-800 dark:border-t-violet-400" /></div>}>
       <MappingPageContent />
     </Suspense>
   );
