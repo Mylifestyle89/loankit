@@ -1,16 +1,13 @@
 "use client";
 
-import { useRef, useState } from "react";
-import { ChevronsDown, Upload, BarChart3, History, FileText, ChevronDown, ChevronUp } from "lucide-react";
+import { useState } from "react";
+import { ChevronsDown, History, FileText, ChevronDown, ChevronUp } from "lucide-react";
 import { useLanguage } from "@/components/language-provider";
 
 type SidebarToolsSectionProps = {
   openMergeGroupsModal: () => void;
   onOpenDocxMerge: () => void;
-  onOpenFinancialAnalysis: () => void;
   onOpenSnapshotRestore: () => void;
-  onOcrFileSelected: (file: File) => void;
-  ocrProcessing: boolean;
   onCloseSidebar: () => void;
 };
 
@@ -20,15 +17,11 @@ const BTN_CLASS =
 export function SidebarToolsSection({
   openMergeGroupsModal,
   onOpenDocxMerge,
-  onOpenFinancialAnalysis,
   onOpenSnapshotRestore,
-  onOcrFileSelected,
-  ocrProcessing,
   onCloseSidebar,
 }: SidebarToolsSectionProps) {
   const { t } = useLanguage();
   const [sectionOpen, setSectionOpen] = useState(false);
-  const ocrInputRef = useRef<HTMLInputElement>(null);
 
   return (
     <div className="space-y-3">
@@ -37,7 +30,7 @@ export function SidebarToolsSection({
         onClick={() => setSectionOpen((v) => !v)}
         className="flex w-full items-center justify-between rounded-lg px-1 py-1 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 transition-colors hover:bg-slate-100/60 dark:hover:bg-white/[0.06]"
       >
-        <span>2. Các tiện ích</span>
+        <span>1. Các tiện ích</span>
         {sectionOpen
           ? <ChevronUp className="h-4 w-4 text-slate-400 dark:text-slate-500" />
           : <ChevronDown className="h-4 w-4 text-slate-400 dark:text-slate-500" />}
@@ -53,38 +46,6 @@ export function SidebarToolsSection({
           >
             <ChevronsDown className="h-4 w-4 text-slate-600 dark:text-slate-300" />
             {t("mapping.mergeGroups")}
-          </button>
-
-          {/* OCR upload */}
-          <input
-            ref={ocrInputRef}
-            type="file"
-            accept=".docx,.png,.jpg,.jpeg,.webp,.pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-            className="hidden"
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) onOcrFileSelected(file);
-              e.target.value = "";
-            }}
-          />
-          <button
-            type="button"
-            onClick={() => ocrInputRef.current?.click()}
-            disabled={ocrProcessing}
-            className={BTN_CLASS + " disabled:opacity-60"}
-          >
-            <Upload className="h-4 w-4 text-slate-600 dark:text-slate-300" />
-            {ocrProcessing ? "Đang xử lý OCR..." : "Upload OCR / DOCX"}
-          </button>
-
-          {/* Financial analysis */}
-          <button
-            type="button"
-            onClick={() => { onCloseSidebar(); onOpenFinancialAnalysis(); }}
-            className={BTN_CLASS}
-          >
-            <BarChart3 className="h-4 w-4 text-slate-600 dark:text-slate-300" />
-            Phân tích tài chính
           </button>
 
           {/* Backup / restore */}

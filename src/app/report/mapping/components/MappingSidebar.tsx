@@ -1,39 +1,24 @@
-import { Users, X } from "lucide-react";
+import { Settings, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { useUiStore } from "../stores/use-ui-store";
-import { SidebarContextSection } from "./sidebar/sidebar-context-section";
 import { SidebarToolsSection } from "./sidebar/sidebar-tools-section";
 import { SidebarDataIoSection } from "./sidebar/sidebar-data-io-section";
 import { DocxMergeModal } from "./Modals/DocxMergeModal";
 
 export type MappingSidebarProps = {
-  applySelectedFieldTemplate: (id: string) => void;
-  openCreateFieldTemplateModal: () => void;
-  openAttachFieldTemplateModal: () => void;
-  openEditFieldTemplatePicker: () => void;
   openMergeGroupsModal: () => void;
   handleImportFieldFile: (
     e: React.ChangeEvent<HTMLInputElement>,
     options?: { mode?: "append" | "overwrite"; templateName?: string | null },
   ) => void;
-  onOcrFileSelected: (file: File) => void;
-  ocrProcessing: boolean;
-  onOpenFinancialAnalysis: () => void;
   onOpenSnapshotRestore: () => void;
 };
 
 export function MappingSidebar({
-  applySelectedFieldTemplate,
-  openCreateFieldTemplateModal,
-  openAttachFieldTemplateModal,
-  openEditFieldTemplatePicker,
   openMergeGroupsModal,
   handleImportFieldFile,
-  onOcrFileSelected,
-  ocrProcessing,
-  onOpenFinancialAnalysis,
   onOpenSnapshotRestore,
 }: MappingSidebarProps) {
   const isOpen = useUiStore((s) => s.sidebarOpen);
@@ -79,21 +64,21 @@ export function MappingSidebar({
             {isOpen ? (
               <motion.div
                 initial={{ x: "100%" }}
-                animate={{ x: 0, width: 400 }}
+                animate={{ x: 0, width: 380 }}
                 exit={{ x: "100%" }}
                 transition={{ type: "spring", damping: 28, stiffness: 300 }}
                 role="dialog"
                 aria-modal="true"
-                aria-label="Điều phối dữ liệu"
+                aria-label="Tùy chọn khác"
                 className="fixed inset-y-0 right-0 z-[101] flex h-screen flex-col border-l border-slate-200/60 dark:border-white/[0.07] bg-slate-50/80 dark:bg-[#141414]/90 shadow-2xl backdrop-blur-xl"
               >
                 {/* Header */}
                 <div className="flex shrink-0 items-center justify-between border-b border-slate-200/60 dark:border-white/[0.07] px-4 py-3">
                   <div className="flex items-center gap-2">
                     <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-violet-300/50 bg-gradient-to-br from-violet-600 to-fuchsia-600 text-white shadow-sm shadow-violet-500/25">
-                      <Users className="h-4 w-4" />
+                      <Settings className="h-4 w-4" />
                     </span>
-                    <h2 className="text-base font-semibold text-slate-800 dark:text-slate-200">Điều phối dữ liệu</h2>
+                    <h2 className="text-base font-semibold text-slate-800 dark:text-slate-200">Tùy chọn khác</h2>
                   </div>
                   <button
                     type="button"
@@ -109,23 +94,10 @@ export function MappingSidebar({
                 {/* Scrollable body */}
                 <div className="flex min-h-0 flex-1 flex-col overflow-y-auto overflow-x-hidden">
                   <div className="flex-1 space-y-6 px-4 py-5">
-                    <SidebarContextSection
-                      applySelectedFieldTemplate={applySelectedFieldTemplate}
-                      openCreateFieldTemplateModal={openCreateFieldTemplateModal}
-                      openAttachFieldTemplateModal={openAttachFieldTemplateModal}
-                      openEditFieldTemplatePicker={openEditFieldTemplatePicker}
-                      onCloseSidebar={closeSidebar}
-                    />
-
-                    <hr className="border-slate-200/60 dark:border-white/[0.07]" />
-
                     <SidebarToolsSection
                       openMergeGroupsModal={openMergeGroupsModal}
                       onOpenDocxMerge={() => setDocxMergeOpen(true)}
-                      onOpenFinancialAnalysis={onOpenFinancialAnalysis}
                       onOpenSnapshotRestore={onOpenSnapshotRestore}
-                      onOcrFileSelected={onOcrFileSelected}
-                      ocrProcessing={ocrProcessing}
                       onCloseSidebar={closeSidebar}
                     />
 

@@ -124,7 +124,7 @@ export function SidebarDataIoSection({ handleImportFieldFile, onCloseSidebar }: 
           onClick={() => setSectionOpen((v) => !v)}
           className="flex w-full items-center justify-between rounded-lg px-1 py-1 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 transition-colors hover:bg-slate-100/60 dark:hover:bg-white/[0.06]"
         >
-          <span>3. Thao tác hệ thống</span>
+          <span>2. Thao tác hệ thống</span>
           {sectionOpen ? <ChevronUp className="h-4 w-4 text-slate-400 dark:text-slate-500" /> : <ChevronDown className="h-4 w-4 text-slate-400 dark:text-slate-500" />}
         </button>
 

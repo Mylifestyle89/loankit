@@ -4,6 +4,59 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ## [Unreleased]
 
+## [Phase 51] - 2026-03-07
+
+### Added - Toolbar Revamp with Modal-Based Customer & Template Selection
+
+#### New Components
+- **toolbar-action-button.tsx** - Shared icon button with tooltip, active/disabled states, dark mode support
+- **CustomerPickerModal.tsx** - Select existing customers or create new ones inline
+  - Search filter by name/code
+  - Create new customer form (customer_code, customer_name, address)
+  - API integration: POST /api/customers, GET /api/customers
+  - Smooth animations with AnimatePresence
+- **TemplatePickerModal.tsx** - Select/create/edit field templates
+  - Sections: Customer-specific templates + Master templates
+  - Search and filter capabilities
+  - Action buttons: Create new, Apply template, Edit existing
+  - Integration with useFieldTemplateStore
+
+#### Toolbar Redesign
+- Rewrite MappingVisualToolbar: 5 icon buttons center-aligned with 3 group separators
+  - Group 1: Customer picker, Template picker
+  - Group 2: Document upload, Financial analysis
+  - Group 3: Sidebar toggle
+- Search and filter UI moved to separate row below toolbar
+- ToolbarActionButton component: Active states, disabled states, consistent styling
+
+#### Sidebar Cleanup
+- Removed: Customer context section (moved to CustomerPickerModal)
+- Removed: Template picker dropdown (moved to TemplatePickerModal)
+- Removed: OCR file upload button (moved to toolbar)
+- Removed: Financial analysis button (moved to toolbar)
+- Kept: Merge groups, DOCX merge, Backup/Restore, Import/Export
+- sidebar-context-section.tsx deleted (functionality extracted to modals)
+- sidebar-template-picker-dropdown.tsx deleted (functionality extracted to modals)
+- sidebar-tools-section.tsx simplified: removed OCR and financial analysis props
+
+#### Keyboard & Accessibility
+- Escape key closes modals
+- Tab order: toolbar → search → filters
+- Focus-visible rings: `ring-2 ring-violet-500/40`
+- ARIA roles and labels on buttons
+- Active state indicators show customer/template selection status
+
+#### Responsive Design
+- Toolbar: `gap-1 md:gap-2` for mobile
+- Modal widths adapt to viewport
+- Search row wraps on mobile
+- Button sizing: `p-2 md:p-2.5`
+
+#### Dark Mode
+- Full dark mode support across all new modals
+- Consistent color scheme: `violet/fuchsia` with `dark:white/[0.08]` borders
+- Verified across toolbar, modals, and sidebar
+
 ## [Phase 50] - 2026-03-07
 
 ### Added - Field Editor UI Reorganization
@@ -291,6 +344,7 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 | Version | Date | Notes |
 |---------|------|-------|
+| v1.7.0 | 2026-03-07 | Toolbar Revamp with Modal-Based Selection |
 | v1.6.0 | 2026-03-06 | Invoice Deadline Email Notifications |
 | v1.5.0 | 2026-03-05 | Disbursement Invoice Tracking MVP |
 | v1.4.0 | 2026-02-28 | OnlyOffice Integration Phase 2 |

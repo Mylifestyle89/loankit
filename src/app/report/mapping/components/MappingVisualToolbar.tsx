@@ -1,20 +1,41 @@
-import { PanelRightClose, PanelRightOpen, Plus } from "lucide-react";
+import { Users, FileText, Upload, BarChart3, Settings } from "lucide-react";
+import { ToolbarActionButton } from "./toolbar-action-button";
 
 type MappingVisualToolbarProps = {
+  // Action buttons
+  onOpenCustomerPicker: () => void;
+  onOpenTemplatePicker: () => void;
+  onUploadDocument: () => void;
+  onOpenFinancialAnalysis: () => void;
+  onToggleSidebar: () => void;
+  // Active states
+  hasCustomer: boolean;
+  hasTemplate: boolean;
+  sidebarOpen: boolean;
+  // Search/filter row
   t: (key: string) => string;
   hasContext: boolean;
   searchTerm: string;
-  setSearchTerm: (value: string) => void;
+  setSearchTerm: (v: string) => void;
   showUnmappedOnly: boolean;
-  setShowUnmappedOnly: (value: boolean) => void;
+  setShowUnmappedOnly: (v: boolean) => void;
   showTechnicalKeys: boolean;
   setShowTechnicalKeys: (v: boolean) => void;
-  onOpenAddFieldModal: () => void;
-  onToggleSidebar: () => void;
-  sidebarOpen: boolean;
 };
 
+const SEPARATOR = (
+  <div className="h-6 w-px bg-zinc-200 dark:bg-white/[0.08] mx-1" />
+);
+
 export function MappingVisualToolbar({
+  onOpenCustomerPicker,
+  onOpenTemplatePicker,
+  onUploadDocument,
+  onOpenFinancialAnalysis,
+  onToggleSidebar,
+  hasCustomer,
+  hasTemplate,
+  sidebarOpen,
   t,
   hasContext,
   searchTerm,
@@ -23,13 +44,57 @@ export function MappingVisualToolbar({
   setShowUnmappedOnly,
   showTechnicalKeys,
   setShowTechnicalKeys,
-  onOpenAddFieldModal,
-  onToggleSidebar,
-  sidebarOpen,
 }: MappingVisualToolbarProps) {
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-zinc-200 dark:border-white/[0.08] bg-white/80 dark:bg-[#141414]/90 p-2 backdrop-blur-sm">
-      <div className={`flex items-center gap-2 w-full md:w-auto transition-opacity duration-300 ${!hasContext ? "opacity-0 pointer-events-none" : "opacity-100"}`}>
+    <div className="space-y-2">
+      {/* Row 1: Action buttons — center-aligned, 3 groups */}
+      <div className="flex items-center justify-center gap-1 rounded-xl border border-zinc-200 dark:border-white/[0.08] bg-white/80 dark:bg-[#141414]/90 p-2 backdrop-blur-sm">
+        {/* Group 1: Context — Customer + Template */}
+        <ToolbarActionButton
+          icon={<Users className="h-5 w-5" />}
+          label="Chọn khách hàng"
+          onClick={onOpenCustomerPicker}
+          active={hasCustomer}
+        />
+        <ToolbarActionButton
+          icon={<FileText className="h-5 w-5" />}
+          label="Chọn mẫu dữ liệu"
+          onClick={onOpenTemplatePicker}
+          active={hasTemplate}
+        />
+
+        {SEPARATOR}
+
+        {/* Group 2: Processing — Upload + Financial */}
+        <ToolbarActionButton
+          icon={<Upload className="h-5 w-5" />}
+          label="Upload tài liệu"
+          onClick={onUploadDocument}
+        />
+        <ToolbarActionButton
+          icon={<BarChart3 className="h-5 w-5" />}
+          label="Phân tích tài chính"
+          onClick={onOpenFinancialAnalysis}
+          disabled={!hasCustomer}
+        />
+
+        {SEPARATOR}
+
+        {/* Group 3: Settings — Sidebar */}
+        <ToolbarActionButton
+          icon={<Settings className="h-5 w-5" />}
+          label="Tùy chọn khác"
+          onClick={onToggleSidebar}
+          active={sidebarOpen}
+        />
+      </div>
+
+      {/* Row 2: Search + filters — visible only when context loaded */}
+      <div
+        className={`flex flex-wrap items-center gap-2 rounded-xl border border-zinc-200 dark:border-white/[0.08] bg-white/80 dark:bg-[#141414]/90 p-2 backdrop-blur-sm transition-opacity duration-300 ${
+          !hasContext ? "opacity-0 pointer-events-none h-0 overflow-hidden p-0 border-0" : "opacity-100"
+        }`}
+      >
         <input
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
@@ -54,26 +119,6 @@ export function MappingVisualToolbar({
           />
           Technical keys
         </label>
-        <button
-          type="button"
-          onClick={onOpenAddFieldModal}
-          className="flex flex-shrink-0 items-center gap-1.5 rounded-lg bg-gradient-to-r from-violet-600 to-fuchsia-600 px-3 py-1.5 text-sm text-white shadow-sm shadow-violet-500/25 transition-all duration-200 hover:shadow-md hover:shadow-violet-500/30 hover:brightness-110"
-        >
-          <Plus className="h-4 w-4" />
-          {t("mapping.newFieldTitle")}
-        </button>
-      </div>
-
-      <div className="flex items-center gap-2">
-        <div className="h-6 w-px bg-zinc-200 dark:bg-white/[0.08] mx-1" />
-        <button
-          type="button"
-          onClick={onToggleSidebar}
-          title="Điều phối dữ liệu"
-          className="rounded-lg p-2 text-zinc-600 dark:text-slate-300 transition-colors hover:bg-violet-50 dark:hover:bg-violet-500/10 hover:text-violet-600 dark:hover:text-violet-400"
-        >
-          {sidebarOpen ? <PanelRightClose className="h-5 w-5" /> : <PanelRightOpen className="h-5 w-5" />}
-        </button>
       </div>
     </div>
   );

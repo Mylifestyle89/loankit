@@ -12,6 +12,8 @@ import { MappingVisualToolbar } from "./components/MappingVisualToolbar";
 import { MappingHeader } from "./components/MappingHeader";
 import { MappingStatusBar } from "./components/MappingStatusBar";
 import { MappingSidebar } from "./components/MappingSidebar";
+import { CustomerPickerModal } from "./components/Modals/CustomerPickerModal";
+import { TemplatePickerModal } from "./components/Modals/TemplatePickerModal";
 import { DeleteConfirmModal } from "./components/Modals/DeleteConfirmModal";
 import { ImportGroupPromptModal } from "./components/Modals/ImportGroupPromptModal";
 import { OcrReviewModal } from "./components/Modals/OcrReviewModal";
@@ -64,8 +66,13 @@ function MappingPageContent() {
 
   const [financialAnalysisOpen, setFinancialAnalysisOpen] = useState(false);
   const [snapshotRestoreOpen, setSnapshotRestoreOpen] = useState(false);
+  const [customerPickerOpen, setCustomerPickerOpen] = useState(false);
+  const [templatePickerOpen, setTemplatePickerOpen] = useState(false);
   const sidebarOpen = useUiStore((s) => s.sidebarOpen);
   const toggleSidebar = useUiStore((s) => s.toggleSidebar);
+
+  // Hidden file input for toolbar Upload button
+  const toolbarUploadRef = useRef<HTMLInputElement>(null);
   useAutoSaveSnapshot();
 
   // ── Reactive store subscriptions ──────────────────────────────────────────
@@ -363,9 +370,33 @@ function MappingPageContent() {
           setShowUnmappedOnly={setShowUnmappedOnly}
           showTechnicalKeys={showTechnicalKeys}
           setShowTechnicalKeys={setShowTechnicalKeys}
-          onOpenAddFieldModal={() => void openCreateMasterTemplateModal()}
+          onOpenCustomerPicker={() => setCustomerPickerOpen(true)}
+          onOpenTemplatePicker={() => setTemplatePickerOpen(true)}
+          onUploadDocument={() => toolbarUploadRef.current?.click()}
+          onOpenFinancialAnalysis={() => {
+            if (!selectedCustomerId) {
+              useUiStore.getState().setStatus({ error: "Xin hãy chọn khách hàng trước khi sử dụng Phân tích tài chính." });
+              return;
+            }
+            setFinancialAnalysisOpen(true);
+          }}
           onToggleSidebar={toggleSidebar}
+          hasCustomer={!!selectedCustomerId}
+          hasTemplate={!!selectedFieldTemplateId || !!editingFieldTemplateId}
           sidebarOpen={sidebarOpen}
+        />
+
+        {/* Hidden file input for toolbar Upload button */}
+        <input
+          ref={toolbarUploadRef}
+          type="file"
+          accept=".docx,.png,.jpg,.jpeg,.webp,.pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+          className="hidden"
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (file) void handleOcrFileSelected(file);
+            e.target.value = "";
+          }}
         />
 
         <SystemLogCard
@@ -555,16 +586,41 @@ function MappingPageContent() {
         onClose={() => setSnapshotRestoreOpen(false)}
       />
 
+      <CustomerPickerModal
+        isOpen={customerPickerOpen}
+        onClose={() => setCustomerPickerOpen(false)}
+        onSelect={(id) => {
+          useFieldTemplateStore.getState().setEditingFieldTemplateId("");
+          useFieldTemplateStore.getState().setEditingFieldTemplateName("");
+          useCustomerStore.getState().setSelectedCustomerId(id);
+          setCustomerPickerOpen(false);
+        }}
+      />
+
+      <TemplatePickerModal
+        isOpen={templatePickerOpen}
+        onClose={() => setTemplatePickerOpen(false)}
+        onSelect={(id) => {
+          applySelectedFieldTemplate(id);
+          setTemplatePickerOpen(false);
+        }}
+        onCreateNew={() => {
+          setTemplatePickerOpen(false);
+          void openCreateMasterTemplateModal();
+        }}
+        onEditTemplate={() => {
+          setTemplatePickerOpen(false);
+          void openEditFieldTemplatePicker();
+        }}
+        onAttachTemplate={() => {
+          setTemplatePickerOpen(false);
+          void assignSelectedFieldTemplate();
+        }}
+      />
+
       <MappingSidebar
-        applySelectedFieldTemplate={applySelectedFieldTemplate}
-        openCreateFieldTemplateModal={() => openCreateMasterTemplateModal()}
-        openAttachFieldTemplateModal={() => void assignSelectedFieldTemplate()}
-        openEditFieldTemplatePicker={() => void openEditFieldTemplatePicker()}
         openMergeGroupsModal={openMergeGroupsModal}
         handleImportFieldFile={handleImportFieldFile}
-        onOcrFileSelected={(file) => void handleOcrFileSelected(file)}
-        ocrProcessing={ocrProcessing}
-        onOpenFinancialAnalysis={() => setFinancialAnalysisOpen(true)}
         onOpenSnapshotRestore={() => setSnapshotRestoreOpen(true)}
       />
     </section>
