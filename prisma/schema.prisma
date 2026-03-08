@@ -168,6 +168,7 @@ model AppNotification {
 
   @@index([readAt])
   @@index([type])
+  @@index([type, createdAt])
   @@map("app_notifications")
 }
 

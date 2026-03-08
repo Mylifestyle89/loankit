@@ -68,14 +68,19 @@ function inferType(fieldKey: string, normalizer?: string): FieldCatalogItem["typ
   return "text";
 }
 
+function isReadOnlyFsError(err: unknown): boolean {
+  const code = (err as NodeJS.ErrnoException).code;
+  return code === "EROFS" || code === "ENOENT" || code === "EPERM";
+}
+
 async function ensureDirectories(): Promise<void> {
-  // On Vercel serverless, filesystem is read-only — skip mkdir gracefully
   try {
     await fs.mkdir(REPORT_CONFIG_DIR, { recursive: true });
     await fs.mkdir(REPORT_VERSIONS_DIR, { recursive: true });
     await fs.mkdir(REPORT_INVENTORY_DIR, { recursive: true });
-  } catch {
-    // Read-only filesystem (e.g. Vercel) — directories may already exist or be unavailable
+  } catch (err) {
+    if (isReadOnlyFsError(err)) return;
+    throw err;
   }
 }
 
@@ -182,43 +187,51 @@ function mergeFinancialCatalog(catalog: FieldCatalogItem[]): {
   return { catalog: [...catalog, ...toAdd], changed: true };
 }
 
+const EMPTY_STATE: FrameworkState = frameworkStateSchema.parse({
+  field_catalog: [],
+  field_templates: [],
+  mapping_versions: [],
+  template_profiles: [],
+  run_logs: [],
+  active_mapping_version_id: "",
+  active_template_id: "",
+});
+
 export async function loadState(): Promise<FrameworkState> {
   await ensureDirectories();
+
+  // Try reading existing state file
+  let stateRaw: unknown;
   try {
-    const stateRaw = await readJsonFile<unknown>(REPORT_STATE_FILE);
-    const parsed = frameworkStateSchema.parse(stateRaw);
-
-    // Merge financial catalog items (idempotent)
-    const mergedFinancial = mergeFinancialCatalog(parsed.field_catalog);
-    if (mergedFinancial.changed) {
-      parsed.field_catalog = mergedFinancial.catalog;
-    }
-
-    const normalizedLabels = normalizeFieldCatalogLabelsVi(parsed.field_catalog);
-    const normalizedGroups = normalizeFieldCatalogGroupsVi(normalizedLabels.catalog);
-    if (mergedFinancial.changed || normalizedLabels.changed || normalizedGroups.changed) {
-      parsed.field_catalog = normalizedGroups.catalog;
-      await saveState(parsed);
-    }
-    return parsed;
-  } catch {
+    stateRaw = await readJsonFile<unknown>(REPORT_STATE_FILE);
+  } catch (err) {
+    if (isReadOnlyFsError(err)) return EMPTY_STATE;
+    // File missing on writable FS — bootstrap
     try {
       const state = await bootstrapState();
       await saveState(state);
       return state;
-    } catch {
-      // Read-only filesystem (Vercel) — return minimal empty state
-      return frameworkStateSchema.parse({
-        field_catalog: [],
-        field_templates: [],
-        mapping_versions: [],
-        template_profiles: [],
-        run_logs: [],
-        active_mapping_version_id: "",
-        active_template_id: "",
-      });
+    } catch (bootstrapErr) {
+      if (isReadOnlyFsError(bootstrapErr)) return EMPTY_STATE;
+      throw bootstrapErr;
     }
   }
+
+  // Parse and normalize (parse errors bubble up, not swallowed)
+  const parsed = frameworkStateSchema.parse(stateRaw);
+
+  const mergedFinancial = mergeFinancialCatalog(parsed.field_catalog);
+  if (mergedFinancial.changed) {
+    parsed.field_catalog = mergedFinancial.catalog;
+  }
+
+  const normalizedLabels = normalizeFieldCatalogLabelsVi(parsed.field_catalog);
+  const normalizedGroups = normalizeFieldCatalogGroupsVi(normalizedLabels.catalog);
+  if (mergedFinancial.changed || normalizedLabels.changed || normalizedGroups.changed) {
+    parsed.field_catalog = normalizedGroups.catalog;
+    await saveState(parsed);
+  }
+  return parsed;
 }
 
 export async function saveState(state: FrameworkState): Promise<void> {
@@ -250,10 +263,7 @@ export async function saveState(state: FrameworkState): Promise<void> {
 
     await fs.writeFile(REPORT_STATE_FILE, nextRaw, "utf-8");
   } catch (err) {
-    // Read-only filesystem (Vercel) — silently skip write
-    if ((err as NodeJS.ErrnoException).code === "EROFS" || (err as NodeJS.ErrnoException).code === "ENOENT") {
-      return;
-    }
+    if (isReadOnlyFsError(err)) return; // Vercel read-only FS
     throw err;
   } finally {
     await fileLockService.releaseLock("report_assets");

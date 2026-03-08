@@ -92,11 +92,22 @@ export async function runDeadlineCheck(): Promise<DeadlineCheckResult> {
     }
   }
 
-  // 2. Mark overdue + notify
-  const { count: newlyOverdue } = await invoiceService.markOverdue();
+  // 2. Mark overdue + only notify NEWLY overdue (not previously marked)
+  const { count: newlyOverdue, newlyOverdueIds } = await invoiceService.markOverdue();
+
+  if (newlyOverdueIds.length === 0) {
+    return {
+      dueSoonChecked: dueSoon.length,
+      newlyOverdue: 0,
+      totalOverdue: 0,
+      notificationsCreated,
+      emailsSent,
+      emailErrors,
+    };
+  }
 
   const overdue = await prisma.invoice.findMany({
-    where: { status: "overdue" },
+    where: { id: { in: newlyOverdueIds } },
     include: invoiceInclude,
   });
 
@@ -133,7 +144,7 @@ export async function runDeadlineCheck(): Promise<DeadlineCheckResult> {
   return {
     dueSoonChecked: dueSoon.length,
     newlyOverdue,
-    totalOverdue: overdue.length,
+    totalOverdue: newlyOverdueIds.length,
     notificationsCreated,
     emailsSent,
     emailErrors,

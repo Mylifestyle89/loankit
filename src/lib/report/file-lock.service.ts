@@ -57,9 +57,10 @@ export class FileLockService {
 
     try {
       await fs.mkdir(LOCK_DIR, { recursive: true });
-    } catch {
-      // Read-only filesystem (Vercel) — skip file locking
-      return;
+    } catch (err) {
+      const code = (err as NodeJS.ErrnoException).code;
+      if (code === "EROFS" || code === "EPERM") return; // Read-only FS (Vercel)
+      throw err;
     }
 
     while (Date.now() - start <= this.timeoutMs) {

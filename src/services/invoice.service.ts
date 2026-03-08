@@ -266,10 +266,10 @@ export const invoiceService = {
     }
   },
 
-  /** Called by scheduler: mark pending invoices past due as overdue */
-  async markOverdue() {
+  /** Called by scheduler: mark pending invoices past due as overdue, return newly marked IDs */
+  async markOverdue(): Promise<{ count: number; newlyOverdueIds: string[] }> {
     const now = new Date();
-    return prisma.invoice.updateMany({
+    const toMark = await prisma.invoice.findMany({
       where: {
         status: "pending",
         OR: [
@@ -277,62 +277,93 @@ export const invoiceService = {
           { AND: [{ customDeadline: null }, { dueDate: { lt: now } }] },
         ],
       },
+      select: { id: true },
+    });
+    const ids = toMark.map((inv) => inv.id);
+    if (ids.length === 0) return { count: 0, newlyOverdueIds: [] };
+
+    await prisma.invoice.updateMany({
+      where: { id: { in: ids } },
       data: { status: "overdue" },
     });
+    return { count: ids.length, newlyOverdueIds: ids };
   },
 
-  /** Aggregate invoices per customer for summary view */
+  /** Aggregate invoices per customer for summary view (optimized — no full graph load) */
   async getCustomerSummary() {
     const customers = await prisma.customer.findMany({
-      include: {
-        loans: {
-          include: {
-            disbursements: {
-              include: {
-                invoices: { select: { amount: true, status: true } },
-                beneficiaryLines: { select: { invoiceStatus: true } },
-              },
-            },
-          },
-        },
+      select: {
+        id: true,
+        customer_name: true,
+        email: true,
+        _count: { select: { loans: true } },
       },
     });
 
+    // Batch aggregate disbursements, invoices, and beneficiary lines per customer
+    const [disbCounts, invoiceStats, supplementCounts] = await Promise.all([
+      prisma.disbursement.groupBy({
+        by: ["loanId"],
+        _count: true,
+      }),
+      prisma.invoice.findMany({
+        select: {
+          amount: true,
+          status: true,
+          disbursement: { select: { loan: { select: { customerId: true } } } },
+        },
+      }),
+      prisma.disbursementBeneficiary.findMany({
+        where: { invoiceStatus: { in: ["pending", "supplementing"] } },
+        select: {
+          disbursement: { select: { loan: { select: { customerId: true } } } },
+        },
+      }),
+    ]);
+
+    // Map loan → customer for disbursement counts
+    const loans = await prisma.loan.findMany({ select: { id: true, customerId: true } });
+    const loanToCustomer = new Map(loans.map((l) => [l.id, l.customerId]));
+
+    // Build per-customer disbursement count
+    const custDisbursements = new Map<string, number>();
+    for (const d of disbCounts) {
+      const custId = loanToCustomer.get(d.loanId);
+      if (custId) custDisbursements.set(custId, (custDisbursements.get(custId) ?? 0) + d._count);
+    }
+
+    // Build per-customer invoice stats
+    const custStats = new Map<string, { total: number; amount: number; pending: number; overdue: number }>();
+    for (const inv of invoiceStats) {
+      const custId = inv.disbursement.loan.customerId;
+      const s = custStats.get(custId) ?? { total: 0, amount: 0, pending: 0, overdue: 0 };
+      s.total++;
+      s.amount += inv.amount;
+      if (inv.status === "pending") s.pending++;
+      if (inv.status === "overdue") s.overdue++;
+      custStats.set(custId, s);
+    }
+
+    // Build per-customer supplement count
+    const custSupplement = new Map<string, number>();
+    for (const b of supplementCounts) {
+      const custId = b.disbursement.loan.customerId;
+      custSupplement.set(custId, (custSupplement.get(custId) ?? 0) + 1);
+    }
+
     return customers.map((c) => {
-      let totalInvoices = 0;
-      let totalAmount = 0;
-      let pendingCount = 0;
-      let overdueCount = 0;
-      let totalDisbursements = 0;
-      let needsSupplementCount = 0;
-
-      for (const loan of c.loans) {
-        totalDisbursements += loan.disbursements.length;
-        for (const d of loan.disbursements) {
-          for (const inv of d.invoices) {
-            totalInvoices++;
-            totalAmount += inv.amount;
-            if (inv.status === "pending") pendingCount++;
-            if (inv.status === "overdue") overdueCount++;
-          }
-          // Count beneficiary lines that still need invoices (pending or supplementing)
-          for (const b of d.beneficiaryLines) {
-            if (b.invoiceStatus === "pending" || b.invoiceStatus === "supplementing") needsSupplementCount++;
-          }
-        }
-      }
-
+      const stats = custStats.get(c.id) ?? { total: 0, amount: 0, pending: 0, overdue: 0 };
       return {
         customerId: c.id,
         customerName: c.customer_name,
         customerEmail: c.email,
-        totalLoans: c.loans.length,
-        totalDisbursements,
-        totalInvoices,
-        totalAmount,
-        pendingCount,
-        overdueCount,
-        needsSupplementCount,
+        totalLoans: c._count.loans,
+        totalDisbursements: custDisbursements.get(c.id) ?? 0,
+        totalInvoices: stats.total,
+        totalAmount: stats.amount,
+        pendingCount: stats.pending,
+        overdueCount: stats.overdue,
+        needsSupplementCount: custSupplement.get(c.id) ?? 0,
       };
     });
   },

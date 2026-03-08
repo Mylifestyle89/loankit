@@ -229,10 +229,17 @@ export const disbursementService = {
     const repaymentEnd = input.repaymentEndDate ? new Date(input.repaymentEndDate) : null;
 
     return prisma.$transaction(async (tx) => {
-      // Delete old beneficiary lines (cascades their invoices via DisbursementBeneficiary → Invoice relation)
+      // Unlink invoices from beneficiary lines before deleting (preserves paid/overdue invoices)
+      await tx.invoice.updateMany({
+        where: { disbursementId: id, disbursementBeneficiaryId: { not: null } },
+        data: { disbursementBeneficiaryId: null },
+      });
+      // Delete old beneficiary lines (invoices now unlinked, not cascade-deleted)
       await tx.disbursementBeneficiary.deleteMany({ where: { disbursementId: id } });
-      // Delete old direct invoices (ones not linked to a beneficiary line)
-      await tx.invoice.deleteMany({ where: { disbursementId: id, disbursementBeneficiaryId: null } });
+      // Only delete pending direct invoices (preserve paid/overdue)
+      await tx.invoice.deleteMany({
+        where: { disbursementId: id, disbursementBeneficiaryId: null, status: "pending" },
+      });
 
       const disbursement = await tx.disbursement.update({
         where: { id },
