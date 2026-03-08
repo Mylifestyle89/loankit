@@ -68,3 +68,5 @@ __pycache__/
 /report_assets/report_preview*.docx
 /report_assets/*preview*.docx
 /report_assets/*trial*.docx
+
+.vercel

@@ -25,6 +25,12 @@ const SECURITY_HEADERS = [
 ];
 
 const nextConfig: NextConfig = {
+  serverExternalPackages: [
+    "better-sqlite3",
+    "@prisma/adapter-better-sqlite3",
+    "@libsql/client",
+    "@prisma/adapter-libsql",
+  ],
   turbopack: {
     root: process.cwd(),
   },

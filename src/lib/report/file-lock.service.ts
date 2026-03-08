@@ -55,7 +55,12 @@ export class FileLockService {
     const lockFilePath = this.getLockFilePath(resourceId);
     const start = Date.now();
 
-    await fs.mkdir(LOCK_DIR, { recursive: true });
+    try {
+      await fs.mkdir(LOCK_DIR, { recursive: true });
+    } catch {
+      // Read-only filesystem (Vercel) — skip file locking
+      return;
+    }
 
     while (Date.now() - start <= this.timeoutMs) {
       try {

@@ -69,9 +69,14 @@ function inferType(fieldKey: string, normalizer?: string): FieldCatalogItem["typ
 }
 
 async function ensureDirectories(): Promise<void> {
-  await fs.mkdir(REPORT_CONFIG_DIR, { recursive: true });
-  await fs.mkdir(REPORT_VERSIONS_DIR, { recursive: true });
-  await fs.mkdir(REPORT_INVENTORY_DIR, { recursive: true });
+  // On Vercel serverless, filesystem is read-only — skip mkdir gracefully
+  try {
+    await fs.mkdir(REPORT_CONFIG_DIR, { recursive: true });
+    await fs.mkdir(REPORT_VERSIONS_DIR, { recursive: true });
+    await fs.mkdir(REPORT_INVENTORY_DIR, { recursive: true });
+  } catch {
+    // Read-only filesystem (e.g. Vercel) — directories may already exist or be unavailable
+  }
 }
 
 async function readJsonFile<T>(filePath: string): Promise<T> {
@@ -197,40 +202,59 @@ export async function loadState(): Promise<FrameworkState> {
     }
     return parsed;
   } catch {
-    const state = await bootstrapState();
-    await saveState(state);
-    return state;
+    try {
+      const state = await bootstrapState();
+      await saveState(state);
+      return state;
+    } catch {
+      // Read-only filesystem (Vercel) — return minimal empty state
+      return frameworkStateSchema.parse({
+        field_catalog: [],
+        field_templates: [],
+        mapping_versions: [],
+        template_profiles: [],
+        run_logs: [],
+        active_mapping_version_id: "",
+        active_template_id: "",
+      });
+    }
   }
 }
 
 export async function saveState(state: FrameworkState): Promise<void> {
   await fileLockService.acquireLock("report_assets");
   try {
-  await ensureDirectories();
-  const parsed = frameworkStateSchema.parse(state);
-  const nextRaw = JSON.stringify(parsed, null, 2);
+    await ensureDirectories();
+    const parsed = frameworkStateSchema.parse(state);
+    const nextRaw = JSON.stringify(parsed, null, 2);
 
-  let currentRaw = "";
-  try {
-    currentRaw = await fs.readFile(REPORT_STATE_FILE, "utf-8");
-  } catch {
-    currentRaw = "";
-  }
+    let currentRaw = "";
+    try {
+      currentRaw = await fs.readFile(REPORT_STATE_FILE, "utf-8");
+    } catch {
+      currentRaw = "";
+    }
 
-  // Skip redundant write/backup when content does not change.
-  if (currentRaw === nextRaw) {
-    return;
-  }
+    // Skip redundant write/backup when content does not change.
+    if (currentRaw === nextRaw) {
+      return;
+    }
 
-  if (currentRaw) {
-    const backupDir = path.join(process.cwd(), "report_assets", "backups", "state-config");
-    await fs.mkdir(backupDir, { recursive: true });
-    const backupPath = path.join(backupDir, `framework_state-${tsForFilename()}.json`);
-    await fs.writeFile(backupPath, currentRaw, "utf-8");
-    await pruneOldBackups(backupDir, 100);
-  }
+    if (currentRaw) {
+      const backupDir = path.join(process.cwd(), "report_assets", "backups", "state-config");
+      await fs.mkdir(backupDir, { recursive: true });
+      const backupPath = path.join(backupDir, `framework_state-${tsForFilename()}.json`);
+      await fs.writeFile(backupPath, currentRaw, "utf-8");
+      await pruneOldBackups(backupDir, 100);
+    }
 
-  await fs.writeFile(REPORT_STATE_FILE, nextRaw, "utf-8");
+    await fs.writeFile(REPORT_STATE_FILE, nextRaw, "utf-8");
+  } catch (err) {
+    // Read-only filesystem (Vercel) — silently skip write
+    if ((err as NodeJS.ErrnoException).code === "EROFS" || (err as NodeJS.ErrnoException).code === "ENOENT") {
+      return;
+    }
+    throw err;
   } finally {
     await fileLockService.releaseLock("report_assets");
   }

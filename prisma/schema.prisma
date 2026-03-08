@@ -26,6 +26,8 @@ model Customer {
   legal_representative_title String?
   organization_type          String?
 
+  email    String?   // Email nhan thong bao hoa don
+
   /// JSON object: extra attributes (report field_key -> value) for mapping/export
   data_json String? @default("{}")
 
@@ -118,7 +120,7 @@ model DisbursementBeneficiary {
   accountNumber   String?      // snapshot: So TK
   bankName        String?      // snapshot: Ngan hang
   amount          Float        // So tien giai ngan cho don vi nay
-  invoiceStatus   String       @default("pending") // pending | has_invoice
+  invoiceStatus   String       @default("pending") // pending | supplementing | has_invoice
   invoiceAmount   Float        @default(0)
 
   invoices        Invoice[]
@@ -161,6 +163,8 @@ model AppNotification {
   title     String
   message   String
   metadata  String?   @default("{}") // JSON: { invoiceId, disbursementId, customerId }
+  emailSentAt      DateTime?  // Thoi diem gui email
+  emailError       String?    // Loi gui email (neu co)
 
   @@index([readAt])
   @@index([type])
