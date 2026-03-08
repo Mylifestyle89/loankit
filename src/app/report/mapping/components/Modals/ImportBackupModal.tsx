@@ -93,7 +93,7 @@ export function ImportBackupModal({ open, onClose, onRestore }: ImportBackupModa
         aria-labelledby="import-backup-title"
       >
         <div className="flex items-center gap-2 border-b border-slate-200/60 pb-3 dark:border-white/[0.07]">
-          <FolderOpen className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+          <FolderOpen className="h-5 w-5 text-violet-600 dark:text-violet-400" />
           <h2 id="import-backup-title" className="text-lg font-semibold text-slate-800 dark:text-slate-200">
             Import từ backup
           </h2>
@@ -125,7 +125,7 @@ export function ImportBackupModal({ open, onClose, onRestore }: ImportBackupModa
                       onClick={() => handleSelectFile(b.filename)}
                       className={`flex w-full items-center gap-2 px-3 py-2 text-left text-sm transition-colors ${
                         selectedFile === b.filename
-                          ? "bg-indigo-50/80 text-indigo-800 dark:bg-indigo-500/10 dark:text-indigo-400"
+                          ? "bg-violet-50/80 text-violet-800 dark:bg-violet-500/10 dark:text-violet-400"
                           : "text-slate-700 hover:bg-slate-100/60 dark:text-slate-200 dark:hover:bg-white/[0.06]"
                       }`}
                     >
@@ -157,7 +157,7 @@ export function ImportBackupModal({ open, onClose, onRestore }: ImportBackupModa
                         onClick={() => setSelectedTemplate(tpl)}
                         className={`flex w-full items-center justify-between px-3 py-2 text-left text-sm transition-colors ${
                           selectedTemplate?.id === tpl.id
-                            ? "bg-indigo-50/80 text-indigo-800 dark:bg-indigo-500/10 dark:text-indigo-400"
+                            ? "bg-violet-50/80 text-violet-800 dark:bg-violet-500/10 dark:text-violet-400"
                             : "text-slate-700 hover:bg-slate-100/60 dark:text-slate-200 dark:hover:bg-white/[0.06]"
                         }`}
                       >
@@ -186,7 +186,7 @@ export function ImportBackupModal({ open, onClose, onRestore }: ImportBackupModa
             type="button"
             onClick={handleRestore}
             disabled={!selectedTemplate?.field_catalog?.length}
-            className="rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white shadow-md transition-all hover:bg-indigo-700 disabled:opacity-50 disabled:pointer-events-none"
+            className="rounded-lg bg-gradient-to-r from-violet-600 to-fuchsia-600 px-3 py-2 text-sm font-medium text-white shadow-md transition-all hover:brightness-110 disabled:opacity-50 disabled:pointer-events-none"
           >
             Khôi phục vào template
           </button>

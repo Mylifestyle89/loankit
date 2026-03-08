@@ -15,6 +15,7 @@ const updateCustomerSchema = z.object({
   legal_representative_name: z.string().optional().nullable(),
   legal_representative_title: z.string().optional().nullable(),
   organization_type: z.string().optional().nullable(),
+  email: z.string().email().optional().nullable(),
   data_json: z.record(z.string(), z.unknown()).optional(),
 });
 
@@ -62,6 +63,7 @@ export async function PATCH(
       legal_representative_name: parsed.legal_representative_name,
       legal_representative_title: parsed.legal_representative_title,
       organization_type: parsed.organization_type,
+      email: parsed.email,
       data_json: parsed.data_json,
     });
     return NextResponse.json({ ok: true, customer });
@@ -73,6 +75,7 @@ export async function PATCH(
         { status: validationError.status },
       );
     }
+    console.error("[api/customers/PATCH] Error:", error);
     const httpError = toHttpError(error, "Failed to update customer.");
     return NextResponse.json(
       {

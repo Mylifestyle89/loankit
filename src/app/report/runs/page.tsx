@@ -192,44 +192,50 @@ export default function RunsPage() {
   }
 
   return (
-    <section className="space-y-4">
+    <section className="space-y-5">
       {onlyOfficePreviewPath && (
         <OnlyOfficeEditorModal
           docxPath={onlyOfficePreviewPath}
           onClose={() => setOnlyOfficePreviewPath("")}
           onSaved={() => {
-            // Refresh runs list if user saves changes in OnlyOffice
             void loadRuns();
             void loadFreshness();
           }}
         />
       )}
 
-      <div className="rounded-xl border border-blue-chill-200 bg-white dark:bg-[#141414]/90 p-4">
-        <h2 className="text-lg font-semibold">{t("runs.title")}</h2>
-        <p className="mt-1 text-sm text-blue-chill-600">{t("runs.desc")}</p>
-        {freshness?.is_stale ? (
-          <div className="mt-2 rounded-xl border border-amber-300/70 bg-amber-50/80 px-3 py-2 text-sm text-amber-800 dark:border-amber-400/40 dark:bg-amber-500/10 dark:text-amber-200">
-            <p className="font-medium">Dữ liệu build có thể cũ so với Mapping hiện tại.</p>
-            <p className="mt-1 text-xs">
-              Lý do: {freshness.reasons.join(", ")}
-              {freshness.last_build_at ? ` | Build gần nhất: ${new Date(freshness.last_build_at).toLocaleString("vi-VN")}` : ""}
-            </p>
-          </div>
-        ) : (
-          <div className="mt-2 rounded-xl border border-emerald-300/70 bg-emerald-50/80 px-3 py-2 text-xs text-emerald-800 dark:border-emerald-400/40 dark:bg-emerald-500/10 dark:text-emerald-200">
-            Dữ liệu build đang đồng bộ với Mapping hiện tại.
-          </div>
-        )}
-        {message ? <p className="mt-2 text-sm text-emerald-700">{message}</p> : null}
-        {error ? <p className="mt-2 text-sm text-red-700">{error}</p> : null}
+      {/* Header with gradient accent */}
+      <div className="relative overflow-hidden rounded-2xl border border-violet-100 dark:border-violet-500/10 bg-gradient-to-br from-violet-50 via-white to-fuchsia-50 dark:from-violet-950/30 dark:via-[#141414] dark:to-fuchsia-950/20 p-5">
+        <div className="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-violet-200/30 blur-2xl dark:bg-violet-500/10" />
+        <div className="relative">
+          <h2 className="text-xl font-bold tracking-tight bg-gradient-to-r from-violet-700 to-fuchsia-600 dark:from-violet-400 dark:to-fuchsia-400 bg-clip-text text-transparent">
+            {t("runs.title")}
+          </h2>
+          <p className="mt-1 text-sm text-zinc-500 dark:text-slate-400">{t("runs.desc")}</p>
+          {freshness?.is_stale ? (
+            <div className="mt-3 rounded-xl border border-amber-300/70 bg-amber-50/80 px-3 py-2 text-sm text-amber-800 dark:border-amber-400/40 dark:bg-amber-500/10 dark:text-amber-200">
+              <p className="font-medium">Dữ liệu build có thể cũ so với Mapping hiện tại.</p>
+              <p className="mt-1 text-xs">
+                Lý do: {freshness.reasons.join(", ")}
+                {freshness.last_build_at ? ` | Build gần nhất: ${new Date(freshness.last_build_at).toLocaleString("vi-VN")}` : ""}
+              </p>
+            </div>
+          ) : (
+            <div className="mt-3 rounded-xl border border-emerald-300/70 bg-emerald-50/80 px-3 py-2 text-xs text-emerald-800 dark:border-emerald-400/40 dark:bg-emerald-500/10 dark:text-emerald-200">
+              Dữ liệu build đang đồng bộ với Mapping hiện tại.
+            </div>
+          )}
+          {message && <p className="mt-2 text-sm text-emerald-600 dark:text-emerald-400">{message}</p>}
+          {error && <p className="mt-2 text-sm text-red-600 dark:text-red-400">{error}</p>}
+        </div>
       </div>
 
+      {/* Action toolbar */}
       <div className="flex flex-wrap gap-3">
         <button
           onClick={runBuildValidate}
           disabled={runningBuild}
-          className="flex items-center gap-2 rounded-md border border-slate-300 bg-white dark:bg-[#141414]/90 px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/[0.06] disabled:opacity-60 transition-colors"
+          className="inline-flex items-center gap-2 rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] px-4 py-2 text-sm font-medium shadow-sm transition-all duration-150 hover:border-violet-200 dark:hover:border-violet-500/20 disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40"
         >
           <Play className="h-4 w-4" />
           {runningBuild ? t("runs.running") : "Chạy Build Dữ Liệu"}
@@ -237,7 +243,7 @@ export default function RunsPage() {
         <button
           onClick={runExportPreview}
           disabled={runningExport || runningBuild}
-          className="flex items-center gap-2 rounded-md bg-emerald-600 px-5 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-60 transition-colors shadow-sm"
+          className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-violet-600 to-fuchsia-600 px-5 py-2 text-sm font-medium text-white shadow-sm shadow-violet-500/25 transition-all duration-200 hover:shadow-md hover:shadow-violet-500/30 hover:brightness-110 disabled:opacity-60"
         >
           <Eye className="h-4 w-4" />
           {runningExport ? "Đang tạo báo cáo..." : "Tạo & Xem Báo Cáo trong OnlyOffice"}
@@ -245,37 +251,41 @@ export default function RunsPage() {
         {onlyOfficePreviewPath && (
           <button
             onClick={handleDownloadDocx}
-            className="flex items-center gap-2 rounded-md border border-slate-300 bg-white dark:bg-[#141414]/90 px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/[0.06] transition-colors"
+            className="inline-flex items-center gap-2 rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] px-4 py-2 text-sm font-medium shadow-sm transition-all duration-150 hover:border-violet-200 dark:hover:border-violet-500/20"
           >
             <Download className="h-4 w-4" />
             Tải về DOCX
           </button>
         )}
       </div>
-      <p className="text-xs text-blue-chill-600 dark:text-blue-chill-300">
+      <p className="text-xs text-zinc-500 dark:text-slate-400">
         Nếu thiếu dữ liệu build, hệ thống sẽ tự chạy Build trước khi export.
       </p>
 
       {buildResult ? (
-        <div className="rounded-xl border border-blue-chill-200 bg-white dark:bg-[#141414]/90 p-4">
+        <div className="rounded-2xl border border-zinc-200 dark:border-white/[0.07] bg-white dark:bg-[#161616] p-4 shadow-sm">
           <h3 className="text-sm font-semibold">{t("runs.buildResult")}</h3>
-          <pre className="mt-2 h-56 overflow-auto rounded bg-blue-chill-950 p-3 text-xs text-blue-chill-50">
+          <pre className="mt-2 h-56 overflow-auto rounded-xl bg-zinc-900 dark:bg-zinc-950 p-3 text-xs text-zinc-200">
             {JSON.stringify(buildResult, null, 2)}
           </pre>
         </div>
       ) : null}
 
-      <div className="rounded-xl border border-blue-chill-200 bg-white dark:bg-[#141414]/90 p-4">
+      <div className="rounded-2xl border border-zinc-200 dark:border-white/[0.07] bg-white dark:bg-[#161616] p-4 shadow-sm">
         <h3 className="text-sm font-semibold">{t("runs.logs")}</h3>
-        {loading ? <p className="mt-2 text-sm text-blue-chill-600">{t("runs.loadingLogs")}</p> : null}
+        {loading ? (
+          <div className="mt-3 flex items-center justify-center py-6">
+            <div className="h-5 w-5 animate-spin rounded-full border-2 border-violet-200 border-t-violet-600 dark:border-violet-800 dark:border-t-violet-400" />
+          </div>
+        ) : null}
         <ul className="mt-2 space-y-2">
           {runs.map((run) => (
-            <li key={run.run_id} className="rounded border border-blue-chill-200 p-3 text-sm">
+            <li key={run.run_id} className="rounded-xl border border-zinc-200 dark:border-white/[0.07] p-3 text-sm transition-colors duration-150 hover:border-violet-200 dark:hover:border-violet-500/20">
               <p className="font-medium">{run.run_id}</p>
-              <p className="text-xs text-blue-chill-600">
+              <p className="text-xs text-zinc-500 dark:text-slate-400">
                 {t("runs.meta.mapping")}: {run.mapping_version_id} | {t("runs.meta.template")}: {run.template_profile_id}
               </p>
-              <p className="text-xs text-blue-chill-500">
+              <p className="text-xs text-zinc-400 dark:text-slate-500">
                 {new Date(run.created_at).toLocaleString("vi-VN", {
                   day: "2-digit",
                   month: "2-digit",
@@ -289,7 +299,7 @@ export default function RunsPage() {
               </p>
               <div className="mt-2 flex flex-wrap gap-2">
                 {run.output_paths.map((p) => (
-                  <span key={p} className="rounded bg-blue-chill-50 px-2 py-1 text-[11px] font-mono text-blue-chill-800">
+                  <span key={p} className="rounded-lg bg-violet-50 dark:bg-violet-500/10 px-2 py-1 text-[11px] font-mono text-violet-800 dark:text-violet-300">
                     {p}
                   </span>
                 ))}

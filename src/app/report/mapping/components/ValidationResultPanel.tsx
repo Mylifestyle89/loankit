@@ -66,7 +66,7 @@ export function ValidationResultPanel({ t, validation }: ValidationResultPanelPr
   })();
 
   return (
-    <div className="rounded-xl border border-coral-tree-200 dark:border-white/[0.07] bg-white dark:bg-[#141414]/90 p-4">
+    <div className="rounded-xl border border-zinc-200 dark:border-white/[0.07] bg-white dark:bg-[#141414]/90 p-4">
       <h3 className="text-sm font-semibold dark:text-slate-100">{t("mapping.validationResult")}</h3>
       {validation ? (
         <div className="mt-3 space-y-2">
@@ -87,7 +87,7 @@ export function ValidationResultPanel({ t, validation }: ValidationResultPanelPr
           ))}
         </div>
       ) : (
-        <p className="mt-1 text-sm text-coral-tree-600 dark:text-slate-300">{t("mapping.noValidation")}</p>
+        <p className="mt-1 text-sm text-zinc-500 dark:text-slate-300">{t("mapping.noValidation")}</p>
       )}
     </div>
   );

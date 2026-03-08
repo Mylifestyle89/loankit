@@ -124,11 +124,14 @@ export default function SystemOperationsPage() {
   }, [importFileData, t]);
 
   return (
-    <section className="space-y-6 p-6 max-w-6xl">
-      {/* Header */}
-      <div className="rounded-xl border border-slate-200/60 dark:border-white/[0.08] bg-white/50 dark:bg-[#141414]/90 p-6">
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">{t("systemOps.title")}</h1>
-        <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">{t("systemOps.description")}</p>
+    <section className="space-y-5 max-w-6xl">
+      {/* Header with gradient accent */}
+      <div className="relative overflow-hidden rounded-2xl border border-violet-100 dark:border-violet-500/10 bg-gradient-to-br from-violet-50 via-white to-fuchsia-50 dark:from-violet-950/30 dark:via-[#141414] dark:to-fuchsia-950/20 p-5">
+        <div className="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-violet-200/30 blur-2xl dark:bg-violet-500/10" />
+        <div className="relative">
+          <h1 className="text-xl font-bold tracking-tight bg-gradient-to-r from-violet-700 to-fuchsia-600 dark:from-violet-400 dark:to-fuchsia-400 bg-clip-text text-transparent">{t("systemOps.title")}</h1>
+          <p className="mt-1 text-sm text-zinc-500 dark:text-slate-400">{t("systemOps.description")}</p>
+        </div>
       </div>
 
       {/* Error/Success messages */}
@@ -180,33 +183,36 @@ export default function SystemOperationsPage() {
       )}
 
       {/* Main Grid */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
         {/* Export Section */}
-        <div className="rounded-xl border border-slate-200/60 dark:border-white/[0.08] bg-white/50 dark:bg-[#141414]/90 p-6">
-          <div className="flex items-center gap-2 mb-4">
-            <Download className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
-            <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">{t("systemOps.exportSection")}</h2>
+        <div className="rounded-2xl border border-zinc-200 dark:border-white/[0.07] bg-white dark:bg-[#161616] p-6 shadow-sm">
+          <div className="flex items-center gap-2.5 mb-4">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-violet-100 dark:bg-violet-500/15">
+              <Download className="h-4.5 w-4.5 text-violet-600 dark:text-violet-400" />
+            </div>
+            <h2 className="text-lg font-bold tracking-tight">{t("systemOps.exportSection")}</h2>
           </div>
 
           <div className="space-y-3">
-            {/* Quick Export */}
             <button
               onClick={handleQuickExport}
               disabled={exporting}
-              className="w-full rounded-lg bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-400 text-white font-medium py-3 px-4 transition-colors flex items-center justify-center gap-2"
+              className="w-full rounded-lg bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white font-medium py-3 px-4 shadow-sm shadow-violet-500/25 transition-all duration-200 hover:shadow-md hover:shadow-violet-500/30 hover:brightness-110 disabled:opacity-50 flex items-center justify-center gap-2"
             >
               <Download className="h-4 w-4" />
               {exporting ? "Đang xuất..." : t("systemOps.quickExport")}
             </button>
-            <p className="text-xs text-slate-600 dark:text-slate-400">{t("systemOps.quickExportDesc")}</p>
+            <p className="text-xs text-zinc-500 dark:text-slate-400">{t("systemOps.quickExportDesc")}</p>
           </div>
         </div>
 
         {/* Import Section */}
-        <div className="rounded-xl border border-slate-200/60 dark:border-white/[0.08] bg-white/50 dark:bg-[#141414]/90 p-6">
-          <div className="flex items-center gap-2 mb-4">
-            <Upload className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
-            <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">{t("systemOps.importSection")}</h2>
+        <div className="rounded-2xl border border-zinc-200 dark:border-white/[0.07] bg-white dark:bg-[#161616] p-6 shadow-sm">
+          <div className="flex items-center gap-2.5 mb-4">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-100 dark:bg-emerald-500/15">
+              <Upload className="h-4.5 w-4.5 text-emerald-600 dark:text-emerald-400" />
+            </div>
+            <h2 className="text-lg font-bold tracking-tight">{t("systemOps.importSection")}</h2>
           </div>
 
           <input
@@ -224,12 +230,12 @@ export default function SystemOperationsPage() {
             <button
               onClick={() => fileInputRef.current?.click()}
               disabled={previewValidating}
-              className="w-full rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-400 text-white font-medium py-3 px-4 transition-colors flex items-center justify-center gap-2"
+              className="w-full rounded-lg bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-medium py-3 px-4 shadow-sm shadow-emerald-500/25 transition-all duration-200 hover:shadow-md hover:shadow-emerald-500/30 hover:brightness-110 disabled:opacity-50 flex items-center justify-center gap-2"
             >
               <Upload className="h-4 w-4" />
               {previewValidating ? "Đang kiểm tra..." : t("systemOps.importFile")}
             </button>
-            <p className="text-xs text-slate-600 dark:text-slate-400">{t("systemOps.importFileDesc")}</p>
+            <p className="text-xs text-zinc-500 dark:text-slate-400">{t("systemOps.importFileDesc")}</p>
           </div>
         </div>
       </div>
@@ -237,7 +243,7 @@ export default function SystemOperationsPage() {
       {/* Import Preview Modal */}
       {showImportPreview && importFileData && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-          <div className="w-full max-w-lg rounded-xl bg-white dark:bg-[#141414]/90 shadow-xl">
+          <div className="w-full max-w-lg rounded-2xl bg-white dark:bg-[#161616] shadow-xl">
             <div className="border-b border-slate-200 dark:border-white/[0.07] p-6">
               <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
                 {t("systemOps.importPreview.title")}
@@ -289,7 +295,7 @@ export default function SystemOperationsPage() {
               <button
                 onClick={handleConfirmImport}
                 disabled={importing}
-                className="flex-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-400 text-white font-medium py-2 px-4 transition-colors"
+                className="flex-1 rounded-lg bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white font-medium py-2 px-4 shadow-sm shadow-violet-500/25 transition-all duration-200 hover:shadow-md hover:shadow-violet-500/30 hover:brightness-110 disabled:opacity-50"
               >
                 {importing ? "Đang nhập..." : t("systemOps.importPreview.import")}
               </button>

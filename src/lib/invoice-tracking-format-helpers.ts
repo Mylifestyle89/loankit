@@ -31,6 +31,27 @@ export const fmtDisplay = (n: number) => new Intl.NumberFormat("vi-VN").format(n
 /** Format ISO date string to vi-VN locale display */
 export const fmtDateDisplay = (d: string) => new Date(d).toLocaleDateString("vi-VN");
 
+/** Convert ISO date string to dd/mm/yyyy display format */
+export function isoToDisplay(isoOrStr: string | null | undefined): string {
+  if (!isoOrStr) return "";
+  try {
+    const d = new Date(isoOrStr);
+    if (isNaN(d.getTime())) return "";
+    const dd = String(d.getDate()).padStart(2, "0");
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    return `${dd}/${mm}/${d.getFullYear()}`;
+  } catch { return ""; }
+}
+
+/** Auto dueDate = date + 1 month (clamped to end of month to handle e.g. Jan 31 → Feb 28) */
+export function addOneMonthClamped(date: Date): Date {
+  const d = new Date(date);
+  const originalDay = d.getDate();
+  d.setMonth(d.getMonth() + 1);
+  if (d.getDate() !== originalDay) d.setDate(0);
+  return d;
+}
+
 /** Shared status values for loans and disbursements */
 export const TRACKING_STATUSES = ["active", "completed", "cancelled"] as const;
 export type TrackingStatus = (typeof TRACKING_STATUSES)[number];

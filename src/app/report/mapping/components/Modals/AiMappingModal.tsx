@@ -66,10 +66,10 @@ const chipStyles: Record<
   { border: string; text: string; bg: string; icon: string }
 > = {
   single: {
-    border: "border-indigo-200/80 dark:border-indigo-500/30",
-    text: "text-indigo-800 dark:text-indigo-400",
-    bg: "bg-indigo-50/60 dark:bg-indigo-500/10",
-    icon: "text-indigo-600 dark:text-indigo-400",
+    border: "border-violet-200/80 dark:border-violet-500/30",
+    text: "text-violet-800 dark:text-violet-400",
+    bg: "bg-violet-50/60 dark:bg-violet-500/10",
+    icon: "text-violet-600 dark:text-violet-400",
   },
   repeater: {
     border: "border-violet-200/80",
@@ -568,7 +568,7 @@ export function AiMappingModal({
           >
             <div className="flex items-center justify-between border-b border-slate-200/50 px-4 py-3 dark:border-white/[0.07]">
               <h3 className="flex items-center gap-2 text-sm font-semibold text-slate-800 dark:text-slate-200">
-                <Sparkles className="h-4 w-4 text-indigo-500" />
+                <Sparkles className="h-4 w-4 text-violet-500" />
                 {t("mapping.aiSuggest.modalTitle")}
               </h3>
               <button
@@ -590,7 +590,7 @@ export function AiMappingModal({
                   onClick={() => setActiveSection(tab)}
                   className={`relative px-3 py-2.5 text-xs font-medium transition-colors ${
                     activeSection === tab
-                      ? "text-indigo-700 dark:text-indigo-400"
+                      ? "text-violet-700 dark:text-violet-400"
                       : "text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
                   }`}
                 >
@@ -598,7 +598,7 @@ export function AiMappingModal({
                   {activeSection === tab && (
                     <motion.div
                       layoutId="tab-indicator"
-                      className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full bg-indigo-600"
+                      className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full bg-violet-600"
                     />
                   )}
                 </button>
@@ -641,14 +641,14 @@ export function AiMappingModal({
                           onChange={(e) => setHeadersRaw(e.target.value)}
                           rows={5}
                           placeholder={t("mapping.aiSuggest.headersPlaceholder")}
-                          className="w-full rounded-lg border border-slate-200/80 bg-white/80 px-3 py-2 text-sm placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-white/[0.08] dark:bg-white/[0.04] dark:text-slate-100 dark:placeholder:text-slate-500"
+                          className="w-full rounded-lg border border-slate-200/80 bg-white/80 px-3 py-2 text-sm placeholder:text-slate-400 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500 dark:border-white/[0.08] dark:bg-white/[0.04] dark:text-slate-100 dark:placeholder:text-slate-500"
                         />
                         <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200">
                           <input
                             type="checkbox"
                             checked={includeGrouping}
                             onChange={(e) => setIncludeGrouping(e.target.checked)}
-                            className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                            className="h-4 w-4 rounded border-slate-300 text-violet-600 focus:ring-violet-500"
                           />
                           {t("mapping.aiSuggest.includeGrouping")}
                         </label>
@@ -656,7 +656,7 @@ export function AiMappingModal({
                           type="button"
                           onClick={() => void runSuggestion()}
                           disabled={loading}
-                          className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-indigo-700 disabled:opacity-70"
+                          className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-violet-600 to-fuchsia-600 px-3 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:brightness-110 disabled:opacity-70"
                         >
                           <Bot className="h-4 w-4" />
                           {loading ? t("mapping.aiSuggest.loading") : t("mapping.aiSuggest.runGemini")}
@@ -670,7 +670,7 @@ export function AiMappingModal({
                           <span className="text-xs font-semibold text-slate-600 dark:text-slate-300">
                             Trích xuất từ Template DOCX
                           </span>
-                          <label className="flex cursor-pointer items-center gap-1.5 rounded-md border border-slate-200 dark:border-white/[0.10] bg-white dark:bg-white/[0.04] px-2 py-1 text-[11px] font-medium text-slate-600 dark:text-slate-300 hover:border-indigo-300 hover:text-indigo-600 dark:hover:border-indigo-500/40 dark:hover:text-indigo-400 transition-colors">
+                          <label className="flex cursor-pointer items-center gap-1.5 rounded-md border border-slate-200 dark:border-white/[0.10] bg-white dark:bg-white/[0.04] px-2 py-1 text-[11px] font-medium text-slate-600 dark:text-slate-300 hover:border-violet-300 hover:text-violet-600 dark:hover:border-violet-500/40 dark:hover:text-violet-400 transition-colors">
                             <FileText className="h-3 w-3 flex-shrink-0" />
                             {docxParsing ? "Đang đọc..." : docxFileName ? docxFileName.replace(/\.docx$/i, "").slice(0, 20) : "Chọn .docx"}
                             <input
@@ -747,9 +747,9 @@ export function AiMappingModal({
                                   data-header={header}
                                   className={`flex items-center gap-2 rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-shadow ${
                                     isMapped
-                                      ? "border-indigo-200/80 bg-indigo-50/60 text-indigo-700 dark:border-indigo-500/30 dark:bg-indigo-500/10 dark:text-indigo-400"
+                                      ? "border-violet-200/80 bg-violet-50/60 text-violet-700 dark:border-violet-500/30 dark:bg-violet-500/10 dark:text-violet-400"
                                       : "border-slate-200/80 bg-slate-50/60 text-slate-600 dark:border-white/[0.07] dark:bg-white/[0.04] dark:text-slate-300"
-                                  } ${hoveredKey === header ? "shadow-md ring-1 ring-indigo-300/60" : ""}`}
+                                  } ${hoveredKey === header ? "shadow-md ring-1 ring-violet-300/60" : ""}`}
                                   onMouseEnter={() => setHoveredKey(header)}
                                   onMouseLeave={() => setHoveredKey(null)}
                                 >
@@ -791,7 +791,7 @@ export function AiMappingModal({
                             type="checkbox"
                             checked={showVietnameseAlias}
                             onChange={(e) => setShowVietnameseAlias(e.target.checked)}
-                            className="h-3.5 w-3.5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                            className="h-3.5 w-3.5 rounded border-slate-300 text-violet-600 focus:ring-violet-500"
                           />
                           Alias Việt
                         </label>
@@ -831,19 +831,19 @@ export function AiMappingModal({
             {activeSection === "batch" && (
               <div className="border-t border-white/40 px-4 py-4">
                 <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-                  <h4 className="text-sm font-semibold text-indigo-900 dark:text-indigo-400">{t("mapping.smartAutoBatch.sectionTitle")}</h4>
-                  <div className="inline-flex rounded-md border border-indigo-200/60 bg-white/50 p-0.5 text-xs dark:border-indigo-500/30 dark:bg-white/[0.04]">
+                  <h4 className="text-sm font-semibold text-violet-900 dark:text-violet-400">{t("mapping.smartAutoBatch.sectionTitle")}</h4>
+                  <div className="inline-flex rounded-md border border-violet-200/60 bg-white/50 p-0.5 text-xs dark:border-violet-500/30 dark:bg-white/[0.04]">
                     <button
                       type="button"
                       onClick={() => setInputMode("manual")}
-                      className={`rounded px-2 py-1 transition-colors ${inputMode === "manual" ? "bg-indigo-700 text-white" : "text-zinc-700 hover:bg-white/60 dark:text-slate-200 dark:hover:bg-white/[0.06]"}`}
+                      className={`rounded px-2 py-1 transition-colors ${inputMode === "manual" ? "bg-violet-700 text-white" : "text-zinc-700 hover:bg-white/60 dark:text-slate-200 dark:hover:bg-white/[0.06]"}`}
                     >
                       {t("mapping.smartAutoBatch.modeManual")}
                     </button>
                     <button
                       type="button"
                       onClick={() => setInputMode("assets")}
-                      className={`rounded px-2 py-1 transition-colors ${inputMode === "assets" ? "bg-indigo-700 text-white" : "text-zinc-700 hover:bg-white/60 dark:text-slate-200 dark:hover:bg-white/[0.06]"}`}
+                      className={`rounded px-2 py-1 transition-colors ${inputMode === "assets" ? "bg-violet-700 text-white" : "text-zinc-700 hover:bg-white/60 dark:text-slate-200 dark:hover:bg-white/[0.06]"}`}
                     >
                       {t("mapping.smartAutoBatch.modeAssets")}
                     </button>
@@ -853,15 +853,15 @@ export function AiMappingModal({
                 <div className="grid gap-3 md:grid-cols-2">
                   <div className="space-y-1.5">
                     <span className="block text-xs font-medium text-zinc-700 dark:text-slate-200">{t("mapping.smartAutoBatch.excelLabel")}</span>
-                    <div className="rounded-lg border-2 border-indigo-300 bg-white/70 px-3 py-2 shadow-sm transition-colors focus-within:border-indigo-500 focus-within:ring-2 focus:ring-indigo-200 dark:border-indigo-500/30 dark:bg-white/[0.04]">
+                    <div className="rounded-lg border-2 border-violet-300 bg-white/70 px-3 py-2 shadow-sm transition-colors focus-within:border-violet-500 focus-within:ring-2 focus:ring-violet-200 dark:border-violet-500/30 dark:bg-white/[0.04]">
                       {inputMode === "manual" ? (
                         <div className="flex flex-col gap-1.5">
-                          <span className="text-xs text-indigo-600 dark:text-indigo-400">{t("mapping.smartAutoBatch.chooseFile")}</span>
+                          <span className="text-xs text-violet-600 dark:text-violet-400">{t("mapping.smartAutoBatch.chooseFile")}</span>
                           <input
                             type="file"
                             accept=".csv,.xlsx,.xls,.json,.md"
                             onChange={(e) => void handleManualDataFile(e)}
-                            className="block w-full text-xs file:mr-2 file:rounded-md file:border-2 file:border-indigo-400 file:bg-indigo-50 file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-zinc-700 file:hover:bg-indigo-100"
+                            className="block w-full text-xs file:mr-2 file:rounded-md file:border-2 file:border-violet-400 file:bg-violet-50 file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-zinc-700 file:hover:bg-violet-100"
                           />
                           {!manualExcelPath ? (
                             <span className="text-[11px] text-zinc-500 dark:text-slate-400">{t("mapping.smartAutoBatch.noFileChosen")}</span>
@@ -872,14 +872,14 @@ export function AiMappingModal({
                           <button
                             type="button"
                             onClick={() => void loadAssetOptions()}
-                            className="rounded-md border-2 border-indigo-300 bg-white px-2 py-1.5 text-xs font-medium text-zinc-700 transition-colors hover:border-indigo-500 hover:bg-indigo-50 dark:border-indigo-500/30 dark:bg-white/[0.04] dark:text-slate-200 dark:hover:bg-indigo-500/10"
+                            className="rounded-md border-2 border-violet-300 bg-white px-2 py-1.5 text-xs font-medium text-zinc-700 transition-colors hover:border-violet-500 hover:bg-violet-50 dark:border-violet-500/30 dark:bg-white/[0.04] dark:text-slate-200 dark:hover:bg-violet-500/10"
                           >
                             {t("mapping.smartAutoBatch.loadFiles")}
                           </button>
                           <select
                             value={selectedExcel}
                             onChange={(e) => setSelectedExcel(e.target.value)}
-                            className="mt-2 w-full rounded-lg border-2 border-indigo-300 bg-white px-2 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200 dark:border-indigo-500/30 dark:bg-[#141414]/90 dark:text-slate-100"
+                            className="mt-2 w-full rounded-lg border-2 border-violet-300 bg-white px-2 py-2 text-sm focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-200 dark:border-violet-500/30 dark:bg-[#141414]/90 dark:text-slate-100"
                             disabled={inputMode !== "assets"}
                           >
                             <option value="">{t("mapping.smartAutoBatch.selectExcel")}</option>
@@ -897,15 +897,15 @@ export function AiMappingModal({
 
                   <div className="space-y-1.5">
                     <span className="block text-xs font-medium text-zinc-700 dark:text-slate-200">{t("mapping.smartAutoBatch.templateLabel")}</span>
-                    <div className="rounded-lg border-2 border-indigo-300 bg-white/70 px-3 py-2 shadow-sm transition-colors focus-within:border-indigo-500 focus-within:ring-2 focus:ring-indigo-200 dark:border-indigo-500/30 dark:bg-white/[0.04]">
+                    <div className="rounded-lg border-2 border-violet-300 bg-white/70 px-3 py-2 shadow-sm transition-colors focus-within:border-violet-500 focus-within:ring-2 focus:ring-violet-200 dark:border-violet-500/30 dark:bg-white/[0.04]">
                       {inputMode === "manual" ? (
                         <div className="flex flex-col gap-1.5">
-                          <span className="text-xs text-indigo-600 dark:text-indigo-400">{t("mapping.smartAutoBatch.chooseFile")}</span>
+                          <span className="text-xs text-violet-600 dark:text-violet-400">{t("mapping.smartAutoBatch.chooseFile")}</span>
                           <input
                             type="file"
                             accept=".docx,.doc"
                             onChange={(e) => void handleManualTemplateFile(e)}
-                            className="block w-full text-xs file:mr-2 file:rounded-md file:border-2 file:border-indigo-400 file:bg-indigo-50 file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-zinc-700 file:hover:bg-indigo-100"
+                            className="block w-full text-xs file:mr-2 file:rounded-md file:border-2 file:border-violet-400 file:bg-violet-50 file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-zinc-700 file:hover:bg-violet-100"
                           />
                           {!manualTemplatePath ? (
                             <span className="text-[11px] text-zinc-500 dark:text-slate-400">{t("mapping.smartAutoBatch.noFileChosen")}</span>
@@ -915,7 +915,7 @@ export function AiMappingModal({
                         <select
                           value={selectedTemplate}
                           onChange={(e) => setSelectedTemplate(e.target.value)}
-                          className="w-full rounded-lg border-2 border-indigo-300 bg-white px-2 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200 dark:border-indigo-500/30 dark:bg-[#141414]/90 dark:text-slate-100"
+                          className="w-full rounded-lg border-2 border-violet-300 bg-white px-2 py-2 text-sm focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-200 dark:border-violet-500/30 dark:bg-[#141414]/90 dark:text-slate-100"
                           disabled={inputMode !== "assets"}
                         >
                           <option value="">{t("mapping.smartAutoBatch.selectTemplate")}</option>
@@ -935,7 +935,7 @@ export function AiMappingModal({
                     <input
                       value={jobType}
                       onChange={(e) => setJobType(e.target.value)}
-                      className="mt-1 w-full rounded-md border border-indigo-200/60 bg-white/50 px-2 py-1.5 text-sm dark:border-indigo-500/30 dark:bg-white/[0.04] dark:text-slate-100"
+                      className="mt-1 w-full rounded-md border border-violet-200/60 bg-white/50 px-2 py-1.5 text-sm dark:border-violet-500/30 dark:bg-white/[0.04] dark:text-slate-100"
                     />
                   </label>
 
@@ -945,7 +945,7 @@ export function AiMappingModal({
                       value={rootKeyOverride}
                       onChange={(e) => setRootKeyOverride(e.target.value)}
                       placeholder={autoProcessJob?.suggested_root_key || t("mapping.smartAutoBatch.autoDetectPlaceholder")}
-                      className="mt-1 w-full rounded-md border border-indigo-200/60 bg-white/50 px-2 py-1.5 text-sm dark:border-indigo-500/30 dark:bg-white/[0.04] dark:text-slate-100"
+                      className="mt-1 w-full rounded-md border border-violet-200/60 bg-white/50 px-2 py-1.5 text-sm dark:border-violet-500/30 dark:bg-white/[0.04] dark:text-slate-100"
                     />
                   </label>
                 </div>
@@ -954,7 +954,7 @@ export function AiMappingModal({
                   <div className="mt-3 space-y-3">
                     <div className="rounded-lg border border-zinc-200/80 bg-zinc-900/95 p-3 text-zinc-300 dark:border-white/[0.08]">
                       <div className="mb-1 flex items-center justify-between">
-                        <span className="text-xs font-semibold text-indigo-400">
+                        <span className="text-xs font-semibold text-violet-400">
                           {t("mapping.smartAutoBatch.rootKeyDetected")}: {autoProcessJob.suggested_root_key || "—"}
                         </span>
                         <span className="text-xs text-zinc-500">
@@ -963,7 +963,7 @@ export function AiMappingModal({
                       </div>
                       <div className="h-2 w-full overflow-hidden rounded bg-zinc-800">
                         <div
-                          className="h-full bg-indigo-500 transition-all duration-300"
+                          className="h-full bg-violet-500 transition-all duration-300"
                           style={{ width: `${Math.max(0, Math.min(100, autoProcessJob.progress.percent))}%` }}
                         />
                       </div>
@@ -1000,9 +1000,9 @@ export function AiMappingModal({
                                   damping: 28,
                                   delay: idx * 0.04,
                                 }}
-                                className="group flex flex-col rounded-xl border border-slate-200/80 bg-white p-3 shadow-sm transition-all hover:border-indigo-300 hover:shadow-md hover:shadow-indigo-500/10 dark:border-white/[0.07] dark:bg-white/[0.04] dark:hover:border-indigo-500/30"
+                                className="group flex flex-col rounded-xl border border-slate-200/80 bg-white p-3 shadow-sm transition-all hover:border-violet-300 hover:shadow-md hover:shadow-violet-500/10 dark:border-white/[0.07] dark:bg-white/[0.04] dark:hover:border-violet-500/30"
                               >
-                                <div className="mb-2 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-indigo-100 text-indigo-600 group-hover:bg-indigo-200/80 dark:bg-indigo-500/10 dark:text-indigo-400">
+                                <div className="mb-2 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-violet-100 text-violet-600 group-hover:bg-violet-200/80 dark:bg-violet-500/10 dark:text-violet-400">
                                   <FileText className="h-5 w-5" aria-hidden />
                                 </div>
                                 <span
@@ -1030,7 +1030,7 @@ export function AiMappingModal({
                     type="button"
                     onClick={() => void startSmartAutoBatch()}
                     disabled={autoProcessing || uploadingData || uploadingTemplate}
-                    className="rounded-lg bg-indigo-600 px-3 py-1.5 text-sm text-white shadow-glow transition-colors hover:bg-indigo-700 disabled:opacity-60"
+                    className="rounded-lg bg-gradient-to-r from-violet-600 to-fuchsia-600 px-3 py-1.5 text-sm text-white shadow-sm shadow-violet-500/25 transition-colors hover:brightness-110 disabled:opacity-60"
                   >
                     {autoProcessing ? t("mapping.smartAutoBatch.running") : t("mapping.smartAutoBatch.start")}
                   </button>
@@ -1038,7 +1038,7 @@ export function AiMappingModal({
                     type="button"
                     onClick={() => void onOpenOutputFolder()}
                     disabled={!autoProcessJob || autoProcessJob.phase !== "completed"}
-                    className="rounded-lg border border-zinc-300 bg-white/80 px-3 py-1.5 text-sm text-zinc-700 transition-colors hover:bg-indigo-50 hover:border-indigo-300 disabled:opacity-60 dark:border-white/[0.08] dark:bg-white/[0.04] dark:text-slate-200 dark:hover:bg-indigo-500/10 dark:hover:border-indigo-500/30"
+                    className="rounded-lg border border-zinc-300 bg-white/80 px-3 py-1.5 text-sm text-zinc-700 transition-colors hover:bg-violet-50 hover:border-violet-300 disabled:opacity-60 dark:border-white/[0.08] dark:bg-white/[0.04] dark:text-slate-200 dark:hover:bg-violet-500/10 dark:hover:border-violet-500/30"
                   >
                     {t("mapping.smartAutoBatch.openOutput")}
                   </button>
@@ -1050,7 +1050,7 @@ export function AiMappingModal({
             {activeSection === "bk" && (
               <div className="space-y-4 px-4 py-4">
                 {/* Header info */}
-                <div className="rounded-xl border border-blue-200/60 bg-gradient-to-br from-blue-50/80 via-blue-50/40 to-indigo-50/40 p-3 dark:border-blue-500/25 dark:from-blue-500/10 dark:via-blue-500/5 dark:to-indigo-500/5">
+                <div className="rounded-xl border border-blue-200/60 bg-gradient-to-br from-blue-50/80 via-blue-50/40 to-violet-50/40 p-3 dark:border-blue-500/25 dark:from-blue-500/10 dark:via-blue-500/5 dark:to-violet-500/5">
                   <div className="flex items-center gap-3">
                     <Database className="h-5 w-5 flex-shrink-0 text-blue-600 dark:text-blue-400" />
                     <div className="flex-1">
@@ -1125,7 +1125,7 @@ export function AiMappingModal({
                             for (const key of Object.keys(bkResult.values)) next[key] = true;
                             setBkAccepted(next);
                           }}
-                          className="text-[11px] font-medium text-indigo-600 hover:underline dark:text-indigo-400"
+                          className="text-[11px] font-medium text-violet-600 hover:underline dark:text-violet-400"
                         >
                           Chọn tất cả
                         </button>
@@ -1147,14 +1147,14 @@ export function AiMappingModal({
                     <div className="rounded-lg border border-slate-200/60 bg-white/60 p-3 dark:border-white/[0.07] dark:bg-white/[0.03]">
                       <p className="mb-2 text-xs font-semibold text-slate-700 dark:text-slate-300">Chọn cách import</p>
                       <div className="space-y-2">
-                        <label className={`flex cursor-pointer items-start gap-2.5 rounded-lg border px-3 py-2.5 transition-colors ${bkMode === "data-only" ? "border-indigo-300 bg-indigo-50/40 dark:border-indigo-500/30 dark:bg-indigo-500/10" : "border-slate-200/60 bg-transparent hover:bg-slate-50/50 dark:border-white/[0.07] dark:hover:bg-white/[0.03]"}`}>
+                        <label className={`flex cursor-pointer items-start gap-2.5 rounded-lg border px-3 py-2.5 transition-colors ${bkMode === "data-only" ? "border-violet-300 bg-violet-50/40 dark:border-violet-500/30 dark:bg-violet-500/10" : "border-slate-200/60 bg-transparent hover:bg-slate-50/50 dark:border-white/[0.07] dark:hover:bg-white/[0.03]"}`}>
                           <input
                             type="radio"
                             name="bkMode"
                             value="data-only"
                             checked={bkMode === "data-only"}
                             onChange={() => setBkMode("data-only")}
-                            className="mt-0.5 h-3.5 w-3.5 text-indigo-600 focus:ring-indigo-500"
+                            className="mt-0.5 h-3.5 w-3.5 text-violet-600 focus:ring-violet-500"
                           />
                           <div>
                             <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">Chỉ import dữ liệu</span>
@@ -1163,14 +1163,14 @@ export function AiMappingModal({
                             </p>
                           </div>
                         </label>
-                        <label className={`flex cursor-pointer items-start gap-2.5 rounded-lg border px-3 py-2.5 transition-colors ${bkMode === "template-and-data" ? "border-indigo-300 bg-indigo-50/40 dark:border-indigo-500/30 dark:bg-indigo-500/10" : "border-slate-200/60 bg-transparent hover:bg-slate-50/50 dark:border-white/[0.07] dark:hover:bg-white/[0.03]"}`}>
+                        <label className={`flex cursor-pointer items-start gap-2.5 rounded-lg border px-3 py-2.5 transition-colors ${bkMode === "template-and-data" ? "border-violet-300 bg-violet-50/40 dark:border-violet-500/30 dark:bg-violet-500/10" : "border-slate-200/60 bg-transparent hover:bg-slate-50/50 dark:border-white/[0.07] dark:hover:bg-white/[0.03]"}`}>
                           <input
                             type="radio"
                             name="bkMode"
                             value="template-and-data"
                             checked={bkMode === "template-and-data"}
                             onChange={() => setBkMode("template-and-data")}
-                            className="mt-0.5 h-3.5 w-3.5 text-indigo-600 focus:ring-indigo-500"
+                            className="mt-0.5 h-3.5 w-3.5 text-violet-600 focus:ring-violet-500"
                           />
                           <div className="flex-1">
                             <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">Tạo template mới + dữ liệu</span>
@@ -1183,7 +1183,7 @@ export function AiMappingModal({
                                 value={bkTemplateName}
                                 onChange={(e) => setBkTemplateName(e.target.value)}
                                 placeholder="Nhập tên template..."
-                                className="mt-2 h-8 w-full rounded-lg border border-indigo-200/80 bg-white/80 px-2.5 text-xs text-slate-800 placeholder:text-slate-400 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-400/20 dark:border-indigo-500/30 dark:bg-white/[0.05] dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:ring-indigo-400/20"
+                                className="mt-2 h-8 w-full rounded-lg border border-violet-200/80 bg-white/80 px-2.5 text-xs text-slate-800 placeholder:text-slate-400 focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-400/20 dark:border-violet-500/30 dark:bg-white/[0.05] dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:ring-violet-400/20"
                               />
                             )}
                           </div>
@@ -1214,7 +1214,7 @@ export function AiMappingModal({
                                 <span className="flex-1 text-xs font-semibold text-slate-700 dark:text-slate-200">
                                   {groupLabel}
                                 </span>
-                                <span className="rounded-full bg-indigo-100/80 px-2 py-0.5 text-[10px] font-medium text-indigo-700 dark:bg-indigo-500/15 dark:text-indigo-400">
+                                <span className="rounded-full bg-violet-100/80 px-2 py-0.5 text-[10px] font-medium text-violet-700 dark:bg-violet-500/15 dark:text-violet-400">
                                   {groupSelected}/{fields.length}
                                 </span>
                               </button>
@@ -1231,7 +1231,7 @@ export function AiMappingModal({
                                     return next;
                                   });
                                 }}
-                                className="h-3.5 w-3.5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                                className="h-3.5 w-3.5 rounded border-slate-300 text-violet-600 focus:ring-violet-500"
                               />
                             </div>
 
@@ -1249,7 +1249,7 @@ export function AiMappingModal({
                                       transition={{ delay: idx * 0.02 }}
                                       className={`flex cursor-pointer items-start gap-2.5 border-b border-slate-100/60 px-3 py-2 last:border-b-0 transition-colors dark:border-white/[0.04] ${
                                         bkAccepted[field.key]
-                                          ? "bg-indigo-50/30 dark:bg-indigo-500/5"
+                                          ? "bg-violet-50/30 dark:bg-violet-500/5"
                                           : "bg-transparent hover:bg-slate-50/50 dark:hover:bg-white/[0.02]"
                                       }`}
                                     >
@@ -1263,7 +1263,7 @@ export function AiMappingModal({
                                             [field.key]: !prev[field.key],
                                           }))
                                         }
-                                        className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                                        className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 rounded border-slate-300 text-violet-600 focus:ring-violet-500"
                                       />
                                       <div className="min-w-0 flex-1">
                                         <div className="flex items-center gap-2">
@@ -1302,7 +1302,7 @@ export function AiMappingModal({
                         type="button"
                         onClick={handleBkApplySelected}
                         disabled={bkSelectedCount === 0 || !onApplyBkImport}
-                        className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition-all hover:from-blue-700 hover:to-indigo-700 disabled:opacity-50"
+                        className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-blue-600 to-violet-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition-all hover:from-blue-700 hover:to-violet-700 disabled:opacity-50"
                       >
                         <Check className="h-4 w-4" />
                         {bkMode === "template-and-data"
@@ -1323,10 +1323,10 @@ export function AiMappingModal({
                 {/* Upload Word file */}
                 <div className="space-y-1.5">
                   <span className="block text-xs font-medium text-slate-700 dark:text-slate-200">{t("autoTagging.uploadLabel")}</span>
-                  <div className="rounded-lg border-2 border-dashed border-indigo-300/80 bg-white/60 px-3 py-3 transition-colors hover:border-indigo-400 dark:border-indigo-500/30 dark:bg-white/[0.04]">
+                  <div className="rounded-lg border-2 border-dashed border-violet-300/80 bg-white/60 px-3 py-3 transition-colors hover:border-violet-400 dark:border-violet-500/30 dark:bg-white/[0.04]">
                     <label className="flex cursor-pointer items-center gap-2">
-                      <Upload className="h-4 w-4 flex-shrink-0 text-indigo-500" />
-                      <span className="text-xs font-medium text-indigo-600">{t("autoTagging.chooseFile")}</span>
+                      <Upload className="h-4 w-4 flex-shrink-0 text-violet-500" />
+                      <span className="text-xs font-medium text-violet-600">{t("autoTagging.chooseFile")}</span>
                       <input
                         type="file"
                         accept=".docx,.doc"
@@ -1354,7 +1354,7 @@ export function AiMappingModal({
                     onChange={(e) => setHeadersRaw(e.target.value)}
                     rows={4}
                     placeholder={t("autoTagging.headersPlaceholder")}
-                    className="w-full rounded-lg border border-slate-200/80 bg-white/80 px-3 py-2 text-sm placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-white/[0.08] dark:bg-white/[0.04] dark:text-slate-100 dark:placeholder:text-slate-500"
+                    className="w-full rounded-lg border border-slate-200/80 bg-white/80 px-3 py-2 text-sm placeholder:text-slate-400 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500 dark:border-white/[0.08] dark:bg-white/[0.04] dark:text-slate-100 dark:placeholder:text-slate-500"
                   />
                 </div>
 
@@ -1367,7 +1367,7 @@ export function AiMappingModal({
                       name="tag-format"
                       checked={tagging.format === "square"}
                       onChange={() => tagging.setFormat("square")}
-                      className="h-3.5 w-3.5 border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                      className="h-3.5 w-3.5 border-slate-300 text-violet-600 focus:ring-violet-500"
                     />
                     {t("autoTagging.formatSquare")}
                   </label>
@@ -1377,7 +1377,7 @@ export function AiMappingModal({
                       name="tag-format"
                       checked={tagging.format === "curly"}
                       onChange={() => tagging.setFormat("curly")}
-                      className="h-3.5 w-3.5 border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                      className="h-3.5 w-3.5 border-slate-300 text-violet-600 focus:ring-violet-500"
                     />
                     {t("autoTagging.formatCurly")}
                   </label>
@@ -1388,7 +1388,7 @@ export function AiMappingModal({
                   type="button"
                   onClick={() => void tagging.analyzeDocument(headersRaw)}
                   disabled={tagging.analyzing}
-                  className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-indigo-700 disabled:opacity-70"
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-violet-600 to-fuchsia-600 px-3 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:brightness-110 disabled:opacity-70"
                 >
                   <Tags className="h-4 w-4" />
                   {tagging.analyzing ? t("autoTagging.analyzing") : t("autoTagging.analyze")}
@@ -1407,7 +1407,7 @@ export function AiMappingModal({
                         <button
                           type="button"
                           onClick={() => tagging.toggleAll(true)}
-                          className="text-[11px] font-medium text-indigo-600 hover:underline dark:text-indigo-400"
+                          className="text-[11px] font-medium text-violet-600 hover:underline dark:text-violet-400"
                         >
                           {t("autoTagging.selectAll")}
                         </button>
@@ -1449,7 +1449,7 @@ export function AiMappingModal({
                             transition={{ delay: idx * 0.03 }}
                             className={`flex cursor-pointer items-start gap-3 rounded-xl border p-3 transition-all ${
                               tagging.accepted[idx]
-                                ? "border-indigo-200/80 bg-indigo-50/40 shadow-sm dark:border-indigo-500/30 dark:bg-indigo-500/10"
+                                ? "border-violet-200/80 bg-violet-50/40 shadow-sm dark:border-violet-500/30 dark:bg-violet-500/10"
                                 : "border-slate-200/60 bg-white/30 dark:border-white/[0.07] dark:bg-white/[0.04]"
                             }`}
                           >
@@ -1457,7 +1457,7 @@ export function AiMappingModal({
                               type="checkbox"
                               checked={tagging.accepted[idx] ?? false}
                               onChange={() => tagging.toggleSuggestion(idx)}
-                              className="mt-0.5 h-4 w-4 flex-shrink-0 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                              className="mt-0.5 h-4 w-4 flex-shrink-0 rounded border-slate-300 text-violet-600 focus:ring-violet-500"
                             />
                             <div className="min-w-0 flex-1">
                               <div className="flex items-center gap-2">
@@ -1465,7 +1465,7 @@ export function AiMappingModal({
                                   &ldquo;{sg.originalText.length > 50 ? sg.originalText.slice(0, 50) + "..." : sg.originalText}&rdquo;
                                 </span>
                                 <ArrowRight className="h-3 w-3 flex-shrink-0 text-slate-400 dark:text-slate-500" />
-                                <span className="truncate rounded-md bg-indigo-50 dark:bg-indigo-500/10 px-2 py-0.5 text-xs font-mono font-medium text-indigo-700 dark:text-indigo-400">
+                                <span className="truncate rounded-md bg-violet-50 dark:bg-violet-500/10 px-2 py-0.5 text-xs font-mono font-medium text-violet-700 dark:text-violet-400">
                                   {tag}
                                 </span>
                               </div>
@@ -1484,7 +1484,7 @@ export function AiMappingModal({
                         type="button"
                         onClick={() => void tagging.applyTags()}
                         disabled={tagging.applying || tagging.accepted.every((a) => !a)}
-                        className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-indigo-600 to-violet-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition-all hover:from-indigo-700 hover:to-violet-700 disabled:opacity-60"
+                        className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-violet-600 to-fuchsia-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition-all hover:brightness-110 disabled:opacity-60"
                       >
                         <FileText className="h-4 w-4" />
                         {tagging.applying ? t("autoTagging.creating") : t("autoTagging.createTemplate")}
@@ -1532,7 +1532,7 @@ export function AiMappingModal({
                   type="button"
                   onClick={() => void handleDownloadAllZip()}
                   disabled={downloadingZip}
-                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 px-4 py-3 text-sm font-medium text-white shadow-lg shadow-indigo-500/25 transition-all hover:from-indigo-700 hover:to-violet-700 hover:shadow-indigo-500/30 disabled:opacity-70"
+                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-fuchsia-600 px-4 py-3 text-sm font-medium text-white shadow-lg shadow-violet-500/25 transition-all hover:brightness-110 hover:shadow-violet-500/30 disabled:opacity-70"
                 >
                   <Download className="h-4 w-4" />
                   {downloadingZip ? "Đang tạo file..." : "Tải xuống tất cả (.zip)"}
@@ -1554,7 +1554,7 @@ export function AiMappingModal({
                   type="button"
                   onClick={acceptSuggestion}
                   disabled={matchedCount === 0}
-                  className="rounded-lg bg-indigo-600 px-3 py-1.5 text-sm text-white shadow-glow transition-colors hover:bg-indigo-700 disabled:opacity-60"
+                  className="rounded-lg bg-gradient-to-r from-violet-600 to-fuchsia-600 px-3 py-1.5 text-sm text-white shadow-sm shadow-violet-500/25 transition-colors hover:brightness-110 disabled:opacity-60"
                 >
                   {t("mapping.aiSuggest.accept")}
                 </button>

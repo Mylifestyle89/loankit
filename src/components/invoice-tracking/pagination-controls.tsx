@@ -19,7 +19,7 @@ export function PaginationControls({ page, pageSize, total, onPageChange }: Prop
   if (total <= pageSize) return null;
 
   return (
-    <div className="flex items-center justify-between border-t border-coral-tree-200 dark:border-white/[0.07] px-4 py-3 text-sm">
+    <div className="flex items-center justify-between border-t border-zinc-200 dark:border-white/[0.07] px-4 py-3 text-sm">
       <span className="text-zinc-500 dark:text-slate-400">
         {from}–{to} / {total}
       </span>
@@ -28,7 +28,7 @@ export function PaginationControls({ page, pageSize, total, onPageChange }: Prop
           type="button"
           disabled={page <= 1}
           onClick={() => onPageChange(page - 1)}
-          className="cursor-pointer rounded-md border border-zinc-300 dark:border-white/[0.09] p-1.5 transition-colors duration-150 hover:bg-zinc-100 dark:hover:bg-white/[0.06] disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/50"
+          className="cursor-pointer rounded-md border border-zinc-300 dark:border-white/[0.09] p-1.5 transition-colors duration-150 hover:bg-zinc-100 dark:hover:bg-white/[0.06] disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40"
         >
           <ChevronLeft className="h-4 w-4" />
         </button>
@@ -39,7 +39,7 @@ export function PaginationControls({ page, pageSize, total, onPageChange }: Prop
           type="button"
           disabled={page >= totalPages}
           onClick={() => onPageChange(page + 1)}
-          className="cursor-pointer rounded-md border border-zinc-300 dark:border-white/[0.09] p-1.5 transition-colors duration-150 hover:bg-zinc-100 dark:hover:bg-white/[0.06] disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/50"
+          className="cursor-pointer rounded-md border border-zinc-300 dark:border-white/[0.09] p-1.5 transition-colors duration-150 hover:bg-zinc-100 dark:hover:bg-white/[0.06] disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40"
         >
           <ChevronRight className="h-4 w-4" />
         </button>

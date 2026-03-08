@@ -125,8 +125,8 @@ export function SnapshotRestoreModal({ open, onClose }: Props) {
         {/* Header */}
         <div className="flex items-center justify-between border-b border-slate-200/60 px-5 py-4 dark:border-white/[0.07]">
           <div className="flex items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-50 dark:bg-indigo-500/10">
-              <History className="h-4.5 w-4.5 text-indigo-600 dark:text-indigo-400" />
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-50 dark:bg-violet-500/10">
+              <History className="h-4.5 w-4.5 text-violet-600 dark:text-violet-400" />
             </div>
             <div>
               <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">
@@ -187,7 +187,7 @@ export function SnapshotRestoreModal({ open, onClose }: Props) {
                         {timeAgo(s.timestamp)}
                       </span>
                       {s.source === "manual" && (
-                        <span className="rounded-md bg-indigo-50 px-1.5 py-0.5 text-[10px] font-medium text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400">
+                        <span className="rounded-md bg-violet-50 px-1.5 py-0.5 text-[10px] font-medium text-violet-600 dark:bg-violet-500/10 dark:text-violet-400">
                           thủ công
                         </span>
                       )}
@@ -208,7 +208,7 @@ export function SnapshotRestoreModal({ open, onClose }: Props) {
                     type="button"
                     onClick={() => handleRestore(s.filename)}
                     disabled={restoring !== null}
-                    className="flex items-center gap-1.5 rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-xs font-medium text-indigo-700 transition-all hover:bg-indigo-100 active:scale-95 disabled:pointer-events-none disabled:opacity-50 dark:border-indigo-500/20 dark:bg-indigo-500/10 dark:text-indigo-400 dark:hover:bg-indigo-500/20"
+                    className="flex items-center gap-1.5 rounded-lg border border-violet-200 bg-violet-50 px-3 py-1.5 text-xs font-medium text-violet-700 transition-all hover:bg-violet-100 active:scale-95 disabled:pointer-events-none disabled:opacity-50 dark:border-violet-500/20 dark:bg-violet-500/10 dark:text-violet-400 dark:hover:bg-violet-500/20"
                   >
                     {restoring === s.filename ? (
                       "Đang khôi phục..."

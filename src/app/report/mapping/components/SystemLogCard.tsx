@@ -27,10 +27,10 @@ const toneMap: Record<
 > = {
   dark: {
     ai: {
-      dot: "bg-indigo-500",
-      rail: "bg-indigo-300/40",
-      badge: "bg-indigo-500/15 text-indigo-300 ring-1 ring-indigo-400/30",
-      text: "text-indigo-100",
+      dot: "bg-violet-500",
+      rail: "bg-violet-300/40",
+      badge: "bg-violet-500/15 text-violet-300 ring-1 ring-violet-400/30",
+      text: "text-violet-100",
       label: "AI",
       entryBg: "bg-zinc-900/60",
       entryBorder: "border-zinc-800/80",
@@ -56,9 +56,9 @@ const toneMap: Record<
   },
   light: {
     ai: {
-      dot: "bg-indigo-500",
-      rail: "bg-indigo-200 dark:bg-indigo-400/30",
-      badge: "bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 ring-1 ring-indigo-200 dark:ring-indigo-500/30",
+      dot: "bg-violet-500",
+      rail: "bg-violet-200 dark:bg-violet-400/30",
+      badge: "bg-violet-50 dark:bg-violet-500/10 text-violet-700 dark:text-violet-400 ring-1 ring-violet-200 dark:ring-violet-500/30",
       text: "text-slate-700 dark:text-slate-200",
       label: "AI",
       entryBg: "bg-white/80 dark:bg-white/[0.04]",
@@ -101,7 +101,7 @@ export function SystemLogCard({ logs, endRef, title = "Live log", emptyText = "C
   return (
     <div className={cardClass}>
       <div className={headClass}>
-        <span className="h-2 w-2 rounded-full bg-indigo-500" />
+        <span className="h-2 w-2 rounded-full bg-violet-500" />
         {title}
       </div>
 

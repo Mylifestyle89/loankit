@@ -29,6 +29,17 @@ function isDueSoon(dueDate: string): boolean {
   return due > now && due - now <= sevenDays;
 }
 
+/** Countdown text: "Con X ngay" or "Qua han Y ngay" */
+function deadlineCountdown(dueDate: string, status: string): string | null {
+  if (status === "paid") return null;
+  const diffMs = new Date(dueDate).getTime() - Date.now();
+  const diffDays = Math.ceil(diffMs / (24 * 60 * 60 * 1000));
+  if (diffDays < 0) return `Quá hạn ${Math.abs(diffDays)} ngày`;
+  if (diffDays === 0) return "Hôm nay";
+  if (diffDays <= 7) return `Còn ${diffDays} ngày`;
+  return null;
+}
+
 export function InvoiceTable({ invoices, onMarkPaid, onDelete }: Props) {
   const { t } = useLanguage();
 
@@ -40,7 +51,7 @@ export function InvoiceTable({ invoices, onMarkPaid, onDelete }: Props) {
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
         <thead>
-          <tr className="border-b border-coral-tree-200 dark:border-white/[0.07] bg-coral-tree-100 dark:bg-white/[0.05] text-left">
+          <tr className="border-b border-zinc-200 dark:border-white/[0.07] bg-violet-50/50 dark:bg-white/[0.05] text-left">
             <th className="px-4 py-2.5 font-semibold whitespace-nowrap">{t("invoices.number")}</th>
             <th className="px-4 py-2.5 font-semibold whitespace-nowrap">{t("invoices.supplier")}</th>
             <th className="px-4 py-2.5 font-semibold whitespace-nowrap text-right">{t("invoices.amount")}</th>
@@ -54,7 +65,7 @@ export function InvoiceTable({ invoices, onMarkPaid, onDelete }: Props) {
           {invoices.map((inv) => (
             <tr
               key={inv.id}
-              className={`border-t border-coral-tree-200 dark:border-white/[0.07] transition-colors duration-150 hover:bg-coral-tree-50 dark:hover:bg-white/[0.04] ${
+              className={`border-t border-zinc-200 dark:border-white/[0.07] transition-colors duration-150 hover:bg-violet-50/50 dark:hover:bg-white/[0.04] ${
                 isDueSoon(inv.dueDate) && inv.status === "pending"
                   ? "bg-yellow-50 dark:bg-yellow-500/5"
                   : ""
@@ -64,11 +75,23 @@ export function InvoiceTable({ invoices, onMarkPaid, onDelete }: Props) {
               <td className="px-4 py-2.5">{inv.supplierName}</td>
               <td className="px-4 py-2.5 text-right tabular-nums">{fmt(inv.amount)}</td>
               <td className="px-4 py-2.5 whitespace-nowrap">{fmtDate(inv.issueDate)}</td>
-              <td className="px-4 py-2.5 whitespace-nowrap">{fmtDate(inv.dueDate)}</td>
+              <td className="px-4 py-2.5 whitespace-nowrap">
+                {fmtDate(inv.customDeadline ?? inv.dueDate)}
+                {(() => {
+                  const cd = deadlineCountdown(inv.customDeadline ?? inv.dueDate, inv.status);
+                  if (!cd) return null;
+                  const isOverdue = cd.startsWith("Quá hạn");
+                  return (
+                    <span className={`ml-1.5 text-xs font-medium ${isOverdue ? "text-red-600 dark:text-red-400" : "text-yellow-600 dark:text-yellow-400"}`}>
+                      ({cd})
+                    </span>
+                  );
+                })()}
+              </td>
               <td className="px-4 py-2.5"><InvoiceStatusBadge status={inv.status} /></td>
               <td className="px-4 py-2.5">
                 <div className="flex gap-2">
-                  {inv.status === "pending" && onMarkPaid && (
+                  {inv.status === "pending" && onMarkPaid && !inv.id.startsWith("virtual-") && (
                     <button
                       type="button"
                       onClick={() => onMarkPaid(inv.id)}
@@ -77,7 +100,7 @@ export function InvoiceTable({ invoices, onMarkPaid, onDelete }: Props) {
                       {t("invoices.markPaid")}
                     </button>
                   )}
-                  {onDelete && (
+                  {onDelete && !inv.id.startsWith("virtual-") && (
                     <button
                       type="button"
                       onClick={() => onDelete(inv.id)}

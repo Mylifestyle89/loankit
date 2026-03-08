@@ -34,6 +34,7 @@ export type CreateCustomerInput = {
   legal_representative_name?: string | null;
   legal_representative_title?: string | null;
   organization_type?: string | null;
+  email?: string | null;
   data_json?: Record<string, unknown>;
 };
 
@@ -76,6 +77,7 @@ function toCreateDbData(input: CreateCustomerInput) {
     legal_representative_name: input.legal_representative_name ?? null,
     legal_representative_title: input.legal_representative_title ?? null,
     organization_type: input.organization_type ?? null,
+    email: input.email ?? null,
     ...(input.data_json !== undefined ? { data_json: JSON.stringify(input.data_json) } : {}),
   };
 }
@@ -90,6 +92,7 @@ function toUpdateDbData(input: UpdateCustomerInput) {
     legal_representative_name?: string | null;
     legal_representative_title?: string | null;
     organization_type?: string | null;
+    email?: string | null;
     data_json?: string;
   } = {};
   if (input.customer_code !== undefined) data.customer_code = input.customer_code;
@@ -100,6 +103,7 @@ function toUpdateDbData(input: UpdateCustomerInput) {
   if (input.legal_representative_name !== undefined) data.legal_representative_name = input.legal_representative_name;
   if (input.legal_representative_title !== undefined) data.legal_representative_title = input.legal_representative_title;
   if (input.organization_type !== undefined) data.organization_type = input.organization_type;
+  if (input.email !== undefined) data.email = input.email;
   if (input.data_json !== undefined) data.data_json = JSON.stringify(input.data_json);
   return data;
 }

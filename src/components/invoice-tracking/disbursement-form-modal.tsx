@@ -1,32 +1,12 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ChevronDown, ChevronUp, Plus, Trash2, X } from "lucide-react";
+import { Plus, X } from "lucide-react";
 import { useLanguage } from "@/components/language-provider";
-import { fmtNumber, parseNumber, formatDateInput, dmy2iso, fmtDisplay } from "@/lib/invoice-tracking-format-helpers";
+import { fmtNumber, parseNumber, formatDateInput, dmy2iso, fmtDisplay, isoToDisplay } from "@/lib/invoice-tracking-format-helpers";
 import { numberToVietnameseWords } from "@/lib/number-to-vietnamese-words";
-
-/* ── Types ── */
-type Beneficiary = { id: string; name: string; accountNumber: string | null; bankName: string | null };
-
-type InvoiceLine = {
-  tempId: string;
-  supplierName: string;
-  invoiceNumber: string;
-  issueDate: string;
-  amount: string;
-};
-
-type BeneficiaryLine = {
-  tempId: string;
-  beneficiaryId: string | null;
-  name: string;
-  accountNumber: string;
-  bankName: string;
-  amount: string;
-  invoiceStatus: "pending" | "has_invoice";
-  invoices: InvoiceLine[];
-};
+import { BeneficiarySection, type BeneficiaryLine, type InvoiceLine, type SavedBeneficiary } from "./beneficiary-section-form";
+import { inputCls, readonlyCls, labelCls, sectionCls } from "./form-styles";
 
 type Props = {
   loanId: string;
@@ -35,14 +15,6 @@ type Props = {
   onClose: () => void;
   onCreated: () => void;
 };
-
-/* ── Styles ── */
-const inputCls =
-  "w-full rounded-md border border-zinc-300 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] px-3 py-2 text-sm transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/50";
-const readonlyCls =
-  "w-full rounded-md border border-zinc-200 dark:border-white/[0.06] bg-zinc-50 dark:bg-white/[0.03] px-3 py-2 text-sm text-zinc-600 dark:text-slate-400";
-const labelCls = "text-xs font-medium text-zinc-600 dark:text-slate-400";
-const sectionCls = "rounded-lg border border-coral-tree-200 dark:border-white/[0.08] p-4";
 
 let _tempId = 0;
 function tempId() { return `tmp_${++_tempId}_${Date.now()}`; }
@@ -55,17 +27,6 @@ function emptyInvoiceLine(): InvoiceLine {
 }
 
 function num(s: string): number { return Number(parseNumber(s)) || 0; }
-
-function isoToDisplay(isoOrStr: string | null | undefined): string {
-  if (!isoOrStr) return "";
-  try {
-    const d = new Date(isoOrStr);
-    if (isNaN(d.getTime())) return "";
-    const dd = String(d.getDate()).padStart(2, "0");
-    const mm = String(d.getMonth() + 1).padStart(2, "0");
-    return `${dd}/${mm}/${d.getFullYear()}`;
-  } catch { return ""; }
-}
 
 export function DisbursementFormModal({ loanId, loanAmount = 0, editDisbursementId, onClose, onCreated }: Props) {
   const { t } = useLanguage();
@@ -86,7 +47,7 @@ export function DisbursementFormModal({ loanId, loanAmount = 0, editDisbursement
   const [beneficiaries, setBeneficiaries] = useState<BeneficiaryLine[]>([emptyBeneficiaryLine()]);
 
   // Saved beneficiaries for search
-  const [savedBeneficiaries, setSavedBeneficiaries] = useState<Beneficiary[]>([]);
+  const [savedBeneficiaries, setSavedBeneficiaries] = useState<SavedBeneficiary[]>([]);
 
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -217,7 +178,7 @@ export function DisbursementFormModal({ loanId, loanAmount = 0, editDisbursement
     }));
   }
 
-  function selectSavedBeneficiary(idx: number, saved: Beneficiary) {
+  function selectSavedBeneficiary(idx: number, saved: SavedBeneficiary) {
     updateBeneficiary(idx, {
       beneficiaryId: saved.id,
       name: saved.name,
@@ -294,11 +255,11 @@ export function DisbursementFormModal({ loanId, loanAmount = 0, editDisbursement
 
   return (
     <div ref={backdropRef} onClick={(e) => { if (e.target === backdropRef.current) onClose(); }} className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-      <div className="w-full max-w-3xl max-h-[90vh] flex flex-col rounded-xl bg-white dark:bg-[#141414]/90 shadow-xl">
+      <div className="w-full max-w-3xl max-h-[90vh] flex flex-col rounded-2xl bg-white dark:bg-[#141414]/90 shadow-xl">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-coral-tree-100 dark:border-white/[0.07] px-6 py-4 shrink-0">
+        <div className="flex items-center justify-between border-b border-zinc-200 dark:border-white/[0.07] px-6 py-4 shrink-0">
           <h3 className="text-lg font-semibold">{isEdit ? (t("disbursements.edit") ?? "Sửa giải ngân") : (t("disbursements.add") ?? "Thêm giải ngân")}</h3>
-          <button onClick={onClose} className="cursor-pointer rounded-md p-1.5 text-zinc-400 hover:bg-zinc-100 dark:hover:bg-white/[0.06]">
+          <button onClick={onClose} className="cursor-pointer rounded-lg p-1.5 text-zinc-400 hover:bg-zinc-100 dark:hover:bg-white/[0.06]">
             <X className="h-5 w-5" />
           </button>
         </div>
@@ -392,6 +353,7 @@ export function DisbursementFormModal({ loanId, loanAmount = 0, editDisbursement
               index={bIdx}
               savedBeneficiaries={savedBeneficiaries}
               canRemove={beneficiaries.length > 1}
+              formatDateInput={formatDateInput}
               onUpdate={(patch) => updateBeneficiary(bIdx, patch)}
               onRemove={() => removeBeneficiary(bIdx)}
               onSelectSaved={(saved) => selectSavedBeneficiary(bIdx, saved)}
@@ -401,7 +363,7 @@ export function DisbursementFormModal({ loanId, loanAmount = 0, editDisbursement
             />
           ))}
 
-          <button type="button" onClick={addBeneficiary} className="cursor-pointer flex items-center gap-1.5 rounded-md border border-dashed border-coral-tree-300 dark:border-white/[0.12] px-3 py-2 text-sm text-zinc-600 dark:text-slate-400 hover:bg-coral-tree-50 dark:hover:bg-white/[0.04] transition-colors duration-150 w-full justify-center">
+          <button type="button" onClick={addBeneficiary} className="cursor-pointer flex items-center gap-1.5 rounded-lg border border-dashed border-zinc-200 dark:border-white/[0.12] px-3 py-2 text-sm text-zinc-500 dark:text-slate-400 hover:bg-violet-50/30 dark:hover:bg-white/[0.04] transition-colors duration-150 w-full justify-center">
             <Plus className="h-4 w-4" /> Thêm đơn vị thụ hưởng
           </button>
 
@@ -414,11 +376,11 @@ export function DisbursementFormModal({ loanId, loanAmount = 0, editDisbursement
         )}
 
         {/* Footer */}
-        <div className="flex justify-end gap-3 border-t border-coral-tree-100 dark:border-white/[0.07] px-6 py-3 shrink-0">
-          <button type="button" onClick={onClose} className="cursor-pointer rounded-md px-4 py-2 text-sm text-zinc-600 dark:text-slate-400 hover:bg-zinc-100 dark:hover:bg-white/[0.06]">
+        <div className="flex justify-end gap-3 border-t border-zinc-200 dark:border-white/[0.07] px-6 py-3 shrink-0">
+          <button type="button" onClick={onClose} className="cursor-pointer rounded-lg px-4 py-2 text-sm text-zinc-500 dark:text-slate-400 hover:bg-zinc-100 dark:hover:bg-white/[0.06]">
             {t("common.cancel") ?? "Hủy"}
           </button>
-          <button type="submit" form="disb-form" disabled={saving} className="cursor-pointer rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed">
+          <button type="submit" form="disb-form" disabled={saving} className="cursor-pointer rounded-lg bg-gradient-to-r from-violet-600 to-fuchsia-600 px-4 py-2 text-sm font-medium text-white hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed">
             {saving ? "Đang lưu..." : (t("common.save") ?? "Lưu")}
           </button>
         </div>
@@ -427,136 +389,3 @@ export function DisbursementFormModal({ loanId, loanAmount = 0, editDisbursement
   );
 }
 
-/* ═══ Beneficiary Section Sub-component ═══ */
-
-type BeneficiarySectionProps = {
-  line: BeneficiaryLine;
-  index: number;
-  savedBeneficiaries: Beneficiary[];
-  canRemove: boolean;
-  onUpdate: (patch: Partial<BeneficiaryLine>) => void;
-  onRemove: () => void;
-  onSelectSaved: (b: Beneficiary) => void;
-  onAddInvoice: () => void;
-  onUpdateInvoice: (iIdx: number, patch: Partial<InvoiceLine>) => void;
-  onRemoveInvoice: (iIdx: number) => void;
-};
-
-function BeneficiarySection({ line, index, savedBeneficiaries, canRemove, onUpdate, onRemove, onSelectSaved, onAddInvoice, onUpdateInvoice, onRemoveInvoice }: BeneficiarySectionProps) {
-  const [showSearch, setShowSearch] = useState(false);
-  const [collapsed, setCollapsed] = useState(false);
-
-  const filteredSaved = savedBeneficiaries.filter((s) =>
-    s.name.toLowerCase().includes(line.name.toLowerCase())
-  );
-
-  const amtNum = num(line.amount);
-  const invoiceTotal = line.invoices.reduce((s, i) => s + num(i.amount), 0);
-
-  return (
-    <div className={sectionCls}>
-      <div className="flex items-center justify-between mb-3">
-        <button type="button" onClick={() => setCollapsed(!collapsed)} className="cursor-pointer flex items-center gap-1 text-sm font-semibold">
-          {collapsed ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
-          Đơn vị thụ hưởng #{index + 1}
-          {line.name && <span className="font-normal text-zinc-500 dark:text-slate-400 ml-1">— {line.name}</span>}
-        </button>
-        {canRemove && (
-          <button type="button" onClick={onRemove} className="cursor-pointer rounded p-1 text-zinc-400 hover:text-red-500 transition-colors duration-150">
-            <Trash2 className="h-4 w-4" />
-          </button>
-        )}
-      </div>
-
-      {!collapsed && (
-        <>
-          <div className="grid grid-cols-3 gap-3">
-            <label className="block relative">
-              <span className={labelCls}>Khách hàng thụ hưởng *</span>
-              <input type="text" value={line.name} onChange={(e) => onUpdate({ name: e.target.value, beneficiaryId: null })}
-                onFocus={() => setShowSearch(true)} onBlur={() => setTimeout(() => setShowSearch(false), 200)}
-                placeholder="Tên đơn vị..." className={inputCls} />
-              {showSearch && filteredSaved.length > 0 && (
-                <div className="absolute z-10 mt-1 w-full max-h-32 overflow-auto rounded-md border border-zinc-200 dark:border-white/[0.1] bg-white dark:bg-[#1a1a1a] shadow-lg">
-                  {filteredSaved.map((s) => (
-                    <button key={s.id} type="button" onMouseDown={() => { onSelectSaved(s); setShowSearch(false); }}
-                      className="cursor-pointer w-full text-left px-3 py-1.5 text-sm hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors">
-                      <span className="font-medium">{s.name}</span>
-                      {s.accountNumber && <span className="text-xs text-zinc-400 ml-2">{s.accountNumber}</span>}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </label>
-            <label className="block">
-              <span className={labelCls}>Số tài khoản</span>
-              <input type="text" value={line.accountNumber} onChange={(e) => onUpdate({ accountNumber: e.target.value })} className={inputCls} />
-            </label>
-            <label className="block">
-              <span className={labelCls}>Ngân hàng thụ hưởng</span>
-              <input type="text" value={line.bankName} onChange={(e) => onUpdate({ bankName: e.target.value })} className={inputCls} />
-            </label>
-          </div>
-          <div className="grid grid-cols-2 gap-3 mt-3">
-            <label className="block">
-              <span className={labelCls}>Số tiền giải ngân *</span>
-              <input type="text" inputMode="numeric" value={line.amount} onChange={(e) => onUpdate({ amount: fmtNumber(e.target.value) })} placeholder="0" className={inputCls} />
-            </label>
-            <label className="block">
-              <span className={labelCls}>Bằng chữ</span>
-              <input type="text" readOnly value={amtNum > 0 ? numberToVietnameseWords(amtNum) : ""} className={readonlyCls} />
-            </label>
-          </div>
-          <div className="grid grid-cols-2 gap-3 mt-3">
-            <label className="block">
-              <span className={labelCls}>Trạng thái hóa đơn</span>
-              <select value={line.invoiceStatus} onChange={(e) => onUpdate({ invoiceStatus: e.target.value as "pending" | "has_invoice" })} className={`${inputCls} cursor-pointer`}>
-                <option value="pending">Nợ hóa đơn</option>
-                <option value="has_invoice">Có hóa đơn</option>
-              </select>
-            </label>
-            {line.invoiceStatus === "has_invoice" && (
-              <label className="block">
-                <span className={labelCls}>Số tiền hóa đơn</span>
-                <input type="text" readOnly value={invoiceTotal > 0 ? fmtDisplay(invoiceTotal) : "0"} className={readonlyCls} />
-              </label>
-            )}
-          </div>
-
-          {/* Section 3: Invoices (if has_invoice) */}
-          {line.invoiceStatus === "has_invoice" && (
-            <div className="mt-3 rounded border border-zinc-200 dark:border-white/[0.07] p-3">
-              <h5 className="text-xs font-semibold text-zinc-500 dark:text-slate-400 mb-2">Hóa đơn</h5>
-              {line.invoices.map((inv, iIdx) => (
-                <div key={inv.tempId} className="grid grid-cols-[1fr_1fr_1fr_1fr_auto] gap-2 mb-2 items-end">
-                  <label className="block">
-                    <span className="text-[10px] text-zinc-400">Số hóa đơn</span>
-                    <input type="text" value={inv.invoiceNumber} onChange={(e) => onUpdateInvoice(iIdx, { invoiceNumber: e.target.value })} className={inputCls} />
-                  </label>
-                  <label className="block">
-                    <span className="text-[10px] text-zinc-400">Ngày hóa đơn</span>
-                    <input type="text" value={inv.issueDate} onChange={(e) => onUpdateInvoice(iIdx, { issueDate: formatDateInput(e.target.value) })} placeholder="dd/mm/yyyy" maxLength={10} className={inputCls} />
-                  </label>
-                  <label className="block">
-                    <span className="text-[10px] text-zinc-400">ĐV phát hành</span>
-                    <input type="text" value={inv.supplierName} onChange={(e) => onUpdateInvoice(iIdx, { supplierName: e.target.value })} placeholder={line.name || "Nhà cung cấp"} className={inputCls} />
-                  </label>
-                  <label className="block">
-                    <span className="text-[10px] text-zinc-400">Số tiền</span>
-                    <input type="text" inputMode="numeric" value={inv.amount} onChange={(e) => onUpdateInvoice(iIdx, { amount: fmtNumber(e.target.value) })} placeholder="0" className={inputCls} />
-                  </label>
-                  <button type="button" onClick={() => onRemoveInvoice(iIdx)} className="cursor-pointer rounded p-1.5 text-zinc-400 hover:text-red-500 transition-colors duration-150 mb-0.5">
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </button>
-                </div>
-              ))}
-              <button type="button" onClick={onAddInvoice} className="cursor-pointer flex items-center gap-1 text-xs text-indigo-500 hover:text-indigo-600 transition-colors duration-150 mt-1">
-                <Plus className="h-3.5 w-3.5" /> Thêm hóa đơn
-              </button>
-            </div>
-          )}
-        </>
-      )}
-    </div>
-  );
-}

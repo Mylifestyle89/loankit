@@ -54,20 +54,20 @@ export default function NewCustomerPage() {
   }
 
   return (
-    <section className="space-y-4">
+    <section className="space-y-5">
       <div className="flex items-center gap-4">
         <Link
           href="/report/customers"
-          className="rounded border border-coral-tree-300 dark:border-white/[0.09] px-3 py-1.5 text-sm hover:bg-coral-tree-100 dark:hover:bg-white/[0.06] dark:text-slate-300"
+          className="inline-flex items-center gap-1 rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] px-3 py-1.5 text-sm shadow-sm transition-all duration-150 hover:border-violet-200 dark:hover:border-violet-500/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40"
         >
           ← {t("customers.title")}
         </Link>
-        <h2 className="text-lg font-semibold">{t("customers.add")}</h2>
+        <h2 className="text-lg font-bold tracking-tight bg-gradient-to-r from-violet-700 to-fuchsia-600 dark:from-violet-400 dark:to-fuchsia-400 bg-clip-text text-transparent">{t("customers.add")}</h2>
       </div>
-      {error ? <p className="text-sm text-red-700 dark:text-red-400">{error}</p> : null}
+      {error ? <p className="text-sm text-red-600 dark:text-red-400">{error}</p> : null}
       <form
         onSubmit={handleSubmit}
-        className="max-w-2xl space-y-4 rounded-xl border border-coral-tree-200 dark:border-white/[0.08] bg-white dark:bg-[#141414]/90 p-6"
+        className="max-w-2xl space-y-4 rounded-2xl border border-zinc-200 dark:border-white/[0.07] bg-white dark:bg-[#161616] p-6 shadow-sm"
       >
         <label className="block">
           <span className="text-sm font-medium">{t("customers.code")} *</span>
@@ -75,7 +75,7 @@ export default function NewCustomerPage() {
             required
             value={form.customer_code}
             onChange={(e) => setForm((p) => ({ ...p, customer_code: e.target.value }))}
-            className="mt-1 w-full rounded-md border border-coral-tree-300 dark:border-white/[0.09] bg-white dark:bg-[#141414] text-zinc-900 dark:text-slate-100 px-3 py-2"
+            className="mt-1 w-full rounded-md border border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] text-zinc-900 dark:text-slate-100 px-3 py-2 shadow-sm transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40"
           />
         </label>
         <label className="block">
@@ -84,7 +84,7 @@ export default function NewCustomerPage() {
             required
             value={form.customer_name}
             onChange={(e) => setForm((p) => ({ ...p, customer_name: e.target.value }))}
-            className="mt-1 w-full rounded-md border border-coral-tree-300 dark:border-white/[0.09] bg-white dark:bg-[#141414] text-zinc-900 dark:text-slate-100 px-3 py-2"
+            className="mt-1 w-full rounded-md border border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] text-zinc-900 dark:text-slate-100 px-3 py-2 shadow-sm transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40"
           />
         </label>
         <label className="block">
@@ -92,7 +92,7 @@ export default function NewCustomerPage() {
           <input
             value={form.address}
             onChange={(e) => setForm((p) => ({ ...p, address: e.target.value }))}
-            className="mt-1 w-full rounded-md border border-coral-tree-300 dark:border-white/[0.09] bg-white dark:bg-[#141414] text-zinc-900 dark:text-slate-100 px-3 py-2"
+            className="mt-1 w-full rounded-md border border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] text-zinc-900 dark:text-slate-100 px-3 py-2 shadow-sm transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40"
           />
         </label>
         <label className="block">
@@ -100,7 +100,7 @@ export default function NewCustomerPage() {
           <input
             value={form.main_business}
             onChange={(e) => setForm((p) => ({ ...p, main_business: e.target.value }))}
-            className="mt-1 w-full rounded-md border border-coral-tree-300 dark:border-white/[0.09] bg-white dark:bg-[#141414] text-zinc-900 dark:text-slate-100 px-3 py-2"
+            className="mt-1 w-full rounded-md border border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] text-zinc-900 dark:text-slate-100 px-3 py-2 shadow-sm transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40"
           />
         </label>
         <label className="block">
@@ -108,7 +108,7 @@ export default function NewCustomerPage() {
           <input
             value={form.charter_capital}
             onChange={(e) => setForm((p) => ({ ...p, charter_capital: e.target.value }))}
-            className="mt-1 w-full rounded-md border border-coral-tree-300 dark:border-white/[0.09] bg-white dark:bg-[#141414] text-zinc-900 dark:text-slate-100 px-3 py-2"
+            className="mt-1 w-full rounded-md border border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] text-zinc-900 dark:text-slate-100 px-3 py-2 shadow-sm transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40"
             placeholder="VD: 1000000000"
           />
         </label>
@@ -119,7 +119,7 @@ export default function NewCustomerPage() {
             onChange={(e) =>
               setForm((p) => ({ ...p, legal_representative_name: e.target.value }))
             }
-            className="mt-1 w-full rounded-md border border-coral-tree-300 dark:border-white/[0.09] bg-white dark:bg-[#141414] text-zinc-900 dark:text-slate-100 px-3 py-2"
+            className="mt-1 w-full rounded-md border border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] text-zinc-900 dark:text-slate-100 px-3 py-2 shadow-sm transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40"
           />
         </label>
         <label className="block">
@@ -129,7 +129,7 @@ export default function NewCustomerPage() {
             onChange={(e) =>
               setForm((p) => ({ ...p, legal_representative_title: e.target.value }))
             }
-            className="mt-1 w-full rounded-md border border-coral-tree-300 dark:border-white/[0.09] bg-white dark:bg-[#141414] text-zinc-900 dark:text-slate-100 px-3 py-2"
+            className="mt-1 w-full rounded-md border border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] text-zinc-900 dark:text-slate-100 px-3 py-2 shadow-sm transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40"
           />
         </label>
         <label className="block">
@@ -139,20 +139,20 @@ export default function NewCustomerPage() {
             onChange={(e) =>
               setForm((p) => ({ ...p, organization_type: e.target.value }))
             }
-            className="mt-1 w-full rounded-md border border-coral-tree-300 dark:border-white/[0.09] bg-white dark:bg-[#141414] text-zinc-900 dark:text-slate-100 px-3 py-2"
+            className="mt-1 w-full rounded-md border border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] text-zinc-900 dark:text-slate-100 px-3 py-2 shadow-sm transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40"
           />
         </label>
         <div className="flex gap-3 pt-2">
           <button
             type="submit"
             disabled={saving}
-            className="rounded-md bg-coral-tree-700 px-4 py-2 text-sm text-white disabled:opacity-60"
+            className="rounded-lg bg-gradient-to-r from-violet-600 to-fuchsia-600 px-5 py-2 text-sm font-medium text-white shadow-sm shadow-violet-500/25 transition-all duration-200 hover:shadow-md hover:shadow-violet-500/30 hover:brightness-110 disabled:opacity-60"
           >
             {saving ? "..." : t("customers.add")}
           </button>
           <Link
             href="/report/customers"
-            className="rounded-md border border-coral-tree-300 dark:border-white/[0.09] px-4 py-2 text-sm dark:text-slate-300 hover:bg-coral-tree-50 dark:hover:bg-white/[0.06]"
+            className="rounded-lg border border-zinc-200 dark:border-white/[0.09] px-4 py-2 text-sm dark:text-slate-300 shadow-sm transition-all duration-150 hover:border-violet-200 dark:hover:border-violet-500/20"
           >
             Hủy
           </Link>

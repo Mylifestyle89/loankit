@@ -67,17 +67,20 @@ export default function NewLoanPage() {
     }
   }
 
-  const inputCls = "mt-1 w-full rounded-md border border-zinc-300 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] px-3 py-2 text-sm transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/50 focus-visible:border-indigo-400";
+  const inputCls = "mt-1 w-full rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] px-3 py-2 text-sm shadow-sm transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40";
   const labelCls = "text-xs font-medium text-zinc-600 dark:text-slate-400";
 
   return (
-    <section className="max-w-xl space-y-4">
-      <div className="rounded-xl border border-coral-tree-200 dark:border-white/[0.08] bg-white dark:bg-[#141414]/90 p-4">
-        <h2 className="text-lg font-semibold">{t("loans.add")}</h2>
-        {error && <p className="mt-2 text-sm text-red-700 dark:text-red-400">{error}</p>}
+    <section className="max-w-xl space-y-5">
+      <div className="relative overflow-hidden rounded-2xl border border-violet-100 dark:border-violet-500/10 bg-gradient-to-br from-violet-50 via-white to-fuchsia-50 dark:from-violet-950/30 dark:via-[#141414] dark:to-fuchsia-950/20 p-5">
+        <div className="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-violet-200/30 blur-2xl dark:bg-violet-500/10" />
+        <div className="relative">
+          <h2 className="text-xl font-bold tracking-tight bg-gradient-to-r from-violet-700 to-fuchsia-600 dark:from-violet-400 dark:to-fuchsia-400 bg-clip-text text-transparent">{t("loans.add")}</h2>
+          {error && <p className="mt-2 text-sm text-red-600 dark:text-red-400">{error}</p>}
+        </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="rounded-xl border border-coral-tree-200 dark:border-white/[0.08] bg-white dark:bg-[#141414]/90 p-6 space-y-4">
+      <form onSubmit={handleSubmit} className="rounded-2xl border border-zinc-200 dark:border-white/[0.07] bg-white dark:bg-[#161616] p-6 shadow-sm space-y-4">
         <label className="block">
           <span className={labelCls}>{t("loans.customer")}</span>
           <select required value={customerId} onChange={(e) => setCustomerId(e.target.value)} className={inputCls}>
@@ -147,10 +150,10 @@ export default function NewLoanPage() {
           <textarea value={purpose} onChange={(e) => setPurpose(e.target.value)} rows={2} className={inputCls} />
         </label>
         <div className="flex justify-end gap-3 pt-2">
-          <button type="button" onClick={() => router.back()} className="cursor-pointer rounded-md px-4 py-2 text-sm text-zinc-600 dark:text-slate-400 transition-colors duration-150 hover:bg-zinc-100 dark:hover:bg-white/[0.06] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/50">
+          <button type="button" onClick={() => router.back()} className="cursor-pointer rounded-lg border border-zinc-200 dark:border-white/[0.09] px-4 py-2 text-sm text-zinc-600 dark:text-slate-400 shadow-sm transition-all duration-150 hover:border-violet-200 dark:hover:border-violet-500/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40">
             {t("common.cancel")}
           </button>
-          <button type="submit" disabled={saving} className="cursor-pointer rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors duration-150 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/50">
+          <button type="submit" disabled={saving} className="cursor-pointer rounded-lg bg-gradient-to-r from-violet-600 to-fuchsia-600 px-5 py-2 text-sm font-medium text-white shadow-sm shadow-violet-500/25 transition-all duration-200 hover:shadow-md hover:shadow-violet-500/30 hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/50">
             {saving ? t("loans.loading") : t("common.save")}
           </button>
         </div>

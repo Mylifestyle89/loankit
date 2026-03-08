@@ -75,7 +75,7 @@ export function AddInvoiceFromLoanModal({
   };
 
   const inputCls =
-    "w-full rounded-md border border-zinc-200 dark:border-white/10 bg-white dark:bg-[#1a1a1a] px-3 py-1.5 text-sm text-zinc-800 dark:text-slate-200 placeholder:text-zinc-400 dark:placeholder:text-slate-500 focus:border-coral-tree-400 focus:outline-none focus:ring-1 focus:ring-coral-tree-400/50";
+    "w-full rounded-md border border-zinc-200 dark:border-white/10 bg-white dark:bg-[#1a1a1a] px-3 py-1.5 text-sm text-zinc-800 dark:text-slate-200 placeholder:text-zinc-400 dark:placeholder:text-slate-500 focus:border-violet-400 focus:outline-none focus:ring-1 focus:ring-violet-500/40";
   const labelCls = "block text-xs text-zinc-500 dark:text-slate-400 mb-1";
 
   return (
@@ -97,7 +97,7 @@ export function AddInvoiceFromLoanModal({
             type="button"
             onClick={handleSubmit}
             disabled={submitting}
-            className="cursor-pointer flex items-center gap-2 rounded-lg bg-coral-tree-600 px-4 py-2 text-sm font-medium text-white hover:bg-coral-tree-700 disabled:opacity-50 transition-colors"
+            className="cursor-pointer flex items-center gap-2 rounded-lg bg-gradient-to-r from-violet-600 to-fuchsia-600 px-4 py-2 text-sm font-medium text-white hover:brightness-110 disabled:opacity-50 transition-all"
           >
             {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
             {submitting ? "Đang lưu..." : (t("invoices.addInvoice") ?? "Thêm hóa đơn")}

@@ -81,9 +81,9 @@ function StepDots({ step }: { step: number }) {
             key={s}
             className={`h-1.5 rounded-full transition-all duration-300 ${
               s === step
-                ? "w-6 bg-indigo-500"
+                ? "w-6 bg-violet-500"
                 : s < step
-                ? "w-1.5 bg-indigo-300 dark:bg-indigo-400"
+                ? "w-1.5 bg-violet-300 dark:bg-violet-400"
                 : "w-1.5 bg-slate-200 dark:bg-white/[0.1]"
             }`}
           />
@@ -133,7 +133,7 @@ function CollapsibleSection({
         )}
         {title}
         {badge && (
-          <span className="ml-auto rounded-full bg-indigo-100 dark:bg-indigo-500/15 px-2 py-0.5 text-[10px] font-semibold text-indigo-600 dark:text-indigo-400">
+          <span className="ml-auto rounded-full bg-violet-100 dark:bg-violet-500/15 px-2 py-0.5 text-[10px] font-semibold text-violet-600 dark:text-violet-400">
             {badge}
           </span>
         )}
@@ -341,8 +341,8 @@ export function FinancialAnalysisModal({ isOpen, onClose, fieldCatalog, onApplyV
     >
       {/* Header */}
       <div className="flex items-center gap-3 border-b border-slate-200/60 dark:border-white/[0.07] px-6 py-4 flex-shrink-0">
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-100 dark:bg-indigo-500/15">
-          <BarChart3 className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-100 dark:bg-violet-500/15">
+          <BarChart3 className="h-4 w-4 text-violet-600 dark:text-violet-400" />
         </div>
         <div className="flex-1 min-w-0">
           <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">
@@ -391,13 +391,13 @@ export function FinancialAnalysisModal({ isOpen, onClose, fieldCatalog, onApplyV
                   onDrop={handleDrop}
                   className={`flex flex-col items-center justify-center rounded-xl border-2 border-dashed py-16 transition-colors ${
                     isDragActive
-                      ? "border-indigo-400 bg-indigo-50/50 dark:bg-indigo-500/10"
-                      : "border-slate-200 dark:border-white/[0.1] hover:border-indigo-300 dark:hover:border-indigo-500/30"
+                      ? "border-violet-400 bg-violet-50/50 dark:bg-violet-500/10"
+                      : "border-slate-200 dark:border-white/[0.1] hover:border-violet-300 dark:hover:border-violet-500/30"
                   }`}
                 >
                   {uploading ? (
                     <div className="flex flex-col items-center gap-3">
-                      <Loader2 className="h-8 w-8 animate-spin text-indigo-500" />
+                      <Loader2 className="h-8 w-8 animate-spin text-violet-500" />
                       <p className="text-sm text-slate-600 dark:text-slate-300">Đang trích xuất dữ liệu...</p>
                     </div>
                   ) : (
@@ -423,7 +423,7 @@ export function FinancialAnalysisModal({ isOpen, onClose, fieldCatalog, onApplyV
                       <button
                         type="button"
                         onClick={() => fileInputRef.current?.click()}
-                        className="rounded-lg bg-indigo-600 px-5 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 transition-colors"
+                        className="rounded-lg bg-gradient-to-r from-violet-600 to-fuchsia-600 px-5 py-2 text-sm font-medium text-white shadow-sm hover:brightness-110 transition-colors"
                       >
                         Chọn file
                       </button>
@@ -545,7 +545,7 @@ export function FinancialAnalysisModal({ isOpen, onClose, fieldCatalog, onApplyV
                         onChange={(e) => setQualContext((prev) => ({ ...prev, [key]: e.target.value }))}
                         placeholder={placeholder}
                         rows={2}
-                        className="w-full rounded-lg border border-slate-200 dark:border-white/[0.1] bg-white dark:bg-white/[0.05] px-3 py-2 text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 resize-none"
+                        className="w-full rounded-lg border border-slate-200 dark:border-white/[0.1] bg-white dark:bg-white/[0.05] px-3 py-2 text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500 resize-none"
                       />
                     </div>
                   ))}
@@ -562,13 +562,13 @@ export function FinancialAnalysisModal({ isOpen, onClose, fieldCatalog, onApplyV
                         Chưa có trường nào được cấu hình analysis_prompt
                       </p>
                       <p className="mt-1 text-xs text-slate-400 dark:text-slate-500 max-w-sm">
-                        Thêm thuộc tính <code className="text-indigo-600 dark:text-indigo-400">analysis_prompt</code> cho
+                        Thêm thuộc tính <code className="text-violet-600 dark:text-violet-400">analysis_prompt</code> cho
                         các trường trong Field Catalog để kích hoạt phân tích AI.
                       </p>
                     </div>
                   ) : Object.keys(analysisValues).length === 0 && !analyzing ? (
                     <div className="flex flex-col items-center py-12 text-center">
-                      <Sparkles className="h-10 w-10 text-indigo-400 mb-4" />
+                      <Sparkles className="h-10 w-10 text-violet-400 mb-4" />
                       <p className="text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">
                         Sẵn sàng phân tích {analysisFields.length} trường
                       </p>
@@ -578,7 +578,7 @@ export function FinancialAnalysisModal({ isOpen, onClose, fieldCatalog, onApplyV
                       <button
                         type="button"
                         onClick={() => void handleGenerate()}
-                        className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-6 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 transition-colors"
+                        className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-violet-600 to-fuchsia-600 px-6 py-2.5 text-sm font-medium text-white shadow-sm hover:brightness-110 transition-colors"
                       >
                         <Sparkles className="h-4 w-4" />
                         Tạo phân tích AI
@@ -586,7 +586,7 @@ export function FinancialAnalysisModal({ isOpen, onClose, fieldCatalog, onApplyV
                     </div>
                   ) : analyzing ? (
                     <div className="flex flex-col items-center py-12 text-center">
-                      <Loader2 className="h-8 w-8 animate-spin text-indigo-500 mb-4" />
+                      <Loader2 className="h-8 w-8 animate-spin text-violet-500 mb-4" />
                       <p className="text-sm font-medium text-slate-600 dark:text-slate-300">
                         Đang phân tích {analysisFields.length} mục...
                       </p>
@@ -629,7 +629,7 @@ export function FinancialAnalysisModal({ isOpen, onClose, fieldCatalog, onApplyV
                                 }))
                               }
                               rows={4}
-                              className="w-full rounded-lg border border-slate-200 dark:border-white/[0.1] bg-white dark:bg-white/[0.05] px-3 py-2 text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 resize-y"
+                              className="w-full rounded-lg border border-slate-200 dark:border-white/[0.1] bg-white dark:bg-white/[0.05] px-3 py-2 text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500 resize-y"
                               placeholder={!value ? "AI chưa tạo nội dung cho mục này" : ""}
                             />
                           </div>
@@ -660,7 +660,7 @@ export function FinancialAnalysisModal({ isOpen, onClose, fieldCatalog, onApplyV
                   <button
                     type="button"
                     onClick={() => setStep(3)}
-                    className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 px-4 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 transition-colors"
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-violet-600 to-fuchsia-600 px-4 py-1.5 text-sm font-medium text-white shadow-sm hover:brightness-110 transition-colors"
                   >
                     Tiếp tục
                     <ArrowRight className="h-3.5 w-3.5" />
@@ -679,7 +679,7 @@ export function FinancialAnalysisModal({ isOpen, onClose, fieldCatalog, onApplyV
                     <button
                       type="button"
                       onClick={() => setStep(4)}
-                      className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 px-4 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 transition-colors"
+                      className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-violet-600 to-fuchsia-600 px-4 py-1.5 text-sm font-medium text-white shadow-sm hover:brightness-110 transition-colors"
                     >
                       Tiếp tục
                       <ArrowRight className="h-3.5 w-3.5" />

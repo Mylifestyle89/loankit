@@ -1,20 +1,34 @@
 import { NotFoundError } from "@/core/errors/app-error";
+import { addOneMonthClamped } from "@/lib/invoice-tracking-format-helpers";
 import { prisma } from "@/lib/prisma";
 import { notificationService } from "@/services/notification.service";
 
-/** Recalculate invoiceStatus and invoiceAmount on a beneficiary line */
+/** Recalculate invoiceStatus and invoiceAmount on a beneficiary line.
+ * Status logic: pending (no invoices) → supplementing (has invoices but total < disbursement amount) → has_invoice (total >= amount) */
 async function recalcBeneficiaryStatus(beneficiaryLineId: string) {
-  const invoices = await prisma.invoice.findMany({
-    where: { disbursementBeneficiaryId: beneficiaryLineId },
-    select: { amount: true },
-  });
-  const totalAmount = invoices.reduce((s, inv) => s + inv.amount, 0);
+  const [invoices, beneficiary] = await Promise.all([
+    prisma.invoice.findMany({
+      where: { disbursementBeneficiaryId: beneficiaryLineId },
+      select: { amount: true },
+    }),
+    prisma.disbursementBeneficiary.findUnique({
+      where: { id: beneficiaryLineId },
+      select: { amount: true },
+    }),
+  ]);
+  const totalInvoiceAmount = invoices.reduce((s, inv) => s + inv.amount, 0);
+  const disbursementAmount = beneficiary?.amount ?? 0;
+
+  let status = "pending";
+  if (invoices.length > 0 && totalInvoiceAmount < disbursementAmount) {
+    status = "supplementing";
+  } else if (invoices.length > 0 && totalInvoiceAmount >= disbursementAmount) {
+    status = "has_invoice";
+  }
+
   await prisma.disbursementBeneficiary.update({
     where: { id: beneficiaryLineId },
-    data: {
-      invoiceStatus: invoices.length > 0 ? "has_invoice" : "pending",
-      invoiceAmount: totalAmount,
-    },
+    data: { invoiceStatus: status, invoiceAmount: totalInvoiceAmount },
   });
 }
 
@@ -51,40 +65,63 @@ export const invoiceService = {
 
   async listAll(filters?: { status?: string; customerId?: string }) {
     const where: Record<string, unknown> = {};
-    if (filters?.status) where.status = filters.status;
-
-    // Filter by customer requires joining through disbursement → loan → customer
-    if (filters?.customerId) {
-      return prisma.invoice.findMany({
-        where: {
-          ...where,
-          disbursement: { loan: { customerId: filters.customerId } },
-        },
-        include: {
-          disbursement: {
-            select: {
-              id: true,
-              amount: true,
-              loan: {
-                select: {
-                  contractNumber: true,
-                  customer: { select: { id: true, customer_name: true } },
-                },
-              },
-            },
-          },
-        },
-        orderBy: { createdAt: "desc" },
-      });
+    if (filters?.status && filters.status !== "needs_supplement") {
+      where.status = filters.status;
     }
 
-    return prisma.invoice.findMany({
-      where,
+    const customerWhere = filters?.customerId
+      ? { disbursement: { loan: { customerId: filters.customerId } } }
+      : {};
+
+    const disbursementInclude = {
+      select: {
+        id: true,
+        amount: true,
+        loan: {
+          select: {
+            contractNumber: true,
+            customer: { select: { id: true, customer_name: true } },
+          },
+        },
+      },
+    } as const;
+
+    const realInvoices = await prisma.invoice.findMany({
+      where: { ...where, ...customerWhere },
+      include: { disbursement: disbursementInclude },
+      orderBy: { createdAt: "desc" },
+    });
+
+    // Build virtual entries for beneficiary lines without invoices
+    const virtualEntries = await this.getVirtualInvoiceEntries(filters?.customerId);
+
+    // If filtering by a real status (not needs_supplement), skip virtual entries
+    if (filters?.status && filters.status !== "needs_supplement") {
+      return realInvoices;
+    }
+    // If filtering specifically for needs_supplement, return only virtual
+    if (filters?.status === "needs_supplement") {
+      return virtualEntries;
+    }
+
+    return [...realInvoices, ...virtualEntries];
+  },
+
+  /** Generate virtual invoice entries for beneficiary lines that still need invoices (pending or supplementing) */
+  async getVirtualInvoiceEntries(customerId?: string) {
+    const beneficiaryWhere: Record<string, unknown> = { invoiceStatus: { in: ["pending", "supplementing"] } };
+    if (customerId) {
+      beneficiaryWhere.disbursement = { loan: { customerId } };
+    }
+
+    const lines = await prisma.disbursementBeneficiary.findMany({
+      where: beneficiaryWhere,
       include: {
         disbursement: {
           select: {
             id: true,
             amount: true,
+            disbursementDate: true,
             loan: {
               select: {
                 contractNumber: true,
@@ -94,8 +131,24 @@ export const invoiceService = {
           },
         },
       },
-      orderBy: { createdAt: "desc" },
     });
+
+    return lines.map((b) => ({
+      id: `virtual-${b.id}`,
+      disbursementId: b.disbursementId,
+      disbursementBeneficiaryId: b.id,
+      invoiceNumber: `—`,
+      supplierName: b.beneficiaryName,
+      amount: b.amount - b.invoiceAmount,
+      issueDate: b.disbursement.disbursementDate,
+      dueDate: addOneMonthClamped(b.disbursement.disbursementDate),
+      customDeadline: null,
+      status: "needs_supplement",
+      notes: null,
+      createdAt: b.disbursement.disbursementDate,
+      updatedAt: b.disbursement.disbursementDate,
+      disbursement: b.disbursement,
+    }));
   },
 
   async getById(id: string) {
@@ -121,6 +174,17 @@ export const invoiceService = {
   },
 
   async create(input: CreateInvoiceInput) {
+    // Auto-set dueDate = disbursementDate + 1 month if not provided or same as issueDate
+    if (!input.dueDate || input.dueDate === input.issueDate) {
+      const disbursement = await prisma.disbursement.findUnique({
+        where: { id: input.disbursementId },
+        select: { disbursementDate: true },
+      });
+      if (disbursement) {
+        input.dueDate = addOneMonthClamped(disbursement.disbursementDate).toISOString();
+      }
+    }
+
     // Check duplicate by BOTH invoiceNumber + supplierName
     const existing = await prisma.invoice.findFirst({
       where: {
@@ -226,6 +290,7 @@ export const invoiceService = {
             disbursements: {
               include: {
                 invoices: { select: { amount: true, status: true } },
+                beneficiaryLines: { select: { invoiceStatus: true } },
               },
             },
           },
@@ -239,6 +304,7 @@ export const invoiceService = {
       let pendingCount = 0;
       let overdueCount = 0;
       let totalDisbursements = 0;
+      let needsSupplementCount = 0;
 
       for (const loan of c.loans) {
         totalDisbursements += loan.disbursements.length;
@@ -249,18 +315,24 @@ export const invoiceService = {
             if (inv.status === "pending") pendingCount++;
             if (inv.status === "overdue") overdueCount++;
           }
+          // Count beneficiary lines that still need invoices (pending or supplementing)
+          for (const b of d.beneficiaryLines) {
+            if (b.invoiceStatus === "pending" || b.invoiceStatus === "supplementing") needsSupplementCount++;
+          }
         }
       }
 
       return {
         customerId: c.id,
         customerName: c.customer_name,
+        customerEmail: c.email,
         totalLoans: c.loans.length,
         totalDisbursements,
         totalInvoices,
         totalAmount,
         pendingCount,
         overdueCount,
+        needsSupplementCount,
       };
     });
   },

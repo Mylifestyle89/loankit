@@ -179,14 +179,14 @@ export const FieldRow = memo(function FieldRow({
     );
 
     const inputClassName =
-        "h-8 w-full rounded border border-transparent bg-transparent px-2 py-1 text-sm transition-colors placeholder:text-coral-tree-700 hover:border-coral-tree-300 focus:border-coral-tree-500 focus:bg-white dark:focus:bg-white/[0.06] focus:outline-none focus:ring-1 focus:ring-coral-tree-500";
+        "h-8 w-full rounded border border-transparent bg-transparent px-2 py-1 text-sm transition-colors placeholder:text-zinc-700 hover:border-zinc-200 focus:border-violet-500 focus:bg-white dark:focus:bg-white/[0.06] focus:outline-none focus:ring-1 focus:ring-violet-500";
 
     const textareaClassName =
-        "min-h-[80px] w-full rounded border border-transparent bg-transparent px-2 py-1.5 font-mono text-sm transition-colors whitespace-pre placeholder:text-coral-tree-700 hover:border-coral-tree-300 focus:border-coral-tree-500 focus:bg-white dark:focus:bg-white/[0.06] focus:outline-none focus:ring-1 focus:ring-coral-tree-500";
+        "min-h-[80px] w-full rounded border border-transparent bg-transparent px-2 py-1.5 font-mono text-sm transition-colors whitespace-pre placeholder:text-zinc-700 hover:border-zinc-200 focus:border-violet-500 focus:bg-white dark:focus:bg-white/[0.06] focus:outline-none focus:ring-1 focus:ring-violet-500";
 
     const isReadOnly = valueReadOnly || hasFormula;
     const readOnlyClassName = isReadOnly
-        ? "cursor-not-allowed bg-coral-tree-50 dark:bg-white/[0.04] text-coral-tree-600 hover:border-transparent focus:border-transparent focus:ring-0"
+        ? "cursor-not-allowed bg-violet-50/30 dark:bg-white/[0.04] text-zinc-500 hover:border-transparent focus:border-transparent focus:ring-0"
         : "";
 
     const valueInput =
@@ -243,7 +243,7 @@ export const FieldRow = memo(function FieldRow({
                     spellCheck={false}
                     readOnly={isReadOnly}
                 />
-                <p className="text-[10px] font-medium text-coral-tree-700 px-2">{tablePasteHint}</p>
+                <p className="text-[10px] font-medium text-zinc-700 px-2">{tablePasteHint}</p>
             </div>
         ) : (
             <input
@@ -262,14 +262,14 @@ export const FieldRow = memo(function FieldRow({
     const hasPendingOcr = ocrSuggestion?.status === "pending";
 
     return (
-        <div ref={setNodeRef} style={style} data-field-row={field.field_key} className={`group min-w-0 grid grid-cols-1 gap-2 border-t border-coral-tree-100 dark:border-white/[0.06] px-3 py-2 text-sm transition-colors md:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)_minmax(110px,140px)_auto] ${isDragging ? "bg-coral-tree-50 dark:bg-white/[0.06] opacity-80 shadow-md ring-1 ring-coral-tree-300" : hasPendingOcr ? "bg-amber-50/60 dark:bg-amber-500/10 hover:bg-amber-50/80 dark:hover:bg-amber-500/15" : "bg-white dark:bg-transparent hover:bg-coral-tree-50 dark:hover:bg-white/[0.04]"}`}>
+        <div ref={setNodeRef} style={style} data-field-row={field.field_key} className={`group min-w-0 grid grid-cols-1 gap-2 border-t border-zinc-100 dark:border-white/[0.06] px-3 py-2 text-sm transition-colors md:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)_minmax(110px,140px)_auto] ${isDragging ? "bg-violet-50/30 dark:bg-white/[0.06] opacity-80 shadow-md ring-1 ring-zinc-200" : hasPendingOcr ? "bg-amber-50/60 dark:bg-amber-500/10 hover:bg-amber-50/80 dark:hover:bg-amber-500/15" : "bg-white dark:bg-transparent hover:bg-violet-50/30 dark:hover:bg-white/[0.04]"}`}>
             <div className="flex min-w-0 items-start gap-2 pt-0.5">
                 <div className="mt-1 flex flex-col gap-0 opacity-0 transition-opacity group-hover:opacity-100">
                     <button
                         type="button"
                         {...attributes}
                         {...listeners}
-                        className="flex h-5 w-5 cursor-grab items-center justify-center rounded text-coral-tree-700 hover:bg-coral-tree-200 hover:text-coral-tree-900 active:cursor-grabbing"
+                        className="flex h-5 w-5 cursor-grab items-center justify-center rounded text-zinc-700 hover:bg-violet-100 hover:text-violet-900 active:cursor-grabbing"
                         title="Kéo để di chuyển"
                     >
                         <GripVertical className="h-4 w-4" />
@@ -282,11 +282,11 @@ export const FieldRow = memo(function FieldRow({
                         onKeyDown={(e) => navigateField(e, "label")}
                         data-field-col="label"
                         aria-label="Tên hiển thị field"
-                        className="w-full truncate rounded border border-transparent bg-transparent px-2 py-1 text-sm font-medium text-coral-tree-800 dark:text-slate-200 transition-colors hover:border-coral-tree-300 focus:border-coral-tree-500 focus:bg-white dark:focus:bg-white/[0.06] focus:outline-none focus:ring-1 focus:ring-coral-tree-500"
+                        className="w-full truncate rounded border border-transparent bg-transparent px-2 py-1 text-sm font-medium text-zinc-800 dark:text-slate-200 transition-colors hover:border-zinc-200 focus:border-violet-500 focus:bg-white dark:focus:bg-white/[0.06] focus:outline-none focus:ring-1 focus:ring-violet-500"
                         title={field.label_vi}
                     />
                     {showTechnicalKeys ? (
-                        <p className="mt-0.5 px-2 font-mono text-[10px] text-coral-tree-700 dark:text-slate-400">{field.field_key}</p>
+                        <p className="mt-0.5 px-2 font-mono text-[10px] text-zinc-700 dark:text-slate-400">{field.field_key}</p>
                     ) : null}
                     <div className="mt-0.5 flex items-center justify-between gap-2 px-2">
                         <p className="truncate text-[10px] text-zinc-400 dark:text-slate-500" title={sampleData || "Chưa có dữ liệu mẫu"}>
@@ -356,7 +356,7 @@ export const FieldRow = memo(function FieldRow({
                     onKeyDown={(e) => navigateField(e, "type")}
                     data-field-col="type"
                     aria-label={`Kiểu dữ liệu cho ${field.label_vi}`}
-                    className="cursor-pointer h-8 w-full rounded border border-transparent bg-transparent px-1.5 py-1 text-sm text-coral-tree-800 dark:text-slate-200 transition-colors hover:border-coral-tree-300 focus:border-coral-tree-500 focus:bg-white dark:focus:bg-white/[0.06] focus:outline-none focus:ring-1 focus:ring-coral-tree-500"
+                    className="cursor-pointer h-8 w-full rounded border border-transparent bg-transparent px-1.5 py-1 text-sm text-zinc-800 dark:text-slate-200 transition-colors hover:border-zinc-200 focus:border-violet-500 focus:bg-white dark:focus:bg-white/[0.06] focus:outline-none focus:ring-1 focus:ring-violet-500"
                 >
                     <option value="string">{typeLabels.string}</option>
                     <option value="number">{typeLabels.number}</option>
@@ -370,7 +370,7 @@ export const FieldRow = memo(function FieldRow({
                     <button
                         type="button"
                         onClick={onOpenFormula}
-                        className={`rounded p-1 ${hasFormula ? "bg-amber-100 text-amber-800" : "text-coral-tree-700 hover:bg-coral-tree-200 hover:text-coral-tree-900"}`}
+                        className={`rounded p-1 ${hasFormula ? "bg-amber-100 text-amber-800" : "text-zinc-700 hover:bg-violet-100 hover:text-violet-900"}`}
                         title={hasFormula ? "Sửa công thức" : "Nhập công thức"}
                     >
                         <FunctionSquare className="h-3.5 w-3.5" />
@@ -379,7 +379,7 @@ export const FieldRow = memo(function FieldRow({
                 <button
                     type="button"
                     onClick={() => onOpenChangeGroupModal(field.field_key)}
-                    className="rounded p-1 text-coral-tree-700 hover:bg-coral-tree-200 hover:text-coral-tree-900"
+                    className="rounded p-1 text-zinc-700 hover:bg-violet-100 hover:text-violet-900"
                     title={changeGroupTitle}
                 >
                     <Pencil className="h-3.5 w-3.5" />
@@ -387,7 +387,7 @@ export const FieldRow = memo(function FieldRow({
                 <button
                     type="button"
                     onClick={() => onDeleteField(field.field_key)}
-                    className="rounded p-1 text-coral-tree-700 hover:bg-red-50 hover:text-red-700"
+                    className="rounded p-1 text-zinc-700 hover:bg-red-50 hover:text-red-700"
                     title={deleteFieldTitle}
                 >
                     <Trash2 className="h-3.5 w-3.5" />

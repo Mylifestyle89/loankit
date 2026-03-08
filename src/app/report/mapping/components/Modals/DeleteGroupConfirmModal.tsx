@@ -79,7 +79,7 @@ export function DeleteGroupConfirmModal() {
           value={typedName}
           onChange={(e) => setTypedName(e.target.value)}
           placeholder="Nhập lại tên nhóm"
-          className="mt-2 h-10 w-full rounded-xl border border-slate-200/60 bg-white px-3 text-sm text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:border-white/[0.08] dark:bg-white/[0.04] dark:text-slate-100"
+          className="mt-2 h-10 w-full rounded-xl border border-slate-200/60 bg-white px-3 text-sm text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 dark:border-white/[0.08] dark:bg-white/[0.04] dark:text-slate-100"
           autoFocus
         />
       </div>

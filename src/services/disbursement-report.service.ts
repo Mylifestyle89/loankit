@@ -94,6 +94,26 @@ export async function buildReportData(
   const remainingLimit = (loan.loanAmount ?? 0) - (d.currentOutstanding ?? 0);
   const loanTermMonths = monthsBetween(loan.startDate, loan.endDate);
 
+  // Build "Hóa đơn chứng từ" detail: list beneficiary + invoice numbers, or "Cam kết bổ sung hóa đơn"
+  const invoiceDetailParts = d.beneficiaryLines
+    .filter((b) => b.beneficiaryName?.trim())
+    .map((b) => {
+      const invoiceNums = b.invoices
+        .filter((inv) => inv.invoiceNumber?.trim())
+        .map((inv) => inv.invoiceNumber.trim());
+      if (invoiceNums.length > 0) {
+        return `${b.beneficiaryName}: ${invoiceNums.join(", ")}`;
+      }
+      return `${b.beneficiaryName}: Cam kết bổ sung hóa đơn`;
+    });
+  const invoiceDetail = invoiceDetailParts.length > 0
+    ? `Hóa đơn chứng từ (${invoiceDetailParts.join("; ")})`
+    : "Hóa đơn chứng từ (Cam kết bổ sung hóa đơn)";
+
+  // Format "Số giải ngân" as "5400LDS{yyyy}0...."
+  const disbCountRaw = loan.disbursementCount ?? "";
+  const disbNumber = `5400LDS${t.yyyy}0${String(disbCountRaw).padStart(3, "0")}`;
+
   const data: Record<string, unknown> = {
     // --- Date literals ---
     Ngày: t.dd,
@@ -136,25 +156,32 @@ export async function buildReportData(
     "GN.Tổng Số tiền hóa đơn": totalInvoiceAmount,
 
     // --- Loan misc ---
-    "Số giải ngân": loan.disbursementCount ?? "",
+    "Số giải ngân": disbNumber,
 
-    // --- Loop: Beneficiary table (UNC) ---
-    UNC: d.beneficiaryLines.map((b, i) => ({
-      STT: i + 1,
-      "Khách hàng thụ hưởng": b.beneficiaryName,
-      "Số tài khoản": b.accountNumber ?? "",
-      "Nơi mở tài khoản": b.bankName ?? "",
-      "Số tiền": b.amount,
-    })),
+    // --- Checklist: Invoice detail for "danh_muc_ho_so" ---
+    "Hóa đơn chứng từ": invoiceDetail,
 
-    // --- Loop: Invoice table (HD) ---
-    HD: allInvoices.map((inv, i) => ({
-      STT: i + 1,
-      "Tổ chức phát hành": inv.supplierName,
-      "Số hóa đơn": inv.invoiceNumber,
-      "Ngày hóa đơn": fmtDate(inv.issueDate),
-      "Số tiền hóa đơn": inv.amount,
-    })),
+    // --- Loop: Beneficiary table (UNC) — filter empty lines ---
+    UNC: d.beneficiaryLines
+      .filter((b) => b.beneficiaryName?.trim() || b.amount > 0)
+      .map((b, i) => ({
+        STT: i + 1,
+        "Khách hàng thụ hưởng": b.beneficiaryName,
+        "Số tài khoản": b.accountNumber ?? "",
+        "Nơi mở tài khoản": b.bankName ?? "",
+        "Số tiền": b.amount,
+      })),
+
+    // --- Loop: Invoice table (HD) — filter empty lines ---
+    HD: allInvoices
+      .filter((inv) => inv.invoiceNumber?.trim() || inv.supplierName?.trim())
+      .map((inv, i) => ({
+        STT: i + 1,
+        "Tổ chức phát hành": inv.supplierName,
+        "Số hóa đơn": inv.invoiceNumber,
+        "Ngày hóa đơn": fmtDate(inv.issueDate),
+        "Số tiền hóa đơn": inv.amount,
+      })),
   };
 
   // Merge manual overrides — only whitelisted keys per template (security)

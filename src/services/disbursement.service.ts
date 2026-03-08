@@ -1,6 +1,7 @@
 import { NotFoundError, ValidationError } from "@/core/errors/app-error";
 import type { TrackingStatus } from "@/lib/invoice-tracking-format-helpers";
 import { prisma } from "@/lib/prisma";
+import { validateBeneficiaryAmounts, createBeneficiaryLines } from "./disbursement-beneficiary-helpers";
 
 export type BeneficiaryLineInput = {
   beneficiaryId?: string | null;
@@ -165,17 +166,8 @@ export const disbursementService = {
       throw new ValidationError("disbursementDate is not a valid date.");
     }
 
-    // Validate beneficiary amounts sum
     const beneficiaries = input.beneficiaries ?? [];
-    if (beneficiaries.length > 0) {
-      const debtAmount = input.debtAmount ?? input.amount;
-      const beneficiarySum = beneficiaries.reduce((s, b) => s + b.amount, 0);
-      if (Math.abs(beneficiarySum - debtAmount) > 0.01) {
-        throw new ValidationError(
-          `Beneficiary amounts sum (${beneficiarySum}) must equal debt amount (${debtAmount}).`,
-        );
-      }
-    }
+    validateBeneficiaryAmounts(beneficiaries, input.debtAmount ?? input.amount);
 
     const repaymentEnd = input.repaymentEndDate ? new Date(input.repaymentEndDate) : null;
 
@@ -198,42 +190,7 @@ export const disbursementService = {
         },
       });
 
-      // Create beneficiary lines + their invoices
-      for (const b of beneficiaries) {
-        const line = await tx.disbursementBeneficiary.create({
-          data: {
-            disbursementId: disbursement.id,
-            beneficiaryId: b.beneficiaryId || null,
-            beneficiaryName: b.beneficiaryName,
-            accountNumber: b.accountNumber ?? null,
-            bankName: b.bankName ?? null,
-            amount: b.amount,
-            invoiceStatus: b.invoiceStatus ?? "pending",
-          },
-        });
-
-        if (b.invoices?.length) {
-          await tx.invoice.createMany({
-            data: b.invoices.map((inv) => ({
-              disbursementId: disbursement.id,
-              disbursementBeneficiaryId: line.id,
-              invoiceNumber: inv.invoiceNumber,
-              supplierName: inv.supplierName,
-              amount: inv.amount,
-              issueDate: new Date(inv.issueDate),
-              dueDate: new Date(inv.issueDate), // default dueDate = issueDate
-            })),
-          });
-
-          // Update invoiceAmount on the line
-          const totalInv = b.invoices.reduce((s, i) => s + i.amount, 0);
-          await tx.disbursementBeneficiary.update({
-            where: { id: line.id },
-            data: { invoiceAmount: totalInv },
-          });
-        }
-      }
-
+      await createBeneficiaryLines(tx, disbursement.id, beneficiaries, date);
       return disbursement;
     });
   },
@@ -267,15 +224,7 @@ export const disbursementService = {
     if (isNaN(date.getTime())) throw new ValidationError("disbursementDate is not a valid date.");
 
     const beneficiaries = input.beneficiaries ?? [];
-    if (beneficiaries.length > 0) {
-      const debtAmount = input.debtAmount ?? input.amount;
-      const beneficiarySum = beneficiaries.reduce((s, b) => s + b.amount, 0);
-      if (Math.abs(beneficiarySum - debtAmount) > 0.01) {
-        throw new ValidationError(
-          `Beneficiary amounts sum (${beneficiarySum}) must equal debt amount (${debtAmount}).`,
-        );
-      }
-    }
+    validateBeneficiaryAmounts(beneficiaries, input.debtAmount ?? input.amount);
 
     const repaymentEnd = input.repaymentEndDate ? new Date(input.repaymentEndDate) : null;
 
@@ -304,41 +253,7 @@ export const disbursementService = {
         },
       });
 
-      // Re-create beneficiary lines + their invoices
-      for (const b of beneficiaries) {
-        const line = await tx.disbursementBeneficiary.create({
-          data: {
-            disbursementId: id,
-            beneficiaryId: b.beneficiaryId || null,
-            beneficiaryName: b.beneficiaryName,
-            accountNumber: b.accountNumber ?? null,
-            bankName: b.bankName ?? null,
-            amount: b.amount,
-            invoiceStatus: b.invoiceStatus ?? "pending",
-          },
-        });
-
-        if (b.invoices?.length) {
-          await tx.invoice.createMany({
-            data: b.invoices.map((inv) => ({
-              disbursementId: id,
-              disbursementBeneficiaryId: line.id,
-              invoiceNumber: inv.invoiceNumber,
-              supplierName: inv.supplierName,
-              amount: inv.amount,
-              issueDate: new Date(inv.issueDate),
-              dueDate: new Date(inv.issueDate),
-            })),
-          });
-
-          const totalInv = b.invoices.reduce((s, i) => s + i.amount, 0);
-          await tx.disbursementBeneficiary.update({
-            where: { id: line.id },
-            data: { invoiceAmount: totalInv },
-          });
-        }
-      }
-
+      await createBeneficiaryLines(tx, id, beneficiaries, date);
       return disbursement;
     });
   },

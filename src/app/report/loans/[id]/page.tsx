@@ -13,6 +13,7 @@ import { DisbursementReportModal } from "@/components/invoice-tracking/disbursem
 import { AddInvoiceFromLoanModal } from "@/components/invoice-tracking/add-invoice-from-loan-modal";
 import { PaginationControls } from "@/components/invoice-tracking/pagination-controls";
 import { DisbursementTable, type DisbursementRow } from "@/components/invoice-tracking/loan-detail-disbursement-table";
+import { ArrowLeft, Banknote, CheckCircle, Layers, Zap } from "lucide-react";
 import { fmtDisplay as fmt, fmtDateDisplay as fmtDate } from "@/lib/invoice-tracking-format-helpers";
 
 type DisbursementSummary = {
@@ -128,116 +129,148 @@ export default function LoanDetailPage() {
     void loadDisbursements();
   }
 
-  if (loading) return <p className="p-6 text-sm text-zinc-500 dark:text-slate-400">{t("loans.loading")}</p>;
+  if (loading) return (
+    <div className="flex items-center justify-center py-16">
+      <div className="h-6 w-6 animate-spin rounded-full border-2 border-violet-200 border-t-violet-600 dark:border-violet-800 dark:border-t-violet-400" />
+    </div>
+  );
   if (error || !loan) return <p className="p-6 text-sm text-red-700 dark:text-red-400">{error || "Not found"}</p>;
 
   return (
-    <section className="space-y-4">
-      {/* Loan info card */}
-      <div className="rounded-xl border border-coral-tree-200 dark:border-white/[0.08] bg-white dark:bg-[#141414]/90 p-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-lg font-semibold">{loan.contractNumber}</h2>
-            <p className="text-sm text-zinc-500 dark:text-slate-400">{loan.customer.customer_name}</p>
+    <section className="space-y-5">
+      {/* Hero card */}
+      <div className="relative overflow-hidden rounded-2xl border border-violet-100 dark:border-violet-500/10 bg-gradient-to-br from-violet-50 via-white to-fuchsia-50 dark:from-violet-950/30 dark:via-[#141414] dark:to-fuchsia-950/20 p-5">
+        <div className="absolute -right-12 -top-12 h-40 w-40 rounded-full bg-violet-200/30 blur-3xl dark:bg-violet-500/10" />
+        <div className="relative">
+          {/* Top row: back + title + actions */}
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex items-start gap-3">
+              <Link href="/report/loans"
+                className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/80 dark:bg-white/[0.06] border border-zinc-200 dark:border-white/[0.08] text-zinc-500 dark:text-slate-400 transition-colors hover:bg-violet-50 dark:hover:bg-violet-500/10 hover:text-violet-600 dark:hover:text-violet-400">
+                <ArrowLeft className="h-4 w-4" />
+              </Link>
+              <div>
+                <div className="flex items-center gap-2.5">
+                  <h2 className="text-xl font-bold tracking-tight bg-gradient-to-r from-violet-700 to-fuchsia-600 dark:from-violet-400 dark:to-fuchsia-400 bg-clip-text text-transparent">
+                    {loan.contractNumber}
+                  </h2>
+                  <LoanStatusBadge status={loan.status} />
+                </div>
+                <p className="mt-0.5 text-sm text-zinc-500 dark:text-slate-400">{loan.customer.customer_name}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <button type="button" onClick={() => setShowBeneficiaryModal(true)}
+                className="rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-white/80 dark:bg-white/[0.05] px-3 py-1.5 text-xs font-medium text-zinc-600 dark:text-slate-300 transition-colors hover:bg-violet-50 dark:hover:bg-violet-500/10 hover:text-violet-700 dark:hover:text-violet-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40">
+                {t("beneficiaries.title") ?? "Đơn vị thụ hưởng"}
+              </button>
+              <button type="button" onClick={() => setShowEditModal(true)}
+                className="rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-white/80 dark:bg-white/[0.05] px-3 py-1.5 text-xs font-medium text-zinc-600 dark:text-slate-300 transition-colors hover:bg-violet-50 dark:hover:bg-violet-500/10 hover:text-violet-700 dark:hover:text-violet-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40">
+                {t("common.edit")}
+              </button>
+              <Link href={`/report/invoices?customerId=${loan.customer.id}`}
+                className="rounded-lg bg-gradient-to-r from-violet-600 to-fuchsia-600 px-3 py-1.5 text-xs font-medium text-white shadow-sm shadow-violet-500/25 transition-all hover:shadow-md hover:brightness-110">
+                {t("invoices.manage") ?? "Quản lý hóa đơn"}
+              </Link>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            <LoanStatusBadge status={loan.status} />
-            <button
-              type="button"
-              onClick={() => setShowBeneficiaryModal(true)}
-              className="cursor-pointer rounded-md border border-coral-tree-300 dark:border-white/[0.09] px-3 py-1 text-xs transition-colors duration-150 hover:bg-coral-tree-100 dark:hover:bg-white/[0.06] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/50"
-            >
-              {t("beneficiaries.title") ?? "Đơn vị thụ hưởng"}
-            </button>
-            <button
-              type="button"
-              onClick={() => setShowEditModal(true)}
-              className="cursor-pointer rounded-md border border-coral-tree-300 dark:border-white/[0.09] px-3 py-1 text-xs transition-colors duration-150 hover:bg-coral-tree-100 dark:hover:bg-white/[0.06] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/50"
-            >
-              {t("common.edit")}
-            </button>
-            <Link
-              href={`/report/invoices?customerId=${loan.customer.id}`}
-              className="rounded-md border border-coral-tree-300 dark:border-white/[0.09] px-3 py-1 text-xs transition-colors duration-150 hover:bg-coral-tree-100 dark:hover:bg-white/[0.06] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/50"
-            >
-              {t("invoices.manage") ?? "Quản lý hóa đơn"}
-            </Link>
+
+          {/* Loan details grid */}
+          <div className="relative mt-4 grid grid-cols-2 gap-3 text-sm md:grid-cols-4">
+            <div className="rounded-lg bg-white/60 dark:bg-white/[0.04] border border-zinc-100 dark:border-white/[0.05] p-3">
+              <span className="text-xs text-zinc-400 dark:text-slate-500">{t("loans.loanAmount")}</span>
+              <p className="mt-0.5 font-semibold tabular-nums">{fmt(loan.loanAmount)} VND</p>
+            </div>
+            <div className="rounded-lg bg-white/60 dark:bg-white/[0.04] border border-zinc-100 dark:border-white/[0.05] p-3">
+              <span className="text-xs text-zinc-400 dark:text-slate-500">{t("loans.interestRate")}</span>
+              <p className="mt-0.5 font-semibold">{loan.interestRate != null ? `${loan.interestRate}%` : "—"}</p>
+            </div>
+            <div className="rounded-lg bg-white/60 dark:bg-white/[0.04] border border-zinc-100 dark:border-white/[0.05] p-3">
+              <span className="text-xs text-zinc-400 dark:text-slate-500">{t("loans.startDate")}</span>
+              <p className="mt-0.5 font-semibold">{fmtDate(loan.startDate)}</p>
+            </div>
+            <div className="rounded-lg bg-white/60 dark:bg-white/[0.04] border border-zinc-100 dark:border-white/[0.05] p-3">
+              <span className="text-xs text-zinc-400 dark:text-slate-500">{t("loans.endDate")}</span>
+              <p className="mt-0.5 font-semibold">{fmtDate(loan.endDate)}</p>
+            </div>
           </div>
+          {(loan.collateralValue != null || loan.securedObligation != null || loan.disbursementLimitByAsset != null) && (
+            <div className="mt-2 grid grid-cols-2 gap-3 text-sm md:grid-cols-4">
+              <div className="rounded-lg bg-white/60 dark:bg-white/[0.04] border border-zinc-100 dark:border-white/[0.05] p-3">
+                <span className="text-xs text-zinc-400 dark:text-slate-500">{t("loans.collateralValue")}</span>
+                <p className="mt-0.5 font-semibold tabular-nums">{loan.collateralValue != null ? `${fmt(loan.collateralValue)} VND` : "—"}</p>
+              </div>
+              <div className="rounded-lg bg-white/60 dark:bg-white/[0.04] border border-zinc-100 dark:border-white/[0.05] p-3">
+                <span className="text-xs text-zinc-400 dark:text-slate-500">{t("loans.securedObligation")}</span>
+                <p className="mt-0.5 font-semibold tabular-nums">{loan.securedObligation != null ? `${fmt(loan.securedObligation)} VND` : "—"}</p>
+              </div>
+              <div className="rounded-lg bg-white/60 dark:bg-white/[0.04] border border-zinc-100 dark:border-white/[0.05] p-3">
+                <span className="text-xs text-zinc-400 dark:text-slate-500">{t("loans.disbursementLimitByAsset")}</span>
+                <p className="mt-0.5 font-semibold tabular-nums">{loan.disbursementLimitByAsset != null ? `${fmt(loan.disbursementLimitByAsset)} VND` : "—"}</p>
+              </div>
+            </div>
+          )}
+          {loan.purpose && (
+            <p className="mt-3 text-sm text-zinc-500 dark:text-slate-400">{t("loans.purpose")}: {loan.purpose}</p>
+          )}
         </div>
-        <div className="mt-3 grid grid-cols-2 gap-4 text-sm md:grid-cols-4">
-          <div>
-            <span className="text-zinc-400 dark:text-slate-500">{t("loans.loanAmount")}</span>
-            <p className="font-medium">{fmt(loan.loanAmount)} VND</p>
-          </div>
-          <div>
-            <span className="text-zinc-400 dark:text-slate-500">{t("loans.interestRate")}</span>
-            <p className="font-medium">{loan.interestRate != null ? `${loan.interestRate}%` : "—"}</p>
-          </div>
-          <div>
-            <span className="text-zinc-400 dark:text-slate-500">{t("loans.startDate")}</span>
-            <p className="font-medium">{fmtDate(loan.startDate)}</p>
-          </div>
-          <div>
-            <span className="text-zinc-400 dark:text-slate-500">{t("loans.endDate")}</span>
-            <p className="font-medium">{fmtDate(loan.endDate)}</p>
-          </div>
-        </div>
-        {(loan.collateralValue != null || loan.securedObligation != null || loan.disbursementLimitByAsset != null) && (
-          <div className="mt-3 grid grid-cols-2 gap-4 text-sm md:grid-cols-4">
-            <div>
-              <span className="text-zinc-400 dark:text-slate-500">{t("loans.collateralValue")}</span>
-              <p className="font-medium">{loan.collateralValue != null ? `${fmt(loan.collateralValue)} VND` : "—"}</p>
-            </div>
-            <div>
-              <span className="text-zinc-400 dark:text-slate-500">{t("loans.securedObligation")}</span>
-              <p className="font-medium">{loan.securedObligation != null ? `${fmt(loan.securedObligation)} VND` : "—"}</p>
-            </div>
-            <div>
-              <span className="text-zinc-400 dark:text-slate-500">{t("loans.disbursementLimitByAsset")}</span>
-              <p className="font-medium">{loan.disbursementLimitByAsset != null ? `${fmt(loan.disbursementLimitByAsset)} VND` : "—"}</p>
-            </div>
-          </div>
-        )}
-        {loan.purpose && (
-          <p className="mt-2 text-sm text-zinc-500 dark:text-slate-400">{t("loans.purpose")}: {loan.purpose}</p>
-        )}
       </div>
 
-      {/* Summary bar */}
+      {/* Summary cards */}
       {summary && (
-        <div className="flex flex-wrap gap-4 rounded-xl border border-coral-tree-200 dark:border-white/[0.08] bg-white dark:bg-[#141414]/90 px-4 py-3 text-sm">
-          <div>
-            <span className="text-zinc-400 dark:text-slate-500">{t("disbursements.totalDisbursed") ?? "Tổng giải ngân"}</span>
-            <p className="font-medium tabular-nums">{fmt(summary.totalDisbursed)} VND</p>
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+          <div className="flex items-center gap-3 rounded-xl border border-zinc-200 dark:border-white/[0.07] bg-white dark:bg-[#161616] p-3.5 shadow-sm">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-100 dark:bg-violet-500/15">
+              <Banknote className="h-5 w-5 text-violet-600 dark:text-violet-400" />
+            </div>
+            <div>
+              <p className="text-xs text-zinc-400 dark:text-slate-500">{t("disbursements.totalDisbursed") ?? "Tổng giải ngân"}</p>
+              <p className="font-bold tabular-nums text-sm">{fmt(summary.totalDisbursed)}</p>
+            </div>
           </div>
-          <div>
-            <span className="text-zinc-400 dark:text-slate-500">{t("disbursements.count") ?? "Số lượng"}</span>
-            <p className="font-medium tabular-nums">{summary.disbursementCount}</p>
+          <div className="flex items-center gap-3 rounded-xl border border-zinc-200 dark:border-white/[0.07] bg-white dark:bg-[#161616] p-3.5 shadow-sm">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-sky-100 dark:bg-sky-500/15">
+              <Layers className="h-5 w-5 text-sky-600 dark:text-sky-400" />
+            </div>
+            <div>
+              <p className="text-xs text-zinc-400 dark:text-slate-500">{t("disbursements.count") ?? "Số lượng"}</p>
+              <p className="font-bold tabular-nums text-sm">{summary.disbursementCount}</p>
+            </div>
           </div>
-          <div>
-            <span className="text-zinc-400 dark:text-slate-500">{t("disbursements.active") ?? "Đang hoạt động"}</span>
-            <p className="font-medium tabular-nums">{summary.activeCount}</p>
+          <div className="flex items-center gap-3 rounded-xl border border-zinc-200 dark:border-white/[0.07] bg-white dark:bg-[#161616] p-3.5 shadow-sm">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-100 dark:bg-emerald-500/15">
+              <Zap className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+            </div>
+            <div>
+              <p className="text-xs text-zinc-400 dark:text-slate-500">{t("disbursements.active") ?? "Đang hoạt động"}</p>
+              <p className="font-bold tabular-nums text-sm">{summary.activeCount}</p>
+            </div>
           </div>
-          <div>
-            <span className="text-zinc-400 dark:text-slate-500">{t("disbursements.completed") ?? "Đã hoàn thành"}</span>
-            <p className="font-medium tabular-nums">{summary.completedCount}</p>
+          <div className="flex items-center gap-3 rounded-xl border border-zinc-200 dark:border-white/[0.07] bg-white dark:bg-[#161616] p-3.5 shadow-sm">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-fuchsia-100 dark:bg-fuchsia-500/15">
+              <CheckCircle className="h-5 w-5 text-fuchsia-600 dark:text-fuchsia-400" />
+            </div>
+            <div>
+              <p className="text-xs text-zinc-400 dark:text-slate-500">{t("disbursements.completed") ?? "Đã hoàn thành"}</p>
+              <p className="font-bold tabular-nums text-sm">{summary.completedCount}</p>
+            </div>
           </div>
         </div>
       )}
 
-      {/* Toolbar: search + filter + add */}
+      {/* Toolbar */}
       <div className="flex flex-wrap items-center gap-3">
         <input
           type="text"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder={t("disbursements.searchPlaceholder") ?? "Tìm kiếm mô tả..."}
-          className="flex-1 min-w-[200px] rounded-md border border-zinc-300 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] px-3 py-2 text-sm transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/50"
+          className="flex-1 min-w-[200px] rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] px-3 py-2 text-sm shadow-sm transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40"
         />
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="cursor-pointer rounded-md border border-zinc-300 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] px-3 py-2 text-sm transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/50"
+          className="cursor-pointer rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] px-3 py-2 text-sm shadow-sm transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40"
         >
           <option value="">{t("invoices.all") ?? "Tất cả"}</option>
           <option value="active">{t("disbursements.active") ?? "Đang hoạt động"}</option>
@@ -247,14 +280,14 @@ export default function LoanDetailPage() {
         <button
           type="button"
           onClick={() => setShowModal(true)}
-          className="cursor-pointer rounded-md bg-indigo-600 px-4 py-2 text-sm text-white transition-colors duration-150 hover:bg-indigo-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/50"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-violet-600 to-fuchsia-600 px-4 py-2 text-sm font-medium text-white shadow-sm shadow-violet-500/25 transition-all hover:shadow-md hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/50"
         >
           {t("disbursements.add")}
         </button>
       </div>
 
       {/* Disbursement table */}
-      <div className="rounded-xl border border-coral-tree-200 dark:border-white/[0.08] bg-white dark:bg-[#141414]/90 overflow-hidden">
+      <div className="rounded-xl border border-zinc-200 dark:border-white/[0.07] bg-white dark:bg-[#161616] overflow-hidden shadow-sm">
         <DisbursementTable
           disbursements={disbursements}
           loading={disbLoading}

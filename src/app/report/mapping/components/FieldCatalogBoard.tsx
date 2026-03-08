@@ -112,7 +112,7 @@ export function FieldCatalogBoard({
                   type="button"
                   onClick={collapseAllGroups}
                   disabled={parentGroups.length === 0 || collapsedParentGroups.length === parentGroups.length}
-                  className="rounded-md border border-zinc-200 dark:border-white/[0.08] bg-white dark:bg-white/[0.05] p-1 text-zinc-500 dark:text-slate-400 transition-colors hover:bg-indigo-50 dark:hover:bg-indigo-500/10 hover:border-indigo-300 hover:text-indigo-600 dark:hover:text-indigo-400 disabled:opacity-30"
+                  className="rounded-md border border-zinc-200 dark:border-white/[0.08] bg-white dark:bg-white/[0.05] p-1 text-zinc-500 dark:text-slate-400 transition-colors hover:bg-violet-50 dark:hover:bg-violet-500/10 hover:border-violet-300 hover:text-violet-600 dark:hover:text-violet-400 disabled:opacity-30"
                   title={t("mapping.collapseAllGroups")}
                 >
                   <ChevronsUp className="h-3 w-3" />
@@ -121,7 +121,7 @@ export function FieldCatalogBoard({
                   type="button"
                   onClick={expandAllGroups}
                   disabled={collapsedParentGroups.length === 0}
-                  className="rounded-md border border-zinc-200 dark:border-white/[0.08] bg-white dark:bg-white/[0.05] p-1 text-zinc-500 dark:text-slate-400 transition-colors hover:bg-indigo-50 dark:hover:bg-indigo-500/10 hover:border-indigo-300 hover:text-indigo-600 dark:hover:text-indigo-400 disabled:opacity-30"
+                  className="rounded-md border border-zinc-200 dark:border-white/[0.08] bg-white dark:bg-white/[0.05] p-1 text-zinc-500 dark:text-slate-400 transition-colors hover:bg-violet-50 dark:hover:bg-violet-500/10 hover:border-violet-300 hover:text-violet-600 dark:hover:text-violet-400 disabled:opacity-30"
                   title={t("mapping.expandAllGroups")}
                 >
                   <ChevronsDown className="h-3 w-3" />
@@ -139,7 +139,7 @@ export function FieldCatalogBoard({
                           type="button"
                           onClick={() => toggleParentCollapse(node.parent)}
                           title={node.parent}
-                          className="inline-flex flex-1 min-w-0 items-center gap-1 rounded-lg border border-indigo-200 dark:border-indigo-500/30 bg-indigo-50 dark:bg-indigo-500/10 px-2 py-1 text-[11px] font-medium text-indigo-800 dark:text-indigo-400 transition-colors hover:bg-indigo-100 dark:hover:bg-indigo-500/20"
+                          className="inline-flex flex-1 min-w-0 items-center gap-1 rounded-lg border border-violet-200 dark:border-violet-500/30 bg-violet-50 dark:bg-violet-500/10 px-2 py-1 text-[11px] font-medium text-violet-800 dark:text-violet-400 transition-colors hover:bg-violet-100 dark:hover:bg-violet-500/20"
                         >
                           {collapsedParentGroups.includes(node.parent) ? <ChevronDown className="h-3 w-3 shrink-0" /> : <ChevronUp className="h-3 w-3 shrink-0" />}
                           <span className="truncate">{node.parent}</span>
@@ -147,7 +147,7 @@ export function FieldCatalogBoard({
                         <button
                           type="button"
                           onClick={() => openCreateSubgroupModal(node.parent)}
-                          className="shrink-0 rounded-md border border-zinc-200 dark:border-white/[0.08] bg-white dark:bg-white/[0.05] p-1.5 text-zinc-500 dark:text-slate-400 transition-colors hover:border-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 hover:text-indigo-700 dark:hover:text-indigo-400"
+                          className="shrink-0 rounded-md border border-zinc-200 dark:border-white/[0.08] bg-white dark:bg-white/[0.05] p-1.5 text-zinc-500 dark:text-slate-400 transition-colors hover:border-violet-300 hover:bg-violet-50 dark:hover:bg-violet-500/10 hover:text-violet-700 dark:hover:text-violet-400"
                           title={t("mapping.addSubgroup")}
                         >
                           <Plus className="h-3 w-3" />
@@ -174,8 +174,8 @@ export function FieldCatalogBoard({
             className="group relative hidden w-3 shrink-0 cursor-col-resize items-center justify-center bg-transparent outline-none md:flex"
             aria-label="Resize panels"
           >
-            <div className="h-full w-px rounded-full bg-slate-200/70 transition-colors group-hover:bg-indigo-300/80 group-focus-visible:bg-indigo-400 group-data-[resize-handle-state=drag]:bg-indigo-500" />
-            <div className="pointer-events-none absolute inset-y-0 left-1/2 w-2 -translate-x-1/2 rounded-full bg-indigo-100/0 transition-colors group-hover:bg-indigo-100/70 group-focus-visible:bg-indigo-100/80 group-data-[resize-handle-state=drag]:bg-indigo-200/80" />
+            <div className="h-full w-px rounded-full bg-slate-200/70 transition-colors group-hover:bg-violet-300/80 group-focus-visible:bg-violet-400 group-data-[resize-handle-state=drag]:bg-violet-500" />
+            <div className="pointer-events-none absolute inset-y-0 left-1/2 w-2 -translate-x-1/2 rounded-full bg-violet-100/0 transition-colors group-hover:bg-violet-100/70 group-focus-visible:bg-violet-100/80 group-data-[resize-handle-state=drag]:bg-violet-200/80" />
           </Separator>
 
           {/* Right column: Field chips */}
@@ -199,7 +199,7 @@ export function FieldCatalogBoard({
                 <button
                   type="button"
                   onClick={onOpenAddFieldModal}
-                  className="flex flex-shrink-0 items-center gap-1.5 rounded-lg bg-indigo-600 px-4 py-2 text-sm text-white shadow-glow transition-colors hover:bg-indigo-700"
+                  className="flex flex-shrink-0 items-center gap-1.5 rounded-lg bg-gradient-to-r from-violet-600 to-fuchsia-600 px-4 py-2 text-sm text-white shadow-sm shadow-violet-500/25 transition-all duration-200 hover:shadow-md hover:shadow-violet-500/30 hover:brightness-110"
                 >
                   <Plus className="h-4 w-4" />
                   Thêm trường dữ liệu (Field)
@@ -213,16 +213,16 @@ export function FieldCatalogBoard({
           <div key={node.parent} className={collapsedParentGroups.includes(node.parent) ? "hidden" : "space-y-3"}>
             {/* Parent group header */}
             <div className="flex items-center gap-2.5 pt-1 pb-0.5">
-              <span className="shrink-0 text-[13px] font-bold tracking-wide text-indigo-700 dark:text-indigo-400">
+              <span className="shrink-0 text-[13px] font-bold tracking-wide text-violet-700 dark:text-violet-400">
                 {node.parent}
               </span>
-              <div className="flex-1 border-t border-indigo-200/60 dark:border-indigo-500/25" />
+              <div className="flex-1 border-t border-violet-200/60 dark:border-violet-500/25" />
             </div>
             {!collapsedParentGroups.includes(node.parent)
               ? node.children.map((child) => (
                   <div key={child.fullPath} className="space-y-2">
                     <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-slate-200/60 dark:border-white/[0.07] bg-slate-50/70 dark:bg-white/[0.04] p-2">
-                      <span className="rounded-full bg-indigo-100 dark:bg-indigo-500/10 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-indigo-700 dark:text-indigo-400">
+                      <span className="rounded-full bg-violet-100 dark:bg-violet-500/10 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-violet-700 dark:text-violet-400">
                         {child.subgroup || t("mapping.groupPathRoot")}
                       </span>
                       <div className="flex flex-wrap items-center gap-1.5">
@@ -238,7 +238,7 @@ export function FieldCatalogBoard({
                         <button
                           type="button"
                           onClick={() => prepareAddFieldForGroup(child.fullPath)}
-                          className="inline-flex items-center gap-1 rounded-lg border border-zinc-200 dark:border-white/[0.08] bg-white dark:bg-white/[0.05] px-2 py-1 text-[11px] font-medium text-zinc-600 dark:text-slate-300 transition-colors hover:border-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 hover:text-indigo-800 dark:hover:text-indigo-400"
+                          className="inline-flex items-center gap-1 rounded-lg border border-zinc-200 dark:border-white/[0.08] bg-white dark:bg-white/[0.05] px-2 py-1 text-[11px] font-medium text-zinc-600 dark:text-slate-300 transition-colors hover:border-violet-300 hover:bg-violet-50 dark:hover:bg-violet-500/10 hover:text-violet-800 dark:hover:text-violet-400"
                         >
                           <Plus className="h-3 w-3" />
                           {t("mapping.addField")}
@@ -246,7 +246,7 @@ export function FieldCatalogBoard({
                         <button
                           type="button"
                           onClick={() => openEditGroupModal(child.fullPath)}
-                          className="inline-flex items-center gap-1 rounded-lg border border-zinc-200 dark:border-white/[0.08] bg-white dark:bg-white/[0.05] px-2 py-1 text-[11px] font-medium text-zinc-600 dark:text-slate-300 transition-colors hover:border-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 hover:text-indigo-800 dark:hover:text-indigo-400"
+                          className="inline-flex items-center gap-1 rounded-lg border border-zinc-200 dark:border-white/[0.08] bg-white dark:bg-white/[0.05] px-2 py-1 text-[11px] font-medium text-zinc-600 dark:text-slate-300 transition-colors hover:border-violet-300 hover:bg-violet-50 dark:hover:bg-violet-500/10 hover:text-violet-800 dark:hover:text-violet-400"
                         >
                           <Pencil className="h-3 w-3" />
                           {t("mapping.editGroup")}

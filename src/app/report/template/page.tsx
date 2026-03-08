@@ -294,29 +294,39 @@ export default function TemplatePage() {
   }, [fieldsByGroup, selectedFieldTemplateId]);
 
   if (loading) {
-    return <p className="text-sm text-coral-tree-600">{t("template.loading")}</p>;
+    return (
+      <div className="flex items-center justify-center py-16">
+        <div className="h-6 w-6 animate-spin rounded-full border-2 border-violet-200 border-t-violet-600 dark:border-violet-800 dark:border-t-violet-400" />
+      </div>
+    );
   }
 
   return (
-    <section className="space-y-4">
-      <div className="rounded-xl border border-coral-tree-200 bg-white dark:bg-[#141414]/90 p-4">
-        <h2 className="text-lg font-semibold">{t("nav.template")}</h2>
-        <p className="mt-1 text-sm text-coral-tree-600">{t("template.desc")}</p>
-        {message ? <p className="mt-2 text-sm text-emerald-700">{message}</p> : null}
-        {error ? <p className="mt-2 text-sm text-red-700">{error}</p> : null}
+    <section className="space-y-5">
+      {/* Header with gradient accent */}
+      <div className="relative overflow-hidden rounded-2xl border border-violet-100 dark:border-violet-500/10 bg-gradient-to-br from-violet-50 via-white to-fuchsia-50 dark:from-violet-950/30 dark:via-[#141414] dark:to-fuchsia-950/20 p-5">
+        <div className="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-violet-200/30 blur-2xl dark:bg-violet-500/10" />
+        <div className="relative">
+          <h2 className="text-xl font-bold tracking-tight bg-gradient-to-r from-violet-700 to-fuchsia-600 dark:from-violet-400 dark:to-fuchsia-400 bg-clip-text text-transparent">
+            {t("nav.template")}
+          </h2>
+          <p className="mt-1 text-sm text-zinc-500 dark:text-slate-400">{t("template.desc")}</p>
+          {message && <p className="mt-2 text-sm text-emerald-600 dark:text-emerald-400">{message}</p>}
+          {error && <p className="mt-2 text-sm text-red-600 dark:text-red-400">{error}</p>}
+        </div>
       </div>
 
       {/* Template editor: open DOCX + inject field toolbar */}
       {templates.length > 0 ? (
-        <div className="rounded-xl border border-coral-tree-200 bg-white dark:bg-[#141414]/90 p-4">
-          <h3 className="text-base font-semibold">{t("template.editor.title")}</h3>
-          <p className="mt-1 text-sm text-coral-tree-600">{t("template.editor.desc")}</p>
+        <div className="rounded-2xl border border-zinc-200 dark:border-white/[0.07] bg-white dark:bg-[#161616] p-4 shadow-sm">
+          <h3 className="text-base font-bold tracking-tight">{t("template.editor.title")}</h3>
+          <p className="mt-1 text-sm text-zinc-500 dark:text-slate-400">{t("template.editor.desc")}</p>
           <div className="mt-3 flex flex-wrap items-center gap-3">
             <select
               value={activeTemplateId}
               onChange={(e) => setActiveTemplateId(e.target.value)}
               aria-label={t("template.editor.title")}
-              className="rounded-md border border-coral-tree-300 bg-white dark:bg-white/[0.05] dark:text-slate-100 px-3 py-2 text-sm"
+              className="rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] dark:text-slate-100 px-3 py-2 text-sm shadow-sm transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40"
             >
               {templates.map((tpl) => (
                 <option key={tpl.id} value={tpl.id}>
@@ -328,7 +338,7 @@ export default function TemplatePage() {
               type="button"
               onClick={openDocx}
               disabled={!docxPath}
-              className="rounded-md border border-coral-tree-300 px-4 py-2 text-sm disabled:opacity-50"
+              className="rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] px-4 py-2 text-sm shadow-sm transition-all duration-150 hover:border-violet-200 dark:hover:border-violet-500/20 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40"
             >
               {t("template.editor.openDocx")}
             </button>
@@ -340,7 +350,7 @@ export default function TemplatePage() {
                 (editorType === "eigenpal" && availableFieldCatalog.length === 0) ||
                 openingEditor
               }
-              className="rounded-md bg-coral-tree-600 px-4 py-2 text-sm text-white disabled:opacity-50 hover:bg-coral-tree-700"
+              className="rounded-lg bg-gradient-to-r from-violet-600 to-fuchsia-600 px-4 py-2 text-sm font-medium text-white shadow-sm shadow-violet-500/25 transition-all duration-200 hover:shadow-md hover:shadow-violet-500/30 hover:brightness-110 disabled:opacity-50"
             >
               {openingEditor ? t("template.editor.modal.loading") : t("template.editor.openEditor")}
             </button>
@@ -356,7 +366,7 @@ export default function TemplatePage() {
               type="button"
               onClick={() => localDocxInputRef.current?.click()}
               disabled={openingEditor}
-              className="rounded-md border border-coral-tree-300 px-4 py-2 text-sm disabled:opacity-50 hover:bg-coral-tree-50"
+              className="rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] px-4 py-2 text-sm shadow-sm transition-all duration-150 hover:border-violet-200 dark:hover:border-violet-500/20 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40"
             >
               {openingEditor ? "Đang mở..." : "Chọn mẫu từ folder để chỉnh sửa"}
             </button>
@@ -399,15 +409,15 @@ export default function TemplatePage() {
             )}
           </div>
           <div className="mt-4">
-            <p className="mb-2 text-sm font-medium text-coral-tree-700">{t("template.editor.injectHint")}</p>
+            <p className="mb-2 text-sm font-medium text-zinc-700 dark:text-slate-300">{t("template.editor.injectHint")}</p>
             <div className="flex flex-wrap items-end gap-3">
               <div className="flex flex-col gap-1">
-                <label className="text-xs text-coral-tree-600">{t("mapping.selectFieldTemplate")}</label>
+                <label className="text-xs text-zinc-500 dark:text-slate-400">{t("mapping.selectFieldTemplate")}</label>
                 <select
                   value={selectedFieldTemplateId}
                   onChange={(e) => setSelectedFieldTemplateId(e.target.value)}
                   aria-label={t("mapping.selectFieldTemplate")}
-                  className="min-w-64 rounded-md border border-coral-tree-300 bg-white dark:bg-white/[0.05] dark:text-slate-100 px-3 py-2 text-sm"
+                  className="min-w-64 rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] dark:text-slate-100 px-3 py-2 text-sm shadow-sm transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40"
                 >
                   {fieldTemplates.map((item) => (
                     <option key={item.id} value={item.id}>
@@ -417,12 +427,12 @@ export default function TemplatePage() {
                 </select>
               </div>
               <div className="flex flex-col gap-1">
-                <label className="text-xs text-coral-tree-600">{t("template.editor.selectGroup")}</label>
+                <label className="text-xs text-zinc-500 dark:text-slate-400">{t("template.editor.selectGroup")}</label>
                 <select
                   value={selectedGroup}
                   onChange={(e) => setSelectedGroup(e.target.value)}
                   aria-label={t("template.editor.selectGroup")}
-                  className="min-w-48 rounded-md border border-coral-tree-300 bg-white dark:bg-white/[0.05] dark:text-slate-100 px-3 py-2 text-sm"
+                  className="min-w-48 rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] dark:text-slate-100 px-3 py-2 text-sm shadow-sm transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40"
                   disabled={!selectedFieldTemplateId || groups.length === 0}
                 >
                   {groups.map((group) => (
@@ -433,12 +443,12 @@ export default function TemplatePage() {
                 </select>
               </div>
               <div className="flex flex-col gap-1">
-                <label className="text-xs text-coral-tree-600">{t("template.editor.selectField")}</label>
+                <label className="text-xs text-zinc-500 dark:text-slate-400">{t("template.editor.selectField")}</label>
                 <select
                   value={selectedFieldKey}
                   onChange={(e) => setSelectedFieldKey(e.target.value)}
                   aria-label={t("template.editor.selectField")}
-                  className="min-w-64 rounded-md border border-coral-tree-300 bg-white dark:bg-white/[0.05] dark:text-slate-100 px-3 py-2 text-sm"
+                  className="min-w-64 rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] dark:text-slate-100 px-3 py-2 text-sm shadow-sm transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40"
                   disabled={!selectedFieldTemplateId || fieldsInSelectedGroup.length === 0}
                 >
                   {fieldsInSelectedGroup.map((field) => (
@@ -452,7 +462,7 @@ export default function TemplatePage() {
                 type="button"
                 onClick={() => injectField()}
                 disabled={!selectedFieldKey}
-                className="rounded-md bg-coral-tree-600 px-4 py-2 text-sm text-white disabled:opacity-50 hover:bg-coral-tree-700"
+                className="rounded-lg bg-gradient-to-r from-violet-600 to-fuchsia-600 px-4 py-2 text-sm font-medium text-white shadow-sm shadow-violet-500/25 transition-all duration-200 hover:shadow-md hover:shadow-violet-500/30 hover:brightness-110 disabled:opacity-50"
               >
                 {t("template.editor.injectButton")}
               </button>
@@ -461,7 +471,7 @@ export default function TemplatePage() {
               ) : null}
             </div>
             {availableFieldCatalog.length === 0 ? (
-              <p className="mt-2 text-xs text-coral-tree-500">{t("template.editor.noFields")}</p>
+              <p className="mt-2 text-xs text-zinc-400 dark:text-slate-500">{t("template.editor.noFields")}</p>
             ) : null}
           </div>
         </div>
