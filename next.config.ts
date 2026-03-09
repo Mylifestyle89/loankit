@@ -31,6 +31,9 @@ const nextConfig: NextConfig = {
     "@libsql/client",
     "@prisma/adapter-libsql",
   ],
+  outputFileTracingExcludes: {
+    "/middleware": ["./node_modules/better-sqlite3/**", "./node_modules/@prisma/**", "./prisma/**"],
+  },
   turbopack: {
     root: process.cwd(),
   },
