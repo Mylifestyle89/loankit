@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { toHttpError } from "@/core/errors/app-error";
-import { requireSession, requireEditorOrAdmin, handleAuthError } from "@/lib/auth-guard";
+import { requireSession, requireEditorOrAdmin, requireOwnerOrAdmin, handleAuthError } from "@/lib/auth-guard";
 import { reportService } from "@/services/report.service";
+import { prisma } from "@/lib/prisma";
 
 export const runtime = "nodejs";
 
@@ -71,12 +72,15 @@ export async function PATCH(req: NextRequest) {
 
 export async function PUT(req: NextRequest) {
   try {
-    await requireEditorOrAdmin();
     const body = (await req.json()) as {
       template_id?: string;
       name?: string;
       field_catalog?: unknown[];
     };
+    // Ownership check: editor can only update own templates
+    const template = await prisma.fieldTemplateMaster.findUnique({ where: { id: body.template_id ?? "" } });
+    if (template) await requireOwnerOrAdmin(template.createdBy);
+    else await requireEditorOrAdmin();
     const result = await reportService.updateFieldTemplate({
       templateId: body.template_id ?? "",
       name: body.name,

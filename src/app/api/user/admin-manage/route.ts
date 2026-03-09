@@ -34,6 +34,9 @@ export async function PATCH(req: NextRequest) {
 
     // Set password if provided (admin override — no current password needed)
     if (body.newPassword) {
+      if (body.newPassword.length < 8) {
+        return NextResponse.json({ ok: false, error: "Password must be at least 8 characters" }, { status: 400 });
+      }
       const { hashPassword } = await import("better-auth/crypto");
       const hashed = await hashPassword(body.newPassword);
       await prisma.account.updateMany({
