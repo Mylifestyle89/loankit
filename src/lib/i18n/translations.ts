@@ -454,6 +454,8 @@ export const messages: Record<Locale, Record<string, string>> = {
     "notifications.title": "Thông báo",
     "notifications.markAllRead": "Đọc tất cả",
     "notifications.empty": "Không có thông báo",
+    // Guide
+    "nav.guide": "Hướng dẫn sử dụng",
     // System Operations
     "nav.systemOps": "Quản lý hệ thống",
     "systemOps.title": "Quản lý dữ liệu và cấu hình",
@@ -951,6 +953,8 @@ export const messages: Record<Locale, Record<string, string>> = {
     "notifications.title": "Notifications",
     "notifications.markAllRead": "Mark all read",
     "notifications.empty": "No notifications",
+    // Guide
+    "nav.guide": "User Guide",
     // System Operations
     "nav.systemOps": "System Management",
     "systemOps.title": "Data & Configuration Management",

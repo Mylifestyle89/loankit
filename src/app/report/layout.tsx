@@ -14,6 +14,7 @@ import {
   Settings,
   Banknote,
   Receipt,
+  BookOpen,
 } from "lucide-react";
 
 import { useLanguage } from "@/components/language-provider";
@@ -40,6 +41,7 @@ export default function ReportLayout({ children }: { children: React.ReactNode }
     { href: "/report/loans", label: t("nav.loans"), icon: Banknote },
     { href: "/report/invoices", label: t("nav.invoices"), icon: Receipt },
     { href: "/report/system-operations", label: t("nav.systemOps"), icon: Settings },
+    { href: "/report/guide", label: t("nav.guide"), icon: BookOpen },
   ];
 
   return (
