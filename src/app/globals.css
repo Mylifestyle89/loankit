@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@plugin "@tailwindcss/typography";
 @import "../../node_modules/@eigenpal/docx-js-editor/dist/styles.css";
 
 /* ── Dark mode: apply when <html> has class="dark" ── */
