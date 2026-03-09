@@ -5,9 +5,9 @@
 Financial reporting and invoice tracking application built with Next.js, TypeScript, Prisma ORM, and SQLite.
 
 **Key Features:**
-- Authentication & RBAC (Better Auth v1.5.4, admin/viewer roles)
-- User management (admin plugin, invite-only signup)
-- Report data mapping and field template management
+- Authentication & RBAC (Better Auth v1.5.4, admin/editor/viewer roles)
+- User management (admin plugin, self-service profile, admin user updates)
+- Report data mapping and field template management (ownership-based access control)
 - Customer loan and disbursement tracking
 - Invoice management with deadline monitoring
 - Real-time notifications (in-app + browser push)
@@ -28,7 +28,8 @@ src/
 │   │   ├── disbursements/            # Disbursement CRUD + invoices list
 │   │   ├── invoices/                 # Invoice CRUD + summary + duplicate check
 │   │   ├── notifications/            # Notification list + read endpoints
-│   │   ├── report/                   # Report operations (build, export, import, mapping, etc.)
+│   │   ├── user/                     # User endpoints (profile, admin-manage)
+│   │   ├── report/                   # Report operations (build, export, import, mapping, templates, etc.)
 │   │   ├── onlyoffice/               # OnlyOffice integration (config, callback, download)
 │   │   └── cron/                     # Cron endpoints (secret-based auth)
 │   │
@@ -36,6 +37,7 @@ src/
 │   │   └── page.tsx                  # Login form with i18n, callbackUrl support
 │   │
 │   ├── report/                       # Report UI pages (protected by middleware)
+│   │   ├── account/                  # User profile page (name, email, password)
 │   │   ├── admin/                    # Admin pages
 │   │   │   └── users/                # User management (admin only)
 │   │   ├── customers/                # Customer list/new/detail pages
@@ -117,7 +119,7 @@ src/
 ├── lib/
 │   ├── auth.ts                       # Better Auth server config (Prisma adapter)
 │   ├── auth-client.ts                # Better Auth client config
-│   ├── auth-guard.ts                 # API guards (requireSession, requireAdmin)
+│   ├── auth-guard.ts                 # API guards (requireSession, requireAdmin, requireEditorOrAdmin, requireOwnerOrAdmin)
 │   │
 │   ├── notifications/
 │   │   └── deadline-scheduler.ts     # Hourly invoice deadline checker
@@ -270,11 +272,12 @@ toHttpError(error, fallback) // Convert to HTTP response
 ### Database Models (Prisma)
 ```
 Customer → Loan → Disbursement → Invoice
-         → MappingInstance
-         → FieldTemplateMaster
-                      ↓
-         ← MappingInstance
+         → MappingInstance ← FieldTemplateMaster
 
+FieldTemplateMaster (createdBy: userId)
+MappingInstance (createdBy: userId)
+
+User → Session, Account (auth)
 AppNotification (independent)
 ```
 
@@ -348,8 +351,16 @@ AppNotification (independent)
 - `DATABASE_URL` - SQLite path (included in schema)
 
 **Roles:**
-- `admin` - Full access + user management (read/create/delete/update)
+- `admin` - Full access + user management (read/create/delete/update), can modify any template/mapping
+- `editor` - Can create and modify own templates/mappings, read-access to reports
 - `viewer` - Read-only access to reports
+
+**Auth Guard Functions** (`src/lib/auth-guard.ts`):
+- `requireSession()` - Validates session exists, throws 401 if missing
+- `requireAdmin()` - Validates admin role, throws 403 if not admin
+- `requireEditorOrAdmin()` - Validates editor or admin role, throws 403 if viewer
+- `requireOwnerOrAdmin(resourceOwnerId)` - Admin bypass or editor must own resource, throws 403 otherwise
+- `handleAuthError(error)` - Converts AuthError to NextResponse
 
 ## Environment Variables
 

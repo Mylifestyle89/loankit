@@ -85,6 +85,18 @@ This is a Next.js-based financial reporting and invoice tracking application bui
 - **Type Values:** invoice_due_soon | invoice_overdue | duplicate_invoice
 - **Metadata:** Contains invoiceId, disbursementId, customerId (as JSON)
 
+### FieldTemplateMaster
+- **Purpose:** Master template for field configurations (templates created by users)
+- **Fields:** ID, name, description, status, fieldCatalogJson, createdBy (userId)
+- **Ownership:** `createdBy` tracks the user who created the template
+- **Access Control:** Editors can only modify templates they created; admins can modify all templates
+
+### MappingInstance
+- **Purpose:** Customer-specific field mapping instance
+- **Fields:** ID, name, status, createdBy (userId), publishedAt, masterId (FK), customerId (FK)
+- **Status Values:** draft | published
+- **Ownership:** `createdBy` tracks the user who created the mapping
+
 ## Deadline Scheduler
 
 **Location:** `src/lib/notifications/deadline-scheduler.ts`
@@ -130,6 +142,25 @@ This is a Next.js-based financial reporting and invoice tracking application bui
 - `POST /api/notifications/[id]/read` - Mark single notification as read
 - `POST /api/notifications/mark-all-read` - Mark all as read
 
+### Templates & Mappings
+- `GET /api/report/field-templates` - List templates (requireSession)
+- `POST /api/report/field-templates` - Create template (requireEditorOrAdmin)
+- `PUT /api/report/field-templates/[id]` - Update template (requireOwnerOrAdmin)
+- `DELETE /api/report/field-templates/[id]` - Delete template (requireOwnerOrAdmin)
+- `GET /api/report/mapping-instances` - List mapping instances (requireSession)
+- `POST /api/report/mapping-instances` - Create mapping (requireEditorOrAdmin)
+- `PUT /api/report/mapping-instances/[id]` - Update mapping (requireOwnerOrAdmin)
+- `DELETE /api/report/mapping-instances/[id]` - Delete mapping (requireOwnerOrAdmin)
+- `GET /api/report/master-templates` - List master templates (requireSession)
+- `POST /api/report/master-templates` - Create master (requireEditorOrAdmin)
+- `PUT /api/report/master-templates/[id]` - Update master (requireOwnerOrAdmin)
+- `DELETE /api/report/master-templates/[id]` - Delete master (requireOwnerOrAdmin)
+
+### User Management
+- `GET /api/user/profile` - Get current user profile
+- `PUT /api/user/profile` - Update own name/email/password
+- `PUT /api/user/admin-manage` - Admin-only: update any user email/password (requireAdmin)
+
 ## UI Pages
 
 ### Loans Module
@@ -142,6 +173,9 @@ This is a Next.js-based financial reporting and invoice tracking application bui
 
 ### Invoices
 - `/report/invoices` - Invoices overview with status filtering
+
+### User Account
+- `/report/account` - User profile (name, email, password change)
 
 ## Shared Components
 
@@ -317,16 +351,22 @@ This is a Next.js-based financial reporting and invoice tracking application bui
 **Components:**
 - `src/lib/auth.ts` - Server config (email/password, admin plugin, cookie caching)
 - `src/lib/auth-client.ts` - Client config for sign-in/sign-out
-- `src/lib/auth-guard.ts` - API guards (requireSession, requireAdmin)
+- `src/lib/auth-guard.ts` - API guards:
+  - `requireSession()` - Validate session, throw 401 if missing
+  - `requireAdmin()` - Validate admin role, throw 403 if not admin
+  - `requireEditorOrAdmin()` - Validate editor or admin role, throw 403 if viewer
+  - `requireOwnerOrAdmin(resourceOwnerId)` - Admin bypass or editor matches resource owner, throw 403 otherwise
 - `middleware.ts` - Route protection (session cookie check, 5-min cache)
 - `src/app/login/page.tsx` - Login UI (email/password form with i18n)
 
 **Auth Features:**
 - Email/password authentication (invite-only, public signup disabled)
-- Two roles: `admin` (full access + user management), `viewer` (read-only)
+- Three roles: `admin` (full access + user management), `editor` (own resources + templates), `viewer` (read-only)
 - Admin plugin: User CRUD operations (`/report/admin/users`)
 - Session cookie caching: 5-min TTL to reduce DB calls
 - Open redirect prevention: Validated callbackUrl on login redirect
+- Self-service profile: Users can update own name, email, password at `/report/account`
+- Admin user management: Admins can update any user via `/api/user/admin-manage`
 
 **Protected Routes:**
 - `/report/**` - Require session (page-level redirect to /login)
