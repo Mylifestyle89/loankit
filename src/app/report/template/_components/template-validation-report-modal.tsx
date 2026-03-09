@@ -57,7 +57,7 @@ export function TemplateValidationReportModal({ report, fileName, onSave, onClos
   const allValid = report.unknown.length === 0;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label="Kết quả kiểm tra template">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label="Kết quả kiểm tra template" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div className="mx-4 w-full max-w-2xl rounded-2xl border border-zinc-200 dark:border-white/[0.1] bg-white dark:bg-[#161616] shadow-2xl">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-zinc-100 dark:border-white/[0.07] px-5 py-4">
@@ -194,7 +194,9 @@ export function TemplateValidationReportModal({ report, fileName, onSave, onClos
 
 /* ---------- Sub-components ---------- */
 
-function StatBadge({ color, count, label }: { color: string; count: number; label: string }) {
+type BadgeColor = "emerald" | "amber" | "blue";
+
+function StatBadge({ color, count, label }: { color: BadgeColor; count: number; label: string }) {
   const colorMap: Record<string, string> = {
     emerald: "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400",
     amber: "bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400",
@@ -208,7 +210,7 @@ function StatBadge({ color, count, label }: { color: string; count: number; labe
 }
 
 function CollapsibleSection({ title, color, expanded, onToggle, children }: {
-  title: string; color: string; expanded: boolean; onToggle: () => void; children: React.ReactNode;
+  title: string; color: BadgeColor; expanded: boolean; onToggle: () => void; children: React.ReactNode;
 }) {
   const borderMap: Record<string, string> = {
     emerald: "border-emerald-200 dark:border-emerald-500/20",

@@ -68,8 +68,17 @@ function inferType(fieldKey: string, normalizer?: string): FieldCatalogItem["typ
   return "text";
 }
 
+function fsErrorCode(err: unknown): string | undefined {
+  return (err as NodeJS.ErrnoException).code;
+}
+
 function isReadOnlyFsError(err: unknown): boolean {
-  const code = (err as NodeJS.ErrnoException).code;
+  const code = fsErrorCode(err);
+  return code === "EROFS" || code === "EPERM";
+}
+
+function isIgnorableFsError(err: unknown): boolean {
+  const code = fsErrorCode(err);
   return code === "EROFS" || code === "ENOENT" || code === "EPERM";
 }
 
@@ -79,7 +88,7 @@ async function ensureDirectories(): Promise<void> {
     await fs.mkdir(REPORT_VERSIONS_DIR, { recursive: true });
     await fs.mkdir(REPORT_INVENTORY_DIR, { recursive: true });
   } catch (err) {
-    if (isReadOnlyFsError(err)) return;
+    if (isIgnorableFsError(err)) return;
     throw err;
   }
 }
@@ -206,13 +215,13 @@ export async function loadState(): Promise<FrameworkState> {
     stateRaw = await readJsonFile<unknown>(REPORT_STATE_FILE);
   } catch (err) {
     if (isReadOnlyFsError(err)) return EMPTY_STATE;
-    // File missing on writable FS — bootstrap
+    if (fsErrorCode(err) !== "ENOENT") throw err; // Only bootstrap for missing file
     try {
       const state = await bootstrapState();
       await saveState(state);
       return state;
     } catch (bootstrapErr) {
-      if (isReadOnlyFsError(bootstrapErr)) return EMPTY_STATE;
+      if (isIgnorableFsError(bootstrapErr)) return EMPTY_STATE;
       throw bootstrapErr;
     }
   }
@@ -263,7 +272,7 @@ export async function saveState(state: FrameworkState): Promise<void> {
 
     await fs.writeFile(REPORT_STATE_FILE, nextRaw, "utf-8");
   } catch (err) {
-    if (isReadOnlyFsError(err)) return; // Vercel read-only FS
+    if (isIgnorableFsError(err)) return; // Vercel read-only FS
     throw err;
   } finally {
     await fileLockService.releaseLock("report_assets");

@@ -11,6 +11,7 @@ type Props = {
   onOpenEditor?: (docxPath: string) => void;
   editorAvailable?: boolean;
   onUploadValidate?: () => void;
+  onRegisterTemplate?: (docxPath: string, templateName: string) => Promise<void>;
 };
 
 function formatSize(bytes: number): string {
@@ -24,7 +25,7 @@ function countFiles(node: FolderNode): number {
   return node.files.length + node.subfolders.reduce((s, f) => s + countFiles(f), 0);
 }
 
-export function TemplateFolderBrowser({ onOpenEditor, editorAvailable, onUploadValidate }: Props) {
+export function TemplateFolderBrowser({ onOpenEditor, editorAvailable, onUploadValidate, onRegisterTemplate }: Props) {
   const [tree, setTree] = useState<FolderNode[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -85,7 +86,7 @@ export function TemplateFolderBrowser({ onOpenEditor, editorAvailable, onUploadV
       {error && <p className="mb-2 text-sm text-red-600 dark:text-red-400">{error}</p>}
       <div className="max-h-[28rem] overflow-y-auto rounded-lg border border-zinc-100 dark:border-white/[0.05] bg-zinc-50/50 dark:bg-[#111]">
         {tree.map((node) => (
-          <FolderRow key={node.path} node={node} depth={0} expanded={expanded} onToggle={toggleFolder} onRefresh={fetchTree} onOpenEditor={onOpenEditor} editorAvailable={editorAvailable} />
+          <FolderRow key={node.path} node={node} depth={0} expanded={expanded} onToggle={toggleFolder} onRefresh={fetchTree} onOpenEditor={onOpenEditor} editorAvailable={editorAvailable} onRegisterTemplate={onRegisterTemplate} />
         ))}
         {tree.length === 0 && !error && (
           <p className="p-4 text-sm text-zinc-400 dark:text-slate-500">Không tìm thấy file DOCX nào.</p>
@@ -96,10 +97,11 @@ export function TemplateFolderBrowser({ onOpenEditor, editorAvailable, onUploadV
 }
 
 /** Recursive folder row with files */
-function FolderRow({ node, depth, expanded, onToggle, onRefresh, onOpenEditor, editorAvailable }: {
+function FolderRow({ node, depth, expanded, onToggle, onRefresh, onOpenEditor, editorAvailable, onRegisterTemplate }: {
   node: FolderNode; depth: number; expanded: Set<string>;
   onToggle: (p: string) => void; onRefresh: () => void;
   onOpenEditor?: (p: string) => void; editorAvailable?: boolean;
+  onRegisterTemplate?: (docxPath: string, templateName: string) => Promise<void>;
 }) {
   const isExpanded = expanded.has(node.path);
   const totalFiles = countFiles(node);
@@ -138,12 +140,13 @@ function FolderRow({ node, depth, expanded, onToggle, onRefresh, onOpenEditor, e
                 onRefresh={() => void onRefresh()}
                 onOpenEditor={onOpenEditor}
                 editorAvailable={editorAvailable}
+                onRegisterTemplate={onRegisterTemplate}
               />
             </div>
           ))}
 
           {node.subfolders.map((sub) => (
-            <FolderRow key={sub.path} node={sub} depth={depth + 1} expanded={expanded} onToggle={onToggle} onRefresh={onRefresh} onOpenEditor={onOpenEditor} editorAvailable={editorAvailable} />
+            <FolderRow key={sub.path} node={sub} depth={depth + 1} expanded={expanded} onToggle={onToggle} onRefresh={onRefresh} onOpenEditor={onOpenEditor} editorAvailable={editorAvailable} onRegisterTemplate={onRegisterTemplate} />
           ))}
         </>
       )}

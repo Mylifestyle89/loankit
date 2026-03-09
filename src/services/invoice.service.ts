@@ -300,12 +300,9 @@ export const invoiceService = {
       },
     });
 
-    // Batch aggregate disbursements, invoices, and beneficiary lines per customer
-    const [disbCounts, invoiceStats, supplementCounts] = await Promise.all([
-      prisma.disbursement.groupBy({
-        by: ["loanId"],
-        _count: true,
-      }),
+    // Batch aggregate all data in parallel
+    const [disbCounts, invoiceStats, supplementCounts, loans] = await Promise.all([
+      prisma.disbursement.groupBy({ by: ["loanId"], _count: true }),
       prisma.invoice.findMany({
         select: {
           amount: true,
@@ -319,10 +316,9 @@ export const invoiceService = {
           disbursement: { select: { loan: { select: { customerId: true } } } },
         },
       }),
+      prisma.loan.findMany({ select: { id: true, customerId: true } }),
     ]);
 
-    // Map loan → customer for disbursement counts
-    const loans = await prisma.loan.findMany({ select: { id: true, customerId: true } });
     const loanToCustomer = new Map(loans.map((l) => [l.id, l.customerId]));
 
     // Build per-customer disbursement count

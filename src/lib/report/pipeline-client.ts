@@ -44,9 +44,9 @@ export async function runBuildAndValidate(): Promise<{
   if (command.exitCode !== 0) {
     throw new Error(command.stderr || command.stdout || "run_pipeline.py failed");
   }
-  const reportDraft = await readJson("report_assets/report_draft.json");
-  const reportDraftFlat = await readJson("report_assets/report_draft_flat.json");
-  const validation = await readJson("report_assets/validation_report.json");
+  const reportDraft = await readJson("report_assets/generated/report_draft.json");
+  const reportDraftFlat = await readJson("report_assets/generated/report_draft_flat.json");
+  const validation = await readJson("report_assets/generated/validation_report.json");
   return { command, reportDraft, reportDraftFlat, validation };
 }
 

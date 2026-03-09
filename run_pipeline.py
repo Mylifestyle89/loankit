@@ -18,13 +18,13 @@ def main() -> None:
     )
     parser.add_argument(
         "--mapping",
-        default="report_assets/mapping_master.json",
-        help="Mapping JSON path relative to root (default: report_assets/mapping_master.json).",
+        default="report_assets/config/mapping_master.json",
+        help="Mapping JSON path relative to root (default: report_assets/config/mapping_master.json).",
     )
     parser.add_argument(
         "--output-dir",
-        default="report_assets",
-        help="Output directory relative to root (default: report_assets).",
+        default="report_assets/generated",
+        help="Output directory relative to root (default: report_assets/generated).",
     )
     parser.add_argument(
         "--sources-root",

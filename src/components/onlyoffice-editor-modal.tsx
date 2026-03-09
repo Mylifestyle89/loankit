@@ -44,6 +44,9 @@ export function OnlyOfficeEditorModal({ docxPath, onClose, onSaved, fieldCatalog
   // container — OnlyOffice SDK takes full ownership of that DOM subtree.
   const [editorMounted, setEditorMounted] = useState(false);
 
+  // Track whether the document has successfully loaded (for error severity)
+  const documentReadyRef = useRef(false);
+
   // Stable refs for callbacks to avoid useEffect re-triggers
   const onCloseRef = useRef(onClose);
   const onSavedRef = useRef(onSaved);
@@ -161,6 +164,7 @@ export function OnlyOfficeEditorModal({ docxPath, onClose, onSaved, fieldCatalog
           type: "desktop",
           events: {
             onDocumentReady: () => {
+              documentReadyRef.current = true;
               if (!cancelled) setLoading(false);
             },
             onError: (event: { data?: { errorCode?: number; errorDescription?: string } }) => {
@@ -172,12 +176,28 @@ export function OnlyOfficeEditorModal({ docxPath, onClose, onSaved, fieldCatalog
                 console.warn("[OnlyOffice] Non-fatal error event (ignored):", event);
                 return;
               }
+
+              // If the document already loaded successfully, treat download
+              // errors (-4) as transient (autosave/forcesave retries) — don't
+              // kill the editor with a fatal overlay.
+              if (documentReadyRef.current && code === -4) {
+                console.warn("[OnlyOffice] Transient download error after document ready (ignored):", event);
+                return;
+              }
+
               console.error("[OnlyOffice] Error:", code, event);
               if (!cancelled) {
                 const desc = event?.data?.errorDescription;
-                const msg = desc
-                  ? `OnlyOffice error ${code}: ${desc}`
-                  : `OnlyOffice error code: ${code}`;
+                let msg: string;
+                if (code === -4) {
+                  msg = "OnlyOffice không thể tải file DOCX.\n\n" +
+                    "Kiểm tra:\n" +
+                    "1. Docker container OnlyOffice đang chạy\n" +
+                    "2. NEXT_PUBLIC_APP_URL trong .env.local trỏ đúng (mặc định: http://host.docker.internal:3000)\n" +
+                    "3. Next.js dev server đang chạy trên port 3000";
+                } else {
+                  msg = desc ? `OnlyOffice error ${code}: ${desc}` : `OnlyOffice error code: ${code}`;
+                }
                 setError(msg);
                 setLoading(false);
               }

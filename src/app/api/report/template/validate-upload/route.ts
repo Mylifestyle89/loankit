@@ -43,11 +43,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: false, error: "Không tìm thấy field template." }, { status: 404 });
     }
 
-    // [RT-2] Check buffer size before JSZip parsing (zip bomb protection)
+    // [RT-2] Buffer for JSZip parsing (size already validated above via file.size)
     const buffer = Buffer.from(await file.arrayBuffer());
-    if (buffer.byteLength > MAX_FILE_SIZE) {
-      return NextResponse.json({ ok: false, error: "File quá lớn (tối đa 20MB)." }, { status: 413 });
-    }
 
     // Parse placeholders from DOCX
     const rawPlaceholders = await parseDocxPlaceholdersFromBuffer(buffer);

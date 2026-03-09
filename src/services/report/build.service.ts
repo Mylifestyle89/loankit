@@ -65,7 +65,7 @@ async function writeBuildMeta(params: {
 
 async function hasFlatDraftFile(): Promise<boolean> {
   try {
-    await fs.access(path.join(process.cwd(), "report_assets", "report_draft_flat.json"));
+    await fs.access(path.join(process.cwd(), "report_assets", "generated", "report_draft_flat.json"));
     return true;
   } catch {
     return false;
@@ -268,7 +268,7 @@ function addLabelViAliases(
  */
 async function produceMergedFlat(fieldCatalog: Array<{ field_key: string; label_vi: string; group: string }>): Promise<void> {
   try {
-    const baseFlat = await docxEngine.readJson<Record<string, unknown>>("report_assets/report_draft_flat.json");
+    const baseFlat = await docxEngine.readJson<Record<string, unknown>>("report_assets/generated/report_draft_flat.json");
     const manualValues = await loadManualValues();
     const mergedFlat = mergeFlatWithManualValues(baseFlat, manualValues);
     addLabelViAliases(mergedFlat, fieldCatalog);
@@ -304,9 +304,9 @@ export const buildService = {
         validation: result.validation,
       },
       outputPaths: [
-        "report_assets/report_draft.json",
-        "report_assets/report_draft_flat.json",
-        "report_assets/validation_report.json",
+        "report_assets/generated/report_draft.json",
+        "report_assets/generated/report_draft_flat.json",
+        "report_assets/generated/validation_report.json",
       ],
       durationMs,
     });
@@ -336,7 +336,7 @@ export const buildService = {
       });
       autoBuildTriggered = true;
     }
-    const baseFlat = await docxEngine.readJson<Record<string, unknown>>("report_assets/report_draft_flat.json");
+    const baseFlat = await docxEngine.readJson<Record<string, unknown>>("report_assets/generated/report_draft_flat.json");
     const aliasMap = await docxEngine.readJson<Record<string, unknown>>(source.aliasPath);
     const manualValues = await loadManualValues();
     const mergedFlat = mergeFlatWithManualValues(baseFlat, manualValues);
@@ -394,7 +394,7 @@ export const buildService = {
     const activeTemplate = await getActiveTemplateProfile(state);
 
     const templatePath = input?.templatePath ?? activeTemplate.docx_path;
-    const reportPath = input?.reportPath ?? "report_assets/template_export_report_bank.json";
+    const reportPath = input?.reportPath ?? "report_assets/generated/template_export_report_bank.json";
     const outputDir = input?.outputDir ?? "report_assets/exports/bank-rate-notices";
     const groupKey = input?.groupKey?.trim() || "HĐTD";
     const repeatKey = input?.repeatKey?.trim() || "items";
@@ -411,7 +411,7 @@ export const buildService = {
       autoBuildTriggered = true;
     }
     const [baseFlat, aliasMapRaw, manualValues] = await Promise.all([
-      docxEngine.readJson<Record<string, unknown>>("report_assets/report_draft_flat.json"),
+      docxEngine.readJson<Record<string, unknown>>("report_assets/generated/report_draft_flat.json"),
       docxEngine.readJson<Record<string, unknown>>(source.aliasPath),
       loadManualValues(),
     ]);
@@ -518,7 +518,7 @@ export const buildService = {
       return { source: "pipeline", validation: final };
     }
 
-    const parsed = await docxEngine.readJson<unknown>("report_assets/validation_report.json");
+    const parsed = await docxEngine.readJson<unknown>("report_assets/generated/validation_report.json");
     const final = validateReportPayload({
       validation: parsed,
       templatePath: activeTemplate.docx_path,

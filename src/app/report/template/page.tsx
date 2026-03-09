@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useRef, useState } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 
 import { DocxTemplateEditorModal } from "@/components/docx-template-editor-modal";
 import { OnlyOfficeEditorModal } from "@/components/onlyoffice-editor-modal";
@@ -8,7 +9,8 @@ import { SegmentedControl } from "@/components/ui/segmented-control";
 import { useLanguage } from "@/components/language-provider";
 import { getSignedFileUrl } from "@/lib/report/signed-file-url";
 
-import { FieldInjectionToolbar } from "./_components/field-injection-toolbar";
+import { BuildExportTab } from "./_components/build-export-tab";
+import { ConfiguredTemplatesTab } from "./_components/configured-templates-tab";
 import { FieldReferencePanel } from "./_components/field-reference-panel";
 import { TemplateFolderBrowser } from "./_components/template-folder-browser";
 import { TemplateValidationReportModal } from "./_components/template-validation-report-modal";
@@ -18,16 +20,28 @@ import { useTemplateUploadValidation } from "./_components/use-template-upload-v
 type TemplateProfile = { id: string; template_name: string; docx_path: string; placeholder_inventory_path: string; active: boolean };
 type TemplateApiResponse = { ok: boolean; error?: string; templates?: TemplateProfile[]; active_template_id?: string };
 
-export default function TemplatePage() {
+const VALID_TABS = ["configured", "folder", "export"] as const;
+type TabKey = (typeof VALID_TABS)[number];
+const TAB_LABELS: Record<TabKey, string> = { configured: "Chỉnh sửa mẫu", folder: "Duyệt folder mẫu", export: "Build & Export" };
+
+function TemplatePageInner() {
   const { t } = useLanguage();
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
+  // URL-synced tab
+  const tabParam = searchParams.get("tab") as TabKey | null;
+  const activeTab: TabKey = tabParam && VALID_TABS.includes(tabParam) ? tabParam : "configured";
+  function setActiveTab(tab: TabKey) { router.replace(`?tab=${tab}`, { scroll: false }); }
+
+  // Core state
   const [loading, setLoading] = useState(true);
   const [templates, setTemplates] = useState<TemplateProfile[]>([]);
   const [activeTemplateId, setActiveTemplateId] = useState("");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
-  const [activeTab, setActiveTab] = useState<"configured" | "folder">("configured");
 
-  // Editor state (shared between configured + folder modes)
+  // Editor state
   const [showEditor, setShowEditor] = useState(false);
   const [editorBuffer, setEditorBuffer] = useState<ArrayBuffer | null>(null);
   const [openingEditor, setOpeningEditor] = useState(false);
@@ -42,35 +56,13 @@ export default function TemplatePage() {
   const [showOnlyofficeEditor, setShowOnlyofficeEditor] = useState(false);
   const [onlyofficeDocxPath, setOnlyofficeDocxPath] = useState("");
 
-  // Field injection hook
+  // Field injection + validation
   const fi = useFieldInjection(templates.length > 0);
-
-  // Upload-and-validate flow
   const validation = useTemplateUploadValidation(fi.selectedFieldTemplateId);
   const validateInputRef = useRef<HTMLInputElement | null>(null);
+  const [removing, setRemoving] = useState(false);
 
-  function handleUploadValidate() {
-    if (!fi.selectedFieldTemplateId) {
-      setError("Vui lòng chọn field template trước khi kiểm tra.");
-      return;
-    }
-    validateInputRef.current?.click();
-  }
-
-  function handleValidateFileChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    e.target.value = "";
-    setError(""); setMessage("");
-    void validation.validateFile(file);
-  }
-
-  async function handleValidationSave(savePath: string) {
-    await validation.saveFile(savePath);
-    validation.reset();
-    setMessage("Đã lưu template thành công.");
-  }
-
+  // --- Data loading ---
   const loadTemplates = useCallback(async () => {
     setLoading(true);
     const res = await fetch("/api/report/template", { cache: "no-store" });
@@ -82,10 +74,8 @@ export default function TemplatePage() {
   }, [t]);
 
   useEffect(() => { const timer = window.setTimeout(() => void loadTemplates(), 0); return () => window.clearTimeout(timer); }, [loadTemplates]);
-
   useEffect(() => {
-    fetch("/api/onlyoffice/health")
-      .then((r) => r.json() as Promise<{ available: boolean }>)
+    fetch("/api/onlyoffice/health").then((r) => r.json() as Promise<{ available: boolean }>)
       .then((d) => { setOnlyofficeAvailable(d.available); if (!d.available) setEditorType("eigenpal"); })
       .catch(() => { setOnlyofficeAvailable(false); setEditorType("eigenpal"); });
   }, []);
@@ -93,6 +83,7 @@ export default function TemplatePage() {
   const selectedTemplate = templates.find((tp) => tp.id === activeTemplateId);
   const profileDocxPath = selectedTemplate?.docx_path ?? "";
 
+  // --- Editor helpers ---
   function openProfileDocx() {
     if (!profileDocxPath) return;
     void getSignedFileUrl(profileDocxPath, true).then((url) => window.open(url, "_blank", "noopener,noreferrer")).catch(() => setError("Failed to generate download URL."));
@@ -101,64 +92,82 @@ export default function TemplatePage() {
   function openProfileEditor() {
     if (!profileDocxPath) return;
     setError(""); setMessage("");
-    if (editorType === "onlyoffice" && onlyofficeAvailable) {
-      setOnlyofficeDocxPath(profileDocxPath); setShowOnlyofficeEditor(true);
-      return;
-    }
+    if (editorType === "onlyoffice" && onlyofficeAvailable) { setOnlyofficeDocxPath(profileDocxPath); setShowOnlyofficeEditor(true); return; }
     openEigenpalEditor(profileDocxPath, "managed");
   }
 
   function openEigenpalEditor(docxPath: string, source: "managed" | "local" | "folder") {
     setOpeningEditor(true); setEditorSource(source); setActiveEditorPath(docxPath);
     void (async () => {
-      try {
-        const signedUrl = await getSignedFileUrl(docxPath, true);
-        const res = await fetch(signedUrl);
-        if (!res.ok) throw new Error("Không thể tải file DOCX.");
-        setEditorBuffer(await res.arrayBuffer()); setShowEditor(true);
-      } catch (e) { setError(e instanceof Error ? e.message : "Lỗi mở editor."); }
+      try { const signedUrl = await getSignedFileUrl(docxPath, true); const res = await fetch(signedUrl); if (!res.ok) throw new Error("Không thể tải file DOCX."); setEditorBuffer(await res.arrayBuffer()); setShowEditor(true); }
+      catch (e) { setError(e instanceof Error ? e.message : "Lỗi mở editor."); }
       finally { setOpeningEditor(false); }
     })();
   }
 
   function openLocalDocx(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    e.target.value = "";
-    setOpeningEditor(true); setError(""); setMessage("");
-    setEditorSource("local"); setLocalDocxName(file.name);
+    const file = e.target.files?.[0]; if (!file) return; e.target.value = "";
+    setOpeningEditor(true); setError(""); setMessage(""); setEditorSource("local"); setLocalDocxName(file.name);
     void file.arrayBuffer().then((buf) => { setEditorBuffer(buf); setShowEditor(true); })
       .catch((err) => setError(err instanceof Error ? err.message : "Không thể mở file."))
       .finally(() => setOpeningEditor(false));
   }
 
-  // Folder browser: open editor (OnlyOffice or Eigenpal fallback)
   function handleOpenEditor(docxPath: string) {
     setError(""); setMessage("");
-    if (editorType === "onlyoffice" && onlyofficeAvailable) {
-      setOnlyofficeDocxPath(docxPath); setShowOnlyofficeEditor(true);
-      return;
-    }
+    if (editorType === "onlyoffice" && onlyofficeAvailable) { setOnlyofficeDocxPath(docxPath); setShowOnlyofficeEditor(true); return; }
     openEigenpalEditor(docxPath, "folder");
   }
 
   async function saveEditorDocx(buffer: ArrayBuffer) {
     if (editorSource === "local") {
       const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a"); a.href = url; a.download = localDocxName || "edited-template.docx";
-      document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
-      setMessage("Đã tải file DOCX đã chỉnh sửa về máy.");
-      return;
+      const url = URL.createObjectURL(blob); const a = document.createElement("a"); a.href = url; a.download = localDocxName || "edited-template.docx";
+      document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url); setMessage("Đã tải file DOCX đã chỉnh sửa về máy."); return;
     }
     const savePath = activeEditorPath || profileDocxPath;
-    const res = await fetch(`/api/report/template/save-docx?path=${encodeURIComponent(savePath)}`, {
-      method: "PUT", headers: { "Content-Type": "application/octet-stream" }, body: buffer,
-    });
+    const res = await fetch(`/api/report/template/save-docx?path=${encodeURIComponent(savePath)}`, { method: "PUT", headers: { "Content-Type": "application/octet-stream" }, body: buffer });
     const data = (await res.json()) as { ok: boolean; error?: string };
     if (!data.ok) throw new Error(data.error ?? "Lỗi lưu DOCX.");
     setMessage(t("template.editor.modal.saved"));
     if (editorSource === "managed") await loadTemplates();
+  }
+
+  // --- Template CRUD ---
+  async function handleRemoveTemplate() {
+    if (!activeTemplateId) return;
+    const tpl = templates.find((tp) => tp.id === activeTemplateId); if (!tpl) return;
+    setRemoving(true); setError(""); setMessage("");
+    try {
+      const res = await fetch(`/api/report/template?id=${encodeURIComponent(activeTemplateId)}`, { method: "DELETE" });
+      const data = (await res.json()) as TemplateApiResponse;
+      if (!data.ok) throw new Error(data.error ?? "Xóa thất bại.");
+      setTemplates(data.templates ?? []); setActiveTemplateId(data.active_template_id ?? data.templates?.[0]?.id ?? "");
+      setMessage(`Đã loại bỏ mẫu "${tpl.template_name}".`);
+    } catch (e) { setError(e instanceof Error ? e.message : "Xóa thất bại."); }
+    finally { setRemoving(false); }
+  }
+
+  async function handleRegisterTemplate(docxPath: string, templateName: string) {
+    const res = await fetch("/api/report/template", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ template_name: templateName, docx_path: docxPath }) });
+    const data = (await res.json()) as TemplateApiResponse;
+    if (!data.ok) throw new Error(data.error ?? "Đăng ký thất bại.");
+    setMessage(`Đã đăng ký mẫu "${templateName}".`);
+    if (data.templates) { setTemplates(data.templates); setActiveTemplateId(data.active_template_id ?? data.templates[0]?.id ?? ""); }
+  }
+
+  function handleUploadValidate() {
+    if (!fi.selectedFieldTemplateId) { setError("Vui lòng chọn field template trước khi kiểm tra."); return; }
+    validateInputRef.current?.click();
+  }
+
+  function handleValidateFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]; if (!file) return; e.target.value = "";
+    setError(""); setMessage(""); void validation.validateFile(file);
+  }
+
+  async function handleValidationSave(savePath: string) {
+    await validation.saveFile(savePath); validation.reset(); setMessage("Đã lưu template thành công.");
   }
 
   if (loading) {
@@ -186,82 +195,54 @@ export default function TemplatePage() {
         </div>
       </div>
 
-      {/* Tab switch */}
+      {/* 3-tab switch */}
       <div className="flex gap-1 rounded-xl bg-zinc-100 dark:bg-white/[0.05] p-1">
-        {(["configured", "folder"] as const).map((tab) => (
+        {VALID_TABS.map((tab) => (
           <button key={tab} type="button" onClick={() => setActiveTab(tab)}
             className={`flex-1 rounded-lg px-4 py-2 text-sm font-medium transition-all ${activeTab === tab ? "bg-white dark:bg-[#1e1e1e] shadow-sm text-violet-700 dark:text-violet-400" : "text-zinc-500 dark:text-slate-400 hover:text-zinc-700 dark:hover:text-slate-300"}`}>
-            {tab === "configured" ? "Mẫu đã cấu hình" : "Duyệt folder mẫu"}
+            {TAB_LABELS[tab]}
           </button>
         ))}
       </div>
 
       {/* Tab: Configured templates */}
-      {activeTab === "configured" && templates.length > 0 && (
-        <div className="rounded-2xl border border-zinc-200 dark:border-white/[0.07] bg-white dark:bg-[#161616] p-4 shadow-sm">
-          <h3 className="text-base font-bold tracking-tight">{t("template.editor.title")}</h3>
-          <p className="mt-1 text-sm text-zinc-500 dark:text-slate-400">{t("template.editor.desc")}</p>
-          <div className="mt-3 flex flex-wrap items-center gap-3">
-            <select value={activeTemplateId} onChange={(e) => setActiveTemplateId(e.target.value)} aria-label={t("template.editor.title")} className="rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] dark:text-slate-100 px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40">
-              {templates.map((tpl) => <option key={tpl.id} value={tpl.id}>{tpl.template_name} {tpl.active ? `(${t("template.active")})` : ""}</option>)}
-            </select>
-            <button type="button" onClick={openProfileDocx} disabled={!profileDocxPath} className="rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] px-4 py-2 text-sm shadow-sm hover:border-violet-200 dark:hover:border-violet-500/20 disabled:opacity-50">{t("template.editor.openDocx")}</button>
-            <button type="button" onClick={openProfileEditor} disabled={!profileDocxPath || openingEditor} className="rounded-lg bg-gradient-to-r from-violet-600 to-fuchsia-600 px-4 py-2 text-sm font-medium text-white shadow-sm shadow-violet-500/25 hover:brightness-110 disabled:opacity-50">
-              {openingEditor ? t("template.editor.modal.loading") : t("template.editor.openEditor")}
-            </button>
-            <input ref={localDocxInputRef} type="file" accept=".docx" aria-label="Chọn file DOCX" className="hidden" onChange={openLocalDocx} />
-            <button type="button" onClick={() => localDocxInputRef.current?.click()} disabled={openingEditor} className="rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] px-4 py-2 text-sm shadow-sm hover:border-violet-200 dark:hover:border-violet-500/20 disabled:opacity-50">
-              {openingEditor ? "Đang mở..." : "Chọn file từ máy"}
-            </button>
-          </div>
-          <FieldInjectionToolbar
-            fieldTemplates={fi.fieldTemplates} selectedFieldTemplateId={fi.selectedFieldTemplateId} onFieldTemplateChange={fi.setSelectedFieldTemplateId}
-            groups={fi.groups} selectedGroup={fi.selectedGroup} onGroupChange={fi.setSelectedGroup} fieldsByGroup={fi.fieldsByGroup}
-            fieldsInSelectedGroup={fi.fieldsInSelectedGroup} selectedFieldKey={fi.selectedFieldKey} onFieldKeyChange={fi.setSelectedFieldKey}
-            onInject={fi.injectField} copyFeedback={fi.copyFeedback} fieldCatalogEmpty={fi.fieldCatalog.length === 0}
-          />
-        </div>
+      {activeTab === "configured" && (
+        <ConfiguredTemplatesTab
+          templates={templates} activeTemplateId={activeTemplateId} onActiveTemplateChange={setActiveTemplateId}
+          profileDocxPath={profileDocxPath} openingEditor={openingEditor} removing={removing}
+          onOpenDocx={openProfileDocx} onOpenEditor={openProfileEditor}
+          onOpenLocal={() => localDocxInputRef.current?.click()} onRemoveTemplate={handleRemoveTemplate}
+          fi={{ fieldTemplates: fi.fieldTemplates, selectedFieldTemplateId: fi.selectedFieldTemplateId, setSelectedFieldTemplateId: fi.setSelectedFieldTemplateId,
+            groups: fi.groups, selectedGroup: fi.selectedGroup, setSelectedGroup: fi.setSelectedGroup, fieldsByGroup: fi.fieldsByGroup,
+            fieldsInSelectedGroup: fi.fieldsInSelectedGroup, selectedFieldKey: fi.selectedFieldKey, setSelectedFieldKey: fi.setSelectedFieldKey,
+            injectField: fi.injectField, copyFeedback: fi.copyFeedback, fieldCatalog: fi.fieldCatalog }}
+        />
       )}
 
       {/* Tab: Folder browser + Field reference */}
       {activeTab === "folder" && (
         <>
           <input ref={validateInputRef} type="file" accept=".docx" aria-label="Chọn file DOCX để kiểm tra" className="hidden" onChange={handleValidateFileChange} />
-          <TemplateFolderBrowser
-            onOpenEditor={handleOpenEditor}
-            editorAvailable={true}
-            onUploadValidate={handleUploadValidate}
-          />
-          <FieldReferencePanel
-            fieldTemplates={fi.fieldTemplates}
-            selectedFieldTemplateId={fi.selectedFieldTemplateId}
-            onFieldTemplateChange={fi.setSelectedFieldTemplateId}
-            fieldsByGroup={fi.fieldsByGroup}
-            groups={fi.groups}
-            onCopyField={fi.injectField}
-            copyFeedback={fi.copyFeedback}
-          />
-          {/* Validation loading/error */}
+          <TemplateFolderBrowser onOpenEditor={handleOpenEditor} editorAvailable={true} onUploadValidate={handleUploadValidate} onRegisterTemplate={handleRegisterTemplate} />
+          <FieldReferencePanel fieldTemplates={fi.fieldTemplates} selectedFieldTemplateId={fi.selectedFieldTemplateId} onFieldTemplateChange={fi.setSelectedFieldTemplateId}
+            fieldsByGroup={fi.fieldsByGroup} groups={fi.groups} onCopyField={fi.injectField} copyFeedback={fi.copyFeedback} />
           {validation.validating && (
             <div className="flex items-center gap-2 rounded-lg border border-violet-200 dark:border-violet-500/20 bg-violet-50 dark:bg-violet-950/30 px-4 py-3 text-sm text-violet-700 dark:text-violet-400">
-              <div className="h-4 w-4 animate-spin rounded-full border-2 border-violet-200 border-t-violet-600" />
-              Đang kiểm tra {validation.fileName}...
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-violet-200 border-t-violet-600" /> Đang kiểm tra {validation.fileName}...
             </div>
           )}
-          {validation.error && (
-            <p className="text-sm text-red-600 dark:text-red-400">{validation.error}</p>
-          )}
-          {/* Validation report modal */}
-          {validation.report && (
-            <TemplateValidationReportModal
-              report={validation.report}
-              fileName={validation.fileName}
-              onSave={handleValidationSave}
-              onClose={validation.reset}
-            />
-          )}
+          {validation.error && <p className="text-sm text-red-600 dark:text-red-400">{validation.error}</p>}
+          {validation.report && <TemplateValidationReportModal report={validation.report} fileName={validation.fileName} onSave={handleValidationSave} onClose={validation.reset} />}
         </>
       )}
+
+      {/* Tab: Build & Export */}
+      {activeTab === "export" && (
+        <BuildExportTab templates={templates} activeTemplateId={activeTemplateId} onMessage={setMessage} onError={setError} />
+      )}
+
+      {/* Hidden file input for local docx (used by configured tab) */}
+      <input ref={localDocxInputRef} type="file" accept=".docx" aria-label="Chọn file DOCX" className="hidden" onChange={openLocalDocx} />
 
       {/* Shared Eigenpal Editor Modal */}
       {showEditor && editorBuffer && (
@@ -269,8 +250,11 @@ export default function TemplatePage() {
           docxPath={editorSource === "local" ? localDocxName || "local-template.docx" : activeEditorPath || profileDocxPath}
           documentBuffer={editorBuffer} fieldCatalog={fi.fieldCatalog}
           onClose={() => { setShowEditor(false); setEditorBuffer(null); }}
-          onSaveDocx={saveEditorDocx}
-          enableAutoBackup={editorSource !== "local"} autoBackupIntervalMs={60_000}
+          onSaveDocx={saveEditorDocx} enableAutoBackup={editorSource !== "local"} autoBackupIntervalMs={60_000}
+          onFallbackToOnlyOffice={onlyofficeAvailable && editorSource !== "local" ? () => {
+            const docxPath = activeEditorPath || profileDocxPath;
+            setShowEditor(false); setEditorBuffer(null); setOnlyofficeDocxPath(docxPath); setShowOnlyofficeEditor(true);
+          } : undefined}
         />
       )}
 
@@ -278,9 +262,17 @@ export default function TemplatePage() {
       {showOnlyofficeEditor && onlyofficeDocxPath && (
         <OnlyOfficeEditorModal docxPath={onlyofficeDocxPath}
           onClose={() => { setShowOnlyofficeEditor(false); setOnlyofficeDocxPath(""); }}
-          onSaved={() => void loadTemplates()} fieldCatalog={fi.fieldCatalog}
-        />
+          onSaved={() => void loadTemplates()} fieldCatalog={fi.fieldCatalog} />
       )}
     </section>
+  );
+}
+
+// Wrap with Suspense for useSearchParams (required by Next.js App Router)
+export default function TemplatePage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center py-16"><div className="h-6 w-6 animate-spin rounded-full border-2 border-violet-200 border-t-violet-600 dark:border-violet-800 dark:border-t-violet-400" /></div>}>
+      <TemplatePageInner />
+    </Suspense>
   );
 }

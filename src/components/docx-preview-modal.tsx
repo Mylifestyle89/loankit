@@ -2,6 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { Download, X } from "lucide-react";
+import { DocxEditorErrorBoundary } from "@/components/docx-editor-error-boundary";
 
 // Loaded only in browser (DOM required)
 const EigenpalDocxEditor = dynamic(
@@ -49,7 +50,9 @@ export function DocxPreviewModal({ documentBuffer, fileName, onClose, onDownload
         </div>
 
         <div className="flex-1 overflow-auto bg-gray-100 dark:bg-[#0a0a0a]">
-          <EigenpalDocxEditor documentBuffer={documentBuffer} />
+          <DocxEditorErrorBoundary onClose={onClose}>
+            <EigenpalDocxEditor documentBuffer={documentBuffer} />
+          </DocxEditorErrorBoundary>
         </div>
       </div>
     </div>

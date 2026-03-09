@@ -19,10 +19,10 @@ import { parseFieldCatalogJson } from "./_shared";
 
 async function loadFlatDraftWithBuildFallback(): Promise<Record<string, unknown>> {
   try {
-    return await docxEngine.readJson<Record<string, unknown>>("report_assets/report_draft_flat.json");
+    return await docxEngine.readJson<Record<string, unknown>>("report_assets/generated/report_draft_flat.json");
   } catch {
     await runBuildAndValidate();
-    return await docxEngine.readJson<Record<string, unknown>>("report_assets/report_draft_flat.json");
+    return await docxEngine.readJson<Record<string, unknown>>("report_assets/generated/report_draft_flat.json");
   }
 }
 

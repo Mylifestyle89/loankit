@@ -22,6 +22,47 @@ export async function GET() {
   }
 }
 
+export async function POST(req: NextRequest) {
+  try {
+    const body = (await req.json()) as { template_name?: string; docx_path?: string };
+    const result = await reportService.registerTemplateProfile({
+      templateName: body.template_name ?? "",
+      docxPath: body.docx_path ?? "",
+    });
+    return NextResponse.json({
+      ok: true,
+      profile: result.profile,
+      templates: result.templates,
+      active_template_id: result.activeTemplateId,
+    });
+  } catch (error) {
+    const httpError = toHttpError(error, "Failed to register template.");
+    return NextResponse.json(
+      { ok: false, error: httpError.message },
+      { status: httpError.status },
+    );
+  }
+}
+
+export async function DELETE(req: NextRequest) {
+  try {
+    const { searchParams } = new URL(req.url);
+    const templateId = searchParams.get("id") ?? "";
+    const result = await reportService.removeTemplateProfile(templateId);
+    return NextResponse.json({
+      ok: true,
+      templates: result.templates,
+      active_template_id: result.activeTemplateId,
+    });
+  } catch (error) {
+    const httpError = toHttpError(error, "Failed to remove template.");
+    return NextResponse.json(
+      { ok: false, error: httpError.message },
+      { status: httpError.status },
+    );
+  }
+}
+
 export async function PATCH(req: NextRequest) {
   try {
     const body = (await req.json()) as { template_id?: string };

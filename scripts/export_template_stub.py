@@ -202,8 +202,8 @@ def main() -> None:
     )
     parser.add_argument(
         "--flat-json",
-        default="report_assets/report_draft_flat.json",
-        help="Flat report JSON filename (default: report_assets/report_draft_flat.json).",
+        default="report_assets/generated/report_draft_flat.json",
+        help="Flat report JSON filename (default: report_assets/generated/report_draft_flat.json).",
     )
     parser.add_argument(
         "--output",

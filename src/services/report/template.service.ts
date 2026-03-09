@@ -381,4 +381,58 @@ export const templateService = {
     const updated = state.field_templates.find((item) => item.id === templateId);
     return { updated, allTemplates: state.field_templates };
   },
+
+  /** Register a DOCX file from folder browser as a configured template profile */
+  async registerTemplateProfile(input: { templateName: string; docxPath: string }) {
+    const name = (input.templateName ?? "").trim();
+    if (!name) throw new ValidationError("Tên mẫu là bắt buộc.");
+    if (!input.docxPath) throw new ValidationError("Đường dẫn file DOCX là bắt buộc.");
+
+    const state = await loadState();
+
+    // Check for duplicate docx_path
+    const existing = state.template_profiles.find((p) => p.docx_path === input.docxPath);
+    if (existing) throw new ValidationError(`File này đã được đăng ký: "${existing.template_name}".`);
+
+    const profile = {
+      id: `template-${Date.now()}`,
+      template_name: name,
+      docx_path: input.docxPath,
+      placeholder_inventory_path: "",
+      active: state.template_profiles.length === 0, // auto-activate if first
+    };
+
+    state.template_profiles.push(profile);
+    if (profile.active) state.active_template_id = profile.id;
+    await saveState(state);
+
+    return {
+      profile,
+      templates: state.template_profiles,
+      activeTemplateId: state.active_template_id,
+    };
+  },
+
+  /** Remove a template profile from configured templates */
+  async removeTemplateProfile(templateId: string) {
+    if (!templateId) throw new ValidationError("template_id là bắt buộc.");
+
+    const state = await loadState();
+    const idx = state.template_profiles.findIndex((p) => p.id === templateId);
+    if (idx === -1) throw new NotFoundError("Không tìm thấy template profile.");
+
+    state.template_profiles.splice(idx, 1);
+
+    // If removed template was active, activate the first remaining one
+    if (state.active_template_id === templateId) {
+      state.active_template_id = state.template_profiles[0]?.id ?? "";
+    }
+
+    await saveState(state);
+
+    return {
+      templates: state.template_profiles,
+      activeTemplateId: state.active_template_id,
+    };
+  },
 };
