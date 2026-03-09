@@ -1,71 +1,124 @@
-import { Download, FileText, Plus } from "lucide-react";
-import type { ReactNode } from "react";
+import { Users, FileText, Upload, BarChart3, Settings } from "lucide-react";
+import { ToolbarActionButton } from "./toolbar-action-button";
 
 type MappingVisualToolbarProps = {
+  // Action buttons
+  onOpenCustomerPicker: () => void;
+  onOpenTemplatePicker: () => void;
+  onUploadDocument: () => void;
+  onOpenFinancialAnalysis: () => void;
+  onToggleSidebar: () => void;
+  // Active states
+  hasCustomer: boolean;
+  hasTemplate: boolean;
+  sidebarOpen: boolean;
+  // Search/filter row
   t: (key: string) => string;
   hasContext: boolean;
   searchTerm: string;
-  setSearchTerm: (value: string) => void;
-  onOpenAddFieldModal: () => void;
-  exportingDocx: boolean;
-  onExportAndOpenDocx: () => void;
-  lastExportedDocxPath: string;
-  sidebar: ReactNode;
+  setSearchTerm: (v: string) => void;
+  showUnmappedOnly: boolean;
+  setShowUnmappedOnly: (v: boolean) => void;
+  showTechnicalKeys: boolean;
+  setShowTechnicalKeys: (v: boolean) => void;
 };
 
+const SEPARATOR = (
+  <div className="h-6 w-px bg-zinc-200 dark:bg-white/[0.08] mx-1" />
+);
+
 export function MappingVisualToolbar({
+  onOpenCustomerPicker,
+  onOpenTemplatePicker,
+  onUploadDocument,
+  onOpenFinancialAnalysis,
+  onToggleSidebar,
+  hasCustomer,
+  hasTemplate,
+  sidebarOpen,
   t,
   hasContext,
   searchTerm,
   setSearchTerm,
-  onOpenAddFieldModal,
-  exportingDocx,
-  onExportAndOpenDocx,
-  lastExportedDocxPath,
-  sidebar,
+  showUnmappedOnly,
+  setShowUnmappedOnly,
+  showTechnicalKeys,
+  setShowTechnicalKeys,
 }: MappingVisualToolbarProps) {
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-coral-tree-200 bg-white p-2">
-      <div className={`flex items-center gap-2 w-full md:w-auto transition-opacity duration-300 ${!hasContext ? "opacity-0 pointer-events-none" : "opacity-100"}`}>
+    <div className="space-y-2">
+      {/* Row 1: Action buttons — center-aligned, 3 groups */}
+      <div className="flex items-center justify-center gap-1 rounded-xl border border-zinc-200 dark:border-white/[0.08] bg-white/80 dark:bg-[#141414]/90 p-2 backdrop-blur-sm">
+        {/* Group 1: Context — Customer + Template */}
+        <ToolbarActionButton
+          icon={<Users className="h-5 w-5" />}
+          label="Chọn khách hàng"
+          onClick={onOpenCustomerPicker}
+          active={hasCustomer}
+        />
+        <ToolbarActionButton
+          icon={<FileText className="h-5 w-5" />}
+          label="Chọn mẫu dữ liệu"
+          onClick={onOpenTemplatePicker}
+          active={hasTemplate}
+        />
+
+        {SEPARATOR}
+
+        {/* Group 2: Processing — Upload + Financial */}
+        <ToolbarActionButton
+          icon={<Upload className="h-5 w-5" />}
+          label="Upload tài liệu"
+          onClick={onUploadDocument}
+        />
+        <ToolbarActionButton
+          icon={<BarChart3 className="h-5 w-5" />}
+          label="Phân tích tài chính"
+          onClick={onOpenFinancialAnalysis}
+          disabled={!hasCustomer}
+        />
+
+        {SEPARATOR}
+
+        {/* Group 3: Settings — Sidebar */}
+        <ToolbarActionButton
+          icon={<Settings className="h-5 w-5" />}
+          label="Tùy chọn khác"
+          onClick={onToggleSidebar}
+          active={sidebarOpen}
+        />
+      </div>
+
+      {/* Row 2: Search + filters — visible only when context loaded */}
+      <div
+        className={`flex flex-wrap items-center gap-2 rounded-xl border border-zinc-200 dark:border-white/[0.08] bg-white/80 dark:bg-[#141414]/90 p-2 backdrop-blur-sm transition-opacity duration-300 ${
+          !hasContext ? "opacity-0 pointer-events-none h-0 overflow-hidden p-0 border-0" : "opacity-100"
+        }`}
+      >
         <input
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full md:w-72 rounded-md border border-coral-tree-300 px-3 py-1.5 text-sm placeholder:text-coral-tree-700"
+          className="w-full md:w-72 rounded-lg border border-zinc-300 dark:border-white/[0.10] px-3 py-1.5 text-sm text-zinc-900 dark:text-slate-100 dark:bg-white/[0.05] placeholder:text-zinc-500 dark:placeholder:text-slate-400 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500/40"
           placeholder={t("mapping.searchPlaceholder")}
         />
-        <button
-          type="button"
-          onClick={onOpenAddFieldModal}
-          className="flex flex-shrink-0 items-center gap-1.5 rounded-md bg-coral-tree-700 px-3 py-1.5 text-sm text-white hover:bg-coral-tree-800"
-        >
-          <Plus className="h-4 w-4" />
-          {t("mapping.newFieldTitle")}
-        </button>
-      </div>
-
-      <div className="flex items-center gap-2">
-        <button
-          onClick={onExportAndOpenDocx}
-          disabled={exportingDocx}
-          className="flex items-center gap-1.5 rounded-md border border-coral-tree-300 bg-white px-3 py-1.5 text-sm font-medium text-coral-tree-900 hover:bg-coral-tree-50 hover:text-coral-tree-950 disabled:opacity-75"
-          title={t("mapping.exportOpenDocx")}
-        >
-          <FileText className="h-4 w-4" />
-          {exportingDocx ? "..." : "Xem Docx"}
-        </button>
-
-        {lastExportedDocxPath ? (
-          <a
-            href={`/api/report/file?path=${encodeURIComponent(lastExportedDocxPath)}&download=1&ts=${Date.now()}`}
-            className="flex items-center gap-1.5 rounded-md border border-coral-tree-300 bg-white px-2 py-1.5 text-sm hover:bg-coral-tree-50"
-            title={t("mapping.downloadDocx")}
-          >
-            <Download className="h-4 w-4 text-coral-tree-800" />
-          </a>
-        ) : null}
-
-        <div className="h-6 w-px bg-coral-tree-200 mx-1" />
-        {sidebar}
+        <label className="inline-flex items-center gap-2 rounded-lg border border-zinc-300 dark:border-white/[0.10] bg-white dark:bg-[#141414]/90 px-3 py-1.5 text-xs text-zinc-700 dark:text-slate-200">
+          <input
+            type="checkbox"
+            checked={showUnmappedOnly}
+            onChange={(e) => setShowUnmappedOnly(e.target.checked)}
+            className="h-3.5 w-3.5 rounded border-zinc-300 dark:border-white/[0.10] text-violet-600 focus:ring-violet-500/40"
+          />
+          Chưa mapping
+        </label>
+        <label className="inline-flex items-center gap-2 rounded-lg border border-zinc-300 dark:border-white/[0.10] bg-white dark:bg-[#141414]/90 px-3 py-1.5 text-xs text-zinc-700 dark:text-slate-200">
+          <input
+            type="checkbox"
+            checked={showTechnicalKeys}
+            onChange={(e) => setShowTechnicalKeys(e.target.checked)}
+            className="h-3.5 w-3.5 rounded border-zinc-300 dark:border-white/[0.10] text-violet-600 focus:ring-violet-500/40"
+          />
+          Technical keys
+        </label>
       </div>
     </div>
   );

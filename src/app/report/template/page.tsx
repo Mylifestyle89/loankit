@@ -1,401 +1,278 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useRef, useState } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 
 import { DocxTemplateEditorModal } from "@/components/docx-template-editor-modal";
+import { OnlyOfficeEditorModal } from "@/components/onlyoffice-editor-modal";
+import { SegmentedControl } from "@/components/ui/segmented-control";
 import { useLanguage } from "@/components/language-provider";
+import { getSignedFileUrl } from "@/lib/report/signed-file-url";
 
-type TemplateProfile = {
-  id: string;
-  template_name: string;
-  docx_path: string;
-  placeholder_inventory_path: string;
-  active: boolean;
-};
+import { BuildExportTab } from "./_components/build-export-tab";
+import { ConfiguredTemplatesTab } from "./_components/configured-templates-tab";
+import { FieldReferencePanel } from "./_components/field-reference-panel";
+import { TemplateFolderBrowser } from "./_components/template-folder-browser";
+import { TemplateValidationReportModal } from "./_components/template-validation-report-modal";
+import { useFieldInjection } from "./_components/use-field-injection";
+import { useTemplateUploadValidation } from "./_components/use-template-upload-validation";
 
-type TemplateApiResponse = {
-  ok: boolean;
-  error?: string;
-  templates?: TemplateProfile[];
-  active_template_id?: string;
-};
+type TemplateProfile = { id: string; template_name: string; docx_path: string; placeholder_inventory_path: string; active: boolean };
+type TemplateApiResponse = { ok: boolean; error?: string; templates?: TemplateProfile[]; active_template_id?: string };
 
-type FieldCatalogItem = {
-  field_key: string;
-  label_vi: string;
-  group: string;
-  type: string;
-};
+const VALID_TABS = ["configured", "folder", "export"] as const;
+type TabKey = (typeof VALID_TABS)[number];
+const TAB_LABELS: Record<TabKey, string> = { configured: "Chỉnh sửa mẫu", folder: "Duyệt folder mẫu", export: "Build & Export" };
 
-type FieldTemplateItem = {
-  id: string;
-  name: string;
-  field_catalog: FieldCatalogItem[];
-};
-
-type FieldTemplatesApiResponse = {
-  ok: boolean;
-  error?: string;
-  field_templates?: FieldTemplateItem[];
-};
-
-export default function TemplatePage() {
+function TemplatePageInner() {
   const { t } = useLanguage();
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
+  // URL-synced tab
+  const tabParam = searchParams.get("tab") as TabKey | null;
+  const activeTab: TabKey = tabParam && VALID_TABS.includes(tabParam) ? tabParam : "configured";
+  function setActiveTab(tab: TabKey) { router.replace(`?tab=${tab}`, { scroll: false }); }
+
+  // Core state
   const [loading, setLoading] = useState(true);
   const [templates, setTemplates] = useState<TemplateProfile[]>([]);
-  const [activeTemplateId, setActiveTemplateId] = useState<string>("");
+  const [activeTemplateId, setActiveTemplateId] = useState("");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
-  const [fieldTemplates, setFieldTemplates] = useState<FieldTemplateItem[]>([]);
-  const [selectedFieldTemplateId, setSelectedFieldTemplateId] = useState<string>("");
-  const [editorCopyFeedback, setEditorCopyFeedback] = useState<string | null>(null);
-  const [selectedGroup, setSelectedGroup] = useState<string>("");
-  const [selectedFieldKey, setSelectedFieldKey] = useState<string>("");
+
+  // Editor state
   const [showEditor, setShowEditor] = useState(false);
   const [editorBuffer, setEditorBuffer] = useState<ArrayBuffer | null>(null);
   const [openingEditor, setOpeningEditor] = useState(false);
-  const [editorSource, setEditorSource] = useState<"managed" | "local">("managed");
+  const [editorSource, setEditorSource] = useState<"managed" | "local" | "folder">("managed");
+  const [activeEditorPath, setActiveEditorPath] = useState("");
   const [localDocxName, setLocalDocxName] = useState("");
   const localDocxInputRef = useRef<HTMLInputElement | null>(null);
 
+  // OnlyOffice
+  const [onlyofficeAvailable, setOnlyofficeAvailable] = useState<boolean | null>(null);
+  const [editorType, setEditorType] = useState<"onlyoffice" | "eigenpal">("onlyoffice");
+  const [showOnlyofficeEditor, setShowOnlyofficeEditor] = useState(false);
+  const [onlyofficeDocxPath, setOnlyofficeDocxPath] = useState("");
+
+  // Field injection + validation
+  const fi = useFieldInjection(templates.length > 0);
+  const validation = useTemplateUploadValidation(fi.selectedFieldTemplateId);
+  const validateInputRef = useRef<HTMLInputElement | null>(null);
+  const [removing, setRemoving] = useState(false);
+
+  // --- Data loading ---
   const loadTemplates = useCallback(async () => {
     setLoading(true);
     const res = await fetch("/api/report/template", { cache: "no-store" });
     const data = (await res.json()) as TemplateApiResponse;
-    if (!data.ok) {
-      setError(data.error ?? t("template.err.load"));
-      setLoading(false);
-      return;
-    }
+    if (!data.ok) { setError(data.error ?? t("template.err.load")); setLoading(false); return; }
     setTemplates(data.templates ?? []);
-    const activeId = data.active_template_id ?? data.templates?.[0]?.id ?? "";
-    setActiveTemplateId((prev) => prev || activeId);
+    setActiveTemplateId((prev) => prev || (data.active_template_id ?? data.templates?.[0]?.id ?? ""));
     setLoading(false);
   }, [t]);
 
-  const loadFieldTemplates = useCallback(async () => {
-    const res = await fetch("/api/report/field-templates", { cache: "no-store" });
-    const data = (await res.json()) as FieldTemplatesApiResponse;
-    if (data.ok && Array.isArray(data.field_templates)) {
-      setFieldTemplates(data.field_templates);
-      setSelectedFieldTemplateId((prev) => prev || data.field_templates?.[0]?.id || "");
-    }
+  useEffect(() => { const timer = window.setTimeout(() => void loadTemplates(), 0); return () => window.clearTimeout(timer); }, [loadTemplates]);
+  useEffect(() => {
+    fetch("/api/onlyoffice/health").then((r) => r.json() as Promise<{ available: boolean }>)
+      .then((d) => { setOnlyofficeAvailable(d.available); if (!d.available) setEditorType("eigenpal"); })
+      .catch(() => { setOnlyofficeAvailable(false); setEditorType("eigenpal"); });
   }, []);
 
-  useEffect(() => {
-    const timer = window.setTimeout(() => {
-      void loadTemplates();
-    }, 0);
-    return () => window.clearTimeout(timer);
-  }, [loadTemplates]);
+  const selectedTemplate = templates.find((tp) => tp.id === activeTemplateId);
+  const profileDocxPath = selectedTemplate?.docx_path ?? "";
 
-  useEffect(() => {
-    if (templates.length > 0) void loadFieldTemplates();
-  }, [templates.length, loadFieldTemplates]);
-
-  const selectedTemplate = templates.find((t) => t.id === activeTemplateId);
-  const docxPath = selectedTemplate?.docx_path ?? "";
-
-  function openDocx() {
-    if (!docxPath) return;
-    const url = `/api/report/file?path=${encodeURIComponent(docxPath)}&download=1&ts=${Date.now()}`;
-    window.open(url, "_blank", "noopener,noreferrer");
+  // --- Editor helpers ---
+  function openProfileDocx() {
+    if (!profileDocxPath) return;
+    void getSignedFileUrl(profileDocxPath, true).then((url) => window.open(url, "_blank", "noopener,noreferrer")).catch(() => setError("Failed to generate download URL."));
   }
 
-  function openEditor() {
-    if (!docxPath) return;
-    setOpeningEditor(true);
-    setEditorSource("managed");
-    setLocalDocxName("");
-    setError("");
-    setMessage("");
+  function openProfileEditor() {
+    if (!profileDocxPath) return;
+    setError(""); setMessage("");
+    if (editorType === "onlyoffice" && onlyofficeAvailable) { setOnlyofficeDocxPath(profileDocxPath); setShowOnlyofficeEditor(true); return; }
+    openEigenpalEditor(profileDocxPath, "managed");
+  }
+
+  function openEigenpalEditor(docxPath: string, source: "managed" | "local" | "folder") {
+    setOpeningEditor(true); setEditorSource(source); setActiveEditorPath(docxPath);
     void (async () => {
-      try {
-        const res = await fetch(`/api/report/file?path=${encodeURIComponent(docxPath)}&download=1&ts=${Date.now()}`);
-        if (!res.ok) {
-          throw new Error("Failed to load DOCX.");
-        }
-        const buf = await res.arrayBuffer();
-        setEditorBuffer(buf);
-        setShowEditor(true);
-      } catch (e) {
-        setError(e instanceof Error ? e.message : "Failed to open editor.");
-      } finally {
-        setOpeningEditor(false);
-      }
+      try { const signedUrl = await getSignedFileUrl(docxPath, true); const res = await fetch(signedUrl); if (!res.ok) throw new Error("Không thể tải file DOCX."); setEditorBuffer(await res.arrayBuffer()); setShowEditor(true); }
+      catch (e) { setError(e instanceof Error ? e.message : "Lỗi mở editor."); }
+      finally { setOpeningEditor(false); }
     })();
   }
 
-  function openLocalDocxFromFolder(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    e.target.value = "";
-    setOpeningEditor(true);
-    setError("");
-    setMessage("");
-    setEditorSource("local");
-    setLocalDocxName(file.name);
-    void (async () => {
-      try {
-        const buf = await file.arrayBuffer();
-        setEditorBuffer(buf);
-        setShowEditor(true);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Không thể mở file DOCX.");
-      } finally {
-        setOpeningEditor(false);
-      }
-    })();
+  function openLocalDocx(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]; if (!file) return; e.target.value = "";
+    setOpeningEditor(true); setError(""); setMessage(""); setEditorSource("local"); setLocalDocxName(file.name);
+    void file.arrayBuffer().then((buf) => { setEditorBuffer(buf); setShowEditor(true); })
+      .catch((err) => setError(err instanceof Error ? err.message : "Không thể mở file."))
+      .finally(() => setOpeningEditor(false));
+  }
+
+  function handleOpenEditor(docxPath: string) {
+    setError(""); setMessage("");
+    if (editorType === "onlyoffice" && onlyofficeAvailable) { setOnlyofficeDocxPath(docxPath); setShowOnlyofficeEditor(true); return; }
+    openEigenpalEditor(docxPath, "folder");
   }
 
   async function saveEditorDocx(buffer: ArrayBuffer) {
     if (editorSource === "local") {
-      const blob = new Blob([buffer], {
-        type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-      });
-      const url = URL.createObjectURL(blob);
-      const anchor = document.createElement("a");
-      anchor.href = url;
-      anchor.download = localDocxName || "edited-template.docx";
-      document.body.appendChild(anchor);
-      anchor.click();
-      anchor.remove();
-      URL.revokeObjectURL(url);
-      setMessage("Đã tải file DOCX đã chỉnh sửa về máy.");
-      return;
+      const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" });
+      const url = URL.createObjectURL(blob); const a = document.createElement("a"); a.href = url; a.download = localDocxName || "edited-template.docx";
+      document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url); setMessage("Đã tải file DOCX đã chỉnh sửa về máy."); return;
     }
-
-    const res = await fetch(`/api/report/template/save-docx?path=${encodeURIComponent(docxPath)}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/octet-stream" },
-      body: buffer,
-    });
+    const savePath = activeEditorPath || profileDocxPath;
+    const res = await fetch(`/api/report/template/save-docx?path=${encodeURIComponent(savePath)}`, { method: "PUT", headers: { "Content-Type": "application/octet-stream" }, body: buffer });
     const data = (await res.json()) as { ok: boolean; error?: string };
-    if (!data.ok) {
-      throw new Error(data.error ?? "Failed to save DOCX.");
-    }
+    if (!data.ok) throw new Error(data.error ?? "Lỗi lưu DOCX.");
     setMessage(t("template.editor.modal.saved"));
-    await loadTemplates();
+    if (editorSource === "managed") await loadTemplates();
   }
 
-  function injectField(fieldKey?: string) {
-    const key = fieldKey ?? selectedFieldKey;
-    if (!key) return;
-    const placeholder = `[${key}]`;
-    void navigator.clipboard.writeText(placeholder).then(() => {
-      setEditorCopyFeedback(placeholder);
-      window.setTimeout(() => setEditorCopyFeedback(null), 2000);
-    });
+  // --- Template CRUD ---
+  async function handleRemoveTemplate() {
+    if (!activeTemplateId) return;
+    const tpl = templates.find((tp) => tp.id === activeTemplateId); if (!tpl) return;
+    setRemoving(true); setError(""); setMessage("");
+    try {
+      const res = await fetch(`/api/report/template?id=${encodeURIComponent(activeTemplateId)}`, { method: "DELETE" });
+      const data = (await res.json()) as TemplateApiResponse;
+      if (!data.ok) throw new Error(data.error ?? "Xóa thất bại.");
+      setTemplates(data.templates ?? []); setActiveTemplateId(data.active_template_id ?? data.templates?.[0]?.id ?? "");
+      setMessage(`Đã loại bỏ mẫu "${tpl.template_name}".`);
+    } catch (e) { setError(e instanceof Error ? e.message : "Xóa thất bại."); }
+    finally { setRemoving(false); }
   }
 
-  const selectedFieldTemplate = fieldTemplates.find((item) => item.id === selectedFieldTemplateId) ?? null;
-  const availableFieldCatalog = selectedFieldTemplate?.field_catalog ?? [];
+  async function handleRegisterTemplate(docxPath: string, templateName: string) {
+    const res = await fetch("/api/report/template", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ template_name: templateName, docx_path: docxPath }) });
+    const data = (await res.json()) as TemplateApiResponse;
+    if (!data.ok) throw new Error(data.error ?? "Đăng ký thất bại.");
+    setMessage(`Đã đăng ký mẫu "${templateName}".`);
+    if (data.templates) { setTemplates(data.templates); setActiveTemplateId(data.active_template_id ?? data.templates[0]?.id ?? ""); }
+  }
 
-  // Group fields by group name (filtered by selected field template)
-  const fieldsByGroup = useMemo(
-    () =>
-      availableFieldCatalog.reduce((acc, field) => {
-        const group = field.group || t("template.editor.ungrouped");
-        if (!acc[group]) {
-          acc[group] = [];
-        }
-        acc[group].push(field);
-        return acc;
-      }, {} as Record<string, FieldCatalogItem[]>),
-    [availableFieldCatalog, t],
-  );
+  function handleUploadValidate() {
+    if (!fi.selectedFieldTemplateId) { setError("Vui lòng chọn field template trước khi kiểm tra."); return; }
+    validateInputRef.current?.click();
+  }
 
-  const groups = useMemo(() => Object.keys(fieldsByGroup).sort((a, b) => a.localeCompare(b, "vi")), [fieldsByGroup]);
-  const fieldsInSelectedGroup = selectedGroup ? fieldsByGroup[selectedGroup] ?? [] : [];
+  function handleValidateFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]; if (!file) return; e.target.value = "";
+    setError(""); setMessage(""); void validation.validateFile(file);
+  }
 
-  // Auto-select first group and first field when groups are loaded
-  useEffect(() => {
-    if (groups.length > 0 && !selectedGroup) {
-      setSelectedGroup(groups[0]);
-    }
-  }, [groups, selectedGroup]);
-
-  useEffect(() => {
-    if (fieldsInSelectedGroup.length > 0 && !selectedFieldKey) {
-      setSelectedFieldKey(fieldsInSelectedGroup[0].field_key);
-    }
-  }, [fieldsInSelectedGroup, selectedFieldKey]);
-
-  // Reset field selection when group changes
-  useEffect(() => {
-    if (fieldsInSelectedGroup.length > 0) {
-      setSelectedFieldKey(fieldsInSelectedGroup[0].field_key);
-    } else {
-      setSelectedFieldKey("");
-    }
-  }, [selectedGroup]);
-
-  // Reset group and field when selected field template changes
-  useEffect(() => {
-    if (!selectedFieldTemplateId) {
-      setSelectedGroup("");
-      setSelectedFieldKey("");
-      return;
-    }
-    const nextGroups = Object.keys(fieldsByGroup).sort((a, b) => a.localeCompare(b, "vi"));
-    if (nextGroups.length > 0) {
-      setSelectedGroup(nextGroups[0]);
-      const firstField = (fieldsByGroup[nextGroups[0]] ?? [])[0];
-      setSelectedFieldKey(firstField?.field_key ?? "");
-    } else {
-      setSelectedGroup("");
-      setSelectedFieldKey("");
-    }
-  }, [selectedFieldTemplateId]);
+  async function handleValidationSave(savePath: string) {
+    await validation.saveFile(savePath); validation.reset(); setMessage("Đã lưu template thành công.");
+  }
 
   if (loading) {
-    return <p className="text-sm text-coral-tree-600">{t("template.loading")}</p>;
+    return <div className="flex items-center justify-center py-16"><div className="h-6 w-6 animate-spin rounded-full border-2 border-violet-200 border-t-violet-600 dark:border-violet-800 dark:border-t-violet-400" /></div>;
   }
 
   return (
-    <section className="space-y-4">
-      <div className="rounded-xl border border-coral-tree-200 bg-white p-4">
-        <h2 className="text-lg font-semibold">{t("nav.template")}</h2>
-        <p className="mt-1 text-sm text-coral-tree-600">{t("template.desc")}</p>
-        {message ? <p className="mt-2 text-sm text-emerald-700">{message}</p> : null}
-        {error ? <p className="mt-2 text-sm text-red-700">{error}</p> : null}
+    <section className="space-y-5">
+      {/* Header */}
+      <div className="relative overflow-hidden rounded-2xl border border-violet-100 dark:border-violet-500/10 bg-gradient-to-br from-violet-50 via-white to-fuchsia-50 dark:from-violet-950/30 dark:via-[#141414] dark:to-fuchsia-950/20 p-5">
+        <div className="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-violet-200/30 blur-2xl dark:bg-violet-500/10" />
+        <div className="relative flex items-start justify-between">
+          <div>
+            <h2 className="text-xl font-bold tracking-tight bg-gradient-to-r from-violet-700 to-fuchsia-600 dark:from-violet-400 dark:to-fuchsia-400 bg-clip-text text-transparent">{t("nav.template")}</h2>
+            <p className="mt-1 text-sm text-zinc-500 dark:text-slate-400">{t("template.desc")}</p>
+            {message && <p className="mt-2 text-sm text-emerald-600 dark:text-emerald-400">{message}</p>}
+            {error && <p className="mt-2 text-sm text-red-600 dark:text-red-400">{error}</p>}
+          </div>
+          {onlyofficeAvailable && (
+            <SegmentedControl value={editorType} onChange={(v) => setEditorType(v as "onlyoffice" | "eigenpal")} options={[
+              { value: "onlyoffice", label: "OnlyOffice" },
+              { value: "eigenpal", label: t("template.editor.eigenpal") },
+            ]} />
+          )}
+        </div>
       </div>
 
-      {/* Template editor: open DOCX + inject field toolbar */}
-      {templates.length > 0 ? (
-        <div className="rounded-xl border border-coral-tree-200 bg-white p-4">
-          <h3 className="text-base font-semibold">{t("template.editor.title")}</h3>
-          <p className="mt-1 text-sm text-coral-tree-600">{t("template.editor.desc")}</p>
-          <div className="mt-3 flex flex-wrap items-center gap-3">
-            <select
-              value={activeTemplateId}
-              onChange={(e) => setActiveTemplateId(e.target.value)}
-              aria-label={t("template.editor.title")}
-              className="rounded-md border border-coral-tree-300 bg-white px-3 py-2 text-sm"
-            >
-              {templates.map((tpl) => (
-                <option key={tpl.id} value={tpl.id}>
-                  {tpl.template_name} {tpl.active ? `(${t("template.active")})` : ""}
-                </option>
-              ))}
-            </select>
-            <button
-              type="button"
-              onClick={openDocx}
-              disabled={!docxPath}
-              className="rounded-md border border-coral-tree-300 px-4 py-2 text-sm disabled:opacity-50"
-            >
-              {t("template.editor.openDocx")}
-            </button>
-            <button
-              type="button"
-              onClick={openEditor}
-              disabled={!docxPath || availableFieldCatalog.length === 0 || openingEditor}
-              className="rounded-md bg-coral-tree-600 px-4 py-2 text-sm text-white disabled:opacity-50 hover:bg-coral-tree-700"
-            >
-              {openingEditor ? t("template.editor.modal.loading") : t("template.editor.openEditor")}
-            </button>
-            <input
-              ref={localDocxInputRef}
-              type="file"
-              accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-              aria-label="Chọn file DOCX từ thư mục"
-              className="hidden"
-              onChange={openLocalDocxFromFolder}
-            />
-            <button
-              type="button"
-              onClick={() => localDocxInputRef.current?.click()}
-              disabled={openingEditor}
-              className="rounded-md border border-coral-tree-300 px-4 py-2 text-sm disabled:opacity-50 hover:bg-coral-tree-50"
-            >
-              {openingEditor ? "Đang mở..." : "Chọn mẫu từ folder để chỉnh sửa"}
-            </button>
-          </div>
-          <div className="mt-4">
-            <p className="mb-2 text-sm font-medium text-coral-tree-700">{t("template.editor.injectHint")}</p>
-            <div className="flex flex-wrap items-end gap-3">
-              <div className="flex flex-col gap-1">
-                <label className="text-xs text-coral-tree-600">{t("mapping.selectFieldTemplate")}</label>
-                <select
-                  value={selectedFieldTemplateId}
-                  onChange={(e) => setSelectedFieldTemplateId(e.target.value)}
-                  aria-label={t("mapping.selectFieldTemplate")}
-                  className="min-w-64 rounded-md border border-coral-tree-300 bg-white px-3 py-2 text-sm"
-                >
-                  {fieldTemplates.map((item) => (
-                    <option key={item.id} value={item.id}>
-                      {item.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="flex flex-col gap-1">
-                <label className="text-xs text-coral-tree-600">{t("template.editor.selectGroup")}</label>
-                <select
-                  value={selectedGroup}
-                  onChange={(e) => setSelectedGroup(e.target.value)}
-                  aria-label={t("template.editor.selectGroup")}
-                  className="min-w-48 rounded-md border border-coral-tree-300 bg-white px-3 py-2 text-sm"
-                  disabled={!selectedFieldTemplateId || groups.length === 0}
-                >
-                  {groups.map((group) => (
-                    <option key={group} value={group}>
-                      {group} ({fieldsByGroup[group]?.length ?? 0})
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="flex flex-col gap-1">
-                <label className="text-xs text-coral-tree-600">{t("template.editor.selectField")}</label>
-                <select
-                  value={selectedFieldKey}
-                  onChange={(e) => setSelectedFieldKey(e.target.value)}
-                  aria-label={t("template.editor.selectField")}
-                  className="min-w-64 rounded-md border border-coral-tree-300 bg-white px-3 py-2 text-sm"
-                  disabled={!selectedFieldTemplateId || fieldsInSelectedGroup.length === 0}
-                >
-                  {fieldsInSelectedGroup.map((field) => (
-                    <option key={field.field_key} value={field.field_key}>
-                      {field.label_vi || field.field_key}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <button
-                type="button"
-                onClick={() => injectField()}
-                disabled={!selectedFieldKey}
-                className="rounded-md bg-coral-tree-600 px-4 py-2 text-sm text-white disabled:opacity-50 hover:bg-coral-tree-700"
-              >
-                {t("template.editor.injectButton")}
-              </button>
-              {editorCopyFeedback ? (
-                <span className="text-sm text-emerald-600">{t("template.editor.copied")}: {editorCopyFeedback}</span>
-              ) : null}
-            </div>
-            {availableFieldCatalog.length === 0 ? (
-              <p className="mt-2 text-xs text-coral-tree-500">{t("template.editor.noFields")}</p>
-            ) : null}
-          </div>
-        </div>
-      ) : null}
+      {/* 3-tab switch */}
+      <div className="flex gap-1 rounded-xl bg-zinc-100 dark:bg-white/[0.05] p-1">
+        {VALID_TABS.map((tab) => (
+          <button key={tab} type="button" onClick={() => setActiveTab(tab)}
+            className={`flex-1 rounded-lg px-4 py-2 text-sm font-medium transition-all ${activeTab === tab ? "bg-white dark:bg-[#1e1e1e] shadow-sm text-violet-700 dark:text-violet-400" : "text-zinc-500 dark:text-slate-400 hover:text-zinc-700 dark:hover:text-slate-300"}`}>
+            {TAB_LABELS[tab]}
+          </button>
+        ))}
+      </div>
 
-      {/* DOCX Editor Modal */}
-      {showEditor && editorBuffer && availableFieldCatalog.length > 0 ? (
-        <DocxTemplateEditorModal
-          docxPath={editorSource === "local" ? localDocxName || "local-template.docx" : docxPath}
-          documentBuffer={editorBuffer}
-          fieldCatalog={availableFieldCatalog}
-          onClose={() => {
-            setShowEditor(false);
-            setEditorBuffer(null);
-          }}
-          onSaveDocx={saveEditorDocx}
-          enableAutoBackup={editorSource === "managed"}
-          autoBackupIntervalMs={60_000}
+      {/* Tab: Configured templates */}
+      {activeTab === "configured" && (
+        <ConfiguredTemplatesTab
+          templates={templates} activeTemplateId={activeTemplateId} onActiveTemplateChange={setActiveTemplateId}
+          profileDocxPath={profileDocxPath} openingEditor={openingEditor} removing={removing}
+          onOpenDocx={openProfileDocx} onOpenEditor={openProfileEditor}
+          onOpenLocal={() => localDocxInputRef.current?.click()} onRemoveTemplate={handleRemoveTemplate}
+          fi={{ fieldTemplates: fi.fieldTemplates, selectedFieldTemplateId: fi.selectedFieldTemplateId, setSelectedFieldTemplateId: fi.setSelectedFieldTemplateId,
+            groups: fi.groups, selectedGroup: fi.selectedGroup, setSelectedGroup: fi.setSelectedGroup, fieldsByGroup: fi.fieldsByGroup,
+            fieldsInSelectedGroup: fi.fieldsInSelectedGroup, selectedFieldKey: fi.selectedFieldKey, setSelectedFieldKey: fi.setSelectedFieldKey,
+            injectField: fi.injectField, copyFeedback: fi.copyFeedback, fieldCatalog: fi.fieldCatalog }}
         />
-      ) : null}
+      )}
+
+      {/* Tab: Folder browser + Field reference */}
+      {activeTab === "folder" && (
+        <>
+          <input ref={validateInputRef} type="file" accept=".docx" aria-label="Chọn file DOCX để kiểm tra" className="hidden" onChange={handleValidateFileChange} />
+          <TemplateFolderBrowser onOpenEditor={handleOpenEditor} editorAvailable={true} onUploadValidate={handleUploadValidate} onRegisterTemplate={handleRegisterTemplate} />
+          <FieldReferencePanel fieldTemplates={fi.fieldTemplates} selectedFieldTemplateId={fi.selectedFieldTemplateId} onFieldTemplateChange={fi.setSelectedFieldTemplateId}
+            fieldsByGroup={fi.fieldsByGroup} groups={fi.groups} onCopyField={fi.injectField} copyFeedback={fi.copyFeedback} />
+          {validation.validating && (
+            <div className="flex items-center gap-2 rounded-lg border border-violet-200 dark:border-violet-500/20 bg-violet-50 dark:bg-violet-950/30 px-4 py-3 text-sm text-violet-700 dark:text-violet-400">
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-violet-200 border-t-violet-600" /> Đang kiểm tra {validation.fileName}...
+            </div>
+          )}
+          {validation.error && <p className="text-sm text-red-600 dark:text-red-400">{validation.error}</p>}
+          {validation.report && <TemplateValidationReportModal report={validation.report} fileName={validation.fileName} onSave={handleValidationSave} onClose={validation.reset} />}
+        </>
+      )}
+
+      {/* Tab: Build & Export */}
+      {activeTab === "export" && (
+        <BuildExportTab templates={templates} activeTemplateId={activeTemplateId} onMessage={setMessage} onError={setError} />
+      )}
+
+      {/* Hidden file input for local docx (used by configured tab) */}
+      <input ref={localDocxInputRef} type="file" accept=".docx" aria-label="Chọn file DOCX" className="hidden" onChange={openLocalDocx} />
+
+      {/* Shared Eigenpal Editor Modal */}
+      {showEditor && editorBuffer && (
+        <DocxTemplateEditorModal
+          docxPath={editorSource === "local" ? localDocxName || "local-template.docx" : activeEditorPath || profileDocxPath}
+          documentBuffer={editorBuffer} fieldCatalog={fi.fieldCatalog}
+          onClose={() => { setShowEditor(false); setEditorBuffer(null); }}
+          onSaveDocx={saveEditorDocx} enableAutoBackup={editorSource !== "local"} autoBackupIntervalMs={60_000}
+          onFallbackToOnlyOffice={onlyofficeAvailable && editorSource !== "local" ? () => {
+            const docxPath = activeEditorPath || profileDocxPath;
+            setShowEditor(false); setEditorBuffer(null); setOnlyofficeDocxPath(docxPath); setShowOnlyofficeEditor(true);
+          } : undefined}
+        />
+      )}
+
+      {/* Shared OnlyOffice Editor Modal */}
+      {showOnlyofficeEditor && onlyofficeDocxPath && (
+        <OnlyOfficeEditorModal docxPath={onlyofficeDocxPath}
+          onClose={() => { setShowOnlyofficeEditor(false); setOnlyofficeDocxPath(""); }}
+          onSaved={() => void loadTemplates()} fieldCatalog={fi.fieldCatalog} />
+      )}
     </section>
+  );
+}
+
+// Wrap with Suspense for useSearchParams (required by Next.js App Router)
+export default function TemplatePage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center py-16"><div className="h-6 w-6 animate-spin rounded-full border-2 border-violet-200 border-t-violet-600 dark:border-violet-800 dark:border-t-violet-400" /></div>}>
+      <TemplatePageInner />
+    </Suspense>
   );
 }

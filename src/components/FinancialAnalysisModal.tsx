@@ -1,0 +1,771 @@
+"use client";
+
+import { memo, useRef, useState, type DragEvent } from "react";
+import {
+  X,
+  BarChart3,
+  Upload,
+  ChevronDown,
+  ChevronRight,
+  CheckCircle,
+  AlertCircle,
+  Loader2,
+  RotateCcw,
+} from "lucide-react";
+
+import type { BctcExtractResult, CstcData } from "@/lib/bctc-extractor";
+import type { FieldCatalogItem } from "@/lib/report/config-schema";
+import { BOLD_CODES } from "@/lib/xlsx-table-injector";
+
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+type Step = 1 | 2 | 3 | 4;
+
+type QualitativeContext = {
+  chatLuongHtk: string;
+  congNoPhaiThu: string;
+  hanMucTinDung: string;
+  ghiChu: string;
+};
+
+// Dữ liệu phân tích gom vào 1 object → reset 1 lần duy nhất
+type AnalysisData = {
+  bctcData: BctcExtractResult;
+  fileName: string;
+  originalAiValues: Record<string, string>; // Giá trị gốc AI trả về (không sửa)
+  editedValues: Record<string, string>;     // Giá trị user có thể chỉnh sửa
+  aiProvider: string;
+};
+
+export type FinancialAnalysisModalProps = {
+  isOpen: boolean;
+  onClose: () => void;
+  fieldCatalog: FieldCatalogItem[];
+  onApply: (values: Record<string, string>) => void;
+};
+
+// ─── Constants ────────────────────────────────────────────────────────────────
+
+const ACCEPTED_MIME = new Set([
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  "application/vnd.ms-excel",
+]);
+const ACCEPTED_EXT = new Set(["xlsx", "xls"]);
+const MAX_FILE_BYTES = 20 * 1024 * 1024; // 20 MB
+
+const CSTC_GROUPS: Array<{
+  label: string;
+  keys: (keyof CstcData)[];
+  thresholds?: Partial<Record<keyof CstcData, string>>;
+}> = [
+  {
+    label: "Thanh toán",
+    keys: ["hsTtTongQuat", "hsTtNganHan", "hsTtNhanh", "hsTtTienMat", "hsTtLaiVay"],
+    thresholds: { hsTtNganHan: "> 1 tốt", hsTtNhanh: "> 0.5 tốt", hsTtLaiVay: "> 1 tốt" },
+  },
+  {
+    label: "Cơ cấu vốn",
+    keys: ["heSoNo", "hsTuTaiTro", "heSoNoVcsh"],
+    thresholds: { heSoNo: "< 0.6 tốt", hsTuTaiTro: "> 0.25 tốt", heSoNoVcsh: "< 3 tốt" },
+  },
+  {
+    label: "Hoạt động",
+    keys: ["vqVld", "vqHtk", "soNgayHtk", "vqPhaiThu", "soNgayThu", "vqTscd", "vqTongTs"],
+  },
+  {
+    label: "Sinh lời",
+    keys: ["tyLeGop", "ros", "roa", "roe", "bep"],
+    thresholds: { roa: "> 5% tốt", roe: "> 10% tốt" },
+  },
+];
+
+const CSTC_LABELS: Record<keyof CstcData, string> = {
+  hsTtTongQuat: "HS thanh toán tổng quát",
+  hsTtNganHan: "HS thanh toán hiện hành",
+  hsTtNhanh: "HS thanh toán nhanh",
+  hsTtTienMat: "HS thanh toán tức thời",
+  hsTtLaiVay: "HS thanh toán lãi vay",
+  heSoNo: "Hệ số nợ",
+  hsTuTaiTro: "HS tự tài trợ",
+  heSoNoVcsh: "Nợ / VCSH",
+  vqVld: "Vòng quay VLĐ",
+  vqHtk: "Vòng quay HTK",
+  soNgayHtk: "Số ngày tồn kho",
+  vqPhaiThu: "Vòng quay phải thu",
+  soNgayThu: "Số ngày thu tiền BQ",
+  vqTscd: "Vòng quay TSCĐ",
+  vqTongTs: "Vòng quay tổng TS",
+  tyLeGop: "Tỷ suất LN gộp",
+  ros: "ROS",
+  roa: "ROA",
+  roe: "ROE",
+  bep: "BEP",
+};
+
+const STEP_LABELS = ["Upload BCTC", "Xem dữ liệu", "Thông tin định tính", "Kết quả AI"];
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function fmtNum(v: number | null): string {
+  if (v === null || v === undefined) return "—";
+  const abs = Math.abs(v);
+  const s = Math.round(abs).toLocaleString("vi-VN");
+  return v < 0 ? `(${s})` : s;
+}
+
+function fmtRatio(v: number | null, digits = 2): string {
+  if (v === null || v === undefined) return "—";
+  return v.toFixed(digits);
+}
+
+function validateFile(file: File): string | null {
+  const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
+  const mime = file.type ?? "";
+  if (!ACCEPTED_EXT.has(ext) && !ACCEPTED_MIME.has(mime)) {
+    return `Chỉ hỗ trợ file Excel (.xlsx, .xls). Nhận được: .${ext}`;
+  }
+  if (file.size > MAX_FILE_BYTES) {
+    return "File vượt quá giới hạn 20MB.";
+  }
+  return null;
+}
+
+// ─── Sub-components ───────────────────────────────────────────────────────────
+
+function SummaryCard({ label, value, sub }: { label: string; value: string; sub?: string }) {
+  return (
+    <div className="rounded-lg border border-slate-200 dark:border-white/[0.07] bg-slate-50 dark:bg-white/[0.04] px-3 py-2.5">
+      <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">{label}</p>
+      <p className="mt-0.5 text-base font-bold text-slate-800 dark:text-slate-100 tabular-nums">{value}</p>
+      {sub && <p className="text-[11px] text-slate-400 dark:text-slate-500">{sub}</p>}
+    </div>
+  );
+}
+
+function CollapsibleSection({
+  title,
+  children,
+  defaultOpen = false,
+}: {
+  title: string;
+  children: React.ReactNode;
+  defaultOpen?: boolean;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <div className="rounded-lg border border-slate-200 dark:border-white/[0.07] overflow-hidden">
+      <button
+        type="button"
+        aria-expanded={open}
+        onClick={() => setOpen((v) => !v)}
+        className="flex w-full items-center justify-between bg-slate-50 dark:bg-white/[0.04] px-3 py-2 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors"
+      >
+        <span>{title}</span>
+        {open ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+      </button>
+      {open && <div className="px-3 py-2">{children}</div>}
+    </div>
+  );
+}
+
+function FinancialTable({
+  rows,
+  currentLabel,
+  priorLabel,
+}: {
+  rows: BctcExtractResult["cdkt"]["rows"];
+  currentLabel: string;
+  priorLabel: string;
+}) {
+  if (rows.length === 0) return (
+    <p className="py-2 text-xs text-slate-400 dark:text-slate-500">Không có dữ liệu.</p>
+  );
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full text-xs">
+        <thead>
+          <tr className="border-b border-slate-200 dark:border-white/[0.07]">
+            <th className="pb-1.5 text-left font-semibold text-slate-600 dark:text-slate-300">Chỉ tiêu</th>
+            <th className="w-12 pb-1.5 text-center font-semibold text-slate-600 dark:text-slate-300">Mã</th>
+            <th className="w-28 pb-1.5 text-right font-semibold text-slate-600 dark:text-slate-300">{currentLabel}</th>
+            <th className="w-28 pb-1.5 text-right font-semibold text-slate-400 dark:text-slate-500">{priorLabel}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((r, i) => (
+            <tr
+              key={i}
+              className={`border-b border-slate-100 dark:border-white/[0.04] last:border-0 ${
+                BOLD_CODES.has(r.maSo)
+                  ? "font-semibold text-slate-800 dark:text-slate-100"
+                  : "text-slate-600 dark:text-slate-300"
+              }`}
+            >
+              <td className="py-1 pr-2">{r.chiTieu}</td>
+              <td className="py-1 text-center text-slate-400 dark:text-slate-500">{r.maSo}</td>
+              <td className="py-1 text-right tabular-nums">{fmtNum(r.current)}</td>
+              <td className="py-1 text-right tabular-nums text-slate-400 dark:text-slate-500">{fmtNum(r.prior)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+// Memoized để tránh re-render toàn bộ list khi user gõ 1 field
+const AiResultRow = memo(function AiResultRow({
+  fieldKey,
+  label,
+  value,
+  originalValue,
+  onChange,
+}: {
+  fieldKey: string;
+  label: string;
+  value: string;
+  originalValue: string;
+  onChange: (key: string, val: string) => void;
+}) {
+  const isDirty = value !== originalValue;
+  return (
+    <div className="space-y-1.5 rounded-lg border border-slate-200 dark:border-white/[0.07] p-3">
+      <div className="flex items-start justify-between gap-2">
+        <label className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+          {label}
+          <span className="ml-2 font-mono font-normal text-slate-400 dark:text-slate-500">[{fieldKey}]</span>
+        </label>
+        {isDirty && (
+          <button
+            type="button"
+            onClick={() => onChange(fieldKey, originalValue)}
+            title="Khôi phục giá trị AI gốc"
+            className="flex-shrink-0 rounded p-1 text-slate-400 dark:text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-slate-100 dark:hover:bg-white/[0.07] transition-colors"
+          >
+            <RotateCcw className="h-3.5 w-3.5" />
+          </button>
+        )}
+      </div>
+      <textarea
+        value={value}
+        onChange={(e) => onChange(fieldKey, e.target.value)}
+        rows={3}
+        className="w-full resize-y rounded-lg border border-slate-200 dark:border-white/[0.09] bg-white dark:bg-white/[0.05] px-3 py-2 text-sm text-slate-800 dark:text-slate-100 focus:border-emerald-400 focus:outline-none focus:ring-1 focus:ring-emerald-400/30"
+      />
+      {isDirty && (
+        <p className="text-[10px] text-amber-500 dark:text-amber-400">● Đã chỉnh sửa</p>
+      )}
+    </div>
+  );
+});
+
+// ─── Main Modal ───────────────────────────────────────────────────────────────
+
+export function FinancialAnalysisModal({
+  isOpen,
+  onClose,
+  fieldCatalog,
+  onApply,
+}: FinancialAnalysisModalProps) {
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const [step, setStep] = useState<Step>(1);
+  const [isDragActive, setIsDragActive] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [analyzing, setAnalyzing] = useState(false);
+  const [error, setError] = useState("");
+  const [analysisData, setAnalysisData] = useState<AnalysisData | null>(null);
+
+  // Qualitative context giữ ngoài analysisData → persist khi upload lại
+  const [qualitative, setQualitative] = useState<QualitativeContext>({
+    chatLuongHtk: "",
+    congNoPhaiThu: "",
+    hanMucTinDung: "",
+    ghiChu: "",
+  });
+
+  const analysisFields = fieldCatalog.filter(
+    (f) => typeof f.analysis_prompt === "string" && f.analysis_prompt.trim(),
+  );
+
+  if (!isOpen) return null;
+
+  // ─── Handlers ─────────────────────────────────────────────────────────────
+
+  async function handleFileUpload(file: File) {
+    const validationError = validateFile(file);
+    if (validationError) { setError(validationError); return; }
+
+    setError("");
+    setUploading(true);
+    try {
+      const form = new FormData();
+      form.set("file", file);
+      const res = await fetch("/api/report/financial-analysis/extract", {
+        method: "POST",
+        body: form,
+      });
+      const data = (await res.json()) as { ok: boolean; error?: string; data?: BctcExtractResult };
+      if (!data.ok || !data.data) throw new Error(data.error ?? "Không thể trích xuất dữ liệu.");
+      setAnalysisData({
+        bctcData: data.data,
+        fileName: file.name,
+        originalAiValues: {},
+        editedValues: {},
+        aiProvider: "",
+      });
+      setStep(2);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Lỗi upload file.");
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  function handleDrop(e: DragEvent<HTMLDivElement>) {
+    e.preventDefault();
+    setIsDragActive(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) void handleFileUpload(file);
+  }
+
+  async function handleAnalyze() {
+    if (!analysisData?.bctcData) return;
+    if (analysisFields.length === 0) return;
+
+    setError("");
+    setAnalyzing(true);
+    try {
+      const qualCtx: Record<string, string> = {};
+      if (qualitative.chatLuongHtk.trim()) qualCtx["Chất lượng hàng tồn kho"] = qualitative.chatLuongHtk;
+      if (qualitative.congNoPhaiThu.trim()) qualCtx["Chất lượng công nợ phải thu"] = qualitative.congNoPhaiThu;
+      if (qualitative.hanMucTinDung.trim()) qualCtx["Hạn mức tín dụng đề xuất"] = qualitative.hanMucTinDung;
+      if (qualitative.ghiChu.trim()) qualCtx["Ghi chú bổ sung"] = qualitative.ghiChu;
+
+      const res = await fetch("/api/report/financial-analysis/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          bctcData: analysisData.bctcData,
+          fields: analysisFields.map((f) => ({
+            field_key: f.field_key,
+            analysis_prompt: f.analysis_prompt,
+          })),
+          qualitativeContext: Object.keys(qualCtx).length > 0 ? qualCtx : undefined,
+        }),
+      });
+      const data = (await res.json()) as {
+        ok: boolean;
+        error?: string;
+        values?: Record<string, string>;
+        provider?: string;
+        model?: string;
+      };
+      if (!data.ok || !data.values) throw new Error(data.error ?? "AI không trả về kết quả.");
+
+      setAnalysisData((prev) =>
+        prev
+          ? {
+              ...prev,
+              originalAiValues: { ...data.values! },
+              editedValues: { ...data.values! },
+              aiProvider: `${data.provider ?? ""} / ${data.model ?? ""}`.trim().replace(/^\/\s*/, ""),
+            }
+          : prev,
+      );
+      setStep(4);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Lỗi khi phân tích AI.");
+    } finally {
+      setAnalyzing(false);
+    }
+  }
+
+  function handleEditValue(key: string, val: string) {
+    setAnalysisData((prev) =>
+      prev ? { ...prev, editedValues: { ...prev.editedValues, [key]: val } } : prev,
+    );
+  }
+
+  function handleApply() {
+    if (!analysisData) return;
+    onApply(analysisData.editedValues);
+    handleClose();
+  }
+
+  function handleClose() {
+    setStep(1);
+    setError("");
+    setAnalysisData(null);
+    // qualitative được GIỮ LẠI giữa các lần mở modal
+    onClose();
+  }
+
+  // ─── Render ───────────────────────────────────────────────────────────────
+
+  const bctcData = analysisData?.bctcData;
+  const editedValues = analysisData?.editedValues ?? {};
+  const originalAiValues = analysisData?.originalAiValues ?? {};
+  const editedCount = Object.keys(editedValues).filter(
+    (k) => editedValues[k] !== originalAiValues[k],
+  ).length;
+
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label="Phân tích Tài chính BCTC"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+    >
+      <div className="flex w-full max-w-3xl flex-col rounded-2xl bg-white dark:bg-[#141414] shadow-2xl max-h-[92vh]">
+
+        {/* Header */}
+        <div className="flex flex-shrink-0 items-center justify-between border-b border-slate-200 dark:border-white/[0.07] px-5 py-3.5">
+          <div className="flex items-center gap-2">
+            <BarChart3 className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+            <h2 className="text-base font-semibold text-slate-800 dark:text-slate-100">
+              Phân tích Tài chính
+            </h2>
+            {analysisData?.fileName && (
+              <span className="hidden sm:inline rounded-full bg-slate-100 dark:bg-white/[0.07] px-2 py-0.5 text-[11px] text-slate-500 dark:text-slate-400">
+                {analysisData.fileName}
+              </span>
+            )}
+          </div>
+          <button
+            type="button"
+            onClick={handleClose}
+            aria-label="Đóng modal"
+            className="rounded-lg p-1.5 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.07] transition-colors"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        {/* Step indicator */}
+        <div className="flex flex-shrink-0 flex-wrap items-center gap-0 border-b border-slate-200 dark:border-white/[0.07] px-5 py-2.5">
+          {STEP_LABELS.map((label, idx) => {
+            const s = (idx + 1) as Step;
+            const active = step === s;
+            const done = step > s;
+            return (
+              <div key={s} className="flex items-center">
+                <div className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${
+                  active
+                    ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
+                    : done
+                    ? "text-slate-400 dark:text-slate-500"
+                    : "text-slate-400 dark:text-slate-600"
+                }`}>
+                  {done
+                    ? <CheckCircle className="h-3.5 w-3.5 text-emerald-500" />
+                    : (
+                      <span className={`flex h-4 w-4 items-center justify-center rounded-full text-[10px] font-bold ${
+                        active
+                          ? "bg-emerald-500 text-white"
+                          : "bg-slate-200 dark:bg-white/[0.10] text-slate-500 dark:text-slate-400"
+                      }`}>{s}</span>
+                    )
+                  }
+                  <span className={done ? "line-through" : ""}>{label}</span>
+                </div>
+                {idx < STEP_LABELS.length - 1 && (
+                  <div className="mx-1 h-px w-5 flex-shrink-0 bg-slate-200 dark:bg-white/[0.07]" />
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Error banner */}
+        {error && (
+          <div className="mx-5 mt-3 flex flex-shrink-0 items-start gap-2 rounded-lg border border-red-200 dark:border-red-500/30 bg-red-50 dark:bg-red-500/10 px-3 py-2 text-sm text-red-700 dark:text-red-400">
+            <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0" />
+            <span>{error}</span>
+          </div>
+        )}
+
+        {/* Body */}
+        <div className="flex-1 space-y-4 overflow-y-auto px-5 py-4">
+
+          {/* ── Step 1: Upload ── */}
+          {step === 1 && (
+            <div className="space-y-4">
+              <p className="text-sm text-slate-600 dark:text-slate-300">
+                Upload file Excel Báo Cáo Tài Chính (BCTC) để trích xuất dữ liệu CDKT, KQKD và các chỉ số tài chính.
+              </p>
+              <div
+                role="button"
+                tabIndex={0}
+                aria-label="Khu vực kéo thả file Excel"
+                onDragOver={(e) => { e.preventDefault(); setIsDragActive(true); }}
+                onDragLeave={() => setIsDragActive(false)}
+                onDrop={handleDrop}
+                onClick={() => fileInputRef.current?.click()}
+                onKeyDown={(e) => e.key === "Enter" && fileInputRef.current?.click()}
+                className={`flex cursor-pointer flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed px-6 py-12 transition-colors ${
+                  isDragActive
+                    ? "border-emerald-400 bg-emerald-50 dark:bg-emerald-500/10"
+                    : "border-slate-300 dark:border-white/[0.10] hover:border-emerald-300 dark:hover:border-emerald-500/40 hover:bg-slate-50 dark:hover:bg-white/[0.03]"
+                }`}
+              >
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) void handleFileUpload(file);
+                    e.target.value = "";
+                  }}
+                />
+                {uploading
+                  ? <Loader2 className="h-10 w-10 animate-spin text-emerald-500" />
+                  : <Upload className={`h-10 w-10 ${isDragActive ? "text-emerald-500" : "text-slate-400 dark:text-slate-500"}`} />
+                }
+                <div className="text-center">
+                  <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                    {uploading ? "Đang trích xuất dữ liệu..." : "Kéo thả hoặc click để chọn file"}
+                  </p>
+                  <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
+                    .xlsx, .xls — tối đa 20MB
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ── Step 2: Preview ── */}
+          {step === 2 && bctcData && (
+            <div className="space-y-3">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                  📄 {analysisData?.fileName}
+                </p>
+                <span className="rounded-full bg-emerald-50 dark:bg-emerald-500/10 px-2.5 py-0.5 text-[11px] font-medium text-emerald-700 dark:text-emerald-400">
+                  {bctcData.yearLabels.current} / {bctcData.yearLabels.prior}
+                </span>
+              </div>
+
+              {/* Summary cards */}
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                <SummaryCard label="Tổng tài sản" value={fmtNum(bctcData.cdkt.byCode["270"]?.current ?? bctcData.cdkt.byCode["250"]?.current ?? null)} sub={bctcData.cdkt.byCode["270"] ? "Mã 270" : "Mã 250"} />
+                <SummaryCard label="VCSH" value={fmtNum(bctcData.cdkt.byCode["400"]?.current ?? null)} sub="Mã 400" />
+                <SummaryCard label="Doanh thu thuần" value={fmtNum(bctcData.kqkd.byCode["10"]?.current ?? null)} sub="Mã 10" />
+                <SummaryCard label="LNST" value={fmtNum(bctcData.kqkd.byCode["60"]?.current ?? null)} sub="Mã 60" />
+              </div>
+
+              <CollapsibleSection title="Chỉ số tài chính (CSTC)" defaultOpen>
+                <div className="grid grid-cols-1 gap-x-6 sm:grid-cols-2">
+                  {CSTC_GROUPS.map((group) => (
+                    <div key={group.label} className="mb-3">
+                      <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                        {group.label}
+                      </p>
+                      {group.keys.map((key) => (
+                        <div key={key} className="flex items-center justify-between py-0.5">
+                          <span className="text-xs text-slate-600 dark:text-slate-300">{CSTC_LABELS[key]}</span>
+                          <span className="text-xs font-medium tabular-nums text-slate-800 dark:text-slate-100">
+                            {fmtRatio(bctcData.cstc[key].current)}
+                            {group.thresholds?.[key] && (
+                              <span className="ml-1.5 text-[10px] text-slate-400 dark:text-slate-500">
+                                ({group.thresholds[key]})
+                              </span>
+                            )}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  ))}
+                </div>
+              </CollapsibleSection>
+
+              <CollapsibleSection title={`Bảng cân đối kế toán (${bctcData.cdkt.rows.length} dòng)`}>
+                <FinancialTable rows={bctcData.cdkt.rows} currentLabel={bctcData.yearLabels.current} priorLabel={bctcData.yearLabels.prior} />
+              </CollapsibleSection>
+
+              <CollapsibleSection title={`Kết quả kinh doanh (${bctcData.kqkd.rows.length} dòng)`}>
+                <FinancialTable rows={bctcData.kqkd.rows} currentLabel={bctcData.yearLabels.current} priorLabel={bctcData.yearLabels.prior} />
+              </CollapsibleSection>
+            </div>
+          )}
+
+          {/* ── Step 3: Qualitative ── */}
+          {step === 3 && (
+            <div className="space-y-4">
+              <p className="text-sm text-slate-600 dark:text-slate-300">
+                Cung cấp thêm thông tin định tính để AI phân tích chính xác hơn (tuỳ chọn).
+                Thông tin này được lưu lại khi bạn đóng và mở lại modal.
+              </p>
+
+              {analysisFields.length === 0 && (
+                <div className="rounded-lg border border-amber-200 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-500/10 px-4 py-3 text-sm text-amber-700 dark:text-amber-400">
+                  ⚠️ Không có field nào có{" "}
+                  <code className="font-mono text-xs">analysis_prompt</code>{" "}
+                  trong field catalog. Hãy thêm{" "}
+                  <code className="font-mono text-xs">analysis_prompt</code>{" "}
+                  cho các field cần phân tích trước khi sử dụng tính năng này.
+                </div>
+              )}
+
+              <div className="space-y-3">
+                {(
+                  [
+                    { key: "chatLuongHtk", label: "Chất lượng Hàng Tồn Kho", placeholder: "VD: HTK đa phần là thành phẩm có thể tiêu thụ ngay, tốc độ quay vòng tốt..." },
+                    { key: "congNoPhaiThu", label: "Chất lượng Công Nợ Phải Thu", placeholder: "VD: Phải thu tập trung vào 3-5 KH lớn, uy tín, tỷ lệ nợ xấu thấp..." },
+                    { key: "hanMucTinDung", label: "Hạn mức tín dụng đề xuất", placeholder: "VD: Đề xuất hạn mức 5 tỷ VND, kỳ hạn 12 tháng..." },
+                    { key: "ghiChu", label: "Ghi chú bổ sung", placeholder: "Thông tin khác cán bộ tín dụng muốn AI cân nhắc khi phân tích..." },
+                  ] as { key: keyof QualitativeContext; label: string; placeholder: string }[]
+                ).map(({ key, label, placeholder }) => (
+                  <div key={key} className="space-y-1">
+                    <label className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                      {label}
+                    </label>
+                    <textarea
+                      value={qualitative[key]}
+                      onChange={(e) =>
+                        setQualitative((prev) => ({ ...prev, [key]: e.target.value }))
+                      }
+                      placeholder={placeholder}
+                      rows={2}
+                      className="w-full resize-none rounded-lg border border-slate-200 dark:border-white/[0.09] bg-white dark:bg-white/[0.05] px-3 py-2 text-sm text-slate-800 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-emerald-400 focus:outline-none focus:ring-1 focus:ring-emerald-400/30"
+                    />
+                  </div>
+                ))}
+              </div>
+
+              {/* Fields summary */}
+              {analysisFields.length > 0 && (
+                <div className="rounded-lg border border-slate-200 dark:border-white/[0.07] bg-slate-50 dark:bg-white/[0.04] px-3 py-2.5">
+                  <p className="text-xs font-medium text-slate-600 dark:text-slate-300">
+                    AI sẽ phân tích{" "}
+                    <span className="font-bold text-emerald-600 dark:text-emerald-400">
+                      {analysisFields.length}
+                    </span>{" "}
+                    field:
+                  </p>
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {analysisFields.map((f) => (
+                      <span
+                        key={f.field_key}
+                        className="rounded-full border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-white/[0.07] px-2 py-0.5 text-[11px] text-slate-600 dark:text-slate-300"
+                      >
+                        {f.label_vi}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ── Step 4: AI Results ── */}
+          {step === 4 && (
+            <div className="space-y-3">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                {analysisData?.aiProvider && (
+                  <p className="text-xs text-slate-400 dark:text-slate-500">
+                    Phân tích bởi:{" "}
+                    <span className="font-medium text-slate-600 dark:text-slate-300">
+                      {analysisData.aiProvider}
+                    </span>
+                  </p>
+                )}
+                {editedCount > 0 && (
+                  <span className="rounded-full bg-amber-50 dark:bg-amber-500/10 px-2 py-0.5 text-[11px] font-medium text-amber-700 dark:text-amber-400">
+                    {editedCount} field đã chỉnh sửa
+                  </span>
+                )}
+              </div>
+              <p className="text-sm text-slate-600 dark:text-slate-300">
+                Xem lại và chỉnh sửa kết quả. Nhấn nút{" "}
+                <RotateCcw className="inline h-3 w-3" /> để khôi phục giá trị gốc từ AI.
+              </p>
+
+              {Object.entries(editedValues).map(([key, value]) => {
+                const field = fieldCatalog.find((f) => f.field_key === key);
+                return (
+                  <AiResultRow
+                    key={key}
+                    fieldKey={key}
+                    label={field?.label_vi ?? key}
+                    value={value}
+                    originalValue={originalAiValues[key] ?? ""}
+                    onChange={handleEditValue}
+                  />
+                );
+              })}
+
+              {Object.keys(editedValues).length === 0 && (
+                <p className="rounded-lg border border-dashed border-slate-200 dark:border-white/[0.07] px-4 py-6 text-center text-sm text-slate-400 dark:text-slate-500">
+                  AI không trả về kết quả nào.
+                </p>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="flex flex-shrink-0 items-center justify-between border-t border-slate-200 dark:border-white/[0.07] px-5 py-3">
+          <button
+            type="button"
+            onClick={() => {
+              if (step > 1) setStep((s) => (s - 1) as Step);
+              else handleClose();
+            }}
+            className="rounded-lg border border-slate-200 dark:border-white/[0.09] px-4 py-2 text-sm text-slate-600 dark:text-slate-300 transition-colors hover:bg-slate-50 dark:hover:bg-white/[0.06]"
+          >
+            {step === 1 ? "Đóng" : "← Quay lại"}
+          </button>
+
+          <div className="flex items-center gap-2">
+            {step === 2 && (
+              <button
+                type="button"
+                onClick={() => { setAnalysisData(null); setStep(1); }}
+                className="rounded-lg border border-slate-200 dark:border-white/[0.09] px-3 py-2 text-xs text-slate-500 dark:text-slate-400 transition-colors hover:bg-slate-50 dark:hover:bg-white/[0.06]"
+              >
+                Upload lại
+              </button>
+            )}
+
+            {step === 4 ? (
+              <button
+                type="button"
+                onClick={handleApply}
+                disabled={Object.keys(editedValues).length === 0}
+                className="flex items-center gap-2 rounded-lg bg-emerald-600 px-5 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-emerald-700 disabled:opacity-60"
+              >
+                <CheckCircle className="h-4 w-4" />
+                Áp dụng ({Object.keys(editedValues).length} field)
+              </button>
+            ) : step === 3 ? (
+              <button
+                type="button"
+                onClick={() => void handleAnalyze()}
+                disabled={analyzing || analysisFields.length === 0}
+                className="flex items-center gap-2 rounded-lg bg-emerald-600 px-5 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-emerald-700 disabled:opacity-60"
+              >
+                {analyzing
+                  ? <Loader2 className="h-4 w-4 animate-spin" />
+                  : <BarChart3 className="h-4 w-4" />
+                }
+                {analyzing ? "Đang phân tích..." : "Phân tích với AI"}
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setStep((s) => (s + 1) as Step)}
+                disabled={step === 1 || !analysisData?.bctcData}
+                className="rounded-lg bg-emerald-600 px-5 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-emerald-700 disabled:opacity-60"
+              >
+                Tiếp theo →
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

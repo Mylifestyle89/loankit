@@ -1,12 +1,10 @@
-import type { ChangeEvent, Dispatch, SetStateAction } from "react";
-import type { DragEndEvent } from "@dnd-kit/core";
+import type { Dispatch, SetStateAction } from "react";
+import type { DragEndEvent, SensorDescriptor, SensorOptions } from "@dnd-kit/core";
 import type { FieldCatalogItem } from "@/lib/report/config-schema";
 import type { TypeLabelMap } from "../helpers";
-import { MappingVisualToolbar } from "./MappingVisualToolbar";
+import type { OcrSuggestionMap } from "../types";
 import { EditingTemplateBanner } from "./EditingTemplateBanner";
 import { FieldCatalogBoard } from "./FieldCatalogBoard";
-import { MappingSidebar } from "./MappingSidebar";
-import type { FieldTemplateItem } from "../types";
 
 type GroupedTreeNode = {
   parent: string;
@@ -16,42 +14,19 @@ type GroupedTreeNode = {
 type MappingVisualSectionProps = {
   t: (key: string) => string;
   hasContext: boolean;
-  searchTerm: string;
-  setSearchTerm: Dispatch<SetStateAction<string>>;
   setAddingFieldModal: Dispatch<SetStateAction<boolean>>;
-  exportingDocx: boolean;
-  exportAndOpenDocx: () => void;
-  lastExportedDocxPath: string;
-  customers: Array<{ id: string; customer_name: string; customer_code: string }>;
-  selectedCustomerId: string;
-  setSelectedCustomerId: Dispatch<SetStateAction<string>>;
-  loadingCustomers: boolean;
-  loading: boolean;
-  fieldTemplates: FieldTemplateItem[];
-  allFieldTemplates: FieldTemplateItem[];
-  selectedFieldTemplateId: string;
-  applySelectedFieldTemplate: (id: string) => void;
-  loadingFieldTemplates: boolean;
-  openCreateFieldTemplateModal: () => void;
-  assignSelectedFieldTemplate: () => void;
-  openEditFieldTemplatePicker: () => void;
-  showTechnicalKeys: boolean;
-  setShowTechnicalKeys: Dispatch<SetStateAction<boolean>>;
-  importingCatalog: boolean;
-  handleImportFieldFile: (
-    e: ChangeEvent<HTMLInputElement>,
-    options?: { mode?: "append" | "overwrite"; templateName?: string | null },
-  ) => void;
-  openMergeGroupsModal: () => void;
-  setEditingFieldTemplateId: Dispatch<SetStateAction<string>>;
-  setEditingFieldTemplateName: Dispatch<SetStateAction<string>>;
   editingFieldTemplateId: string;
   editingFieldTemplateName: string;
   savingEditedTemplate: boolean;
   saveEditedFieldTemplate: () => void;
-  stopEditingFieldTemplate: () => void;
-  openBackupFolder: () => void;
-  sensors: any;
+  setEditingFieldTemplateName: Dispatch<SetStateAction<string>>;
+  stopEditingFieldTemplate: () => void | Promise<void>;
+  openImportGroupModal: () => void;
+  openDeleteGenericTemplateModal: () => void;
+  isEditingMaster: boolean;
+  promoteToMasterTemplate: () => void;
+  promotingToMaster: boolean;
+  sensors: SensorDescriptor<SensorOptions>[];
   handleDragEnd: (event: DragEndEvent) => void;
   groupedFieldTree: GroupedTreeNode[];
   parentGroups: string[];
@@ -66,6 +41,7 @@ type MappingVisualSectionProps = {
   onDeleteGroup: (groupPath: string) => void;
   values: Record<string, unknown>;
   fieldCatalog: FieldCatalogItem[];
+  showTechnicalKeys: boolean;
   typeLabels: TypeLabelMap;
   onRepeaterItemChange: (groupPath: string, index: number, field: FieldCatalogItem, rawVal: string) => void;
   onManualChange: (field: FieldCatalogItem, rawValue: string) => void;
@@ -78,43 +54,29 @@ type MappingVisualSectionProps = {
   deleteField: (fieldKey: string) => void;
   formulas: Record<string, string>;
   onOpenFormulaModal: (fieldKey: string) => void;
+  confidenceByField: Record<string, number>;
+  sampleByField: Record<string, string>;
+  ocrSuggestionsByField: OcrSuggestionMap;
+  onAcceptOcrSuggestion: (fieldKey: string) => void;
+  onDeclineOcrSuggestion: (fieldKey: string) => void;
 };
 
 export function MappingVisualSection({
   t,
   hasContext,
-  searchTerm,
-  setSearchTerm,
   setAddingFieldModal,
-  exportingDocx,
-  exportAndOpenDocx,
-  lastExportedDocxPath,
-  customers,
-  selectedCustomerId,
-  setSelectedCustomerId,
-  loadingCustomers,
-  loading,
-  fieldTemplates,
-  allFieldTemplates,
-  selectedFieldTemplateId,
-  applySelectedFieldTemplate,
-  loadingFieldTemplates,
-  openCreateFieldTemplateModal,
-  assignSelectedFieldTemplate,
-  openEditFieldTemplatePicker,
   showTechnicalKeys,
-  setShowTechnicalKeys,
-  importingCatalog,
-  handleImportFieldFile,
-  openMergeGroupsModal,
-  setEditingFieldTemplateId,
   setEditingFieldTemplateName,
   editingFieldTemplateId,
   editingFieldTemplateName,
   savingEditedTemplate,
   saveEditedFieldTemplate,
   stopEditingFieldTemplate,
-  openBackupFolder,
+  openImportGroupModal,
+  openDeleteGenericTemplateModal,
+  isEditingMaster,
+  promoteToMasterTemplate,
+  promotingToMaster,
   sensors,
   handleDragEnd,
   groupedFieldTree,
@@ -142,47 +104,14 @@ export function MappingVisualSection({
   deleteField,
   formulas,
   onOpenFormulaModal,
+  confidenceByField,
+  sampleByField,
+  ocrSuggestionsByField,
+  onAcceptOcrSuggestion,
+  onDeclineOcrSuggestion,
 }: MappingVisualSectionProps) {
   return (
     <section className="space-y-4">
-      <MappingVisualToolbar
-        t={t}
-        hasContext={hasContext}
-        searchTerm={searchTerm}
-        setSearchTerm={setSearchTerm}
-        onOpenAddFieldModal={() => setAddingFieldModal(true)}
-        exportingDocx={exportingDocx}
-        onExportAndOpenDocx={exportAndOpenDocx}
-        lastExportedDocxPath={lastExportedDocxPath}
-        sidebar={
-          <MappingSidebar
-            t={t}
-            customers={customers}
-            selectedCustomerId={selectedCustomerId}
-            setSelectedCustomerId={setSelectedCustomerId}
-            loadingCustomers={loadingCustomers}
-            loading={loading}
-            fieldCatalog={fieldCatalog}
-            fieldTemplates={fieldTemplates}
-            allFieldTemplates={allFieldTemplates}
-            selectedFieldTemplateId={selectedFieldTemplateId}
-            editingFieldTemplateId={editingFieldTemplateId}
-            applySelectedFieldTemplate={applySelectedFieldTemplate}
-            loadingFieldTemplates={loadingFieldTemplates}
-            openCreateFieldTemplateModal={openCreateFieldTemplateModal}
-            openAttachFieldTemplateModal={() => void assignSelectedFieldTemplate()}
-            openEditFieldTemplatePicker={() => void openEditFieldTemplatePicker()}
-            showTechnicalKeys={showTechnicalKeys}
-            setShowTechnicalKeys={setShowTechnicalKeys}
-            importingCatalog={importingCatalog}
-            handleImportFieldFile={handleImportFieldFile}
-            openMergeGroupsModal={openMergeGroupsModal}
-            setEditingFieldTemplateId={setEditingFieldTemplateId}
-            setEditingFieldTemplateName={setEditingFieldTemplateName}
-          />
-        }
-      />
-
       <EditingTemplateBanner
         t={t}
         editingFieldTemplateId={editingFieldTemplateId}
@@ -191,7 +120,11 @@ export function MappingVisualSection({
         saveEditedFieldTemplate={saveEditedFieldTemplate}
         savingEditedTemplate={savingEditedTemplate}
         stopEditingFieldTemplate={stopEditingFieldTemplate}
-        openBackupFolder={openBackupFolder}
+        openImportGroupModal={openImportGroupModal}
+        openDeleteGenericTemplateModal={openDeleteGenericTemplateModal}
+        isEditingMaster={isEditingMaster}
+        promoteToMasterTemplate={promoteToMasterTemplate}
+        promotingToMaster={promotingToMaster}
       />
 
       <FieldCatalogBoard
@@ -226,6 +159,11 @@ export function MappingVisualSection({
         onDeleteField={deleteField}
         formulas={formulas}
         onOpenFormulaModal={onOpenFormulaModal}
+        confidenceByField={confidenceByField}
+        sampleByField={sampleByField}
+        ocrSuggestionsByField={ocrSuggestionsByField}
+        onAcceptOcrSuggestion={onAcceptOcrSuggestion}
+        onDeclineOcrSuggestion={onDeclineOcrSuggestion}
       />
     </section>
   );

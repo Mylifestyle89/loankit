@@ -1,7 +1,10 @@
 import { useMemo } from "react";
-import type { Dispatch, SetStateAction } from "react";
 import type { FieldCatalogItem } from "@/lib/report/config-schema";
+import { toNumber } from "@/lib/report/field-calc";
 import { buildInternalFieldKey } from "../helpers";
+import { useMappingDataStore } from "../stores/use-mapping-data-store";
+import { useGroupUiStore } from "../stores/use-group-ui-store";
+import { useUiStore } from "../stores/use-ui-store";
 
 type GroupTreeNode = {
   parent: string;
@@ -10,77 +13,32 @@ type GroupTreeNode = {
 
 type UseGroupManagementParams = {
   t: (key: string) => string;
-  fieldCatalog: FieldCatalogItem[];
   groupedFieldTree: GroupTreeNode[];
   parentGroups: string[];
-  selectedGroup: string;
-  newField: { label_vi: string; group: string; type: "string" | "number" | "percent" | "date" | "table" };
-  changingFieldGroup: string | null;
-  changingFieldGroupValue: string;
-  changingFieldGroupNewName: string;
-  editingGroup: string | null;
-  editingGroupValue: string;
-  mergeSourceGroups: string[];
-  mergeTargetGroup: string;
-  mergeOrderMode: "keep" | "alpha";
-  setValues: Dispatch<SetStateAction<Record<string, unknown>>>;
-  setFieldCatalog: Dispatch<SetStateAction<FieldCatalogItem[]>>;
-  setCustomGroups: Dispatch<SetStateAction<string[]>>;
-  setMessage: Dispatch<SetStateAction<string>>;
-  setSelectedGroup: Dispatch<SetStateAction<string>>;
-  setNewField: Dispatch<
-    SetStateAction<{ label_vi: string; group: string; type: "string" | "number" | "percent" | "date" | "table" }>
-  >;
-  setChangingFieldGroup: Dispatch<SetStateAction<string | null>>;
-  setChangingFieldGroupValue: Dispatch<SetStateAction<string>>;
-  setChangingFieldGroupNewName: Dispatch<SetStateAction<string>>;
-  setEditingGroup: Dispatch<SetStateAction<string | null>>;
-  setEditingGroupValue: Dispatch<SetStateAction<string>>;
-  setEditingGroupError: Dispatch<SetStateAction<string>>;
-  setMergingGroups: Dispatch<SetStateAction<boolean>>;
-  setMergeSourceGroups: Dispatch<SetStateAction<string[]>>;
-  setMergeTargetGroup: Dispatch<SetStateAction<string>>;
-  setMergeOrderMode: Dispatch<SetStateAction<"keep" | "alpha">>;
-  setMergeGroupsError: Dispatch<SetStateAction<string>>;
-  setCollapsedParentGroups: Dispatch<SetStateAction<string[]>>;
-  customGroups: string[];
 };
 
-export function useGroupManagement({
-  t,
-  fieldCatalog,
-  groupedFieldTree,
-  parentGroups,
-  selectedGroup,
-  newField,
-  changingFieldGroup,
-  changingFieldGroupValue,
-  changingFieldGroupNewName,
-  editingGroup,
-  editingGroupValue,
-  mergeSourceGroups,
-  mergeTargetGroup,
-  mergeOrderMode,
-  setValues,
-  setFieldCatalog,
-  setCustomGroups,
-  setMessage,
-  setSelectedGroup,
-  setNewField,
-  setChangingFieldGroup,
-  setChangingFieldGroupValue,
-  setChangingFieldGroupNewName,
-  setEditingGroup,
-  setEditingGroupValue,
-  setEditingGroupError,
-  setMergingGroups,
-  setMergeSourceGroups,
-  setMergeTargetGroup,
-  setMergeOrderMode,
-  setMergeGroupsError,
-  setCollapsedParentGroups,
-  customGroups,
-}: UseGroupManagementParams) {
+/** Safe numeric parse: returns a number when parseable, otherwise the original string. */
+function parseNumericValue(val: string, type: FieldCatalogItem["type"]): unknown {
+  if (type === "number" || type === "percent") {
+    const num = toNumber(val);
+    return num !== null ? num : val;
+  }
+  return val;
+}
+
+/** Re-computes the STT (row number) field for every item after a splice. */
+function recomputeStt(list: Record<string, unknown>[], sttKey: string | null): Record<string, unknown>[] {
+  if (!sttKey) return list;
+  return list.map((item, i) => ({ ...(typeof item === "object" && item !== null ? item : {}), [sttKey]: i + 1 }));
+}
+
+export function useGroupManagement({ t, groupedFieldTree, parentGroups }: UseGroupManagementParams) {
+  // Reactive subscriptions for useMemo — plain getState() is not enough here
+  const fieldCatalog = useMappingDataStore((s) => s.fieldCatalog);
+  const customGroups = useGroupUiStore((s) => s.customGroups);
+  const mergeSourceGroups = useGroupUiStore((s) => s.mergeSourceGroups);
+  const mergeTargetGroup = useGroupUiStore((s) => s.mergeTargetGroup);
+
   function isSttField(field: FieldCatalogItem): boolean {
     return field.label_vi.trim().toUpperCase() === "STT";
   }
@@ -98,41 +56,47 @@ export function useGroupManagement({
   const mergePreview = useMemo(() => {
     const selected = new Set(mergeSourceGroups);
     const fieldCount = fieldCatalog.reduce((count, item) => (selected.has(item.group) ? count + 1 : count), 0);
-    return {
-      groupCount: mergeSourceGroups.length,
-      fieldCount,
-      targetGroup: mergeTargetGroup.trim(),
-    };
+    return { groupCount: mergeSourceGroups.length, fieldCount, targetGroup: mergeTargetGroup.trim() };
   }, [fieldCatalog, mergeSourceGroups, mergeTargetGroup]);
 
+  // ── Change-group modal ───────────────────────────────────────────────────────
+
   function closeChangeGroupModal() {
-    setChangingFieldGroup(null);
-    setChangingFieldGroupValue("");
-    setChangingFieldGroupNewName("");
+    const gu = useGroupUiStore.getState();
+    gu.setChangingFieldGroup(null);
+    gu.setChangingFieldGroupValue("");
+    gu.setChangingFieldGroupNewName("");
   }
 
   function applyChangeGroup() {
+    const gu = useGroupUiStore.getState();
+    const { fieldCatalog: catalog, setFieldCatalog } = useMappingDataStore.getState();
+    const { changingFieldGroup, changingFieldGroupValue, changingFieldGroupNewName } = gu;
     if (!changingFieldGroup) return;
-    const field = fieldCatalog.find((f) => f.field_key === changingFieldGroup);
-    if (!field) return;
+    if (!catalog.find((f) => f.field_key === changingFieldGroup)) return;
 
     let targetGroup = changingFieldGroupValue.trim();
     if (targetGroup === "__create_new__") {
       targetGroup = changingFieldGroupNewName.trim();
       if (!targetGroup) return;
       if (!existingGroups.includes(targetGroup)) {
-        setCustomGroups((prev) => (prev.includes(targetGroup) ? prev : [...prev, targetGroup]));
+        gu.setCustomGroups((prev) => (prev.includes(targetGroup) ? prev : [...prev, targetGroup]));
       }
     }
 
     setFieldCatalog((prev) =>
-      prev.map((item) => (item.field_key === changingFieldGroup ? { ...item, group: targetGroup, is_repeater: false } : item)),
+      prev.map((item) =>
+        item.field_key === changingFieldGroup ? { ...item, group: targetGroup, is_repeater: false } : item,
+      ),
     );
-    setMessage(t("mapping.msg.groupChanged"));
+    useUiStore.getState().setStatus({ message: t("mapping.msg.groupChanged") });
     closeChangeGroupModal();
   }
 
+  // ── Repeater group ───────────────────────────────────────────────────────────
+
   function toggleRepeaterGroup(groupPath: string) {
+    const { setFieldCatalog, setValues } = useMappingDataStore.getState();
     const isRepeater = groupedFieldTree
       .flatMap((p) => p.children)
       .find((c) => c.fullPath === groupPath)
@@ -141,14 +105,8 @@ export function useGroupManagement({
     const turningOn = !isRepeater;
     setFieldCatalog((prev) => {
       const toggled = prev.map((f) => (f.group === groupPath ? { ...f, is_repeater: turningOn } : f));
-      if (!turningOn) {
-        return toggled;
-      }
-
-      const hasStt = toggled.some((item) => item.group === groupPath && item.is_repeater && isSttField(item));
-      if (hasStt) {
-        return toggled;
-      }
+      if (!turningOn) return toggled;
+      if (toggled.some((item) => item.group === groupPath && item.is_repeater && isSttField(item))) return toggled;
 
       const sttKey = buildInternalFieldKey({
         group: groupPath,
@@ -164,161 +122,179 @@ export function useGroupManagement({
         examples: [],
         is_repeater: true,
       };
-
       const insertIndex = toggled.findIndex((item) => item.group === groupPath);
-      if (insertIndex === -1) {
-        return [...toggled, sttField];
-      }
-      return [...toggled.slice(0, insertIndex), sttField, ...toggled.slice(insertIndex)];
+      return insertIndex === -1
+        ? [...toggled, sttField]
+        : [...toggled.slice(0, insertIndex), sttField, ...toggled.slice(insertIndex)];
     });
+
+    // Initialize values[groupPath] as empty array when turning on,
+    // or clean up when turning off
+    if (turningOn) {
+      setValues((prev) => {
+        if (Array.isArray(prev[groupPath])) return prev; // already initialized
+        return { ...prev, [groupPath]: [] };
+      });
+    }
   }
 
   function addRepeaterItem(groupPath: string) {
+    const { fieldCatalog: catalog, setValues } = useMappingDataStore.getState();
+    const sttFieldKey = getGroupSttFieldKey(groupPath, catalog);
     setValues((prev) => {
-      const currentList = Array.isArray(prev[groupPath]) ? prev[groupPath] : [];
-      const sttFieldKey = getGroupSttFieldKey(groupPath, fieldCatalog);
-      const nextIndex = currentList.length + 1;
-      const newItem = sttFieldKey ? { [sttFieldKey]: nextIndex } : {};
+      const currentList = Array.isArray(prev[groupPath]) ? (prev[groupPath] as unknown[]) : [];
+      const newItem = sttFieldKey ? { [sttFieldKey]: currentList.length + 1 } : {};
       return { ...prev, [groupPath]: [...currentList, newItem] };
     });
   }
 
   function removeRepeaterItem(groupPath: string, index: number) {
+    const { fieldCatalog: catalog, setValues } = useMappingDataStore.getState();
+    const sttFieldKey = getGroupSttFieldKey(groupPath, catalog);
     setValues((prev) => {
-      const currentList = (Array.isArray(prev[groupPath]) ? prev[groupPath] : []) as any[];
-      const newList = [...currentList];
-      newList.splice(index, 1);
-      const sttFieldKey = getGroupSttFieldKey(groupPath, fieldCatalog);
-      if (sttFieldKey) {
-        for (let i = 0; i < newList.length; i += 1) {
-          const currentItem = typeof newList[i] === "object" && newList[i] !== null ? newList[i] : {};
-          newList[i] = { ...currentItem, [sttFieldKey]: i + 1 };
-        }
-      }
-      return { ...prev, [groupPath]: newList };
+      const currentList = Array.isArray(prev[groupPath])
+        ? [...(prev[groupPath] as Record<string, unknown>[])]
+        : [];
+      currentList.splice(index, 1);
+      return { ...prev, [groupPath]: recomputeStt(currentList, sttFieldKey) };
     });
   }
 
   function onRepeaterItemChange(groupPath: string, index: number, field: FieldCatalogItem, rawVal: string) {
+    const { setValues } = useMappingDataStore.getState();
     setValues((prev) => {
-      const currentList = (Array.isArray(prev[groupPath]) ? prev[groupPath] : []) as any[];
-      const newList = [...currentList];
-      if (!newList[index]) newList[index] = {};
-      let parsedVal: unknown = rawVal;
-      if (field.type === "number" || field.type === "percent") {
-        const num = parseFloat(rawVal.replace(/,/g, ""));
-        parsedVal = isNaN(num) ? rawVal : num;
-      }
-      newList[index] = { ...newList[index], [field.field_key]: parsedVal };
-      return { ...prev, [groupPath]: newList };
+      const currentList = Array.isArray(prev[groupPath])
+        ? [...(prev[groupPath] as Record<string, unknown>[])]
+        : [];
+      const currentItem = (currentList[index] as Record<string, unknown>) ?? {};
+      currentList[index] = { ...currentItem, [field.field_key]: parseNumericValue(rawVal, field.type) };
+      return { ...prev, [groupPath]: currentList };
     });
   }
 
+  // ── Edit-group modal ─────────────────────────────────────────────────────────
+
   function openEditGroupModal(group: string) {
-    setEditingGroup(group);
-    setEditingGroupValue(group);
-    setEditingGroupError("");
+    const gu = useGroupUiStore.getState();
+    gu.setEditingGroup(group);
+    gu.setEditingGroupValue(group);
+    gu.setEditingGroupError("");
   }
 
   function openCreateSubgroupModal(parentGroup: string) {
-    setEditingGroup("");
-    setEditingGroupValue(`${parentGroup}/`);
-    setEditingGroupError("");
+    const gu = useGroupUiStore.getState();
+    gu.setEditingGroup("");
+    gu.setEditingGroupValue(`${parentGroup}/`);
+    gu.setEditingGroupError("");
   }
 
   function closeEditGroupModal() {
-    setEditingGroup(null);
-    setEditingGroupValue("");
-    setEditingGroupError("");
-  }
-
-  function toggleParentCollapse(parent: string) {
-    setCollapsedParentGroups((prev) => (prev.includes(parent) ? prev.filter((item) => item !== parent) : [...prev, parent]));
-  }
-
-  function collapseAllGroups() {
-    setCollapsedParentGroups(parentGroups);
-  }
-
-  function expandAllGroups() {
-    setCollapsedParentGroups([]);
+    const gu = useGroupUiStore.getState();
+    gu.setEditingGroup(null);
+    gu.setEditingGroupValue("");
+    gu.setEditingGroupError("");
   }
 
   function applyEditGroup() {
+    const gu = useGroupUiStore.getState();
+    const { setFieldCatalog } = useMappingDataStore.getState();
+    const ui = useUiStore.getState();
+    const { editingGroup, editingGroupValue } = gu;
     const target = editingGroup ?? "";
     const next = editingGroupValue.trim();
     if (!next) {
-      setEditingGroupError(t("mapping.editGroup.errEmpty"));
+      gu.setEditingGroupError(t("mapping.editGroup.errEmpty"));
       return;
     }
 
     if (!target) {
-      setCustomGroups((prev) => (prev.includes(next) ? prev : [...prev, next]));
-      setSelectedGroup(next);
-      setNewField((prev) => ({ ...prev, group: next }));
+      gu.setCustomGroups((prev) => (prev.includes(next) ? prev : [...prev, next]));
+      ui.setFilters({ selectedGroup: next });
+      ui.setContext((ctx) => ({ newField: { ...ctx.newField, group: next } }));
       closeEditGroupModal();
       return;
     }
 
     setFieldCatalog((prev) => prev.map((item) => (item.group === target ? { ...item, group: next } : item)));
-    setCustomGroups((prev) => prev.map((g) => (g === target ? next : g)));
-    if (selectedGroup === target) setSelectedGroup(next);
-    if (newField.group === target) setNewField((prev) => ({ ...prev, group: next }));
+    gu.setCustomGroups((prev) => prev.map((g) => (g === target ? next : g)));
+    if (ui.filters.selectedGroup === target) ui.setFilters({ selectedGroup: next });
+    if (ui.context.newField.group === target) ui.setContext((ctx) => ({ newField: { ...ctx.newField, group: next } }));
     closeEditGroupModal();
   }
 
+  // ── Collapse / expand ────────────────────────────────────────────────────────
+
+  function toggleParentCollapse(parent: string) {
+    useGroupUiStore.getState().setCollapsedParentGroups((prev) =>
+      prev.includes(parent) ? prev.filter((item) => item !== parent) : [...prev, parent],
+    );
+  }
+
+  function collapseAllGroups() {
+    useGroupUiStore.getState().setCollapsedParentGroups(parentGroups);
+  }
+
+  function expandAllGroups() {
+    useGroupUiStore.getState().setCollapsedParentGroups([]);
+  }
+
+  // ── Merge-groups modal ───────────────────────────────────────────────────────
+
   function openMergeGroupsModal() {
-    setMergingGroups(true);
-    setMergeSourceGroups([]);
-    setMergeTargetGroup("");
-    setMergeOrderMode("keep");
-    setMergeGroupsError("");
+    const gu = useGroupUiStore.getState();
+    gu.setMergingGroups(true);
+    gu.setMergeSourceGroups([]);
+    gu.setMergeTargetGroup("");
+    gu.setMergeOrderMode("keep");
+    gu.setMergeGroupsError("");
   }
 
   function closeMergeGroupsModal() {
-    setMergingGroups(false);
-    setMergeSourceGroups([]);
-    setMergeTargetGroup("");
-    setMergeOrderMode("keep");
-    setMergeGroupsError("");
+    const gu = useGroupUiStore.getState();
+    gu.setMergingGroups(false);
+    gu.setMergeSourceGroups([]);
+    gu.setMergeTargetGroup("");
+    gu.setMergeOrderMode("keep");
+    gu.setMergeGroupsError("");
   }
 
   function toggleMergeSourceGroup(group: string) {
-    setMergeSourceGroups((prev) => (prev.includes(group) ? prev.filter((g) => g !== group) : [...prev, group]));
+    useGroupUiStore.getState().setMergeSourceGroups((prev) =>
+      prev.includes(group) ? prev.filter((g) => g !== group) : [...prev, group],
+    );
   }
 
   function applyMergeGroups() {
-    const target = mergeTargetGroup.trim();
-    if (mergeSourceGroups.length < 2) {
-      setMergeGroupsError(t("mapping.merge.errMinGroups"));
-      return;
-    }
-    if (!target) {
-      setMergeGroupsError(t("mapping.merge.errTarget"));
-      return;
-    }
+    const gu = useGroupUiStore.getState();
+    const { setFieldCatalog } = useMappingDataStore.getState();
+    const ui = useUiStore.getState();
+    const { mergeSourceGroups: sources, mergeTargetGroup: rawTarget, mergeOrderMode } = gu;
+    const target = rawTarget.trim();
+
+    if (sources.length < 2) { gu.setMergeGroupsError(t("mapping.merge.errMinGroups")); return; }
+    if (!target) { gu.setMergeGroupsError(t("mapping.merge.errTarget")); return; }
 
     setFieldCatalog((prev) => {
-      const renamed = prev.map((item) => (mergeSourceGroups.includes(item.group) ? { ...item, group: target } : item));
+      const renamed = prev.map((item) => (sources.includes(item.group) ? { ...item, group: target } : item));
       if (mergeOrderMode === "keep") return renamed;
-      const sortedTargetItems = renamed
+      const sorted = renamed
         .filter((item) => item.group === target)
         .sort((a, b) => a.label_vi.localeCompare(b.label_vi, "vi"));
       let cursor = 0;
-      return renamed.map((item) => {
-        if (item.group !== target) return item;
-        const nextItem = sortedTargetItems[cursor];
-        cursor += 1;
-        return nextItem;
-      });
+      return renamed.map((item) => (item.group !== target ? item : sorted[cursor++]));
     });
-    setCustomGroups((prev) => {
-      const next = prev.filter((g) => !mergeSourceGroups.includes(g));
-      return next.includes(target) ? next : [...next, target];
+
+    gu.setCustomGroups((prev) => {
+      const filtered = prev.filter((g) => !sources.includes(g));
+      return filtered.includes(target) ? filtered : [...filtered, target];
     });
-    if (mergeSourceGroups.includes(selectedGroup)) setSelectedGroup(target);
-    if (mergeSourceGroups.includes(newField.group)) setNewField((prev) => ({ ...prev, group: target }));
-    setMessage(t("mapping.msg.groupsMerged").replace("{count}", String(mergeSourceGroups.length)));
+
+    // Atomic UI update: both selectedGroup and newField in one pass
+    ui.setFilters({ selectedGroup: sources.includes(ui.filters.selectedGroup) ? target : ui.filters.selectedGroup });
+    if (sources.includes(ui.context.newField.group)) {
+      ui.setContext((ctx) => ({ newField: { ...ctx.newField, group: target } }));
+    }
+    ui.setStatus({ message: t("mapping.msg.groupsMerged").replace("{count}", String(sources.length)) });
     closeMergeGroupsModal();
   }
 

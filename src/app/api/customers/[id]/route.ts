@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
-import { prisma } from "@/lib/db";
+import { toHttpError, ValidationError } from "@/core/errors/app-error";
+import { customerService } from "@/services/customer.service";
 
 export const runtime = "nodejs";
 
@@ -14,6 +15,7 @@ const updateCustomerSchema = z.object({
   legal_representative_name: z.string().optional().nullable(),
   legal_representative_title: z.string().optional().nullable(),
   organization_type: z.string().optional().nullable(),
+  email: z.string().email().optional().nullable(),
   data_json: z.record(z.string(), z.unknown()).optional(),
 });
 
@@ -23,13 +25,7 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    const customer = await prisma.customer.findUnique({ where: { id } });
-    if (!customer) {
-      return NextResponse.json(
-        { ok: false, error: "Customer not found." },
-        { status: 404 },
-      );
-    }
+    const customer = await customerService.getCustomerById(id);
     const payload = {
       ...customer,
       data_json:
@@ -39,12 +35,13 @@ export async function GET(
     };
     return NextResponse.json({ ok: true, customer: payload });
   } catch (error) {
+    const httpError = toHttpError(error, "Failed to get customer.");
     return NextResponse.json(
       {
         ok: false,
-        error: error instanceof Error ? error.message : "Failed to get customer.",
+        error: httpError.message,
       },
-      { status: 500 },
+      { status: httpError.status },
     );
   }
 }
@@ -57,50 +54,35 @@ export async function PATCH(
     const { id } = await params;
     const body = await req.json();
     const parsed = updateCustomerSchema.parse(body);
-    const data: {
-      customer_code?: string;
-      customer_name?: string;
-      address?: string | null;
-      main_business?: string | null;
-      charter_capital?: number | null;
-      legal_representative_name?: string | null;
-      legal_representative_title?: string | null;
-      organization_type?: string | null;
-      data_json?: string;
-    } = {};
-    if (parsed.customer_code != null) data.customer_code = parsed.customer_code;
-    if (parsed.customer_name != null) data.customer_name = parsed.customer_name;
-    if (parsed.address !== undefined) data.address = parsed.address;
-    if (parsed.main_business !== undefined)
-      data.main_business = parsed.main_business;
-    if (parsed.charter_capital !== undefined)
-      data.charter_capital = parsed.charter_capital;
-    if (parsed.legal_representative_name !== undefined)
-      data.legal_representative_name = parsed.legal_representative_name;
-    if (parsed.legal_representative_title !== undefined)
-      data.legal_representative_title = parsed.legal_representative_title;
-    if (parsed.organization_type !== undefined)
-      data.organization_type = parsed.organization_type;
-    if (parsed.data_json !== undefined)
-      data.data_json = JSON.stringify(parsed.data_json);
-    const customer = await prisma.customer.update({
-      where: { id },
-      data,
+    const customer = await customerService.updateCustomer(id, {
+      customer_code: parsed.customer_code,
+      customer_name: parsed.customer_name,
+      address: parsed.address,
+      main_business: parsed.main_business,
+      charter_capital: parsed.charter_capital,
+      legal_representative_name: parsed.legal_representative_name,
+      legal_representative_title: parsed.legal_representative_title,
+      organization_type: parsed.organization_type,
+      email: parsed.email,
+      data_json: parsed.data_json,
     });
     return NextResponse.json({ ok: true, customer });
   } catch (error) {
     if (error instanceof z.ZodError) {
+      const validationError = new ValidationError("Invalid request body.", error.flatten().fieldErrors);
       return NextResponse.json(
-        { ok: false, error: error.flatten().fieldErrors },
-        { status: 400 },
+        { ok: false, error: validationError.message, details: validationError.details },
+        { status: validationError.status },
       );
     }
+    console.error("[api/customers/PATCH] Error:", error);
+    const httpError = toHttpError(error, "Failed to update customer.");
     return NextResponse.json(
       {
         ok: false,
-        error: error instanceof Error ? error.message : "Failed to update customer.",
+        error: httpError.message,
       },
-      { status: 500 },
+      { status: httpError.status },
     );
   }
 }
@@ -111,15 +93,16 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
-    await prisma.customer.delete({ where: { id } });
+    await customerService.deleteCustomer(id);
     return NextResponse.json({ ok: true });
   } catch (error) {
+    const httpError = toHttpError(error, "Failed to delete customer.");
     return NextResponse.json(
       {
         ok: false,
-        error: error instanceof Error ? error.message : "Failed to delete customer.",
+        error: httpError.message,
       },
-      { status: 500 },
+      { status: httpError.status },
     );
   }
 }

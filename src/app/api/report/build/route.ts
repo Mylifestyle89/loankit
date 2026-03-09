@@ -1,36 +1,24 @@
 import { NextResponse } from "next/server";
 
-import { logRun, runBuildAndValidate } from "@/lib/report/pipeline-client";
+import { toHttpError } from "@/core/errors/app-error";
+import { reportService } from "@/services/report.service";
 
 export const runtime = "nodejs";
 
 export async function POST() {
-  const start = Date.now();
   try {
-    const result = await runBuildAndValidate();
-    const durationMs = Date.now() - start;
-    await logRun({
-      resultSummary: {
-        step: "build_validate",
-        validation: result.validation,
-      },
-      outputPaths: [
-        "report_assets/report_draft.json",
-        "report_assets/report_draft_flat.json",
-        "report_assets/validation_report.json",
-      ],
-      durationMs,
-    });
+    const result = await reportService.runBuildAndLog();
     return NextResponse.json({
       ok: true,
-      duration_ms: durationMs,
+      duration_ms: result.durationMs,
       command: result.command,
       validation: result.validation,
     });
   } catch (error) {
+    const httpError = toHttpError(error, "Build failed.");
     return NextResponse.json(
-      { ok: false, error: error instanceof Error ? error.message : "Build failed." },
-      { status: 500 },
+      { ok: false, error: httpError.message },
+      { status: httpError.status },
     );
   }
 }

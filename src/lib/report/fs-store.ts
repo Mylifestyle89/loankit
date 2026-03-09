@@ -27,6 +27,8 @@ import {
   translateFieldLabelVi,
   translateGroupVi,
 } from "@/lib/report/field-labels";
+import { fileLockService } from "@/lib/report/file-lock.service";
+import { FINANCIAL_FIELD_CATALOG } from "@/lib/report/financial-field-catalog";
 
 const nowIso = () => new Date().toISOString();
 
@@ -66,10 +68,29 @@ function inferType(fieldKey: string, normalizer?: string): FieldCatalogItem["typ
   return "text";
 }
 
+function fsErrorCode(err: unknown): string | undefined {
+  return (err as NodeJS.ErrnoException).code;
+}
+
+function isReadOnlyFsError(err: unknown): boolean {
+  const code = fsErrorCode(err);
+  return code === "EROFS" || code === "EPERM";
+}
+
+function isIgnorableFsError(err: unknown): boolean {
+  const code = fsErrorCode(err);
+  return code === "EROFS" || code === "ENOENT" || code === "EPERM";
+}
+
 async function ensureDirectories(): Promise<void> {
-  await fs.mkdir(REPORT_CONFIG_DIR, { recursive: true });
-  await fs.mkdir(REPORT_VERSIONS_DIR, { recursive: true });
-  await fs.mkdir(REPORT_INVENTORY_DIR, { recursive: true });
+  try {
+    await fs.mkdir(REPORT_CONFIG_DIR, { recursive: true });
+    await fs.mkdir(REPORT_VERSIONS_DIR, { recursive: true });
+    await fs.mkdir(REPORT_INVENTORY_DIR, { recursive: true });
+  } catch (err) {
+    if (isIgnorableFsError(err)) return;
+    throw err;
+  }
 }
 
 async function readJsonFile<T>(filePath: string): Promise<T> {
@@ -78,7 +99,12 @@ async function readJsonFile<T>(filePath: string): Promise<T> {
 }
 
 async function writeJsonFile(filePath: string, data: unknown): Promise<void> {
-  await fs.writeFile(filePath, JSON.stringify(data, null, 2), "utf-8");
+  await fileLockService.acquireLock("report_assets");
+  try {
+    await fs.writeFile(filePath, JSON.stringify(data, null, 2), "utf-8");
+  } finally {
+    await fileLockService.releaseLock("report_assets");
+  }
 }
 
 export async function readMappingFile(mappingPath: string): Promise<MappingMaster> {
@@ -156,51 +182,101 @@ async function bootstrapState(): Promise<FrameworkState> {
   return frameworkStateSchema.parse(state);
 }
 
+/**
+ * Merge FINANCIAL_FIELD_CATALOG items into the existing catalog.
+ * Idempotent: only adds items whose field_key does not already exist.
+ */
+function mergeFinancialCatalog(catalog: FieldCatalogItem[]): {
+  catalog: FieldCatalogItem[];
+  changed: boolean;
+} {
+  const existing = new Set(catalog.map((item) => item.field_key));
+  const toAdd = FINANCIAL_FIELD_CATALOG.filter((item) => !existing.has(item.field_key));
+  if (toAdd.length === 0) return { catalog, changed: false };
+  return { catalog: [...catalog, ...toAdd], changed: true };
+}
+
+const EMPTY_STATE: FrameworkState = frameworkStateSchema.parse({
+  field_catalog: [],
+  field_templates: [],
+  mapping_versions: [],
+  template_profiles: [],
+  run_logs: [],
+  active_mapping_version_id: "",
+  active_template_id: "",
+});
+
 export async function loadState(): Promise<FrameworkState> {
   await ensureDirectories();
+
+  // Try reading existing state file
+  let stateRaw: unknown;
   try {
-    const stateRaw = await readJsonFile<unknown>(REPORT_STATE_FILE);
-    const parsed = frameworkStateSchema.parse(stateRaw);
-    const normalizedLabels = normalizeFieldCatalogLabelsVi(parsed.field_catalog);
-    const normalizedGroups = normalizeFieldCatalogGroupsVi(normalizedLabels.catalog);
-    if (normalizedLabels.changed || normalizedGroups.changed) {
-      parsed.field_catalog = normalizedGroups.catalog;
-      await saveState(parsed);
+    stateRaw = await readJsonFile<unknown>(REPORT_STATE_FILE);
+  } catch (err) {
+    if (isReadOnlyFsError(err)) return EMPTY_STATE;
+    if (fsErrorCode(err) !== "ENOENT") throw err; // Only bootstrap for missing file
+    try {
+      const state = await bootstrapState();
+      await saveState(state);
+      return state;
+    } catch (bootstrapErr) {
+      if (isIgnorableFsError(bootstrapErr)) return EMPTY_STATE;
+      throw bootstrapErr;
     }
-    return parsed;
-  } catch {
-    const state = await bootstrapState();
-    await saveState(state);
-    return state;
   }
+
+  // Parse and normalize (parse errors bubble up, not swallowed)
+  const parsed = frameworkStateSchema.parse(stateRaw);
+
+  const mergedFinancial = mergeFinancialCatalog(parsed.field_catalog);
+  if (mergedFinancial.changed) {
+    parsed.field_catalog = mergedFinancial.catalog;
+  }
+
+  const normalizedLabels = normalizeFieldCatalogLabelsVi(parsed.field_catalog);
+  const normalizedGroups = normalizeFieldCatalogGroupsVi(normalizedLabels.catalog);
+  if (mergedFinancial.changed || normalizedLabels.changed || normalizedGroups.changed) {
+    parsed.field_catalog = normalizedGroups.catalog;
+    await saveState(parsed);
+  }
+  return parsed;
 }
 
 export async function saveState(state: FrameworkState): Promise<void> {
-  await ensureDirectories();
-  const parsed = frameworkStateSchema.parse(state);
-  const nextRaw = JSON.stringify(parsed, null, 2);
-
-  let currentRaw = "";
+  await fileLockService.acquireLock("report_assets");
   try {
-    currentRaw = await fs.readFile(REPORT_STATE_FILE, "utf-8");
-  } catch {
-    currentRaw = "";
-  }
+    await ensureDirectories();
+    const parsed = frameworkStateSchema.parse(state);
+    const nextRaw = JSON.stringify(parsed, null, 2);
 
-  // Skip redundant write/backup when content does not change.
-  if (currentRaw === nextRaw) {
-    return;
-  }
+    let currentRaw = "";
+    try {
+      currentRaw = await fs.readFile(REPORT_STATE_FILE, "utf-8");
+    } catch {
+      currentRaw = "";
+    }
 
-  if (currentRaw) {
-    const backupDir = path.join(process.cwd(), "report_assets", "backups", "state-config");
-    await fs.mkdir(backupDir, { recursive: true });
-    const backupPath = path.join(backupDir, `framework_state-${tsForFilename()}.json`);
-    await fs.writeFile(backupPath, currentRaw, "utf-8");
-    await pruneOldBackups(backupDir, 100);
-  }
+    // Skip redundant write/backup when content does not change.
+    if (currentRaw === nextRaw) {
+      return;
+    }
 
-  await fs.writeFile(REPORT_STATE_FILE, nextRaw, "utf-8");
+    if (currentRaw) {
+      const backupDir = path.join(process.cwd(), "report_assets", "backups", "state-config");
+      await fs.mkdir(backupDir, { recursive: true });
+      const backupPath = path.join(backupDir, `framework_state-${tsForFilename()}.json`);
+      await fs.writeFile(backupPath, currentRaw, "utf-8");
+      await pruneOldBackups(backupDir, 100);
+    }
+
+    await fs.writeFile(REPORT_STATE_FILE, nextRaw, "utf-8");
+  } catch (err) {
+    if (isIgnorableFsError(err)) return; // Vercel read-only FS
+    throw err;
+  } finally {
+    await fileLockService.releaseLock("report_assets");
+  }
 }
 
 export async function createMappingDraft(params: {

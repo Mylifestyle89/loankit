@@ -1,60 +1,457 @@
 @import "tailwindcss";
 @import "../../node_modules/@eigenpal/docx-js-editor/dist/styles.css";
 
+/* ── Dark mode: apply when <html> has class="dark" ── */
+@custom-variant dark (&:is(.dark *));
+
+/* ── Semantic design tokens ── */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --bg-base:      #fafafa;
+  --surface:      #ffffff;
+  --surface-2:    #f8fafc;
+  --surface-3:    #f1f5f9;
+  --surface-overlay: rgb(255 255 255 / 0.80);
+  --surface-inset:   #f8fafc;
+  --border-sub:   rgb(226 232 240 / 0.6);
+  --border-str:   rgb(226 232 240 / 0.8);
+  --border-strong: rgb(226 232 240 / 1.0);
+  --text-1:       #0f172a;
+  --text-2:       #64748b;
+  --glow:         0 0 20px rgb(99 102 241 / 0.2);
+  --glow-lg:      0 0 32px rgb(99 102 241 / 0.25);
+
+  /* Type scale (14px base for SaaS UI) */
+  --text-xs:   0.75rem;      /* 12px */
+  --text-sm:   0.8125rem;    /* 13px */
+  --text-base: 0.875rem;     /* 14px */
+  --text-lg:   1rem;          /* 16px */
+  --text-xl:   1.25rem;       /* 20px */
+  --text-2xl:  1.5rem;        /* 24px */
+
+  /* Easing curves */
+  --ease-out:     cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out:  cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-spring:  cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* Letter-spacing */
+  --tracking-tight:  -0.025em;
+  --tracking-normal:  0em;
+  --tracking-wide:    0.05em;
+}
+
+html.dark {
+  color-scheme: dark;                               /* native controls dark */
+  --bg-base:      #0a0a0a;                          /* neutral black      */
+  --surface:      #141414;                          /* card / panel       */
+  --surface-2:    #1a1a1a;                          /* elevated surface   */
+  --surface-3:    #1e1e1e;
+  --surface-overlay: rgb(20 20 20 / 0.85);
+  --surface-inset:   #0e0e0e;
+  --border-sub:   rgb(255 255 255 / 0.10);
+  --border-str:   rgb(255 255 255 / 0.15);
+  --border-strong: rgb(255 255 255 / 0.20);
+  --text-1:       #e2e8f0;                          /* slate-200         */
+  --text-2:       #64748b;                          /* slate-500         */
+  --glow:         0 0 12px rgb(99 102 241 / 0.15);  /* subtle in dark    */
+  --glow-lg:      0 0 20px rgb(99 102 241 / 0.20);
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  --color-background: var(--bg-base);
+  --color-foreground: var(--text-1);
   --font-sans: var(--font-inter);
+  --font-heading: var(--font-geist-sans, var(--font-inter));
   --font-mono: var(--font-geist-mono);
 
-  /* Blue Chill palette – đã kiểm tra tương phản (WCAG AA) */
-  --color-blue-chill-50: #effcfb;
-  --color-blue-chill-100: #d5f7f8;
-  --color-blue-chill-200: #b1eef0;
-  --color-blue-chill-300: #7be0e5;
-  --color-blue-chill-400: #3dcad3;
-  --color-blue-chill-500: #22adb8;
-  --color-blue-chill-600: #1e8897;
-  --color-blue-chill-700: #1f717f;
-  --color-blue-chill-800: #225c68;
-  --color-blue-chill-900: #204d59;
-  --color-blue-chill-950: #10333c;
+  /* Digital Premium 2025 – Electric Indigo (WCAG AA) */
+  --color-indigo-50: #eef2ff;
+  --color-indigo-100: #e0e7ff;
+  --color-indigo-200: #c7d2fe;
+  --color-indigo-300: #a5b4fc;
+  --color-indigo-400: #818cf8;
+  --color-indigo-500: #6366f1;
+  --color-indigo-600: #4f46e5;
+  --color-indigo-700: #4338ca;
+  --color-indigo-800: #3730a3;
+  --color-indigo-900: #312e81;
+  --color-indigo-950: #1e1b4b;
 
-  /*
-    Backward-compatible: các class `coral-tree-*` dùng Blue Chill.
-    Độ tương phản (WCAG AA: 4.5:1 chữ thường, 3:1 chữ lớn):
-    - Chữ trắng trên nền 600/700 (nút chính): ~7:1 ✓
-    - Chữ 600/700/800/900 trên nền trắng: >4.5:1 ✓
-    - Nền 950 + chữ 50 (khối code): ~14:1 ✓
-    - Chữ 500 trên trắng (gợi ý phụ): ~5:1 ✓
-  */
-  --color-coral-tree-50: #effcfb;
-  --color-coral-tree-100: #d5f7f8;
-  --color-coral-tree-200: #b1eef0;
-  --color-coral-tree-300: #7be0e5;
-  --color-coral-tree-400: #3dcad3;
-  --color-coral-tree-500: #22adb8;
-  --color-coral-tree-600: #1e8897;
-  --color-coral-tree-700: #1f717f;
-  --color-coral-tree-800: #225c68;
-  --color-coral-tree-900: #204d59;
-  --color-coral-tree-950: #10333c;
-}
+  /* Violet – repeater/array chips */
+  --color-violet-50: #f5f3ff;
+  --color-violet-100: #ede9fe;
+  --color-violet-200: #ddd6fe;
+  --color-violet-600: #7c3aed;
+  --color-violet-800: #5b21b6;
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  /* Amber – root key chips */
+  --color-amber-50: #fffbeb;
+  --color-amber-100: #fef3c7;
+  --color-amber-200: #fde68a;
+  --color-amber-600: #d97706;
+  --color-amber-800: #92400e;
+
+  /* Zinc / Slate neutrals */
+  --color-zinc-50: #fafafa;
+  --color-zinc-100: #f4f4f5;
+  --color-zinc-200: #e4e4e7;
+  --color-zinc-300: #d4d4d8;
+  --color-zinc-400: #a1a1aa;
+  --color-zinc-500: #71717a;
+  --color-zinc-600: #52525b;
+  --color-zinc-700: #3f3f46;
+  --color-zinc-800: #27272a;
+  --color-zinc-900: #18181b;
+  --color-zinc-950: #09090b;
+
+  /* Elevation shadows (layered, realistic depth) */
+  --shadow-xs:  0 1px 2px rgb(0 0 0 / 0.04);
+  --shadow-sm:  0 1px 3px rgb(0 0 0 / 0.06), 0 1px 2px rgb(0 0 0 / 0.04);
+  --shadow-md:  0 4px 6px rgb(0 0 0 / 0.05), 0 2px 4px rgb(0 0 0 / 0.04);
+  --shadow-lg:  0 10px 15px rgb(0 0 0 / 0.06), 0 4px 6px rgb(0 0 0 / 0.04);
+  --shadow-xl:  0 20px 25px rgb(0 0 0 / 0.08), 0 8px 10px rgb(0 0 0 / 0.04);
+
+  /* Glow utility */
+  --shadow-glow: var(--glow);
+  --shadow-glow-lg: var(--glow-lg);
+
+  /* Backward-compatible: coral-tree / blue-chill map to indigo */
+  --color-coral-tree-50: var(--color-indigo-50);
+  --color-coral-tree-100: var(--color-indigo-100);
+  --color-coral-tree-200: var(--color-indigo-200);
+  --color-coral-tree-300: var(--color-indigo-300);
+  --color-coral-tree-400: var(--color-indigo-400);
+  --color-coral-tree-500: var(--color-indigo-500);
+  --color-coral-tree-600: var(--color-indigo-600);
+  --color-coral-tree-700: var(--color-indigo-700);
+  --color-coral-tree-800: var(--color-indigo-800);
+  --color-coral-tree-900: var(--color-indigo-900);
+  --color-coral-tree-950: var(--color-indigo-950);
+  --color-blue-chill-50: var(--color-indigo-50);
+  --color-blue-chill-100: var(--color-indigo-100);
+  --color-blue-chill-200: var(--color-indigo-200);
+  --color-blue-chill-300: var(--color-indigo-300);
+  --color-blue-chill-400: var(--color-indigo-400);
+  --color-blue-chill-500: var(--color-indigo-500);
+  --color-blue-chill-600: var(--color-indigo-600);
+  --color-blue-chill-700: var(--color-indigo-700);
+  --color-blue-chill-800: var(--color-indigo-800);
+  --color-blue-chill-900: var(--color-indigo-900);
+  --color-blue-chill-950: var(--color-indigo-950);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
+  background: var(--bg-base);
+  color: var(--text-1);
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+  transition: background-color 0.2s var(--ease-out), color 0.15s var(--ease-out);
+}
+
+/* ── Heading typography ── */
+h1, h2, h3, h4 {
+  font-family: var(--font-heading), sans-serif;
+  letter-spacing: var(--tracking-tight);
+}
+
+/* ── Native <select> dropdown dark mode ── */
+/* color-scheme on html.dark doesn't always cascade to the native popup on Windows */
+.dark select {
+  color-scheme: dark;
+}
+.dark option {
+  background-color: #141414;
+  color: #e2e8f0;
+}
+
+/* Glow for primary buttons */
+.shadow-glow {
+  box-shadow: var(--glow);
+}
+.shadow-glow-lg {
+  box-shadow: var(--glow-lg);
+}
+
+/* Prevent flex children from overflowing parent width */
+.panel-flex-safe {
+  min-width: 0;
+}
+
+/* Aurora ambient removed — clean neutral dark mode */
+
+/* Flowing dash animation for AI mapping Bezier lines */
+@keyframes dash-flow {
+  to {
+    stroke-dashoffset: -20;
+  }
+}
+.animate-dash-flow {
+  animation: dash-flow 2.5s ease-in-out infinite;
+}
+
+@keyframes landing-gradient-shift {
+  0% {
+    transform: translate3d(0, 0, 0) scale(0.97);
+    opacity: 0;
+  }
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+    opacity: 0.95;
+  }
+}
+
+@keyframes landing-node-float {
+  0% {
+    transform: translateY(8px) scale(0.9);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0) scale(1);
+    opacity: 0.85;
+  }
+}
+
+@keyframes landing-line-breathe {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 0.4;
+  }
+}
+
+@keyframes landing-button-pulse {
+  0% {
+    box-shadow:
+      0 12px 40px rgb(99 102 241 / 0.3),
+      inset 0 1px 0 rgb(255 255 255 / 0.35);
+  }
+  50% {
+    box-shadow:
+      0 18px 56px rgb(99 102 241 / 0.45),
+      inset 0 1px 0 rgb(255 255 255 / 0.45);
+  }
+  100% {
+    box-shadow:
+      0 12px 40px rgb(99 102 241 / 0.3),
+      inset 0 1px 0 rgb(255 255 255 / 0.35);
+  }
+}
+
+.landing-gradient-shift {
+  animation: landing-gradient-shift 2s var(--ease-out) 1 forwards;
+}
+
+.landing-node-float {
+  animation: landing-node-float 1.8s var(--ease-out) 1 forwards;
+}
+
+.landing-line-breathe {
+  animation: landing-line-breathe 2s var(--ease-out) 1 forwards;
+}
+
+.landing-button-pulse {
+  animation: landing-button-pulse 1.5s var(--ease-out) 1 forwards;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   Dark mode – @eigenpal/docx-js-editor override
+   Strategy: darken the editor chrome (toolbar/menus); keep document
+   pages white (as printed) with a dramatic shadow on dark canvas.
+   ════════════════════════════════════════════════════════════════ */
+
+/* 1. CSS variable override for eigenpal's shadcn-style tokens */
+html.dark .ep-root {
+  /* Surface — neutral grays */
+  --background:              0 0% 8%;       /* #141414 */
+  --foreground:              214 32% 91%;   /* slate-200 */
+  /* Primary – Indigo */
+  --primary:                 239 84% 67%;   /* indigo-400 */
+  --primary-foreground:      0   0%  100%;
+  /* Secondary / muted */
+  --secondary:               0 0% 10%;     /* #1a1a1a */
+  --secondary-foreground:    214 32% 78%;
+  --muted:                   0 0% 10%;
+  --muted-foreground:        215 16% 47%;   /* slate-500 */
+  /* Accent (hover bg) */
+  --accent:                  0 0% 14%;     /* #242424 */
+  --accent-foreground:       214 32% 91%;
+  /* Destructive */
+  --destructive:             0   63% 55%;
+  --destructive-foreground:  0   0%  100%;
+  /* Borders / inputs / ring */
+  --border:                  0 0% 18%;     /* #2e2e2e */
+  --input:                   0 0% 18%;
+  --ring:                    239 84% 67%;
+  /* Radius (preserve existing) */
+  --radius:                  0.5rem;
+}
+
+/* 2. Toolbar buttons / dropdowns extra overrides
+      (some eigenpal classes use hard-coded colors, not CSS vars) */
+html.dark .ep-root .bg-white {
+  background-color: #141414 !important;
+}
+html.dark .ep-root .bg-slate-100 {
+  background-color: #1e1e1e !important;
+}
+html.dark .ep-root .bg-slate-200 {
+  background-color: #252525 !important;
+}
+html.dark .ep-root .border-slate-200,
+html.dark .ep-root .border-slate-200\/50 {
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+html.dark .ep-root .border-slate-300 {
+  border-color: rgba(255, 255, 255, 0.12) !important;
+}
+html.dark .ep-root .text-slate-700 {
+  color: #cbd5e1 !important;   /* slate-300 */
+}
+html.dark .ep-root .text-slate-500 {
+  color: #64748b !important;
+}
+html.dark .ep-root .text-slate-400 {
+  color: #475569 !important;
+}
+html.dark .ep-root .hover\:bg-slate-100:hover,
+html.dark .ep-root .hover\:bg-slate-100\/80:hover,
+html.dark .ep-root .hover\:bg-slate-50:hover,
+html.dark .ep-root .focus\:bg-slate-100:focus,
+html.dark .ep-root .focus\:bg-slate-100\/80:focus {
+  background-color: rgba(255, 255, 255, 0.07) !important;
+}
+html.dark .ep-root .hover\:bg-slate-800:hover {
+  background-color: #1e1e1e !important;
+}
+html.dark .ep-root .hover\:text-slate-900:hover {
+  color: #e2e8f0 !important;
+}
+html.dark .ep-root .shadow-lg,
+html.dark .ep-root .shadow {
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5) !important;
+}
+html.dark .ep-root .shadow-sm {
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* 3. Document pages – keep white (like print preview) but with
+      a premium shadow so they "float" on the dark canvas */
+html.dark .docx-editor-wrap .docx-editor-page,
+html.dark .docx-editor-wrap .layout-page {
+  background-color: #ffffff !important;
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.06),
+    0 8px 32px rgba(0, 0, 0, 0.55),
+    0 24px 64px rgba(0, 0, 0, 0.4) !important;
+  border-radius: 2px;
+}
+
+/* 4. Section-break dividers inside document */
+html.dark .docx-editor-wrap .docx-section-break::after {
+  --doc-text-muted: #9ca3af;
+  --doc-border:     #d1d5db;
+}
+
+/* 5. Find-highlight colours stay visible on white pages */
+html.dark .docx-editor-wrap .docx-find-highlight {
+  background-color: rgba(253, 224, 71, 0.55) !important;
+}
+html.dark .docx-editor-wrap .docx-find-highlight-current {
+  background-color: rgba(251, 146, 60, 0.65) !important;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   Segmented Control — Apple / Vercel style
+   ════════════════════════════════════════════════════════════════ */
+.seg-root {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  padding: 3px;
+  border-radius: 10px;
+  background: #f0f0f0;
+  box-shadow: inset 0 0.5px 2px rgba(0,0,0,0.06), 0 0 0 0.5px rgba(0,0,0,0.04);
+}
+
+.seg-slider {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  height: calc(100% - 6px);
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow:
+    0 1px 3px rgba(0,0,0,0.08),
+    0 1px 2px rgba(0,0,0,0.04),
+    0 0 0 0.5px rgba(0,0,0,0.04);
+  transition:
+    transform 0.35s cubic-bezier(0.4, 0, 0.15, 1),
+    width     0.3s  cubic-bezier(0.4, 0, 0.15, 1);
+  z-index: 0;
+}
+
+.seg-item {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 16px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: #8a8a8e;
+  cursor: pointer;
+  transition: color 0.25s ease;
+  white-space: nowrap;
+  user-select: none;
+  outline: none;
+}
+
+.seg-item:hover:not(.seg-active) {
+  color: #636366;
+}
+
+.seg-item.seg-active {
+  color: #1d1d1f;
+  cursor: default;
+}
+
+.seg-item:focus-visible {
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.4);
+  border-radius: 8px;
+}
+
+.seg-icon {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+/* Dark variant */
+html.dark .seg-root {
+  background: #2c2c2e;
+  box-shadow: inset 0 0.5px 2px rgba(0,0,0,0.2), 0 0 0 0.5px rgba(255,255,255,0.05);
+}
+
+html.dark .seg-slider {
+  background: #3a3a3c;
+  box-shadow:
+    0 1px 4px rgba(0,0,0,0.3),
+    0 0 0 0.5px rgba(255,255,255,0.06);
+}
+
+html.dark .seg-item {
+  color: #8e8e93;
+}
+
+html.dark .seg-item:hover:not(.seg-active) {
+  color: #aeaeb2;
+}
+
+html.dark .seg-item.seg-active {
+  color: #f5f5f7;
 }

@@ -1,10 +1,12 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { X, Save, Copy, FolderOpen } from "lucide-react";
+import type { DocxEditorRef as EigenpalDocxEditorRef } from "@eigenpal/docx-js-editor";
 
 import { useLanguage } from "@/components/language-provider";
+import { DocxEditorErrorBoundary } from "@/components/docx-editor-error-boundary";
 
 type FieldCatalogItem = {
   field_key: string;
@@ -20,6 +22,7 @@ type Props = {
   onSaveDocx: (buffer: ArrayBuffer) => Promise<void>;
   enableAutoBackup?: boolean;
   autoBackupIntervalMs?: number;
+  onFallbackToOnlyOffice?: () => void;
 };
 
 // Loaded only in browser (DOM required)
@@ -31,12 +34,6 @@ const EigenpalDocxEditor = dynamic(
   { ssr: false },
 );
 
-type DocxEditorRef = {
-  save: () => Promise<ArrayBuffer | undefined>;
-  focus: () => void;
-  getEditorElement?: () => HTMLElement | null;
-};
-
 export function DocxTemplateEditorModal({
   docxPath,
   documentBuffer,
@@ -45,9 +42,10 @@ export function DocxTemplateEditorModal({
   onSaveDocx,
   enableAutoBackup = false,
   autoBackupIntervalMs = 60_000,
+  onFallbackToOnlyOffice,
 }: Props) {
   const { t } = useLanguage();
-  const editorRef = useRef<DocxEditorRef | null>(null);
+  const editorRef = useRef<EigenpalDocxEditorRef | null>(null);
   const editorElementRef = useRef<HTMLElement | null>(null);
   const backingUpRef = useRef(false);
   const [saving, setSaving] = useState(false);
@@ -69,8 +67,11 @@ export function DocxTemplateEditorModal({
 
   const [selectedGroup, setSelectedGroup] = useState("");
   const [selectedFieldKey, setSelectedFieldKey] = useState("");
-  const fieldsInSelectedGroup = selectedGroup ? fieldsByGroup[selectedGroup] ?? [] : [];
-  
+  const fieldsInSelectedGroup = useMemo(
+    () => (selectedGroup ? fieldsByGroup[selectedGroup] ?? [] : []),
+    [fieldsByGroup, selectedGroup],
+  );
+
   // Get Vietnamese label for selected field
   const selectedFieldLabel = useMemo(() => {
     if (!selectedFieldKey) return "";
@@ -79,20 +80,24 @@ export function DocxTemplateEditorModal({
   }, [selectedFieldKey, fieldCatalog]);
 
   useEffect(() => {
-    if (!selectedGroup && groups.length > 0) {
+    if (groups.length === 0) {
+      setSelectedGroup("");
+      return;
+    }
+    if (!selectedGroup || !groups.includes(selectedGroup)) {
       setSelectedGroup(groups[0]);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [groups.length]);
+  }, [groups, selectedGroup]);
 
   useEffect(() => {
-    if (fieldsInSelectedGroup.length > 0) {
-      setSelectedFieldKey(fieldsInSelectedGroup[0].field_key);
-    } else {
+    if (fieldsInSelectedGroup.length === 0) {
       setSelectedFieldKey("");
+      return;
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedGroup]);
+    setSelectedFieldKey((prev) =>
+      fieldsInSelectedGroup.some((field) => field.field_key === prev) ? prev : fieldsInSelectedGroup[0].field_key,
+    );
+  }, [fieldsInSelectedGroup]);
 
   // Find editor element after mount
   useEffect(() => {
@@ -102,12 +107,12 @@ export function DocxTemplateEditorModal({
         editorElementRef.current = editorElement;
       }
     };
-    
+
     // Try immediately and also after delays to catch async mounting
     findEditorElement();
     const timeout1 = setTimeout(findEditorElement, 300);
     const timeout2 = setTimeout(findEditorElement, 1000);
-    
+
     return () => {
       clearTimeout(timeout1);
       clearTimeout(timeout2);
@@ -116,18 +121,18 @@ export function DocxTemplateEditorModal({
 
   async function insertPlaceholder() {
     if (!selectedFieldKey || !selectedFieldLabel) return;
-    
+
     const placeholder = `[${selectedFieldLabel}]`;
-    
+
     // Focus editor first
     editorRef.current?.focus();
-    
+
     // Wait a bit for focus to take effect
     await new Promise((resolve) => setTimeout(resolve, 100));
-    
+
     // Try multiple approaches to insert text
     let inserted = false;
-    
+
     // Approach 1: Use Selection API if there's an active selection
     const selection = window.getSelection();
     if (selection && selection.rangeCount > 0) {
@@ -142,11 +147,11 @@ export function DocxTemplateEditorModal({
         selection.removeAllRanges();
         selection.addRange(range);
         inserted = true;
-      } catch (e) {
-        console.warn("Failed to insert via Selection API:", e);
+      } catch {
+        // Try next insertion strategy
       }
     }
-    
+
     // Approach 2: Try execCommand (works in most browsers)
     if (!inserted) {
       try {
@@ -154,16 +159,16 @@ export function DocxTemplateEditorModal({
         if (success) {
           inserted = true;
         }
-      } catch (e) {
-        console.warn("execCommand failed:", e);
+      } catch {
+        // Try next insertion strategy
       }
     }
-    
+
     // Approach 3: Find contenteditable element and insert
     if (!inserted) {
-      const editorElement = editorElementRef.current || 
+      const editorElement = editorElementRef.current ||
         (document.querySelector('[contenteditable="true"]') as HTMLElement);
-      
+
       if (editorElement) {
         editorElement.focus();
         try {
@@ -171,12 +176,12 @@ export function DocxTemplateEditorModal({
           if (success) {
             inserted = true;
           }
-        } catch (e) {
-          console.warn("Failed to insert via execCommand on element:", e);
+        } catch {
+          // Fallback to clipboard flow below
         }
       }
     }
-    
+
     // Fallback: copy to clipboard if all else fails
     if (!inserted) {
       await navigator.clipboard.writeText(placeholder);
@@ -202,7 +207,7 @@ export function DocxTemplateEditorModal({
     setSaving(false);
   }
 
-  async function runAutoBackup(): Promise<void> {
+  const runAutoBackup = useCallback(async (): Promise<void> => {
     if (!enableAutoBackup || backingUpRef.current) return;
     backingUpRef.current = true;
     try {
@@ -234,7 +239,7 @@ export function DocxTemplateEditorModal({
     } finally {
       backingUpRef.current = false;
     }
-  }
+  }, [docxPath, enableAutoBackup]);
 
   async function openBackupFolder() {
     setError("");
@@ -257,21 +262,25 @@ export function DocxTemplateEditorModal({
       void runAutoBackup();
     }, Math.max(15_000, autoBackupIntervalMs));
     return () => window.clearInterval(timer);
-  }, [enableAutoBackup, autoBackupIntervalMs, docxPath]);
+  }, [enableAutoBackup, autoBackupIntervalMs, runAutoBackup]);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-3">
-      <div className="flex h-full max-h-[95vh] w-full max-w-7xl flex-col overflow-hidden rounded-xl bg-white shadow-xl">
-        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-coral-tree-200 px-4 py-3">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-3 backdrop-blur-sm">
+      <div className="flex h-full max-h-[95vh] w-full max-w-7xl flex-col overflow-hidden rounded-2xl bg-white shadow-[0_24px_80px_rgba(0,0,0,0.18)] dark:bg-[#141414] dark:shadow-[0_24px_80px_rgba(0,0,0,0.6)]">
+
+        {/* ── Header ── */}
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200/70 px-4 py-3 dark:border-white/[0.08]">
           <div className="min-w-0">
-            <p className="text-sm font-semibold">{t("template.editor.modal.title")}</p>
-            <p className="text-xs text-coral-tree-500 truncate">{docxPath}</p>
+            <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+              {t("template.editor.modal.title")}
+            </p>
+            <p className="truncate text-xs text-slate-500 dark:text-slate-400">{docxPath}</p>
           </div>
           <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={() => void openBackupFolder()}
-              className="flex items-center gap-1.5 rounded-md border border-coral-tree-300 px-3 py-1.5 text-sm hover:bg-coral-tree-50"
+              className="flex items-center gap-1.5 rounded-lg border border-slate-300 px-3 py-1.5 text-sm text-slate-700 transition-colors hover:bg-slate-50 dark:border-white/[0.10] dark:text-slate-300 dark:hover:bg-white/[0.06]"
               title="Mở thư mục backup"
             >
               <FolderOpen className="h-4 w-4" />
@@ -280,7 +289,7 @@ export function DocxTemplateEditorModal({
             <button
               type="button"
               onClick={onClose}
-              className="flex items-center gap-1.5 rounded-md border border-coral-tree-300 px-3 py-1.5 text-sm hover:bg-coral-tree-50"
+              className="flex items-center gap-1.5 rounded-lg border border-slate-300 px-3 py-1.5 text-sm text-slate-700 transition-colors hover:bg-slate-50 dark:border-white/[0.10] dark:text-slate-300 dark:hover:bg-white/[0.06]"
             >
               <X className="h-4 w-4" />
               {t("template.editor.modal.close")}
@@ -289,7 +298,7 @@ export function DocxTemplateEditorModal({
               type="button"
               onClick={handleSave}
               disabled={saving}
-              className="flex items-center gap-1.5 rounded-md bg-emerald-600 px-3 py-1.5 text-sm text-white disabled:opacity-50 hover:bg-emerald-700"
+              className="flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-1.5 text-sm text-white shadow-sm transition-colors hover:bg-emerald-700 disabled:opacity-50 dark:bg-emerald-600 dark:hover:bg-emerald-700"
             >
               <Save className="h-4 w-4" />
               {saving ? t("template.editor.modal.saving") : t("template.editor.modal.save")}
@@ -297,20 +306,23 @@ export function DocxTemplateEditorModal({
           </div>
         </div>
 
-        <div className="border-b border-coral-tree-200 bg-coral-tree-50 px-4 py-3">
+        {/* ── Placeholder Toolbar ── */}
+        <div className="border-b border-slate-200/70 bg-slate-50/80 px-4 py-3 dark:border-white/[0.07] dark:bg-[#1a1a1a]/80">
           {enableAutoBackup ? (
-            <p className="mb-2 text-xs text-coral-tree-600">
+            <p className="mb-2 text-xs text-slate-500 dark:text-slate-400">
               Auto backup mỗi {Math.round(autoBackupIntervalMs / 1000)} giây
               {lastBackupAt ? ` • Lần gần nhất: ${lastBackupAt}` : ""}
             </p>
           ) : null}
           <div className="flex flex-wrap items-end gap-3">
             <div className="flex flex-col gap-1">
-              <label className="text-xs text-coral-tree-600">{t("template.editor.selectGroup")}</label>
+              <label className="text-xs font-medium text-slate-600 dark:text-slate-400">
+                {t("template.editor.selectGroup")}
+              </label>
               <select
                 value={selectedGroup}
                 onChange={(e) => setSelectedGroup(e.target.value)}
-                className="min-w-48 rounded-md border border-coral-tree-300 bg-white px-3 py-2 text-sm"
+                className="min-w-48 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-white/[0.10] dark:bg-[#141414]/80 dark:text-slate-100"
               >
                 {groups.map((group) => (
                   <option key={group} value={group}>
@@ -320,11 +332,13 @@ export function DocxTemplateEditorModal({
               </select>
             </div>
             <div className="flex flex-col gap-1">
-              <label className="text-xs text-coral-tree-600">{t("template.editor.selectField")}</label>
+              <label className="text-xs font-medium text-slate-600 dark:text-slate-400">
+                {t("template.editor.selectField")}
+              </label>
               <select
                 value={selectedFieldKey}
                 onChange={(e) => setSelectedFieldKey(e.target.value)}
-                className="min-w-72 rounded-md border border-coral-tree-300 bg-white px-3 py-2 text-sm"
+                className="min-w-72 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:opacity-50 dark:border-white/[0.10] dark:bg-[#141414]/80 dark:text-slate-100"
                 disabled={fieldsInSelectedGroup.length === 0}
               >
                 {fieldsInSelectedGroup.map((field) => (
@@ -339,23 +353,29 @@ export function DocxTemplateEditorModal({
               type="button"
               onClick={() => void insertPlaceholder()}
               disabled={!selectedFieldKey}
-              className="flex items-center gap-2 rounded-md bg-coral-tree-600 px-4 py-2 text-sm text-white disabled:opacity-50 hover:bg-coral-tree-700"
+              className="flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-indigo-700 disabled:opacity-50 dark:bg-indigo-600 dark:hover:bg-indigo-700"
               title={selectedFieldKey ? `Chèn [${selectedFieldLabel}] vào vị trí con trỏ` : ""}
             >
               <Copy className="h-4 w-4" />
               {t("template.editor.injectButton")}
             </button>
 
-            <p className="text-xs text-coral-tree-500">
+            <p className="text-xs text-slate-500 dark:text-slate-500">
               {t("template.editor.desc")}
             </p>
           </div>
-          {error ? <p className="mt-2 text-sm text-red-600">{error}</p> : null}
+          {error ? (
+            <p className="mt-2 text-sm text-red-600 dark:text-rose-400">{error}</p>
+          ) : null}
         </div>
 
-        <div className="flex-1 overflow-auto bg-white">
-          <EigenpalDocxEditor ref={editorRef as any} documentBuffer={documentBuffer} />
+        {/* ── Editor canvas ── */}
+        <div className="docx-editor-wrap flex-1 overflow-auto bg-slate-100 dark:bg-[#0a0a0a]">
+          <DocxEditorErrorBoundary onClose={onClose} onFallbackToOnlyOffice={onFallbackToOnlyOffice}>
+            <EigenpalDocxEditor ref={editorRef} documentBuffer={documentBuffer} />
+          </DocxEditorErrorBoundary>
         </div>
+
       </div>
     </div>
   );

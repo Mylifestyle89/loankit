@@ -1,292 +1,420 @@
-import type { Dispatch, SetStateAction } from "react";
-import type { FieldCatalogItem } from "@/lib/report/config-schema";
-import type { FieldTemplateItem, FieldTemplatesResponse } from "../types";
 import { normalizeFieldCatalogForSchema } from "../helpers";
+import type { FieldTemplateItem, MappingInstanceItem, MasterTemplateItem } from "../types";
+import { useMappingDataStore } from "../stores/use-mapping-data-store";
+import { useFieldTemplateStore } from "../stores/use-field-template-store";
+import { useCustomerStore } from "../stores/use-customer-store";
+import { useUiStore } from "../stores/use-ui-store";
 
-type UseFieldTemplatesParams = {
-  t: (key: string) => string;
-  selectedCustomerId: string;
-  selectedFieldTemplateId: string;
-  editingFieldTemplateId: string;
-  editingFieldTemplateName: string;
-  newFieldTemplateName: string;
-  fieldCatalog: FieldCatalogItem[];
-  allFieldTemplates: FieldTemplateItem[];
-  setFieldTemplates: Dispatch<SetStateAction<FieldTemplateItem[]>>;
-  setAllFieldTemplates: Dispatch<SetStateAction<FieldTemplateItem[]>>;
-  setLoadingFieldTemplates: Dispatch<SetStateAction<boolean>>;
-  setSelectedFieldTemplateId: Dispatch<SetStateAction<string>>;
-  setCreatingFieldTemplate: Dispatch<SetStateAction<boolean>>;
-  setNewFieldTemplateName: Dispatch<SetStateAction<string>>;
-  setSavingFieldTemplate: Dispatch<SetStateAction<boolean>>;
-  setEditingFieldTemplatePicker: Dispatch<SetStateAction<boolean>>;
-  setEditPickerTemplateId: Dispatch<SetStateAction<string>>;
-  setEditingFieldTemplateId: Dispatch<SetStateAction<string>>;
-  setEditingFieldTemplateName: Dispatch<SetStateAction<string>>;
-  setSavingEditedTemplate: Dispatch<SetStateAction<boolean>>;
-  setFieldCatalog: Dispatch<SetStateAction<FieldCatalogItem[]>>;
-  setValues: Dispatch<SetStateAction<Record<string, unknown>>>;
-  setManualValues: Dispatch<SetStateAction<Record<string, string | number | boolean | null>>>;
-  setMessage: Dispatch<SetStateAction<string>>;
-  setError: Dispatch<SetStateAction<string>>;
-};
+export function useFieldTemplates({ t }: { t: (key: string) => string }) {
+  /** Unified error handler — avoids repeating the same pattern everywhere. */
+  function handleApiError(e: unknown, defaultKey: string) {
+    useUiStore.getState().setStatus({ error: e instanceof Error ? e.message : t(defaultKey) });
+  }
 
-export function useFieldTemplates({
-  t,
-  selectedCustomerId,
-  selectedFieldTemplateId,
-  editingFieldTemplateId,
-  editingFieldTemplateName,
-  newFieldTemplateName,
-  fieldCatalog,
-  allFieldTemplates,
-  setFieldTemplates,
-  setAllFieldTemplates,
-  setLoadingFieldTemplates,
-  setSelectedFieldTemplateId,
-  setCreatingFieldTemplate,
-  setNewFieldTemplateName,
-  setSavingFieldTemplate,
-  setEditingFieldTemplatePicker,
-  setEditPickerTemplateId,
-  setEditingFieldTemplateId,
-  setEditingFieldTemplateName,
-  setSavingEditedTemplate,
-  setFieldCatalog,
-  setValues,
-  setManualValues,
-  setMessage,
-  setError,
-}: UseFieldTemplatesParams) {
   async function loadFieldTemplates(customerId?: string) {
+    const { setFieldTemplates, setLoadingFieldTemplates } = useFieldTemplateStore.getState();
     setLoadingFieldTemplates(true);
     try {
       const query = customerId ? `?customer_id=${encodeURIComponent(customerId)}` : "";
-      const res = await fetch(`/api/report/field-templates${query}`, { cache: "no-store" });
-      const data = (await res.json()) as FieldTemplatesResponse;
-      if (data.ok && Array.isArray(data.field_templates)) {
-        setFieldTemplates(data.field_templates);
+      const [instancesRes, mastersRes] = await Promise.all([
+        fetch(`/api/report/mapping-instances${query}`, { cache: "no-store" }),
+        fetch("/api/report/master-templates?with_usage=1", { cache: "no-store" }),
+      ]);
+      const [instancesData, mastersData] = (await Promise.all([instancesRes.json(), mastersRes.json()])) as [
+        { ok: boolean; error?: string; mapping_instances?: MappingInstanceItem[] },
+        { ok: boolean; error?: string; master_templates?: MasterTemplateItem[] },
+      ];
+
+      if (!instancesData.ok || !mastersData.ok) {
+        throw new Error(instancesData.error ?? mastersData.error ?? t("mapping.fieldTemplate.errLoad"));
       }
+
+      const templates: FieldTemplateItem[] = customerId
+        ? (instancesData.mapping_instances ?? []).map((item) => ({
+            id: item.id,
+            name: item.name || item.master_snapshot_name || "Template khách hàng",
+            created_at: item.updated_at || item.created_at,
+            field_catalog: normalizeFieldCatalogForSchema(item.field_catalog ?? []),
+            assigned_customer_count: 1,
+          }))
+        : (mastersData.master_templates ?? []).map((master) => ({
+            id: master.id,
+            name: master.name,
+            created_at: master.created_at,
+            field_catalog: master.field_catalog,
+            assigned_customer_count: master.assigned_customer_count,
+          }));
+
+      setFieldTemplates(templates);
     } catch (e) {
-      console.error("Failed to load field templates:", e);
+      handleApiError(e, "mapping.fieldTemplate.errLoad");
     } finally {
-      setLoadingFieldTemplates(false);
+      useFieldTemplateStore.getState().setLoadingFieldTemplates(false);
     }
   }
 
   async function loadAllFieldTemplates() {
+    const { setAllFieldTemplates } = useFieldTemplateStore.getState();
     try {
-      const res = await fetch("/api/report/field-templates?with_usage=1", { cache: "no-store" });
-      const data = (await res.json()) as FieldTemplatesResponse;
-      if (data.ok && Array.isArray(data.field_templates)) {
-        setAllFieldTemplates(data.field_templates);
+      const res = await fetch("/api/report/master-templates?with_usage=1", { cache: "no-store" });
+      const data = (await res.json()) as { ok: boolean; error?: string; master_templates?: MasterTemplateItem[] };
+      if (data.ok && Array.isArray(data.master_templates)) {
+        setAllFieldTemplates(
+          data.master_templates.map((master) => ({
+            id: master.id,
+            name: master.name,
+            created_at: master.created_at,
+            field_catalog: master.field_catalog,
+            assigned_customer_count: master.assigned_customer_count,
+          })),
+        );
       }
     } catch (e) {
-      console.error("Failed to load all field templates:", e);
+      handleApiError(e, "mapping.fieldTemplate.errLoad");
     }
   }
 
-  function applySelectedFieldTemplate(templateId: string) {
+  async function applySelectedFieldTemplate(templateId: string) {
+    const ft = useFieldTemplateStore.getState();
+    const md = useMappingDataStore.getState();
+    const { selectedCustomerId } = useCustomerStore.getState();
     if (!templateId) {
-      setSelectedFieldTemplateId("");
+      ft.setSelectedFieldTemplateId("");
+      ft.setEditingFieldTemplateId("");
+      ft.setEditingFieldTemplateName("");
       return;
     }
-    const template = allFieldTemplates.find((item) => item.id === templateId);
+    const template =
+      ft.fieldTemplates.find((i) => i.id === templateId) ??
+      ft.allFieldTemplates.find((i) => i.id === templateId);
     if (!template) return;
-    setEditingFieldTemplateId("");
-    setEditingFieldTemplateName("");
+
     const normalizedCatalog = normalizeFieldCatalogForSchema(template.field_catalog ?? []);
-    setFieldCatalog(normalizedCatalog);
-    const emptyValues = Object.fromEntries(normalizedCatalog.map((field) => [field.field_key, ""]));
-    setManualValues({});
-    setValues(emptyValues);
-    setSelectedFieldTemplateId(templateId);
+
+    // Preserve current values/manualValues before switching template
+    const prevValues = { ...md.values };
+    const prevManual = { ...md.manualValues };
+    const prevFormulas = { ...md.formulas };
+
+    // Load saved values from disk FIRST (before resetting state)
+    let diskValues = prevValues;
+    let diskManual: Record<string, string | number | boolean | null> = prevManual;
+    let diskFormulas = prevFormulas;
+    try {
+      const query = selectedCustomerId ? `?mapping_instance_id=${encodeURIComponent(templateId)}` : "";
+      const res = await fetch(`/api/report/values${query}`, { cache: "no-store" });
+      const data = (await res.json()) as { ok: boolean; manual_values?: Record<string, string | number | boolean | null>; field_formulas?: Record<string, string>; values?: Record<string, unknown> };
+      if (data.ok) {
+        diskValues = { ...prevValues, ...(data.values ?? {}) };
+        diskManual = { ...prevManual, ...(data.manual_values ?? {}) };
+        diskFormulas = { ...prevFormulas, ...(data.field_formulas ?? {}) };
+      }
+    } catch { /* keep previous values if API fails */ }
+
+    // Now set template data atomically with preserved + disk values
+    md.setTemplateData(normalizedCatalog, diskValues, diskManual);
+    md.setFormulas(diskFormulas);
+
+    ft.setSelectedFieldTemplateId(templateId);
+    ft.setEditingFieldTemplateId(templateId);
+    ft.setEditingFieldTemplateName(template.name);
   }
 
-  function openCreateFieldTemplateModal() {
-    setCreatingFieldTemplate(true);
-    setNewFieldTemplateName("");
-  }
-
-  async function openEditFieldTemplatePicker() {
-    await loadAllFieldTemplates();
-    setEditPickerTemplateId("");
-    setEditingFieldTemplatePicker(true);
-  }
-
-  function closeEditFieldTemplatePicker() {
-    setEditingFieldTemplatePicker(false);
-    setEditPickerTemplateId("");
-  }
-
-  function startEditingExistingTemplate(templateId: string) {
+  async function startEditingExistingTemplate(templateId: string) {
+    const ft = useFieldTemplateStore.getState();
+    const md = useMappingDataStore.getState();
     if (!templateId) {
-      setError(t("mapping.fieldTemplate.errSelectEdit"));
+      useUiStore.getState().setStatus({ error: t("mapping.fieldTemplate.errSelectEdit") });
       return;
     }
-    const template = allFieldTemplates.find((item) => item.id === templateId);
+    const template = ft.allFieldTemplates.find((i) => i.id === templateId);
     if (!template) {
-      setError(t("mapping.fieldTemplate.errTemplateNotFound"));
+      useUiStore.getState().setStatus({ error: t("mapping.fieldTemplate.errTemplateNotFound") });
       return;
     }
-
-    setSelectedFieldTemplateId("");
-    setFieldTemplates([]);
+    ft.setSelectedFieldTemplateId("");
+    ft.setFieldTemplates([]);
     const normalizedCatalog = normalizeFieldCatalogForSchema(template.field_catalog ?? []);
-    setFieldCatalog(normalizedCatalog);
-    const emptyValues = Object.fromEntries(normalizedCatalog.map((field) => [field.field_key, ""]));
-    setManualValues({});
-    setValues(emptyValues);
-    setEditingFieldTemplateId(template.id);
-    setEditingFieldTemplateName(template.name);
-    setMessage(t("mapping.msg.templateEditing").replace("{name}", template.name));
+
+    // Preserve current values before switching
+    const prevValues = { ...md.values };
+    const prevManual = { ...md.manualValues };
+    const prevFormulas = { ...md.formulas };
+
+    // Load saved values from disk FIRST (before resetting state)
+    let diskValues = prevValues;
+    let diskManual: Record<string, string | number | boolean | null> = prevManual;
+    let diskFormulas = prevFormulas;
+    try {
+      const res = await fetch("/api/report/values", { cache: "no-store" });
+      const data = (await res.json()) as { ok: boolean; manual_values?: Record<string, string | number | boolean | null>; field_formulas?: Record<string, string>; values?: Record<string, unknown> };
+      if (data.ok) {
+        diskValues = { ...prevValues, ...(data.values ?? {}) };
+        diskManual = { ...prevManual, ...(data.manual_values ?? {}) };
+        diskFormulas = { ...prevFormulas, ...(data.field_formulas ?? {}) };
+      }
+    } catch { /* keep previous values if API fails */ }
+
+    // Set template data atomically with preserved + disk values
+    md.setTemplateData(normalizedCatalog, diskValues, diskManual);
+    md.setFormulas(diskFormulas);
+
+    ft.setEditingFieldTemplateId(template.id);
+    ft.setEditingFieldTemplateName(template.name);
+    useUiStore.getState().setStatus({ message: t("mapping.msg.templateEditing").replace("{name}", template.name) });
     closeEditFieldTemplatePicker();
   }
 
-  function stopEditingFieldTemplate() {
-    setEditingFieldTemplateId("");
-    setEditingFieldTemplateName("");
-    if (!selectedCustomerId) {
-      setFieldCatalog([]);
-      setValues({});
-      setManualValues({});
-    }
-  }
+  async function stopEditingFieldTemplate() {
+    const ft = useFieldTemplateStore.getState();
+    const { selectedCustomerId } = useCustomerStore.getState();
+    const md = useMappingDataStore.getState();
 
-  function closeCreateFieldTemplateModal() {
-    setCreatingFieldTemplate(false);
-    setNewFieldTemplateName("");
+    // Auto-save current values to disk before clearing template editing state
+    // This prevents data loss when toggling template off
+    try {
+      const repeaterData: Record<string, unknown> = {};
+      for (const [key, val] of Object.entries(md.values)) {
+        if (Array.isArray(val)) repeaterData[key] = val;
+      }
+      const hasData = Object.keys(md.manualValues).length > 0 || Object.keys(repeaterData).length > 0;
+      if (hasData) {
+        const candidateId = ft.selectedFieldTemplateId || ft.editingFieldTemplateId;
+        const mappingInstanceId =
+          selectedCustomerId && candidateId && ft.fieldTemplates.some((template) => template.id === candidateId)
+            ? candidateId
+            : undefined;
+        await fetch("/api/report/values", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            manual_values: { ...md.manualValues, ...repeaterData },
+            field_formulas: md.formulas,
+            mapping_instance_id: mappingInstanceId,
+          }),
+        });
+      }
+    } catch { /* best-effort save */ }
+
+    ft.setEditingFieldTemplateId("");
+    ft.setEditingFieldTemplateName("");
+    ft.setSelectedFieldTemplateId("");
+    if (!selectedCustomerId) {
+      // Only clear the field catalog (UI fields), but preserve values
+      // so data isn't lost when toggling template off/on
+      md.setFieldCatalog([]);
+    }
   }
 
   async function assignSelectedFieldTemplate() {
-    if (!selectedCustomerId) {
-      setError(t("mapping.fieldTemplate.errSelectCustomer"));
-      return;
-    }
-    if (!selectedFieldTemplateId) {
-      setError(t("mapping.fieldTemplate.errSelectAttach"));
-      return;
-    }
-    setError("");
-    try {
-      const res = await fetch("/api/report/field-templates", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          customer_id: selectedCustomerId,
-          template_id: selectedFieldTemplateId,
-        }),
-      });
-      const data = (await res.json()) as { ok: boolean; error?: string };
-      if (!data.ok) {
-        throw new Error(data.error ?? t("mapping.fieldTemplate.errAttach"));
-      }
-      const attached = allFieldTemplates.find((item) => item.id === selectedFieldTemplateId);
-      if (attached) {
-        setMessage(`Đã áp dụng mẫu "${attached.name}" cho khách hàng này.`);
-      }
-      await loadFieldTemplates(selectedCustomerId);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : t("mapping.fieldTemplate.errAttach"));
-    }
-  }
+    const ft = useFieldTemplateStore.getState();
+    const { selectedCustomerId } = useCustomerStore.getState();
+    if (!selectedCustomerId) return useUiStore.getState().setStatus({ error: t("mapping.fieldTemplate.errSelectCustomer") });
+    if (!ft.selectedFieldTemplateId) return useUiStore.getState().setStatus({ error: t("mapping.fieldTemplate.errSelectAttach") });
+    const selectedMaster = ft.allFieldTemplates.find((i) => i.id === ft.selectedFieldTemplateId);
+    if (!selectedMaster) return useUiStore.getState().setStatus({ error: "Vui lòng chọn template mẫu (generic) từ thư viện để áp dụng." });
 
-  async function saveFieldTemplate() {
-    const name = newFieldTemplateName.trim();
-    if (!name) {
-      setError(t("mapping.fieldTemplate.errName"));
-      return;
-    }
-    setSavingFieldTemplate(true);
-    setError("");
+    useUiStore.getState().setStatus({ error: "" });
     try {
-      const res = await fetch("/api/report/field-templates", {
+      const res = await fetch("/api/report/mapping-instances", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name,
-          field_catalog: [],
-          customer_id: selectedCustomerId,
-        }),
+        body: JSON.stringify({ customer_id: selectedCustomerId, master_id: selectedMaster.id, name: `instance-${Date.now()}` }),
       });
-      const data = (await res.json()) as FieldTemplatesResponse;
-      if (!data.ok) {
-        throw new Error(data.error ?? t("mapping.fieldTemplate.errSave"));
-      }
-      if (selectedCustomerId) {
-        await loadFieldTemplates(selectedCustomerId);
-      } else {
-        await loadAllFieldTemplates();
-      }
-      if (data.field_template) {
-        setFieldCatalog([]);
-        setValues({});
-        setManualValues({});
-        setSelectedFieldTemplateId(data.field_template.id);
-        setEditingFieldTemplateId(data.field_template.id);
-        setEditingFieldTemplateName(data.field_template.name);
-      }
-      setMessage(t("mapping.msg.templateSaved").replace("{name}", name));
-      closeCreateFieldTemplateModal();
+      const data = (await res.json()) as { ok: boolean; error?: string };
+      if (!data.ok) throw new Error(data.error ?? t("mapping.fieldTemplate.errAttach"));
+      useUiStore.getState().setStatus({ message: `Đã áp dụng mẫu "${selectedMaster.name}" cho khách hàng này.` });
+      await loadFieldTemplates(selectedCustomerId);
     } catch (e) {
-      setError(e instanceof Error ? e.message : t("mapping.fieldTemplate.errSave"));
-    } finally {
-      setSavingFieldTemplate(false);
+      handleApiError(e, "mapping.fieldTemplate.errAttach");
     }
   }
 
   async function saveEditedFieldTemplate() {
-    if (!editingFieldTemplateId) {
-      setError(t("mapping.fieldTemplate.errSelectEdit"));
-      return;
+    const ft = useFieldTemplateStore.getState();
+    const md = useMappingDataStore.getState();
+    const { selectedCustomerId } = useCustomerStore.getState();
+    if (!ft.editingFieldTemplateId) return useUiStore.getState().setStatus({ error: t("mapping.fieldTemplate.errSelectEdit") });
+    const nextName = ft.editingFieldTemplateName.trim();
+    if (!nextName) return useUiStore.getState().setStatus({ error: t("mapping.fieldTemplate.errName") });
+
+    // Detect: master template (in allFieldTemplates) or customer instance (in fieldTemplates only)
+    const isMaster = ft.allFieldTemplates.some((t) => t.id === ft.editingFieldTemplateId);
+
+    ft.setSavingEditedTemplate(true);
+    useUiStore.getState().setStatus({ error: "" });
+    try {
+      const normalizedCatalog = normalizeFieldCatalogForSchema(md.fieldCatalog);
+
+      // Step 1: Auto-save full state (mapping + alias + values) to avoid data loss
+      const mappingInstanceId = isMaster ? undefined : ft.editingFieldTemplateId;
+      await Promise.all([
+        fetch("/api/report/mapping", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            created_by: "web-user",
+            notes: "Auto-saved before template update",
+            mapping: JSON.parse(md.mappingText || "{}"),
+            alias_map: JSON.parse(md.aliasText || "{}"),
+            field_catalog: normalizedCatalog,
+            mapping_instance_id: mappingInstanceId,
+          }),
+        }),
+        fetch("/api/report/values", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            manual_values: {
+              ...md.manualValues,
+              ...Object.fromEntries(Object.entries(md.values).filter(([, v]) => Array.isArray(v))),
+            },
+            field_formulas: md.formulas,
+            mapping_instance_id: mappingInstanceId,
+          }),
+        }),
+      ]);
+
+      // Step 2: Update template definition (name + field_catalog) in DB
+      if (isMaster) {
+        const res = await fetch("/api/report/master-templates", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            master_id: ft.editingFieldTemplateId,
+            name: nextName,
+            field_catalog: normalizedCatalog,
+          }),
+        });
+        const data = (await res.json()) as { ok: boolean; error?: string };
+        if (!data.ok) throw new Error(data.error ?? t("mapping.fieldTemplate.errSave"));
+      } else {
+        // Customer-specific instance
+        const res = await fetch(`/api/report/mapping-instances/${ft.editingFieldTemplateId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: nextName, field_catalog: normalizedCatalog }),
+        });
+        const data = (await res.json()) as { ok: boolean; error?: string };
+        if (!data.ok) throw new Error(data.error ?? t("mapping.fieldTemplate.errSave"));
+      }
+
+      await Promise.all([
+        loadAllFieldTemplates(),
+        selectedCustomerId ? loadFieldTemplates(selectedCustomerId) : Promise.resolve(),
+      ]);
+      useUiStore.getState().setStatus({ message: t("mapping.msg.templateUpdated").replace("{name}", nextName) });
+    } catch (e) {
+      handleApiError(e, "mapping.fieldTemplate.errSave");
+    } finally {
+      useFieldTemplateStore.getState().setSavingEditedTemplate(false);
     }
-    const nextName = editingFieldTemplateName.trim();
-    if (!nextName) {
-      setError(t("mapping.fieldTemplate.errName"));
+  }
+
+  async function promoteToMasterTemplate(newName?: string) {
+    const ft = useFieldTemplateStore.getState();
+    const md = useMappingDataStore.getState();
+
+    // Only allow for instances (not masters)
+    const isMaster = ft.allFieldTemplates.some((i) => i.id === ft.editingFieldTemplateId);
+    if (isMaster) {
+      useUiStore.getState().setStatus({ error: "Template này đã là template mẫu." });
       return;
     }
 
-    setSavingEditedTemplate(true);
-    setError("");
+    const name = (newName ?? ft.editingFieldTemplateName).trim();
+    if (!name) {
+      useUiStore.getState().setStatus({ error: t("mapping.fieldTemplate.errName") });
+      return;
+    }
+
+    ft.setPromotingToMaster(true);
+    useUiStore.getState().setStatus({ error: "" });
     try {
-      const normalizedCatalog = normalizeFieldCatalogForSchema(fieldCatalog);
-      const res = await fetch("/api/report/field-templates", {
-        method: "PUT",
+      const normalizedCatalog = normalizeFieldCatalogForSchema(md.fieldCatalog);
+
+      // Step 1: Auto-save current instance state (mapping + alias + values) to prevent data loss
+      await Promise.all([
+        fetch("/api/report/mapping", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            created_by: "web-user",
+            notes: "Auto-saved before promote to master",
+            mapping: JSON.parse(md.mappingText || "{}"),
+            alias_map: JSON.parse(md.aliasText || "{}"),
+            field_catalog: normalizedCatalog,
+            mapping_instance_id: ft.editingFieldTemplateId,
+          }),
+        }),
+        fetch("/api/report/values", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            manual_values: {
+              ...md.manualValues,
+              ...Object.fromEntries(Object.entries(md.values).filter(([, v]) => Array.isArray(v))),
+            },
+            field_formulas: md.formulas,
+            mapping_instance_id: ft.editingFieldTemplateId,
+          }),
+        }),
+      ]);
+
+      // Step 2: Create new master template from current field catalog
+      const res = await fetch("/api/report/master-templates", {
+        method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          template_id: editingFieldTemplateId,
-          name: nextName,
+          name,
+          description: `Tạo từ template khách hàng`,
           field_catalog: normalizedCatalog,
         }),
       });
-      const data = (await res.json()) as FieldTemplatesResponse;
-      if (!data.ok) {
-        throw new Error(data.error ?? t("mapping.fieldTemplate.errSave"));
-      }
-      await loadAllFieldTemplates();
-      if (selectedCustomerId) {
-        await loadFieldTemplates(selectedCustomerId);
-      }
-      setMessage(t("mapping.msg.templateUpdated").replace("{name}", nextName));
+      const data = (await res.json()) as { ok: boolean; error?: string };
+      if (!data.ok) throw new Error(data.error ?? "Không thể tạo template mẫu.");
+
+      // Step 3: Also update the instance definition (name + field_catalog)
+      await fetch(`/api/report/mapping-instances/${ft.editingFieldTemplateId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: ft.editingFieldTemplateName.trim(), field_catalog: normalizedCatalog }),
+      });
+
+      const { selectedCustomerId } = useCustomerStore.getState();
+      await Promise.all([
+        loadAllFieldTemplates(),
+        selectedCustomerId ? loadFieldTemplates(selectedCustomerId) : Promise.resolve(),
+      ]);
+      useUiStore.getState().setStatus({ message: `Đã lưu template mẫu: "${name}"` });
     } catch (e) {
-      setError(e instanceof Error ? e.message : t("mapping.fieldTemplate.errSave"));
+      handleApiError(e, "mapping.fieldTemplate.errSave");
     } finally {
-      setSavingEditedTemplate(false);
+      useFieldTemplateStore.getState().setPromotingToMaster(false);
     }
+  }
+
+  function closeEditFieldTemplatePicker() {
+    const ft = useFieldTemplateStore.getState();
+    ft.setEditingFieldTemplatePicker(false);
+    ft.setEditPickerTemplateId("");
   }
 
   return {
     loadFieldTemplates,
     loadAllFieldTemplates,
     applySelectedFieldTemplate,
-    openCreateFieldTemplateModal,
-    openEditFieldTemplatePicker,
+    openEditFieldTemplatePicker: async () => {
+      await loadAllFieldTemplates();
+      const ft = useFieldTemplateStore.getState();
+      ft.setEditPickerTemplateId("");
+      ft.setEditingFieldTemplatePicker(true);
+    },
     closeEditFieldTemplatePicker,
     startEditingExistingTemplate,
     stopEditingFieldTemplate,
-    closeCreateFieldTemplateModal,
     assignSelectedFieldTemplate,
-    saveFieldTemplate,
     saveEditedFieldTemplate,
+    promoteToMasterTemplate,
   };
 }

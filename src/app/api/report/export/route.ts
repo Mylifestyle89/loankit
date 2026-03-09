@@ -1,66 +1,100 @@
-import fs from "node:fs/promises";
-import path from "node:path";
-
 import { NextRequest, NextResponse } from "next/server";
+import path from "node:path";
+import { z } from "zod";
 
-import { REPORT_MERGED_FLAT_FILE } from "@/lib/report/constants";
-import { getActiveMappingVersion, getActiveTemplateProfile, loadState } from "@/lib/report/fs-store";
-import { loadManualValues, mergeFlatWithManualValues } from "@/lib/report/manual-values";
-import { logRun, runExport } from "@/lib/report/pipeline-client";
+import { toHttpError, ValidationError } from "@/core/errors/app-error";
+import { REPORT_ASSETS_BASE, validatePathUnderBase } from "@/lib/report/path-validation";
+import { reportService } from "@/services/report.service";
 
 export const runtime = "nodejs";
 
-export async function POST(req: NextRequest) {
-  const start = Date.now();
+function isAllowedAssetPath(v: string | undefined): boolean {
+  if (v === undefined) return true;
   try {
-    const body = (await req.json().catch(() => ({}))) as {
-      output_path?: string;
-      report_path?: string;
-      template_path?: string;
-    };
-    const state = await loadState();
-    const activeVersion = await getActiveMappingVersion(state);
-    const activeTemplate = await getActiveTemplateProfile(state);
+    validatePathUnderBase(v, REPORT_ASSETS_BASE);
+    return true;
+  } catch {
+    return false;
+  }
+}
 
-    const outputPath = body.output_path ?? "report_assets/report_preview.docx";
-    const reportPath = body.report_path ?? "report_assets/template_export_report.json";
-    const templatePath = body.template_path ?? activeTemplate.docx_path;
-    const baseFlatPath = path.join(process.cwd(), "report_assets/report_draft_flat.json");
-    const baseFlat = JSON.parse(await fs.readFile(baseFlatPath, "utf-8")) as Record<string, unknown>;
-    const manualValues = await loadManualValues();
-    const mergedFlat = mergeFlatWithManualValues(baseFlat, manualValues);
-    await fs.writeFile(REPORT_MERGED_FLAT_FILE, JSON.stringify(mergedFlat, null, 2), "utf-8");
+const safePath = z
+  .string()
+  .optional()
+  .refine(isAllowedAssetPath, { message: "Đường dẫn file không hợp lệ." });
 
-    const result = await runExport({
-      templatePath,
-      aliasPath: activeVersion.alias_json_path,
-      flatJsonPath: "report_assets/config/merged_report_draft_flat.json",
-      outputPath,
-      reportPath,
+const exportSchema = z.object({
+  export_mode: z.enum(["bank_grouped"]).optional(),
+  output_path: safePath,
+  report_path: safePath,
+  template_path: safePath,
+  output_dir: safePath,
+  group_key: z.string().max(100).optional(),
+  repeat_key: z.string().max(100).optional(),
+  customer_name_key: z.string().max(100).optional(),
+  mapping_instance_id: z.string().optional(),
+});
+
+export async function POST(req: NextRequest) {
+  try {
+    const raw = await req.json().catch(() => {
+      throw new ValidationError("Request body phải là JSON hợp lệ.");
     });
+    const body = exportSchema.parse(raw);
 
-    const durationMs = Date.now() - start;
-    await logRun({
-      resultSummary: {
-        step: "export_docx",
-        report: result.exportReport,
-      },
-      outputPaths: [outputPath, reportPath],
-      durationMs,
-    });
+    const result =
+      body.export_mode === "bank_grouped"
+        ? await reportService.processBankReportExport({
+            reportPath: body.report_path,
+            templatePath: body.template_path,
+            outputDir: body.output_dir,
+            groupKey: body.group_key,
+            repeatKey: body.repeat_key,
+            customerNameKey: body.customer_name_key,
+            mappingInstanceId: body.mapping_instance_id,
+          })
+        : await reportService.runReportExport({
+            outputPath: body.output_path,
+            reportPath: body.report_path,
+            templatePath: body.template_path,
+            mappingInstanceId: body.mapping_instance_id,
+          });
 
     return NextResponse.json({
       ok: true,
-      duration_ms: durationMs,
-      output_path: outputPath,
-      report_path: reportPath,
-      report: result.exportReport,
-      command: result.command,
+      ...result,
     });
   } catch (error) {
+    console.error("[Export API] Caught error:", error);
+    console.error("[Export API] Error type:", error?.constructor?.name);
+    console.error("[Export API] Error message:", error instanceof Error ? error.message : String(error));
+
+    if (error instanceof z.ZodError) {
+      const validationError = new ValidationError("Dữ liệu request không hợp lệ.", error.flatten().fieldErrors);
+      return NextResponse.json(
+        { ok: false, error: validationError.message, details: validationError.details },
+        { status: validationError.status },
+      );
+    }
+    const httpError = toHttpError(error, "Export failed.");
+    console.error("[Export API] HTTP Error status:", httpError.status);
+    console.error("[Export API] HTTP Error message:", httpError.message);
+
+    // Extract detailed error info
+    let detailsStr = error instanceof Error ? error.message : String(error);
+    if (error && typeof error === "object" && "details" in error) {
+      const details = (error as any).details;
+      if (details && typeof details === "object") {
+        detailsStr = JSON.stringify(details, null, 2).slice(0, 500);
+      } else if (typeof details === "string") {
+        detailsStr = details;
+      }
+    }
+    console.error("[Export API] Details:", detailsStr);
+
     return NextResponse.json(
-      { ok: false, error: error instanceof Error ? error.message : "Export failed." },
-      { status: 500 },
+      { ok: false, error: httpError.message, details: detailsStr },
+      { status: httpError.status },
     );
   }
 }

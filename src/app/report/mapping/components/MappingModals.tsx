@@ -7,15 +7,10 @@ import { MergeGroupsModal } from "./Modals/MergeGroupsModal";
 import { AddFieldModal } from "./Modals/AddFieldModal";
 import { FunctionListModal } from "./Modals/FunctionListModal";
 import { FormulaModal } from "./Modals/FormulaModal";
+import { ImportTemplateGroupModal } from "./Modals/ImportTemplateGroupModal";
 import type { FieldTemplateItem } from "../types";
 
 type MappingModalsProps = {
-  creatingFieldTemplate: boolean;
-  closeCreateFieldTemplateModal: () => void;
-  newFieldTemplateName: string;
-  setNewFieldTemplateName: Dispatch<SetStateAction<string>>;
-  saveFieldTemplate: () => void;
-  savingFieldTemplate: boolean;
   editingFieldTemplatePicker: boolean;
   closeEditFieldTemplatePicker: () => void;
   editPickerTemplateId: string;
@@ -71,15 +66,17 @@ type MappingModalsProps = {
   setFormulaModalFieldKey: Dispatch<SetStateAction<string | null>>;
   formulas: Record<string, string>;
   setFormulas: Dispatch<SetStateAction<Record<string, string>>>;
+
+  importGroupModalOpen: boolean;
+  closeImportGroupModal: () => void;
+  importGroupTemplateId: string;
+  setImportGroupTemplateId: Dispatch<SetStateAction<string>>;
+  importGroupPath: string;
+  setImportGroupPath: Dispatch<SetStateAction<string>>;
+  applyImportGroupToCurrentTemplate: () => void;
 };
 
 export function MappingModals({
-  creatingFieldTemplate,
-  closeCreateFieldTemplateModal,
-  newFieldTemplateName,
-  setNewFieldTemplateName,
-  saveFieldTemplate,
-  savingFieldTemplate,
   editingFieldTemplatePicker,
   closeEditFieldTemplatePicker,
   editPickerTemplateId,
@@ -130,6 +127,13 @@ export function MappingModals({
   setFormulaModalFieldKey,
   formulas,
   setFormulas,
+  importGroupModalOpen,
+  closeImportGroupModal,
+  importGroupTemplateId,
+  setImportGroupTemplateId,
+  importGroupPath,
+  setImportGroupPath,
+  applyImportGroupToCurrentTemplate,
 }: MappingModalsProps) {
   const formulaField = formulaModalFieldKey
     ? fieldCatalog.find((f) => f.field_key === formulaModalFieldKey) ?? null
@@ -163,18 +167,23 @@ export function MappingModals({
       />
 
       <FieldTemplateModals
-        creatingFieldTemplate={creatingFieldTemplate}
-        closeCreateFieldTemplateModal={closeCreateFieldTemplateModal}
-        newFieldTemplateName={newFieldTemplateName}
-        setNewFieldTemplateName={setNewFieldTemplateName}
-        saveFieldTemplate={saveFieldTemplate}
-        savingFieldTemplate={savingFieldTemplate}
         editingFieldTemplatePicker={editingFieldTemplatePicker}
         closeEditFieldTemplatePicker={closeEditFieldTemplatePicker}
         editPickerTemplateId={editPickerTemplateId}
         setEditPickerTemplateId={setEditPickerTemplateId}
         allFieldTemplates={allFieldTemplates}
         startEditingExistingTemplate={onStartEditingExistingTemplate}
+      />
+
+      <ImportTemplateGroupModal
+        isOpen={importGroupModalOpen}
+        onClose={closeImportGroupModal}
+        templates={allFieldTemplates}
+        selectedSourceTemplateId={importGroupTemplateId}
+        setSelectedSourceTemplateId={setImportGroupTemplateId}
+        selectedGroupPath={importGroupPath}
+        setSelectedGroupPath={setImportGroupPath}
+        onApply={applyImportGroupToCurrentTemplate}
       />
 
       <EditGroupModal

@@ -5,8 +5,7 @@
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
-  provider = "prisma-client"
-  output   = "../src/generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
@@ -27,8 +26,187 @@ model Customer {
   legal_representative_title String?
   organization_type          String?
 
+  email    String?   // Email nhan thong bao hoa don
+
   /// JSON object: extra attributes (report field_key -> value) for mapping/export
   data_json String? @default("{}")
 
+  mapping_instances MappingInstance[]
+  loans            Loan[]
+
   @@map("customers")
+}
+
+model Loan {
+  id              String   @id @default(cuid())
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  customerId      String
+  customer        Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  contractNumber  String   @unique
+  loanAmount      Float
+  interestRate    Float?
+  startDate       DateTime
+  endDate         DateTime
+  purpose              String?
+  disbursementCount    String?
+  collateralValue      Float?
+  securedObligation    Float?
+  disbursementLimitByAsset Float?
+  status               String   @default("active") // active | completed | cancelled
+  disbursements     Disbursement[]
+  beneficiaries     Beneficiary[]
+
+  @@index([customerId])
+  @@index([status])
+  @@map("loans")
+}
+
+model Beneficiary {
+  id            String   @id @default(cuid())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  loanId        String
+  loan          Loan     @relation(fields: [loanId], references: [id], onDelete: Cascade)
+  name          String   // Don vi thu huong
+  accountNumber String?  // So tai khoan
+  bankName      String?  // Ngan hang thu huong
+
+  disbursementLines DisbursementBeneficiary[]
+
+  @@index([loanId])
+  @@map("beneficiaries")
+}
+
+model Disbursement {
+  id               String   @id @default(cuid())
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  loanId           String
+  loan             Loan     @relation(fields: [loanId], references: [id], onDelete: Cascade)
+  amount           Float
+  disbursementDate DateTime
+  description      String?
+  status           String   @default("active") // active | completed | cancelled
+
+  // Expanded fields (Phase P2)
+  currentOutstanding   Float?    // Du no hien tai (snapshot)
+  debtAmount           Float?    // So tien nhan no
+  totalOutstanding     Float?    // Tong du no (snapshot)
+  purpose              String?   // Muc dich
+  supportingDoc        String?   // Tai lieu chung minh
+  loanTerm             Int?      // Thoi han cho vay (months)
+  repaymentEndDate     DateTime? // Han tra cuoi cung
+  principalSchedule    String?   // Dinh ky tra goc
+  interestSchedule     String?   // Dinh ky tra lai
+
+  invoices             Invoice[]
+  beneficiaryLines     DisbursementBeneficiary[]
+
+  @@index([loanId])
+  @@index([status])
+  @@index([loanId, disbursementDate])
+  @@map("disbursements")
+}
+
+model DisbursementBeneficiary {
+  id              String       @id @default(cuid())
+  createdAt       DateTime     @default(now())
+  disbursementId  String
+  disbursement    Disbursement @relation(fields: [disbursementId], references: [id], onDelete: Cascade)
+  beneficiaryId   String?
+  beneficiary     Beneficiary? @relation(fields: [beneficiaryId], references: [id], onDelete: SetNull)
+  beneficiaryName String       // snapshot: KH thu huong
+  accountNumber   String?      // snapshot: So TK
+  bankName        String?      // snapshot: Ngan hang
+  amount          Float        // So tien giai ngan cho don vi nay
+  invoiceStatus   String       @default("pending") // pending | supplementing | has_invoice
+  invoiceAmount   Float        @default(0)
+
+  invoices        Invoice[]
+
+  @@index([disbursementId])
+  @@index([beneficiaryId])
+  @@map("disbursement_beneficiaries")
+}
+
+model Invoice {
+  id             String       @id @default(cuid())
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  disbursementId String
+  disbursement   Disbursement @relation(fields: [disbursementId], references: [id], onDelete: Cascade)
+  disbursementBeneficiaryId String?
+  disbursementBeneficiary   DisbursementBeneficiary? @relation(fields: [disbursementBeneficiaryId], references: [id], onDelete: SetNull)
+  invoiceNumber  String
+  supplierName   String
+  amount         Float
+  issueDate      DateTime
+  dueDate        DateTime
+  customDeadline DateTime?
+  status         String       @default("pending") // pending | paid | overdue
+  notes          String?
+
+  @@unique([invoiceNumber, supplierName])
+  @@index([disbursementId])
+  @@index([disbursementBeneficiaryId])
+  @@index([status])
+  @@index([dueDate])
+  @@map("invoices")
+}
+
+model AppNotification {
+  id        String    @id @default(cuid())
+  createdAt DateTime  @default(now())
+  readAt    DateTime?
+  type      String    // invoice_due_soon | invoice_overdue | duplicate_invoice
+  title     String
+  message   String
+  metadata  String?   @default("{}") // JSON: { invoiceId, disbursementId, customerId }
+  emailSentAt      DateTime?  // Thoi diem gui email
+  emailError       String?    // Loi gui email (neu co)
+
+  @@index([readAt])
+  @@index([type])
+  @@index([type, createdAt])
+  @@map("app_notifications")
+}
+
+model FieldTemplateMaster {
+  id               String   @id @default(cuid())
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  name             String
+  description      String?
+  status           String   @default("active")
+  fieldCatalogJson String   @default("[]")
+
+  mapping_instances MappingInstance[]
+
+  @@index([status])
+  @@map("field_template_masters")
+}
+
+model MappingInstance {
+  id             String   @id @default(cuid())
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  name           String
+  status         String   @default("draft")
+  createdBy      String   @default("web-user")
+  publishedAt    DateTime?
+  mappingJsonPath String
+  aliasJsonPath   String
+  masterSnapshotName String @default("")
+  fieldCatalogJson   String @default("[]")
+
+  masterId   String?
+  customerId String
+  master     FieldTemplateMaster? @relation(fields: [masterId], references: [id], onDelete: SetNull)
+  customer   Customer            @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@index([masterId])
+  @@index([customerId])
+  @@index([customerId, masterId, status])
+  @@map("mapping_instances")
 }

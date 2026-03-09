@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 
+import { toHttpError, ValidationError } from "@/core/errors/app-error";
 import { fieldCatalogItemSchema } from "@/lib/report/config-schema";
 import { loadState, saveState } from "@/lib/report/fs-store";
 
@@ -10,10 +12,8 @@ export async function GET() {
     const state = await loadState();
     return NextResponse.json({ ok: true, field_catalog: state.field_catalog });
   } catch (error) {
-    return NextResponse.json(
-      { ok: false, error: error instanceof Error ? error.message : "Failed to load field catalog." },
-      { status: 500 },
-    );
+    const httpError = toHttpError(error, "Failed to load field catalog.");
+    return NextResponse.json({ ok: false, error: httpError.message }, { status: httpError.status });
   }
 }
 
@@ -29,9 +29,11 @@ export async function PUT(req: NextRequest) {
     await saveState(state);
     return NextResponse.json({ ok: true, field_catalog: parsed });
   } catch (error) {
-    return NextResponse.json(
-      { ok: false, error: error instanceof Error ? error.message : "Failed to save field catalog." },
-      { status: 400 },
-    );
+    if (error instanceof z.ZodError) {
+      const ve = new ValidationError("Định dạng field catalog không hợp lệ.", error.flatten().fieldErrors);
+      return NextResponse.json({ ok: false, error: ve.message, details: ve.details }, { status: ve.status });
+    }
+    const httpError = toHttpError(error, "Failed to save field catalog.");
+    return NextResponse.json({ ok: false, error: httpError.message }, { status: httpError.status });
   }
 }

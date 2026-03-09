@@ -56,6 +56,9 @@ __pycache__/
 
 # report runtime outputs (generated)
 /report_assets/config/
+/report_assets/backups/
+/report_assets/uploads/
+/report_assets/.locks/
 /report_assets/report_draft*.json
 /report_assets/validation_report.json
 /report_assets/template_export_report*.json
@@ -65,3 +68,5 @@ __pycache__/
 /report_assets/report_preview*.docx
 /report_assets/*preview*.docx
 /report_assets/*trial*.docx
+
+.vercel

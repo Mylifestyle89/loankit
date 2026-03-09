@@ -6,6 +6,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
+from report_pipeline.utils import FileLockManager
 
 PLACEHOLDER_CURLY_RE = re.compile(r"\{\{\s*([A-Za-z0-9_.-]+)\s*\}\}")
 PLACEHOLDER_BRACKET_RE = re.compile(r"\[([^\]\r\n]{1,120})\]")
@@ -201,8 +202,8 @@ def main() -> None:
     )
     parser.add_argument(
         "--flat-json",
-        default="report_assets/report_draft_flat.json",
-        help="Flat report JSON filename (default: report_assets/report_draft_flat.json).",
+        default="report_assets/generated/report_draft_flat.json",
+        help="Flat report JSON filename (default: report_assets/generated/report_draft_flat.json).",
     )
     parser.add_argument(
         "--output",
@@ -240,8 +241,13 @@ def main() -> None:
             raise FileNotFoundError(f"Alias map file not found: {alias_map_file}")
         alias_map = json.loads(alias_map_file.read_text(encoding="utf-8"))
 
-    export_result = export_stub(template_docx, flat_data, alias_map, output_docx)
-    report_json.write_text(json.dumps(export_result, ensure_ascii=False, indent=2), encoding="utf-8")
+    lock_manager = FileLockManager(root_dir=root)
+    lock_manager.acquire_lock("report_assets")
+    try:
+        export_result = export_stub(template_docx, flat_data, alias_map, output_docx)
+        report_json.write_text(json.dumps(export_result, ensure_ascii=False, indent=2), encoding="utf-8")
+    finally:
+        lock_manager.release_lock("report_assets")
 
     print("=== Template Export Stub Completed ===")
     print(f"- template: {template_docx}")
