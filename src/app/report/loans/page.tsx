@@ -7,8 +7,8 @@ import { ArrowRight, Calendar, Layers, Plus, Trash2 } from "lucide-react";
 import { useLanguage } from "@/components/language-provider";
 import { LoanStatusBadge } from "@/components/invoice-tracking/loan-status-badge";
 import { fmtDisplay as fmt, fmtDateDisplay as fmtDate } from "@/lib/invoice-tracking-format-helpers";
-
-type Customer = { id: string; customer_name: string };
+import { useCustomerStore } from "@/stores/use-customer-store";
+import { useCustomerData } from "@/hooks/use-customer-data";
 type Loan = {
   id: string;
   contractNumber: string;
@@ -23,11 +23,17 @@ type Loan = {
 
 export default function LoansPage() {
   const { t } = useLanguage();
+  const storeCustomerId = useCustomerStore((s) => s.selectedCustomerId);
+  const { customers } = useCustomerData();
   const [loans, setLoans] = useState<Loan[]>([]);
-  const [customers, setCustomers] = useState<Customer[]>([]);
   const [customerId, setCustomerId] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  // Sync store -> local filter
+  useEffect(() => {
+    setCustomerId(storeCustomerId);
+  }, [storeCustomerId]);
 
   const loadLoans = useCallback(async () => {
     setLoading(true);
@@ -39,12 +45,6 @@ export default function LoansPage() {
     setLoans(data.loans ?? []);
     setLoading(false);
   }, [customerId]);
-
-  useEffect(() => {
-    fetch("/api/customers").then((r) => r.json()).then((d) => {
-      if (d.ok) setCustomers(d.customers ?? []);
-    });
-  }, []);
 
   useEffect(() => { void loadLoans(); }, [loadLoans]);
 

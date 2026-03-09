@@ -23,8 +23,10 @@ import {
 import { useLanguage } from "@/components/language-provider";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { NotificationBell } from "@/components/invoice-tracking/notification-bell";
+import { CustomerContextIndicator } from "@/components/customer-context-indicator";
 import { GlobalModalProvider } from "./mapping/components/GlobalModalProvider";
 import { authClient } from "@/lib/auth-client";
+import { useCustomerData } from "@/hooks/use-customer-data";
 
 const SIDEBAR_COLLAPSED = 48;
 const SIDEBAR_EXPANDED = 240;
@@ -39,6 +41,7 @@ export default function ReportLayout({ children }: { children: React.ReactNode }
   const [hovered, setHovered] = useState(false);
   const { data: session } = authClient.useSession();
   const isAdmin = session?.user?.role === "admin";
+  useCustomerData(); // Populate shared customer store once for all tabs
 
   const links = [
     { href: "/report/mapping", label: t("nav.mapping"), icon: PenLine },
@@ -136,6 +139,9 @@ export default function ReportLayout({ children }: { children: React.ReactNode }
             </AnimatePresence>
           </button>
         </div>
+
+        {/* ── Selected customer indicator ── */}
+        <CustomerContextIndicator expanded={hovered} />
 
         {/* ── Nav links ── */}
         <nav className="flex flex-1 flex-col gap-0.5 overflow-y-auto px-1.5 py-1">

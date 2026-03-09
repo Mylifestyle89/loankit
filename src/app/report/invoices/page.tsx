@@ -7,8 +7,8 @@ import { useLanguage } from "@/components/language-provider";
 import { InvoiceTable } from "@/components/invoice-tracking/invoice-table";
 import { fmtDisplay as fmt } from "@/lib/invoice-tracking-format-helpers";
 import { CustomerSummaryCards } from "@/components/invoice-tracking/customer-summary-cards";
-
-type Customer = { id: string; customer_name: string; email?: string | null };
+import { useCustomerStore } from "@/stores/use-customer-store";
+import { useCustomerData } from "@/hooks/use-customer-data";
 
 type SummaryItem = {
   customerId: string;
@@ -37,17 +37,22 @@ type Invoice = {
 
 export default function InvoicesOverviewPage() {
   const { t } = useLanguage();
+  const storeCustomerId = useCustomerStore((s) => s.selectedCustomerId);
+  const { customers: storeCustomers } = useCustomerData();
   const [summary, setSummary] = useState<SummaryItem[]>([]);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
-  const [customers, setCustomers] = useState<Customer[]>([]);
+  // Map store customers to local type (add email from summary if available)
+  const customers = storeCustomers as Array<{ id: string; customer_name: string; email?: string | null }>;
   const [statusFilter, setStatusFilter] = useState("");
   const [customerFilter, setCustomerFilter] = useState("");
   const [loading, setLoading] = useState(true);
 
+  // Sync store -> local filter
   useEffect(() => {
-    fetch("/api/customers").then((r) => r.json()).then((d) => {
-      if (d.ok) setCustomers(d.customers ?? []);
-    });
+    setCustomerFilter(storeCustomerId);
+  }, [storeCustomerId]);
+
+  useEffect(() => {
     fetch("/api/invoices/summary").then((r) => r.json()).then((d) => {
       if (d.ok) setSummary(d.summary ?? []);
     });

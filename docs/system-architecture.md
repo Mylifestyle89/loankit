@@ -190,6 +190,43 @@ This is a Next.js-based financial reporting and invoice tracking application bui
 - `NotificationPanel` - Displays notification list with read/clear actions
 - `NotificationBell` - Sidebar icon with unread badge, polls every 60s
 
+## Cross-Tab Customer Data Hub
+
+**Purpose:** Centralized customer state management for synchronized filtering and context across all report tabs.
+
+**Components:**
+
+1. **Zustand Store** (`src/stores/use-customer-store.ts`)
+   - Global customer list and selected customer ID state
+   - Persists selected customer ID to localStorage (SSR-safe hydration)
+   - Exports: `useCustomerStore()`, `useSelectedCustomer()`, `useIsCustomerStoreHydrated()`
+
+2. **Shared Hook** (`src/hooks/use-customer-data.ts`)
+   - `useCustomerData()` - Single entry point for fetching and caching customers
+   - Called once in layout (`src/app/report/layout.tsx`) to populate store globally
+   - Prevents redundant API calls across tabs
+   - Returns: `{ customers, loading }`
+
+3. **Context Indicator Widget** (`src/components/customer-context-indicator.tsx`)
+   - Sidebar widget displaying selected customer name and code
+   - Clear button to reset selection
+   - Responsive: collapsed icon view vs expanded text view
+   - Uses Zustand selectors to avoid unnecessary re-renders
+
+**Data Flow:**
+1. Layout calls `useCustomerData()` on mount → fetches `/api/customers` once
+2. Customers list stored in Zustand, persisted to localStorage
+3. Selecting customer in Customers tab updates store via `setSelectedCustomerId()`
+4. Store subscription triggers re-renders in:
+   - Loans tab (auto-filters by selectedCustomerId)
+   - Invoices tab (auto-filters by selectedCustomerId)
+   - CustomerContextIndicator (displays selected customer)
+
+**Hydration Safety:**
+- `_hasHydrated` flag prevents SSR mismatch (localStorage not available on server)
+- `useSelectedCustomer()` returns null until hydrated
+- Components check `useIsCustomerStoreHydrated()` before rendering dependent UI
+
 ## Notification System
 
 **Push Notifications:**

@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ArrowRight, Download, Plus, Trash2, Upload, Users, X } from "lucide-react";
+import { ArrowRight, Check, Download, Plus, Trash2, Upload, Users, X } from "lucide-react";
 
 import { useLanguage } from "@/components/language-provider";
+import { useCustomerStore } from "@/stores/use-customer-store";
 
 type Customer = {
   id: string;
@@ -27,6 +28,8 @@ type ApiResponse = {
 
 export default function CustomersPage() {
   const { t } = useLanguage();
+  const selectedCustomerId = useCustomerStore((s) => s.selectedCustomerId);
+  const setSelectedCustomerId = useCustomerStore((s) => s.setSelectedCustomerId);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -217,7 +220,11 @@ export default function CustomersPage() {
         <div className="grid gap-3">
           {customers.map((c) => (
             <div key={c.id}
-              className="group relative rounded-xl border border-zinc-200 dark:border-white/[0.07] bg-white dark:bg-[#161616] p-4 shadow-sm transition-all duration-200 hover:shadow-md hover:border-violet-200 dark:hover:border-violet-500/20">
+              className={`group relative rounded-xl border bg-white dark:bg-[#161616] p-4 shadow-sm transition-all duration-200 hover:shadow-md ${
+                selectedCustomerId === c.id
+                  ? "border-violet-400 dark:border-violet-500/40 ring-1 ring-violet-300 dark:ring-violet-500/20"
+                  : "border-zinc-200 dark:border-white/[0.07] hover:border-violet-200 dark:hover:border-violet-500/20"
+              }`}>
               <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2.5">
@@ -237,6 +244,15 @@ export default function CustomersPage() {
                   {t("customers.edit")}
                   <ArrowRight className="h-3 w-3" />
                 </Link>
+                <button type="button"
+                  onClick={() => setSelectedCustomerId(selectedCustomerId === c.id ? "" : c.id)}
+                  className={`inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors duration-150 ${
+                    selectedCustomerId === c.id
+                      ? "bg-violet-600 text-white hover:bg-violet-700"
+                      : "bg-zinc-100 dark:bg-white/[0.06] text-zinc-600 dark:text-slate-400 hover:bg-violet-50 dark:hover:bg-violet-500/10 hover:text-violet-700 dark:hover:text-violet-400"
+                  }`}>
+                  {selectedCustomerId === c.id ? <><Check className="h-3 w-3" /> Đang chọn</> : "Chọn KH"}
+                </button>
                 <button type="button" onClick={() => handleDelete(c.id)}
                   className="inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs text-zinc-500 dark:text-slate-400 transition-colors duration-150 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-500/10 dark:hover:text-red-400">
                   <Trash2 className="h-3 w-3" />

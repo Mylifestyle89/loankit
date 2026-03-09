@@ -67,9 +67,16 @@ src/
 │   ├── ui/                           # Base UI components (modal, controls, etc.)
 │   ├── language-provider.tsx         # i18n context provider
 │   ├── language-toggle.tsx           # Language switcher component
+│   ├── customer-context-indicator.tsx # Sidebar widget showing selected customer
 │   ├── onlyoffice-editor-modal.tsx   # Document editing modal
 │   ├── docx-preview-modal.tsx        # Document preview
 │   └── ...                           # Report-specific components
+│
+├── hooks/
+│   └── use-customer-data.ts          # Shared hook: fetch & cache customers in Zustand store
+│
+├── stores/
+│   └── use-customer-store.ts         # Zustand store: cross-tab customer selection state
 │
 ├── core/
 │   ├── errors/
