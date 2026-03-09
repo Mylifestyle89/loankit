@@ -4,6 +4,7 @@ import { z } from "zod";
 import { toHttpError } from "@/core/errors/app-error";
 import { withErrorHandling, withValidatedBody } from "@/lib/api-helpers";
 import { reportService } from "@/services/report.service";
+import { requireAdmin } from "@/lib/auth-guard";
 
 export const runtime = "nodejs";
 
@@ -33,11 +34,12 @@ const mappingInstancesPostSchema = z.object({
 
 export const POST = withErrorHandling(
   withValidatedBody(mappingInstancesPostSchema, async (body) => {
+    const session = await requireAdmin();
     const mappingInstance = await reportService.createMappingInstance({
       masterId: body.master_id,
       customerId: body.customer_id,
       name: body.name,
-      createdBy: body.created_by,
+      createdBy: session.user.id,
     });
     return NextResponse.json({ ok: true, mapping_instance: mappingInstance });
   }),

@@ -4,6 +4,99 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ## [Unreleased]
 
+## [Phase 53] - 2026-03-09
+
+### Added - Authentication & RBAC System (Better Auth v1.5.4)
+
+#### Core Authentication
+- **Better Auth v1.5.4** with Prisma SQLite adapter for production-ready auth
+- **Email/password authentication** with invite-only signup (public signup disabled)
+- **Session-based authentication** with 5-minute cookie caching to reduce DB round-trips
+- **Two-role RBAC:** admin (full access + user management), viewer (read-only access)
+
+#### Server-Side Components
+- **src/lib/auth.ts** - Better Auth server configuration
+  - Prisma adapter for SQLite/Turso databases
+  - Email/password strategy with disableSignUp: true
+  - Session cookie caching (5-min maxAge)
+  - Admin plugin for role-based access control
+- **src/lib/auth-guard.ts** - API guards for route protection
+  - `requireSession()` - Validates session, throws 401 if missing
+  - `requireAdmin()` - Validates admin role, throws 403 if not admin
+  - `handleAuthError()` - Converts AuthError to NextResponse
+- **middleware.ts** - Route protection at edge
+  - Session cookie validation (fast, no DB call)
+  - Protected routes: /report/**, /api/**
+  - Public routes: /, /login, /api/auth/**
+  - Cron & OnlyOffice routes: Have own auth (secrets, JWT)
+  - Authenticated users redirected away from /login to /report/mapping
+
+#### Client-Side Components
+- **src/lib/auth-client.ts** - Better Auth client configuration
+  - `authClient.signIn.email()` - Email/password sign-in
+  - `authClient.signOut()` - Session termination
+- **src/app/login/page.tsx** - Login form UI
+  - Email/password form with validation
+  - Error message display
+  - Open redirect prevention (validated callbackUrl)
+  - i18n support (vi/en)
+  - Redirect authenticated users to /report/mapping
+  - Loading state during sign-in
+
+#### User Management
+- **src/app/report/admin/users/page.tsx** - Admin user management page
+  - List existing users with role display
+  - Create new user form (email, password, role)
+  - Delete user functionality
+  - Admin-only access via requireAdmin() guard
+- **prisma/seed-admin.ts** - Admin seed script
+  - Email: admin@company.com
+  - Password: changeme123!
+  - Role: admin
+  - Runs via: `npx prisma db seed`
+
+#### Database Models
+- **User** - Email (unique), name, role, hashed password
+- **Session** - User sessions with expiryDate and token
+- **Account** - OAuth provider support (prepared for future)
+- **Verification** - Email verification tokens (prepared for future)
+- **Relations** - User → Session, User → Account, User → Verification
+
+#### Middleware Configuration
+- Session cookie check (5-min cache hits reduce DB load)
+- Protected page redirect: /login with callbackUrl query param
+- Protected API return 401 with error JSON
+- Skip auth for: /, /login, /api/auth/**, /api/cron/**, /api/onlyoffice/callback
+
+#### i18n Translations
+- Login form labels, placeholders, buttons
+- Error messages (invalid credentials, auth required)
+- Admin user management page (user list, form fields)
+- Support for Vietnamese (vi) and English (en)
+
+#### Security Features
+- **Open Redirect Prevention** - Validated callbackUrl (starts with /, not //)
+- **Password Hashing** - bcrypt via Better Auth
+- **Session Tokens** - Secure random tokens with expiration
+- **CSRF Protection** - Implicit via session-based auth (not OAuth)
+- **Rate Limiting** - Foundation ready (not yet implemented)
+
+### Changed
+- `prisma/schema.prisma` - Added User, Session, Account, Verification models
+- `src/app/layout.tsx` - Wrap with auth client provider
+- `src/app/report/layout.tsx` - Added layout structure for /report/admin routes
+- `src/lib/i18n/translations.ts` - Extended with auth UI strings
+
+### Technical Details
+- Better Auth version: 1.5.4
+- Database adapter: Prisma (SQLite compatible)
+- Session storage: Database (SQLite)
+- Cookie caching: Enabled (5-min TTL)
+- Default role: viewer (for new users created via admin panel)
+- Admin roles: ["admin"]
+
+---
+
 ## [Phase 51] - 2026-03-07
 
 ### Added - Toolbar Revamp with Modal-Based Customer & Template Selection
@@ -344,6 +437,7 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 | Version | Date | Notes |
 |---------|------|-------|
+| v1.8.0 | 2026-03-09 | Authentication & RBAC System (Better Auth v1.5.4) |
 | v1.7.0 | 2026-03-07 | Toolbar Revamp with Modal-Based Selection |
 | v1.6.0 | 2026-03-06 | Invoice Deadline Email Notifications |
 | v1.5.0 | 2026-03-05 | Disbursement Invoice Tracking MVP |
@@ -411,8 +505,9 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ## Future Roadmap Items
 
-- [ ] Role-based access control (admin, user, viewer roles)
-- [ ] Audit logging for financial transactions
+- [x] Role-based access control (admin, viewer roles) (completed Phase 53)
+- [ ] Audit logging for financial transactions (Phase 54)
+- [ ] Enhanced admin UI (edit user, deactivate account, view sessions) (Phase 54)
 - [x] Email notifications for invoice deadlines (completed Phase 49)
 - [ ] Batch invoice import/export
 - [ ] Invoice payment tracking

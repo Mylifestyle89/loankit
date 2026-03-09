@@ -14,8 +14,17 @@ This is a Next.js-based financial reporting and invoice tracking application bui
                    │
                    ▼
 ┌─────────────────────────────────────────────────────────┐
+│                  Middleware (Auth Gate)                  │
+│  Session cookie check: Fast path (5-min cache)          │
+│  Routes: /login (public), /report/** (protected),       │
+│  /api/** (protected), /api/cron/** (secret-based)       │
+└──────────────────┬──────────────────────────────────────┘
+                   │
+                   ▼
+┌─────────────────────────────────────────────────────────┐
 │                  API Layer (Route Handlers)               │
-│    /api/loans, /api/disbursements, /api/invoices,       │
+│    /api/auth/** (better-auth), /api/loans,              │
+│    /api/disbursements, /api/invoices,                   │
 │    /api/notifications, /api/report/*, /api/customers    │
 └──────────────────┬──────────────────────────────────────┘
                    │
@@ -24,19 +33,22 @@ This is a Next.js-based financial reporting and invoice tracking application bui
 │                  Service Layer                           │
 │   loan, disbursement, invoice, notification services    │
 │         + report, mapping, financial analysis           │
+│   Auth guards: requireSession(), requireAdmin()         │
 └──────────────────┬──────────────────────────────────────┘
                    │
                    ▼
 ┌─────────────────────────────────────────────────────────┐
 │                  Core Libraries                          │
 │   Prisma ORM, error handling, i18n, utilities            │
+│   Better Auth (v1.5.4 with Prisma adapter)              │
 └──────────────────┬──────────────────────────────────────┘
                    │
                    ▼
 ┌─────────────────────────────────────────────────────────┐
 │                    SQLite Database                       │
 │    Tables: customers, loans, disbursements, invoices,   │
-│    app_notifications, mapping_instances, etc.           │
+│    app_notifications, mapping_instances,                │
+│    user, session, account (auth), role (RBAC)           │
 └─────────────────────────────────────────────────────────┘
 ```
 
@@ -298,13 +310,57 @@ This is a Next.js-based financial reporting and invoice tracking application bui
 - Validation via Zod (fast, compiled schemas)
 - Timeout management prevents hanging requests
 
+## Authentication & Authorization
+
+**System:** Better Auth v1.5.4 with Prisma adapter
+
+**Components:**
+- `src/lib/auth.ts` - Server config (email/password, admin plugin, cookie caching)
+- `src/lib/auth-client.ts` - Client config for sign-in/sign-out
+- `src/lib/auth-guard.ts` - API guards (requireSession, requireAdmin)
+- `middleware.ts` - Route protection (session cookie check, 5-min cache)
+- `src/app/login/page.tsx` - Login UI (email/password form with i18n)
+
+**Auth Features:**
+- Email/password authentication (invite-only, public signup disabled)
+- Two roles: `admin` (full access + user management), `viewer` (read-only)
+- Admin plugin: User CRUD operations (`/report/admin/users`)
+- Session cookie caching: 5-min TTL to reduce DB calls
+- Open redirect prevention: Validated callbackUrl on login redirect
+
+**Protected Routes:**
+- `/report/**` - Require session (page-level redirect to /login)
+- `/api/**` - Require session (return 401 if missing)
+- `/api/cron/**` - Secret-based auth (x-cron-secret header)
+- `/api/onlyoffice/callback` - JWT-based auth (server-to-server)
+
+**Public Routes:**
+- `/` - Home page
+- `/login` - Login form (redirects authenticated users to /report/mapping)
+- `/api/auth/**` - Better Auth endpoints
+
+**Database Models:**
+- `User` - Email, name, role, hashed password
+- `Session` - User sessions with expiryDate
+- `Account` - OAuth provider accounts
+- `Role` - Admin/viewer role definitions
+
+**Seed Admin:**
+- Email: `admin@company.com`
+- Password: `changeme123!`
+- Script: `prisma/seed-admin.ts`
+
 ## Security Considerations
 
 - Input validation at API layer (Zod schemas)
 - Error messages don't leak system details
+- Auth guards on sensitive write routes (requireAdmin)
+- Middleware prevents unauthenticated access (session cookie check)
+- Open redirect prevention on login callback
 - No sensitive data in logs
 - CORS and rate limiting configured where needed
 - Notification metadata is JSON-stringified (not exposed to frontend)
+- Cookie caching reduces DB load (5-min TTL)
 
 ## Performance Optimizations
 

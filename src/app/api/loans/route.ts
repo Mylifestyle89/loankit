@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import { toHttpError, ValidationError } from "@/core/errors/app-error";
 import { loanService } from "@/services/loan.service";
+import { requireAdmin, handleAuthError } from "@/lib/auth-guard";
 
 export const runtime = "nodejs";
 
@@ -30,6 +31,7 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
+    await requireAdmin();
     const body = await req.json();
     const parsed = createSchema.parse(body);
     const loan = await loanService.create(parsed);
@@ -39,6 +41,8 @@ export async function POST(req: NextRequest) {
       const ve = new ValidationError("Invalid request body.", error.flatten().fieldErrors);
       return NextResponse.json({ ok: false, error: ve.message, details: ve.details }, { status: ve.status });
     }
+    const authResponse = handleAuthError(error);
+    if (authResponse) return authResponse;
     const httpError = toHttpError(error, "Failed to create loan.");
     return NextResponse.json({ ok: false, error: httpError.message }, { status: httpError.status });
   }

@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import { toHttpError, ValidationError } from "@/core/errors/app-error";
 import { customerService } from "@/services/customer.service";
+import { requireAdmin, handleAuthError } from "@/lib/auth-guard";
 
 export const runtime = "nodejs";
 
@@ -36,6 +37,7 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
+    await requireAdmin();
     const body = await req.json();
     const parsed = createCustomerSchema.parse(body);
     const customer = await customerService.createCustomer({
@@ -58,6 +60,8 @@ export async function POST(req: NextRequest) {
         { status: validationError.status },
       );
     }
+    const authResponse = handleAuthError(error);
+    if (authResponse) return authResponse;
     const httpError = toHttpError(error, "Failed to create customer.");
     return NextResponse.json(
       {

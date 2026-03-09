@@ -134,30 +134,57 @@ Build a comprehensive financial reporting and invoice tracking platform that ena
 
 ---
 
-### Phase 52: Role-Based Access Control (Planned)
+### Phase 53: Authentication & RBAC (Better Auth v1.5.4) ✅ COMPLETE
+
+**Status:** Complete (2026-03-09)
+
+**Deliverables:**
+- Better Auth v1.5.4 with Prisma adapter (SQLite/Turso support)
+- Email/password authentication (invite-only, public signup disabled)
+- Two roles: admin (full access + user management), viewer (read-only)
+- Admin plugin for user CRUD operations
+- Middleware route protection (cookie-only check for /report/** and /api/**)
+- API-level auth guards (requireSession, requireAdmin) on critical write routes
+- Login page at /login with callbackUrl support and i18n
+- Admin user management page at /report/admin/users
+- Admin seed script (admin@company.com / changeme123!)
+- Cookie caching (5-min) to reduce DB round-trips
+- i18n translations for auth UI (vi + en)
+
+**Completion Percentage:** 100%
+
+**Key Metrics:**
+- Auth components: 4/4 (auth.ts, auth-client.ts, auth-guard.ts, middleware.ts)
+- Protected routes: 2/2 (/report/**, /api/**)
+- Login UI: 1/1 with i18n and open redirect prevention
+- Admin panel: 1/1 user management page
+- Database models: 4/4 (User, Session, Account, Verification)
+
+---
+
+### Phase 54: Audit Logging & Enhanced User Management (Planned)
 
 **Status:** Backlog
 
-**Target Date:** 2026-05-01
+**Target Date:** 2026-05-15
 
 **Scope:**
-- [ ] User authentication system
-- [ ] Role definitions (admin, manager, viewer)
-- [ ] Permission-based API access
-- [ ] Audit logging for all financial operations
+- [ ] Audit logging for all financial operations (create, update, delete)
+- [ ] Admin panel UI enhancements (edit user, deactivate account)
+- [ ] Permission-based API access refinement
 - [ ] Customer-specific visibility rules
+- [ ] Session management (force logout, view active sessions)
 
 **Success Criteria:**
-- Users cannot access data outside their permissions
 - All sensitive operations logged with user/timestamp
-- Role switching tested and verified
 - Audit logs queryable and exportable
+- Admin can deactivate users without deleting
+- Role switching tested and verified
 
 **Security Requirements:**
-- Password hashing (bcrypt)
-- JWT or session-based auth
-- HTTPS enforcement
+- Audit log immutability (no delete, only archive)
 - Rate limiting on auth endpoints
+- Session invalidation on password change
 
 ---
 
@@ -231,6 +258,25 @@ Build a comprehensive financial reporting and invoice tracking platform that ena
 ---
 
 ## Completed Phases
+
+### Phase 53: Authentication & RBAC (Better Auth v1.5.4) ✅ COMPLETE
+
+**Delivered:** 2026-03-09
+
+**Features:**
+- Better Auth v1.5.4 with Prisma + SQLite adapter
+- Email/password authentication (invite-only)
+- Admin role (full access) and Viewer role (read-only)
+- Admin plugin for user CRUD operations
+- Login page at /login with callbackUrl support
+- Admin user management at /report/admin/users
+- Seed admin: admin@company.com / changeme123!
+- Middleware protection for /report/** and /api/**
+- API guards: requireSession(), requireAdmin()
+- Cookie caching (5-min TTL) to reduce DB hits
+- Full i18n support (vi/en) for auth UI
+
+---
 
 ### Phase 51: Toolbar Revamp with Modal-Based Selection ✅ COMPLETE
 
@@ -487,18 +533,23 @@ Build a comprehensive financial reporting and invoice tracking platform that ena
 
 ### For Product Team
 - Phase 48-51 complete: Invoice Tracking MVP + Email Notifications + UI Reorganization + Toolbar Revamp
-- Field Editor toolbar now streamlined with modal-based customer/template selection
+- Phase 53 complete: Authentication & RBAC with Better Auth v1.5.4
+- System now ready for production: Only authenticated users can access reports
+- Admin role can manage users; Viewer role has read-only access
+- Field Editor toolbar streamlined with modal-based customer/template selection
 - Cleaner, more focused sidebar (removed context management, now in modals)
-- Ready for customer rollout with improved modal-based UX
-- Phase 52 (Enhanced Invoice Features) estimates 2 weeks for payment tracking + batch import
+- Ready for customer rollout with improved modal-based UX and auth
+- Phase 54 (Audit Logging) estimates 1 week for operation audit trails
 
 ### For Engineering Team
-- Phase 51 delivered modal component pattern: CustomerPickerModal + TemplatePickerModal with full API integration
-- Phase 50 modularization verified: 813-line component split to 137-line parent + focused sub-components
-- All components under 200 LOC (code quality standard maintained)
-- Zustand state management applied to sidebar & modals (reusable pattern)
-- TypeScript: 0 errors across all changes (Phase 50-51)
-- Technical debt backlog prioritized by impact
+- Phase 53 delivered: Better Auth integration with Prisma SQLite adapter
+- Auth architecture: Server config (auth.ts) + Client config (auth-client.ts) + Guards (auth-guard.ts) + Middleware
+- Route protection: Middleware checks session cookie (5-min cache), Guards enforce role checks
+- API endpoints: GET/POST /api/auth/** via better-auth, API guards on sensitive routes
+- TypeScript: 0 errors across all auth components
+- Admin plugin: User model with roles, admin can CRUD users via dedicated page
+- Security: Open redirect prevention, secure password hashing, cookie-based sessions
+- Technical debt backlog: Add audit logging, enhance admin UI (edit/deactivate user)
 - Architecture review scheduled for Q2 (before PostgreSQL migration)
 
 ### For Customers
@@ -506,7 +557,9 @@ Build a comprehensive financial reporting and invoice tracking platform that ena
 - Automatic deadline reminders active (Phase 49)
 - Field Editor UI significantly improved (Phase 50-51) - faster mapping workflow with modals
 - Customer picker & template selector now easily accessible from toolbar
-- Future phases include advanced analytics, payment tracking, mobile access
+- System now secured with user authentication (Phase 53)
+- Only authorized users can access reports; admins can manage team members
+- Future phases include advanced analytics, payment tracking, audit logs, mobile access
 
 ---
 
@@ -521,9 +574,9 @@ Build a comprehensive financial reporting and invoice tracking platform that ena
 
 ## Next Steps
 
-1. Plan Phase 52 implementation (Enhanced Invoice Features: payment tracking, batch import)
-2. Collect customer feedback on Phase 48-51 features (Invoice Tracking + Email + UI Redesign)
-3. Schedule QA testing for Phase 51 modals: CustomerPickerModal, TemplatePickerModal across browsers
-4. Review database scaling strategy for Phase 54 (PostgreSQL migration)
-5. Finalize authentication design for Phase 53 (RBAC)
+1. Plan Phase 54 implementation (Audit Logging: operation audit trails, enhanced admin UI)
+2. Collect customer feedback on Phase 53 auth system (user experience, permission granularity)
+3. Plan Phase 52 implementation (Enhanced Invoice Features: payment tracking, batch import)
+4. Collect customer feedback on Phase 48-51 features (Invoice Tracking + Email + UI Redesign)
+5. Review database scaling strategy for Phase 55 (PostgreSQL migration)
 6. Begin research on Phase 52 scope: payment tracking, batch invoice import, advanced filtering

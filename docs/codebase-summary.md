@@ -5,6 +5,8 @@
 Financial reporting and invoice tracking application built with Next.js, TypeScript, Prisma ORM, and SQLite.
 
 **Key Features:**
+- Authentication & RBAC (Better Auth v1.5.4, admin/viewer roles)
+- User management (admin plugin, invite-only signup)
 - Report data mapping and field template management
 - Customer loan and disbursement tracking
 - Invoice management with deadline monitoring
@@ -20,6 +22,7 @@ Financial reporting and invoice tracking application built with Next.js, TypeScr
 src/
 ├── app/
 │   ├── api/                          # Next.js API routes
+│   │   ├── auth/                     # Better Auth endpoints ([...all]/route.ts)
 │   │   ├── customers/                # Customer CRUD endpoints
 │   │   ├── loans/                    # Loan CRUD + disbursement list
 │   │   ├── disbursements/            # Disbursement CRUD + invoices list
@@ -27,9 +30,14 @@ src/
 │   │   ├── notifications/            # Notification list + read endpoints
 │   │   ├── report/                   # Report operations (build, export, import, mapping, etc.)
 │   │   ├── onlyoffice/               # OnlyOffice integration (config, callback, download)
-│   │   └── customers/                # Customer management endpoints
+│   │   └── cron/                     # Cron endpoints (secret-based auth)
 │   │
-│   ├── report/                       # Report UI pages
+│   ├── login/                        # Login page (email/password form)
+│   │   └── page.tsx                  # Login form with i18n, callbackUrl support
+│   │
+│   ├── report/                       # Report UI pages (protected by middleware)
+│   │   ├── admin/                    # Admin pages
+│   │   │   └── users/                # User management (admin only)
 │   │   ├── customers/                # Customer list/new/detail pages
 │   │   ├── loans/                    # Loan list/new/detail pages
 │   │   ├── disbursements/            # Disbursement detail page
@@ -37,7 +45,7 @@ src/
 │   │   ├── mapping/                  # Field mapping editor (visual + JSON)
 │   │   ├── template/                 # Template management
 │   │   ├── runs/                     # Report generation runs
-│   │   └── system-operations/        # System admin page
+│   │   └── system-operations/        # System operations page
 │   │
 │   ├── layout.tsx                    # Root layout (scheduler startup)
 │   ├── page.tsx                      # Home page
@@ -107,6 +115,10 @@ src/
 │   └── financial-analysis.service.ts  # Financial ratio analysis
 │
 ├── lib/
+│   ├── auth.ts                       # Better Auth server config (Prisma adapter)
+│   ├── auth-client.ts                # Better Auth client config
+│   ├── auth-guard.ts                 # API guards (requireSession, requireAdmin)
+│   │
 │   ├── notifications/
 │   │   └── deadline-scheduler.ts     # Hourly invoice deadline checker
 │   │
@@ -322,14 +334,33 @@ AppNotification (independent)
 
 **Run Tests:** `npm test`
 
+## Authentication Configuration
+
+**Files:**
+- `src/lib/auth.ts` - Server: Better Auth + Prisma adapter + admin plugin
+- `src/lib/auth-client.ts` - Client: Sign-in/sign-out functions
+- `src/lib/auth-guard.ts` - API guards for route protection
+- `middleware.ts` - Session cookie validation for protected routes
+- `prisma/schema.prisma` - User, Session, Account, Verification models
+
+**Environment Variables:**
+- `BETTER_AUTH_SECRET` - Session signing key (random 32+ bytes)
+- `DATABASE_URL` - SQLite path (included in schema)
+
+**Roles:**
+- `admin` - Full access + user management (read/create/delete/update)
+- `viewer` - Read-only access to reports
+
 ## Environment Variables
 
 Key env variables (see `.env.example`):
 - `DATABASE_URL` - SQLite database path
+- `BETTER_AUTH_SECRET` - Session signing key for Better Auth
 - `NEXT_PUBLIC_API_URL` - Frontend API base URL
 - `PYTHON_EXECUTABLE` - Python path for document processing
 - `ONLYOFFICE_API_URL` - OnlyOffice DS API endpoint
 - `ONLYOFFICE_JWT_SECRET` - OnlyOffice JWT signing key
+- `CRON_SECRET` - Secret for `/api/cron/**` endpoints (optional, defaults to generated)
 
 ## Build & Deployment
 
@@ -374,6 +405,6 @@ npx prisma studio      # Prisma data browser
 
 - SQLite not suitable for high-concurrency production (consider PostgreSQL)
 - Deadline scheduler runs in-process (serverless not recommended)
-- No role-based access control (all users have same permissions)
 - No audit logging for financial transactions
 - Push notifications require browser permission and Service Worker
+- Admin panel minimal (user list/create/delete only, no UI for edit/deactivate yet)

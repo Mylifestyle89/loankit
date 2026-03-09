@@ -499,6 +499,18 @@ export const messages: Record<Locale, Record<string, string>> = {
     "systemOps.error.parseError": "Không thể đọc file JSON.",
     "systemOps.error.importFailed": "Nhập dữ liệu thất bại.",
     "systemOps.error.exportFailed": "Xuất dữ liệu thất bại.",
+
+    // Auth
+    "login.title": "Đăng nhập",
+    "login.email": "Email",
+    "login.password": "Mật khẩu",
+    "login.submit": "Đăng nhập",
+    "login.signingIn": "Đang đăng nhập...",
+    "login.errorGeneric": "Sai email hoặc mật khẩu",
+    "login.errorBanned": "Tài khoản đã bị khóa",
+    "auth.logout": "Đăng xuất",
+    "auth.admin": "Quản trị",
+    "auth.users": "Quản lý người dùng",
   },
   en: {
     "lang.vi": "Tiếng Việt",
@@ -998,5 +1010,17 @@ export const messages: Record<Locale, Record<string, string>> = {
     "systemOps.error.parseError": "Failed to parse JSON file.",
     "systemOps.error.importFailed": "Import failed.",
     "systemOps.error.exportFailed": "Export failed.",
+
+    // Auth
+    "login.title": "Sign In",
+    "login.email": "Email",
+    "login.password": "Password",
+    "login.submit": "Sign In",
+    "login.signingIn": "Signing in...",
+    "login.errorGeneric": "Invalid email or password",
+    "login.errorBanned": "Account is banned",
+    "auth.logout": "Sign Out",
+    "auth.admin": "Admin",
+    "auth.users": "Manage Users",
   },
 };
