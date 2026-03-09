@@ -32,10 +32,7 @@ const nextConfig: NextConfig = {
     "@prisma/adapter-libsql",
   ],
   outputFileTracingExcludes: {
-    "/middleware": ["./node_modules/better-sqlite3/**", "./node_modules/@prisma/**", "./prisma/**"],
-  },
-  turbopack: {
-    root: process.cwd(),
+    "/proxy": ["./node_modules/better-sqlite3/**", "./node_modules/@prisma/**", "./prisma/**"],
   },
   async headers() {
     return [
