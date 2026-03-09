@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { toHttpError } from "@/core/errors/app-error";
+import { requireSession, requireEditorOrAdmin, handleAuthError } from "@/lib/auth-guard";
 import { reportService } from "@/services/report.service";
 
 export const runtime = "nodejs";
 
 export async function GET(req: NextRequest) {
   try {
+    await requireSession();
     const customerId = req.nextUrl.searchParams.get("customer_id") ?? "";
     const withUsage = req.nextUrl.searchParams.get("with_usage") === "1";
     const fieldTemplates = await reportService.listFieldTemplates({
@@ -15,6 +17,8 @@ export async function GET(req: NextRequest) {
     });
     return NextResponse.json({ ok: true, field_templates: fieldTemplates });
   } catch (error) {
+    const authResp = handleAuthError(error);
+    if (authResp) return authResp;
     const httpError = toHttpError(error, "Failed to load field templates.");
     return NextResponse.json(
       { ok: false, error: httpError.message },
@@ -25,14 +29,18 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
+    const session = await requireEditorOrAdmin();
     const body = (await req.json()) as { name?: string; field_catalog?: unknown[]; customer_id?: string };
     const result = await reportService.createFieldTemplate({
       name: body.name ?? "",
       fieldCatalog: Array.isArray(body.field_catalog) ? body.field_catalog : [],
       customerId: body.customer_id,
+      createdBy: session.user.id,
     });
     return NextResponse.json({ ok: true, field_template: result.template, field_templates: result.allTemplates });
   } catch (error) {
+    const authResp = handleAuthError(error);
+    if (authResp) return authResp;
     const httpError = toHttpError(error, "Failed to create field template.");
     return NextResponse.json(
       { ok: false, error: httpError.message },
@@ -43,6 +51,7 @@ export async function POST(req: NextRequest) {
 
 export async function PATCH(req: NextRequest) {
   try {
+    await requireEditorOrAdmin();
     const body = (await req.json()) as { customer_id?: string; template_id?: string };
     const result = await reportService.attachTemplateToCustomer({
       customerId: body.customer_id ?? "",
@@ -50,6 +59,8 @@ export async function PATCH(req: NextRequest) {
     });
     return NextResponse.json({ ok: true, template_id: result.template_id, customer_id: result.customer_id });
   } catch (error) {
+    const authResp = handleAuthError(error);
+    if (authResp) return authResp;
     const httpError = toHttpError(error, "Failed to attach field template.");
     return NextResponse.json(
       { ok: false, error: httpError.message },
@@ -60,6 +71,7 @@ export async function PATCH(req: NextRequest) {
 
 export async function PUT(req: NextRequest) {
   try {
+    await requireEditorOrAdmin();
     const body = (await req.json()) as {
       template_id?: string;
       name?: string;
@@ -72,6 +84,8 @@ export async function PUT(req: NextRequest) {
     });
     return NextResponse.json({ ok: true, field_template: result.updated, field_templates: result.allTemplates });
   } catch (error) {
+    const authResp = handleAuthError(error);
+    if (authResp) return authResp;
     const httpError = toHttpError(error, "Failed to update field template.");
     return NextResponse.json(
       { ok: false, error: httpError.message },

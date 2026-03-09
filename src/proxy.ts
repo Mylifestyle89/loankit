@@ -10,8 +10,10 @@ const CRON_PATH = "/api/cron";
 /** OnlyOffice callback is server-to-server (has its own JWT auth) */
 const ONLYOFFICE_CALLBACK = "/api/onlyoffice/callback";
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  console.log(`[MIDDLEWARE] ${request.method} ${pathname}`);
 
   // Skip public paths
   if (PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(p + "/"))) {

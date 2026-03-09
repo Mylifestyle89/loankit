@@ -40,7 +40,7 @@ export const masterTemplateService = {
     }));
   },
 
-  async createMasterTemplate(input: { name: string; description?: string; fieldCatalog: unknown[] }) {
+  async createMasterTemplate(input: { name: string; description?: string; fieldCatalog: unknown[]; createdBy?: string }) {
     const name = input.name.trim();
     if (!name) throw new ValidationError("name is required.");
     if (!Array.isArray(input.fieldCatalog)) throw new ValidationError("field_catalog must be an array.");
@@ -52,6 +52,7 @@ export const masterTemplateService = {
         description: input.description?.trim() || null,
         status: "active",
         fieldCatalogJson: JSON.stringify(fieldCatalog),
+        ...(input.createdBy ? { createdBy: input.createdBy } : {}),
       },
     });
     return mapMasterTemplateRecordToSummary(created);

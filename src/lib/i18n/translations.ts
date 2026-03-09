@@ -511,6 +511,7 @@ export const messages: Record<Locale, Record<string, string>> = {
     "auth.logout": "Đăng xuất",
     "auth.admin": "Quản trị",
     "auth.users": "Quản lý người dùng",
+    "auth.account": "Tài khoản",
   },
   en: {
     "lang.vi": "Tiếng Việt",
@@ -1022,5 +1023,6 @@ export const messages: Record<Locale, Record<string, string>> = {
     "auth.logout": "Sign Out",
     "auth.admin": "Admin",
     "auth.users": "Manage Users",
+    "auth.account": "Account",
   },
 };

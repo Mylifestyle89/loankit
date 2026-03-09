@@ -26,12 +26,13 @@ async function seed() {
     return;
   }
 
-  // Create user via Better Auth API (handles password hashing)
-  const result = await auth.api.signUpEmail({
+  // Create user via Better Auth admin API (bypasses disabled signup)
+  const result = await auth.api.createUser({
     body: {
       email: ADMIN_EMAIL,
       password: ADMIN_PASSWORD,
       name: ADMIN_NAME,
+      role: "admin",
     },
   });
 
@@ -39,12 +40,6 @@ async function seed() {
     console.error("Failed to create admin user. Result:", result);
     process.exit(1);
   }
-
-  // Set role to admin (Better Auth creates with default "viewer" role)
-  await prisma.user.update({
-    where: { id: result.user.id },
-    data: { role: "admin" },
-  });
 
   console.log(`Admin user created: ${ADMIN_EMAIL} (id: ${result.user.id})`);
   await migrateCreatedBy(result.user.id);

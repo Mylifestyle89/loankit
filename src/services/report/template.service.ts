@@ -195,7 +195,7 @@ export const templateService = {
     return allTemplates.filter((template) => assignedIds.includes(template.id));
   },
 
-  async createFieldTemplate(input: { name: string; fieldCatalog: unknown[]; customerId?: string }) {
+  async createFieldTemplate(input: { name: string; fieldCatalog: unknown[]; customerId?: string; createdBy?: string }) {
     const name = (input.name ?? "").trim();
     if (!name) throw new ValidationError("Template name is required.");
     if (!Array.isArray(input.fieldCatalog)) throw new ValidationError("field_catalog must be an array.");
@@ -229,7 +229,7 @@ export const templateService = {
             data: {
               name: `${customer.customer_name} - ${name}`,
               status: "draft",
-              createdBy: "web-user",
+              createdBy: input.createdBy ?? "web-user",
               mappingJsonPath: files.mappingPath,
               aliasJsonPath: files.aliasPath,
               masterSnapshotName: master.name,

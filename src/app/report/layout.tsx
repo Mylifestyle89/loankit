@@ -17,6 +17,7 @@ import {
   BookOpen,
   LogOut,
   Shield,
+  UserCog,
 } from "lucide-react";
 
 import { useLanguage } from "@/components/language-provider";
@@ -209,6 +210,32 @@ export default function ReportLayout({ children }: { children: React.ReactNode }
               )}
             </AnimatePresence>
           </button>
+
+          {/* Account link */}
+          {session?.user && (
+            <Link
+              href="/report/account"
+              title={!hovered ? t("auth.account") : undefined}
+              className={`flex w-full items-center rounded-lg py-1.5 text-xs font-medium text-zinc-400 transition-all duration-150 hover:bg-slate-100/70 hover:text-zinc-700 dark:text-slate-500 dark:hover:bg-white/[0.06] dark:hover:text-slate-300 ${
+                hovered ? "gap-2.5 px-2.5 justify-start" : "justify-center px-0"
+              }`}
+            >
+              <UserCog className="h-[17px] w-[17px] shrink-0 text-zinc-400 dark:text-slate-500" />
+              <AnimatePresence>
+                {hovered && (
+                  <motion.span
+                    initial={{ opacity: 0, x: -4 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -4 }}
+                    transition={{ delay: 0.07, duration: 0.14 }}
+                    className="truncate"
+                  >
+                    {t("auth.account")}
+                  </motion.span>
+                )}
+              </AnimatePresence>
+            </Link>
+          )}
 
           {/* Admin link */}
           {isAdmin && (

@@ -4,12 +4,13 @@ import { z } from "zod";
 import { toHttpError } from "@/core/errors/app-error";
 import { withErrorHandling, withValidatedBody } from "@/lib/api-helpers";
 import { reportService } from "@/services/report.service";
-import { requireAdmin } from "@/lib/auth-guard";
+import { requireSession, requireEditorOrAdmin, handleAuthError } from "@/lib/auth-guard";
 
 export const runtime = "nodejs";
 
 export async function GET(req: NextRequest) {
   try {
+    await requireSession();
     const customerId = req.nextUrl.searchParams.get("customer_id") ?? undefined;
     const masterId = req.nextUrl.searchParams.get("master_id") ?? undefined;
     const statusRaw = req.nextUrl.searchParams.get("status") ?? undefined;
@@ -20,6 +21,8 @@ export async function GET(req: NextRequest) {
     const instances = await reportService.listMappingInstances({ customerId, masterId, status });
     return NextResponse.json({ ok: true, mapping_instances: instances });
   } catch (error) {
+    const authResp = handleAuthError(error);
+    if (authResp) return authResp;
     const httpError = toHttpError(error, "Failed to load mapping instances.");
     return NextResponse.json({ ok: false, error: httpError.message }, { status: httpError.status });
   }
@@ -34,7 +37,7 @@ const mappingInstancesPostSchema = z.object({
 
 export const POST = withErrorHandling(
   withValidatedBody(mappingInstancesPostSchema, async (body) => {
-    const session = await requireAdmin();
+    const session = await requireEditorOrAdmin();
     const mappingInstance = await reportService.createMappingInstance({
       masterId: body.master_id,
       customerId: body.customer_id,
