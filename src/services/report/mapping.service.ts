@@ -12,6 +12,8 @@ import {
 import {
   createMappingDraft,
   loadState,
+  parseAliasJson,
+  parseMappingJson,
   publishMappingVersion as fsPublishMappingVersion,
   readAliasFile,
   readMappingFile,
@@ -27,8 +29,15 @@ export const mappingService = {
   async getMapping(params?: { mappingInstanceId?: string }) {
     const state = await loadState();
     const source = await resolveMappingSource(params?.mappingInstanceId);
-    const mapping = await readMappingFile(source.mappingPath);
-    const aliasMap = await readAliasFile(source.aliasPath);
+
+    // Prefer inline DB JSON (works on Vercel read-only FS)
+    const mapping = source.mode === "instance" && source.mappingJson
+      ? parseMappingJson(source.mappingJson)
+      : await readMappingFile(source.mappingPath);
+    const aliasMap = source.mode === "instance" && source.aliasJson
+      ? parseAliasJson(source.aliasJson)
+      : await readAliasFile(source.aliasPath);
+
     return {
       active_version_id: source.mode === "legacy" ? source.versionId : source.instanceId,
       versions: state.mapping_versions,
@@ -56,26 +65,41 @@ export const mappingService = {
         where: { id: input.mappingInstanceId },
       });
       if (!instance) throw new NotFoundError("Mapping instance not found.");
-      // Write files first — nếu ghi file lỗi, DB không bị update lệch
-      await Promise.all([
-        docxEngine.writeJson(instance.mappingJsonPath, mapping),
-        docxEngine.writeJson(instance.aliasJsonPath, aliasMap),
-      ]);
+
+      const mappingJsonStr = JSON.stringify(mapping);
+      const aliasJsonStr = JSON.stringify(aliasMap);
+
+      // Write to filesystem (best-effort — skipped on Vercel read-only FS)
+      try {
+        await Promise.all([
+          docxEngine.writeJson(instance.mappingJsonPath, mapping),
+          docxEngine.writeJson(instance.aliasJsonPath, aliasMap),
+        ]);
+      } catch (err) {
+        const code = (err as NodeJS.ErrnoException).code;
+        if (code !== "EROFS" && code !== "EPERM" && code !== "ENOENT") throw err;
+      }
+
+      // Always store JSON in DB columns (works on Vercel)
+      const dbUpdateData: Record<string, string> = {
+        mappingJson: mappingJsonStr,
+        aliasJson: aliasJsonStr,
+      };
       if (fieldCatalog) {
         const serializedCatalog = JSON.stringify(fieldCatalog);
+        dbUpdateData.fieldCatalogJson = serializedCatalog;
         if (instance.masterId) {
           await prisma.fieldTemplateMaster.update({
             where: { id: instance.masterId },
             data: { fieldCatalogJson: serializedCatalog },
           });
-        } else {
-          // Snapshot instance no longer linked to a master template.
-          await prisma.mappingInstance.update({
-            where: { id: instance.id },
-            data: { fieldCatalogJson: serializedCatalog },
-          });
         }
       }
+      await prisma.mappingInstance.update({
+        where: { id: instance.id },
+        data: dbUpdateData,
+      });
+
       return { version: { id: instance.id, status: "draft", created_at: instance.updatedAt.toISOString() }, activeVersionId: instance.id };
     }
     const { state, version } = await createMappingDraft({

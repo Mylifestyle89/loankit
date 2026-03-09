@@ -3,7 +3,34 @@ import { prismaAdapter } from "better-auth/adapters/prisma";
 import { admin } from "better-auth/plugins";
 import { prisma } from "./prisma";
 
+function sanitizeEnv(value?: string): string | undefined {
+  return value?.replace(/\\r/g, "").replace(/\\n/g, "").trim();
+}
+
+const configuredAuthUrl = sanitizeEnv(process.env.BETTER_AUTH_URL);
+const vercelUrl = sanitizeEnv(process.env.VERCEL_URL);
+const vercelProjectUrl = sanitizeEnv(process.env.VERCEL_PROJECT_PRODUCTION_URL);
+const vercelBranchUrl = sanitizeEnv(process.env.VERCEL_BRANCH_URL);
+
+const trustedOrigins = Array.from(
+  new Set(
+    [
+      configuredAuthUrl,
+      vercelUrl ? `https://${vercelUrl}` : undefined,
+      vercelProjectUrl ? `https://${vercelProjectUrl}` : undefined,
+      vercelBranchUrl ? `https://${vercelBranchUrl}` : undefined,
+    ].filter((value): value is string => Boolean(value)),
+  ),
+);
+
+// Resolve base URL: explicit env > Vercel production URL > Vercel deploy URL
+const resolvedBaseUrl = configuredAuthUrl
+  || (vercelProjectUrl ? `https://${vercelProjectUrl}` : undefined)
+  || (vercelUrl ? `https://${vercelUrl}` : undefined);
+
 export const auth = betterAuth({
+  ...(resolvedBaseUrl ? { baseURL: resolvedBaseUrl } : {}),
+  ...(trustedOrigins.length > 0 ? { trustedOrigins } : {}),
   database: prismaAdapter(prisma, {
     provider: "sqlite",
   }),

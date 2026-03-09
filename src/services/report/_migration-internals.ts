@@ -67,16 +67,29 @@ export async function createInstanceDraftFiles(seed: {
   masterId?: string | null;
   mapping: unknown;
   aliasMap: unknown;
-}): Promise<{ mappingPath: string; aliasPath: string }> {
+}): Promise<{ mappingPath: string; aliasPath: string; mappingJson: string; aliasJson: string }> {
   const stamp = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
   const idBase = `instance-${seed.customerId}-${seed.masterId ?? "snapshot"}-${stamp}`;
   const mappingPath = `report_assets/config/versions/${idBase}.mapping.json`;
   const aliasPath = `report_assets/config/versions/${idBase}.alias.json`;
-  await Promise.all([
-    docxEngine.writeJson(mappingPath, mappingMasterSchema.parse(seed.mapping)),
-    docxEngine.writeJson(aliasPath, aliasMapSchema.parse(seed.aliasMap)),
-  ]);
-  return { mappingPath, aliasPath };
+
+  const parsedMapping = mappingMasterSchema.parse(seed.mapping);
+  const parsedAlias = aliasMapSchema.parse(seed.aliasMap);
+  const mappingJson = JSON.stringify(parsedMapping);
+  const aliasJson = JSON.stringify(parsedAlias);
+
+  // Write to filesystem (best-effort — skipped on Vercel read-only FS)
+  try {
+    await Promise.all([
+      docxEngine.writeJson(mappingPath, parsedMapping),
+      docxEngine.writeJson(aliasPath, parsedAlias),
+    ]);
+  } catch (err) {
+    const code = (err as NodeJS.ErrnoException).code;
+    if (code !== "EROFS" && code !== "EPERM" && code !== "ENOENT") throw err;
+  }
+
+  return { mappingPath, aliasPath, mappingJson, aliasJson };
 }
 
 // ---------------------------------------------------------------------------
@@ -158,6 +171,8 @@ export async function ensureMasterInstanceMigration(): Promise<void> {
               createdBy: "migration",
               mappingJsonPath: draftFiles.mappingPath,
               aliasJsonPath: draftFiles.aliasPath,
+              mappingJson: draftFiles.mappingJson,
+              aliasJson: draftFiles.aliasJson,
               masterSnapshotName: "migrated instance",
               fieldCatalogJson: JSON.stringify(
                 legacyTemplates.find((t) => t.id === legacyId)?.field_catalog ?? [],
@@ -215,18 +230,24 @@ export async function resolveMappingSource(
     const instance = await prisma.mappingInstance.findUnique({
       where: { id: mappingInstanceId },
     });
-    if (
-      instance &&
-      (await relPathExists(instance.mappingJsonPath)) &&
-      (await relPathExists(instance.aliasJsonPath))
-    ) {
-      return {
-        mode: "instance",
-        mappingPath: instance.mappingJsonPath,
-        aliasPath: instance.aliasJsonPath,
-        instanceId: instance.id,
-        mappingUpdatedAt: instance.updatedAt.toISOString(),
-      };
+    if (instance) {
+      // Prefer DB columns; fall back to file existence check
+      const hasDbJson = !!instance.mappingJson && !!instance.aliasJson;
+      const hasFiles = hasDbJson || (
+        (await relPathExists(instance.mappingJsonPath)) &&
+        (await relPathExists(instance.aliasJsonPath))
+      );
+      if (hasDbJson || hasFiles) {
+        return {
+          mode: "instance",
+          mappingPath: instance.mappingJsonPath,
+          aliasPath: instance.aliasJsonPath,
+          instanceId: instance.id,
+          mappingUpdatedAt: instance.updatedAt.toISOString(),
+          mappingJson: instance.mappingJson,
+          aliasJson: instance.aliasJson,
+        };
+      }
     }
   }
 

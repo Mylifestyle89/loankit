@@ -1,6 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 
+import { prisma } from "@/lib/prisma";
 import {
   DEFAULT_ALIAS_FILE,
   DEFAULT_MAPPING_FILE,
@@ -29,6 +30,8 @@ import {
 } from "@/lib/report/field-labels";
 import { fileLockService } from "@/lib/report/file-lock.service";
 import { FINANCIAL_FIELD_CATALOG } from "@/lib/report/financial-field-catalog";
+
+const REPORT_CONFIG_DB_KEY = "framework_state";
 
 const nowIso = () => new Date().toISOString();
 
@@ -113,10 +116,20 @@ export async function readMappingFile(mappingPath: string): Promise<MappingMaste
   return mappingMasterSchema.parse(parsed);
 }
 
+/** Parse mapping JSON from inline DB string (avoids filesystem read). */
+export function parseMappingJson(json: string): MappingMaster {
+  return mappingMasterSchema.parse(JSON.parse(json));
+}
+
 export async function readAliasFile(aliasPath: string): Promise<AliasMap> {
   const absolute = path.join(process.cwd(), aliasPath);
   const parsed = await readJsonFile<unknown>(absolute);
   return aliasMapSchema.parse(parsed);
+}
+
+/** Parse alias JSON from inline DB string (avoids filesystem read). */
+export function parseAliasJson(json: string): AliasMap {
+  return aliasMapSchema.parse(JSON.parse(json));
 }
 
 function buildCatalog(mapping: MappingMaster): FieldCatalogItem[] {
@@ -206,16 +219,46 @@ const EMPTY_STATE: FrameworkState = frameworkStateSchema.parse({
   active_template_id: "",
 });
 
-export async function loadState(): Promise<FrameworkState> {
-  await ensureDirectories();
+/** Try loading state from DB first (works on Vercel), fall back to filesystem. */
+async function loadStateFromDb(): Promise<FrameworkState | null> {
+  try {
+    const row = await prisma.reportConfig.findUnique({ where: { key: REPORT_CONFIG_DB_KEY } });
+    if (!row) return null;
+    return frameworkStateSchema.parse(JSON.parse(row.valueJson));
+  } catch {
+    return null;
+  }
+}
 
-  // Try reading existing state file
+/** Persist state to DB (always works, even on read-only FS). */
+async function saveStateToDb(state: FrameworkState): Promise<void> {
+  try {
+    const json = JSON.stringify(state);
+    await prisma.reportConfig.upsert({
+      where: { key: REPORT_CONFIG_DB_KEY },
+      update: { valueJson: json },
+      create: { key: REPORT_CONFIG_DB_KEY, valueJson: json },
+    });
+  } catch (err) {
+    console.warn("[fs-store] DB save failed, falling back to file:", err);
+  }
+}
+
+export async function loadState(): Promise<FrameworkState> {
+  // 1. Try DB first (works on Vercel read-only FS)
+  const fromDb = await loadStateFromDb();
+  if (fromDb) {
+    return normalizeAndPersist(fromDb);
+  }
+
+  // 2. Fall back to filesystem (local dev)
+  await ensureDirectories();
   let stateRaw: unknown;
   try {
     stateRaw = await readJsonFile<unknown>(REPORT_STATE_FILE);
   } catch (err) {
     if (isReadOnlyFsError(err)) return EMPTY_STATE;
-    if (fsErrorCode(err) !== "ENOENT") throw err; // Only bootstrap for missing file
+    if (fsErrorCode(err) !== "ENOENT") throw err;
     try {
       const state = await bootstrapState();
       await saveState(state);
@@ -226,9 +269,14 @@ export async function loadState(): Promise<FrameworkState> {
     }
   }
 
-  // Parse and normalize (parse errors bubble up, not swallowed)
   const parsed = frameworkStateSchema.parse(stateRaw);
+  // Seed DB from file so future reads use DB
+  await saveStateToDb(parsed);
+  return normalizeAndPersist(parsed);
+}
 
+/** Merge financial catalog + normalize labels, persist if changed. */
+async function normalizeAndPersist(parsed: FrameworkState): Promise<FrameworkState> {
   const mergedFinancial = mergeFinancialCatalog(parsed.field_catalog);
   if (mergedFinancial.changed) {
     parsed.field_catalog = mergedFinancial.catalog;
@@ -244,10 +292,15 @@ export async function loadState(): Promise<FrameworkState> {
 }
 
 export async function saveState(state: FrameworkState): Promise<void> {
+  const parsed = frameworkStateSchema.parse(state);
+
+  // Always save to DB (works on Vercel)
+  await saveStateToDb(parsed);
+
+  // Also save to filesystem when possible (local dev, backup)
   await fileLockService.acquireLock("report_assets");
   try {
     await ensureDirectories();
-    const parsed = frameworkStateSchema.parse(state);
     const nextRaw = JSON.stringify(parsed, null, 2);
 
     let currentRaw = "";
@@ -257,10 +310,7 @@ export async function saveState(state: FrameworkState): Promise<void> {
       currentRaw = "";
     }
 
-    // Skip redundant write/backup when content does not change.
-    if (currentRaw === nextRaw) {
-      return;
-    }
+    if (currentRaw === nextRaw) return;
 
     if (currentRaw) {
       const backupDir = path.join(process.cwd(), "report_assets", "backups", "state-config");
@@ -272,7 +322,7 @@ export async function saveState(state: FrameworkState): Promise<void> {
 
     await fs.writeFile(REPORT_STATE_FILE, nextRaw, "utf-8");
   } catch (err) {
-    if (isIgnorableFsError(err)) return; // Vercel read-only FS
+    if (isIgnorableFsError(err)) return; // Vercel read-only FS — DB already saved above
     throw err;
   } finally {
     await fileLockService.releaseLock("report_assets");
@@ -291,8 +341,16 @@ export async function createMappingDraft(params: {
   const mappingPath = `report_assets/config/versions/${id}.mapping.json`;
   const aliasPath = `report_assets/config/versions/${id}.alias.json`;
 
-  await writeJsonFile(path.join(process.cwd(), mappingPath), mappingMasterSchema.parse(params.mapping));
-  await writeJsonFile(path.join(process.cwd(), aliasPath), aliasMapSchema.parse(params.aliasMap));
+  const parsedMapping = mappingMasterSchema.parse(params.mapping);
+  const parsedAlias = aliasMapSchema.parse(params.aliasMap);
+
+  // Write to filesystem (best-effort, skipped on Vercel read-only FS)
+  try {
+    await writeJsonFile(path.join(process.cwd(), mappingPath), parsedMapping);
+    await writeJsonFile(path.join(process.cwd(), aliasPath), parsedAlias);
+  } catch (err) {
+    if (!isIgnorableFsError(err)) throw err;
+  }
 
   const version: MappingVersion = {
     id,

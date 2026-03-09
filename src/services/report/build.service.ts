@@ -29,6 +29,11 @@ import { resolveMappingSource } from "./_migration-internals";
 // Internal helpers
 // ---------------------------------------------------------------------------
 
+function isReadOnlyFsError(err: unknown): boolean {
+  const code = (err as NodeJS.ErrnoException).code;
+  return code === "EROFS" || code === "EPERM" || code === "ENOENT";
+}
+
 async function readBuildMeta(): Promise<BuildMeta | null> {
   try {
     const raw = await fs.readFile(REPORT_BUILD_META_FILE, "utf-8");
@@ -59,8 +64,21 @@ async function writeBuildMeta(params: {
     mapping_source_updated_at: params.source.mappingUpdatedAt,
     template_profile_id: params.templateProfileId,
   };
-  await fs.writeFile(REPORT_BUILD_META_FILE, JSON.stringify(next, null, 2), "utf-8");
+  try {
+    await fs.writeFile(REPORT_BUILD_META_FILE, JSON.stringify(next, null, 2), "utf-8");
+  } catch (err) {
+    if (!isReadOnlyFsError(err)) throw err;
+  }
   return next;
+}
+
+/** Write JSON via docxEngine, silently skip on Vercel read-only FS. */
+async function safeWriteJson(relPath: string, data: unknown): Promise<void> {
+  try {
+    await docxEngine.writeJson(relPath, data);
+  } catch (err) {
+    if (!isReadOnlyFsError(err)) throw err;
+  }
 }
 
 async function hasFlatDraftFile(): Promise<boolean> {
@@ -272,7 +290,7 @@ async function produceMergedFlat(fieldCatalog: Array<{ field_key: string; label_
     const manualValues = await loadManualValues();
     const mergedFlat = mergeFlatWithManualValues(baseFlat, manualValues);
     addLabelViAliases(mergedFlat, fieldCatalog);
-    await docxEngine.writeJson(REPORT_MERGED_FLAT_FILE, mergedFlat);
+    await safeWriteJson(REPORT_MERGED_FLAT_FILE, mergedFlat);
   } catch (e) {
     console.error("[Build] Failed to produce merged flat file after build:", e);
   }
@@ -341,7 +359,7 @@ export const buildService = {
     const manualValues = await loadManualValues();
     const mergedFlat = mergeFlatWithManualValues(baseFlat, manualValues);
     addLabelViAliases(mergedFlat, state.field_catalog);
-    await docxEngine.writeJson(REPORT_MERGED_FLAT_FILE, mergedFlat);
+    await safeWriteJson(REPORT_MERGED_FLAT_FILE, mergedFlat);
 
     try {
       await docxEngine.generateDocx(templatePath, { flat: mergedFlat, aliasMap }, outputPath);
@@ -353,7 +371,7 @@ export const buildService = {
       output_docx: outputPath,
       engine: "docxtemplater (engine)",
     };
-    await docxEngine.writeJson(reportPath, report);
+    await safeWriteJson(reportPath, report);
 
     const durationMs = Date.now() - start;
     await logRun({
@@ -418,7 +436,7 @@ export const buildService = {
     const aliasMap = aliasMapRaw as Record<string, unknown>;
     const mergedFlat = mergeFlatWithManualValues(baseFlat, manualValues);
     addLabelViAliases(mergedFlat, state.field_catalog);
-    await docxEngine.writeJson(REPORT_MERGED_FLAT_FILE, mergedFlat);
+    await safeWriteJson(REPORT_MERGED_FLAT_FILE, mergedFlat);
 
     const rowsRaw = mergedFlat[repeatKey];
     if (!Array.isArray(rowsRaw)) {
@@ -469,7 +487,7 @@ export const buildService = {
       repeat_key: repeatKey,
       outputs: outputPaths,
     };
-    await docxEngine.writeJson(reportPath, report);
+    await safeWriteJson(reportPath, report);
 
     const durationMs = Date.now() - start;
     await logRun({

@@ -166,7 +166,7 @@ export function mapDocxError(error: unknown): never {
 // ---------------------------------------------------------------------------
 
 export type MappingSource =
-  | { mode: "instance"; mappingPath: string; aliasPath: string; instanceId: string; mappingUpdatedAt: string }
+  | { mode: "instance"; mappingPath: string; aliasPath: string; instanceId: string; mappingUpdatedAt: string; mappingJson?: string | null; aliasJson?: string | null }
   | { mode: "legacy"; mappingPath: string; aliasPath: string; versionId: string; mappingUpdatedAt: string };
 
 export function sourceIdFromResolved(source: MappingSource): string {

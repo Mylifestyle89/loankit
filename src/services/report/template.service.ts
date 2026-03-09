@@ -77,7 +77,12 @@ export const templateService = {
 
     const inventory = await parseDocxPlaceholderInventory(template.docx_path);
     const inventoryFile = `report_assets/config/inventories/${template.id}.json`;
-    await docxEngine.writeJson(inventoryFile, inventory);
+    try {
+      await docxEngine.writeJson(inventoryFile, inventory);
+    } catch (err) {
+      const code = (err as NodeJS.ErrnoException).code;
+      if (code !== "EROFS" && code !== "EPERM" && code !== "ENOENT") throw err;
+    }
     await updateTemplateInventory(template.id, inventoryFile);
 
     const activeVersion = state.mapping_versions.find(
@@ -232,6 +237,8 @@ export const templateService = {
               createdBy: input.createdBy ?? "web-user",
               mappingJsonPath: files.mappingPath,
               aliasJsonPath: files.aliasPath,
+              mappingJson: files.mappingJson,
+              aliasJson: files.aliasJson,
               masterSnapshotName: master.name,
               fieldCatalogJson: master.fieldCatalogJson,
               customerId: customer.id,
@@ -311,6 +318,8 @@ export const templateService = {
           createdBy: "web-user",
           mappingJsonPath: files.mappingPath,
           aliasJsonPath: files.aliasPath,
+          mappingJson: files.mappingJson,
+          aliasJson: files.aliasJson,
           masterSnapshotName: master.name,
           fieldCatalogJson: master.fieldCatalogJson,
           customerId: customer.id,

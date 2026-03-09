@@ -48,6 +48,8 @@ export const mappingInstanceService = {
         createdBy: input.createdBy?.trim() || "web-user",
         mappingJsonPath: files.mappingPath,
         aliasJsonPath: files.aliasPath,
+        mappingJson: files.mappingJson,
+        aliasJson: files.aliasJson,
         masterSnapshotName: master.name,
         fieldCatalogJson: master.fieldCatalogJson,
         customerId: customer.id,

@@ -271,6 +271,10 @@ model MappingInstance {
   masterSnapshotName String @default("")
   fieldCatalogJson   String @default("[]")
 
+  /// JSON content stored directly — avoids filesystem writes on Vercel (EROFS)
+  mappingJson    String?
+  aliasJson      String?
+
   masterId   String?
   customerId String
   master     FieldTemplateMaster? @relation(fields: [masterId], references: [id], onDelete: SetNull)
@@ -280,4 +284,13 @@ model MappingInstance {
   @@index([customerId])
   @@index([customerId, masterId, status])
   @@map("mapping_instances")
+}
+
+// ─── Report Config (replaces filesystem framework_state.json) ────
+model ReportConfig {
+  key       String   @id
+  valueJson String   @default("{}")
+  updatedAt DateTime @updatedAt
+
+  @@map("report_configs")
 }
