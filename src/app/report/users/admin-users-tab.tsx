@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import { Shield, UserPlus, Trash2, Pencil, Loader2 } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 import { useLanguage } from "@/components/language-provider";
@@ -16,17 +15,13 @@ type UserRecord = {
   createdAt: string;
 };
 
-export default function AdminUsersPage() {
+/** Admin-only user management panel */
+export function AdminUsersTab() {
   const { t } = useLanguage();
-  const router = useRouter();
   const { data: session } = authClient.useSession();
   const [users, setUsers] = useState<UserRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateForm, setShowCreateForm] = useState(false);
-
-  useEffect(() => {
-    if (session && session.user.role !== "admin") router.push("/report/mapping");
-  }, [session, router]);
 
   const fetchUsers = useCallback(async () => {
     setLoading(true);
@@ -50,20 +45,20 @@ export default function AdminUsersPage() {
     if (session?.user.role === "admin") fetchUsers();
   }, [session, fetchUsers]);
 
-  if (!session || session.user.role !== "admin") return null;
+  if (!session || session.user.role !== "admin") {
+    return (
+      <div className="rounded-xl border border-dashed border-zinc-300 dark:border-white/[0.08] py-12 text-center">
+        <Shield className="mx-auto h-6 w-6 text-zinc-300 dark:text-slate-600" />
+        <p className="mt-2 text-sm text-zinc-400 dark:text-slate-500">{t("auth.admin")} only</p>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto max-w-3xl">
-      <div className="mb-6 flex items-center justify-between">
-        <div className="flex items-center gap-2.5">
-          <Shield className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
-          <h1 className="text-lg font-semibold text-zinc-900 dark:text-slate-100">{t("auth.users")}</h1>
-        </div>
-        <button
-          type="button"
-          onClick={() => setShowCreateForm(!showCreateForm)}
-          className="flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-indigo-700"
-        >
+      <div className="mb-5 flex items-center justify-end">
+        <button type="button" onClick={() => setShowCreateForm(!showCreateForm)}
+          className="flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-indigo-700">
           <UserPlus className="h-3.5 w-3.5" />
           {showCreateForm ? "Cancel" : "Create User"}
         </button>
@@ -154,13 +149,8 @@ function UserRow({ user, currentUserId, onUpdated }: { user: UserRecord; current
         </td>
       </tr>
       {editing && (
-        <EditUserDialog
-          userId={user.id}
-          currentEmail={user.email}
-          userName={user.name}
-          onClose={() => setEditing(false)}
-          onUpdated={onUpdated}
-        />
+        <EditUserDialog userId={user.id} currentEmail={user.email} userName={user.name}
+          onClose={() => setEditing(false)} onUpdated={onUpdated} />
       )}
     </>
   );

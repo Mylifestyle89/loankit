@@ -68,23 +68,15 @@ export function EditUserDialog({ userId, currentEmail, userName, onClose, onUpda
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="mb-1 block text-[10px] font-medium text-slate-500 dark:text-slate-400">
-                Email
-              </label>
+              <label className="mb-1 block text-[10px] font-medium text-slate-500 dark:text-slate-400">Email</label>
               <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className={inputClass} />
             </div>
             <div>
               <label className="mb-1 block text-[10px] font-medium text-slate-500 dark:text-slate-400">
                 New Password (leave blank to keep)
               </label>
-              <input
-                type="password"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                minLength={8}
-                placeholder="••••••••"
-                className={inputClass}
-              />
+              <input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)}
+                minLength={8} placeholder="••••••••" className={inputClass} />
             </div>
           </div>
 
@@ -94,11 +86,8 @@ export function EditUserDialog({ userId, currentEmail, userName, onClose, onUpda
             </p>
           )}
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="rounded-lg bg-indigo-600 px-4 py-1.5 text-xs font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
-          >
+          <button type="submit" disabled={loading}
+            className="rounded-lg bg-indigo-600 px-4 py-1.5 text-xs font-medium text-white hover:bg-indigo-700 disabled:opacity-50">
             {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Save Changes"}
           </button>
         </form>

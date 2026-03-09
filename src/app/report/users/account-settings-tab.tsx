@@ -3,10 +3,9 @@
 import { useState } from "react";
 import { User, Mail, Lock, Loader2 } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
-import { useLanguage } from "@/components/language-provider";
 
-export default function AccountPage() {
-  const { t } = useLanguage();
+/** Account settings: change name, email, password */
+export function AccountSettingsTab() {
   const { data: session, isPending } = authClient.useSession();
 
   if (isPending) {
@@ -29,16 +28,13 @@ export default function AccountPage() {
 
   return (
     <div className="mx-auto max-w-lg">
-      <div className="mb-6 flex items-center gap-2.5">
-        <User className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
-        <h1 className="text-lg font-semibold text-zinc-900 dark:text-slate-100">
-          {t("auth.account")}
-        </h1>
+      <div className="mb-5 flex items-center gap-2">
+        <User className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+        <span className="text-sm font-medium text-zinc-700 dark:text-slate-300">{user.name}</span>
         <span className={`ml-auto rounded-full px-2 py-0.5 text-[10px] font-semibold ${roleBadgeClass}`}>
           {user.role}
         </span>
       </div>
-
       <div className="space-y-4">
         <ChangeNameForm currentName={user.name} />
         <ChangeEmailForm currentEmail={user.email} />
@@ -122,24 +118,10 @@ function ChangePasswordForm() {
   return (
     <FormCard icon={<Lock className="h-4 w-4" />} title="Password">
       <form onSubmit={handleSubmit} className="space-y-2">
-        <input
-          type="password"
-          placeholder="Current password"
-          value={current}
-          onChange={(e) => setCurrent(e.target.value)}
-          required
-          minLength={8}
-          className={inputClass}
-        />
-        <input
-          type="password"
-          placeholder="New password"
-          value={newPw}
-          onChange={(e) => setNewPw(e.target.value)}
-          required
-          minLength={8}
-          className={inputClass}
-        />
+        <input type="password" placeholder="Current password" value={current}
+          onChange={(e) => setCurrent(e.target.value)} required minLength={8} className={inputClass} />
+        <input type="password" placeholder="New password" value={newPw}
+          onChange={(e) => setNewPw(e.target.value)} required minLength={8} className={inputClass} />
         <SubmitBtn loading={loading} disabled={!current || !newPw} label="Change Password" />
       </form>
       <Msg text={msg} />
@@ -164,11 +146,8 @@ function FormCard({ icon, title, children }: { icon: React.ReactNode; title: str
 
 function SubmitBtn({ loading, disabled, label = "Save" }: { loading: boolean; disabled: boolean; label?: string }) {
   return (
-    <button
-      type="submit"
-      disabled={loading || disabled}
-      className="shrink-0 rounded-lg bg-indigo-600 px-4 py-2 text-xs font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
-    >
+    <button type="submit" disabled={loading || disabled}
+      className="shrink-0 rounded-lg bg-indigo-600 px-4 py-2 text-xs font-medium text-white hover:bg-indigo-700 disabled:opacity-50">
       {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : label}
     </button>
   );
@@ -177,9 +156,5 @@ function SubmitBtn({ loading, disabled, label = "Save" }: { loading: boolean; di
 function Msg({ text }: { text: string }) {
   if (!text) return null;
   const isError = !text.includes("Updated") && !text.includes("changed");
-  return (
-    <p className={`mt-2 text-xs ${isError ? "text-red-500" : "text-green-600 dark:text-green-400"}`}>
-      {text}
-    </p>
-  );
+  return <p className={`mt-2 text-xs ${isError ? "text-red-500" : "text-green-600 dark:text-green-400"}`}>{text}</p>;
 }

@@ -16,7 +16,6 @@ import {
   Receipt,
   BookOpen,
   LogOut,
-  Shield,
   UserCog,
 } from "lucide-react";
 
@@ -40,15 +39,15 @@ export default function ReportLayout({ children }: { children: React.ReactNode }
   const isMappingPage = pathname.startsWith("/report/mapping");
   const [hovered, setHovered] = useState(false);
   const { data: session } = authClient.useSession();
-  const isAdmin = session?.user?.role === "admin";
   useCustomerData(); // Populate shared customer store once for all tabs
 
   const links = [
-    { href: "/report/mapping", label: t("nav.mapping"), icon: PenLine },
-    { href: "/report/template", label: t("nav.template"), icon: FileText },
     { href: "/report/customers", label: t("nav.customers"), icon: Users },
     { href: "/report/loans", label: t("nav.loans"), icon: Banknote },
     { href: "/report/invoices", label: t("nav.invoices"), icon: Receipt },
+    { href: "/report/mapping", label: t("nav.mapping"), icon: PenLine },
+    { href: "/report/template", label: t("nav.template"), icon: FileText },
+    { href: "/report/users", label: t("auth.users"), icon: UserCog },
     { href: "/report/system-operations", label: t("nav.systemOps"), icon: Settings },
     { href: "/report/guide", label: t("nav.guide"), icon: BookOpen },
   ];
@@ -217,59 +216,7 @@ export default function ReportLayout({ children }: { children: React.ReactNode }
             </AnimatePresence>
           </button>
 
-          {/* Account link */}
-          {session?.user && (
-            <Link
-              href="/report/account"
-              title={!hovered ? t("auth.account") : undefined}
-              className={`flex w-full items-center rounded-lg py-1.5 text-xs font-medium text-zinc-400 transition-all duration-150 hover:bg-slate-100/70 hover:text-zinc-700 dark:text-slate-500 dark:hover:bg-white/[0.06] dark:hover:text-slate-300 ${
-                hovered ? "gap-2.5 px-2.5 justify-start" : "justify-center px-0"
-              }`}
-            >
-              <UserCog className="h-[17px] w-[17px] shrink-0 text-zinc-400 dark:text-slate-500" />
-              <AnimatePresence>
-                {hovered && (
-                  <motion.span
-                    initial={{ opacity: 0, x: -4 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -4 }}
-                    transition={{ delay: 0.07, duration: 0.14 }}
-                    className="truncate"
-                  >
-                    {t("auth.account")}
-                  </motion.span>
-                )}
-              </AnimatePresence>
-            </Link>
-          )}
-
-          {/* Admin link */}
-          {isAdmin && (
-            <Link
-              href="/report/admin/users"
-              title={!hovered ? t("auth.users") : undefined}
-              className={`flex w-full items-center rounded-lg py-1.5 text-xs font-medium text-zinc-400 transition-all duration-150 hover:bg-slate-100/70 hover:text-zinc-700 dark:text-slate-500 dark:hover:bg-white/[0.06] dark:hover:text-slate-300 ${
-                hovered ? "gap-2.5 px-2.5 justify-start" : "justify-center px-0"
-              }`}
-            >
-              <Shield className="h-[17px] w-[17px] shrink-0 text-zinc-400 dark:text-slate-500" />
-              <AnimatePresence>
-                {hovered && (
-                  <motion.span
-                    initial={{ opacity: 0, x: -4 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -4 }}
-                    transition={{ delay: 0.07, duration: 0.14 }}
-                    className="truncate"
-                  >
-                    {t("auth.users")}
-                  </motion.span>
-                )}
-              </AnimatePresence>
-            </Link>
-          )}
-
-          {/* User info + Logout */}
+          {/* Logout */}
           {session?.user && (
             <button
               type="button"
