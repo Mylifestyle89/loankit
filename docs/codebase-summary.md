@@ -249,6 +249,34 @@ plans/
 ### AI Mapping Service (`src/services/ai-mapping.service.ts`)
 - AI-powered field mapping suggestions for template columns → field placeholders
 
+## State Management & Hooks
+
+### Customer Data Hub (Zustand)
+
+**Store: `src/stores/use-customer-store.ts`**
+- **Purpose:** Global cross-tab customer state management
+- **State:**
+  - `customers: Customer[]` - List of all customers
+  - `selectedCustomerId: string` - Currently selected customer ID
+  - `loadingCustomers: boolean` - Fetch loading state
+  - `_hasHydrated: boolean` - SSR hydration safety flag
+- **Persistence:** Only selectedCustomerId persisted to localStorage
+- **Key Selectors:**
+  - `useCustomerStore()` - Direct store access
+  - `useSelectedCustomer()` - Currently selected Customer object (null if none selected or not hydrated)
+  - `useIsCustomerStoreHydrated()` - Check hydration status before rendering dependent UI
+
+**Hook: `src/hooks/use-customer-data.ts`**
+- **Purpose:** Fetch customer list once and populate store (prevents redundant API calls)
+- **Usage:** Called in layout (`src/app/report/layout.tsx`)
+- **Behavior:** Checks if customers already loaded; if not, fetches from `/api/customers`
+- **Returns:** `{ customers, loading }`
+
+**Widget: `src/components/customer-context-indicator.tsx`**
+- **Purpose:** Sidebar widget displaying currently selected customer
+- **Displays:** Customer name, code, and clear button (when hydrated + customer selected)
+- **Responsive:** Collapsed (icon only) vs expanded (text + icon) based on sidebar state
+
 ## Key Classes & Types
 
 ### Error Classes (`src/core/errors/app-error.ts`)
@@ -258,6 +286,11 @@ ValidationError(message, details)
 NotFoundError(message)
 toHttpError(error, fallback) // Convert to HTTP response
 ```
+
+### State Management Types
+**From `src/stores/use-customer-store.ts`:**
+- `Customer` - { id, customer_name, customer_code }
+- `CustomerState` - Store state with setters and hydration flag
 
 ### Zod Schemas (Input Validation)
 - Loan: customerId, contractNumber, loanAmount, startDate, endDate
