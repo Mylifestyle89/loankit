@@ -1,12 +1,19 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Play, Eye, Download } from "lucide-react";
+import { Play, Eye, Download, RotateCcw } from "lucide-react";
 
 import { useLanguage } from "@/components/language-provider";
 import { OnlyOfficeEditorModal } from "@/components/onlyoffice-editor-modal";
 import { useMappingDataStore } from "@/app/report/mapping/stores/use-mapping-data-store";
 import { getSignedFileUrl } from "@/lib/report/signed-file-url";
+
+type TemplateProfile = {
+  id: string;
+  template_name: string;
+  docx_path: string;
+  active: boolean;
+};
 
 type RunLog = {
   run_id: string;
@@ -74,8 +81,13 @@ export default function RunsPage() {
   const [buildResult, setBuildResult] = useState<unknown>(null);
   const [freshness, setFreshness] = useState<FreshnessPayload | null>(null);
 
+  // Template selector states
+  const [templates, setTemplates] = useState<TemplateProfile[]>([]);
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string>("");
+
   // OnlyOffice Preview states
   const [onlyOfficePreviewPath, setOnlyOfficePreviewPath] = useState<string>("");
+  const [previewClosed, setPreviewClosed] = useState(false);
 
   const loadRuns = useCallback(async () => {
     setLoading(true);
@@ -90,6 +102,18 @@ export default function RunsPage() {
     setLoading(false);
   }, [t]);
 
+  const loadTemplates = useCallback(async () => {
+    try {
+      const res = await fetch("/api/report/template", { cache: "no-store" });
+      const data = (await res.json()) as { ok: boolean; templates?: TemplateProfile[]; active_template_id?: string };
+      if (data.ok && data.templates) {
+        setTemplates(data.templates);
+        // Default to active template if not yet selected
+        setSelectedTemplateId((prev) => prev || data.active_template_id || "");
+      }
+    } catch { /* best-effort */ }
+  }, []);
+
   const loadFreshness = useCallback(async () => {
     const res = await fetch("/api/report/freshness", { cache: "no-store" });
     const data = (await res.json()) as { ok: boolean; error?: string; freshness?: FreshnessPayload };
@@ -103,9 +127,10 @@ export default function RunsPage() {
     const timer = window.setTimeout(() => {
       void loadRuns();
       void loadFreshness();
+      void loadTemplates();
     }, 0);
     return () => window.clearTimeout(timer);
-  }, [loadFreshness, loadRuns]);
+  }, [loadFreshness, loadRuns, loadTemplates]);
 
   async function runBuildValidate() {
     setRunningBuild(true);
@@ -140,16 +165,18 @@ export default function RunsPage() {
       // Flush Zustand draft (repeater arrays) to server before export
       try { await flushZustandDraft(); } catch { /* best-effort */ }
 
-      const output = `report_assets/report_preview_${Date.now()}.docx`;
-      const report = `report_assets/template_export_report_${Date.now()}.json`;
+      const output = `report_assets/generated/report_preview_${Date.now()}.docx`;
+      const report = `report_assets/generated/template_export_report_${Date.now()}.json`;
+
+      // Resolve selected template's docx_path
+      const selectedTemplate = templates.find((tp) => tp.id === selectedTemplateId);
+      const exportBody: Record<string, string> = { output_path: output, report_path: report };
+      if (selectedTemplate) exportBody.template_path = selectedTemplate.docx_path;
 
       const res = await fetch("/api/report/export", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          output_path: output,
-          report_path: report,
-        }),
+        body: JSON.stringify(exportBody),
       });
 
       if (!res.ok) {
@@ -167,6 +194,7 @@ export default function RunsPage() {
 
       const filePath = data.output_path;
       setOnlyOfficePreviewPath(filePath);
+      setPreviewClosed(false);
       setMessage(
         data.auto_build_triggered
           ? `Đã tự động chạy Build trước khi export${data.stale_reasons?.length ? ` (${data.stale_reasons.join(", ")})` : ""}.`
@@ -193,10 +221,10 @@ export default function RunsPage() {
 
   return (
     <section className="space-y-5">
-      {onlyOfficePreviewPath && (
+      {onlyOfficePreviewPath && !previewClosed && (
         <OnlyOfficeEditorModal
           docxPath={onlyOfficePreviewPath}
-          onClose={() => setOnlyOfficePreviewPath("")}
+          onClose={() => setPreviewClosed(true)}
           onSaved={() => {
             void loadRuns();
             void loadFreshness();
@@ -230,6 +258,27 @@ export default function RunsPage() {
         </div>
       </div>
 
+      {/* Template selector */}
+      {templates.length > 0 && (
+        <div className="flex items-center gap-3">
+          <label htmlFor="template-select" className="text-sm font-medium text-zinc-700 dark:text-slate-300">
+            Template:
+          </label>
+          <select
+            id="template-select"
+            value={selectedTemplateId}
+            onChange={(e) => setSelectedTemplateId(e.target.value)}
+            className="rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40"
+          >
+            {templates.map((tp) => (
+              <option key={tp.id} value={tp.id}>
+                {tp.template_name}{tp.active ? " (active)" : ""}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+
       {/* Action toolbar */}
       <div className="flex flex-wrap gap-3">
         <button
@@ -255,6 +304,15 @@ export default function RunsPage() {
           >
             <Download className="h-4 w-4" />
             Tải về DOCX
+          </button>
+        )}
+        {onlyOfficePreviewPath && previewClosed && (
+          <button
+            onClick={() => setPreviewClosed(false)}
+            className="inline-flex items-center gap-2 rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] px-4 py-2 text-sm font-medium shadow-sm transition-all duration-150 hover:border-violet-200 dark:hover:border-violet-500/20"
+          >
+            <RotateCcw className="h-4 w-4" />
+            Mở lại trong OnlyOffice
           </button>
         )}
       </div>
@@ -299,9 +357,20 @@ export default function RunsPage() {
               </p>
               <div className="mt-2 flex flex-wrap gap-2">
                 {run.output_paths.map((p) => (
-                  <span key={p} className="rounded-lg bg-violet-50 dark:bg-violet-500/10 px-2 py-1 text-[11px] font-mono text-violet-800 dark:text-violet-300">
-                    {p}
-                  </span>
+                  <button
+                    key={p}
+                    onClick={async () => {
+                      try {
+                        const url = await getSignedFileUrl(p, true);
+                        window.open(url, "_blank");
+                      } catch { setError("Failed to download file."); }
+                    }}
+                    className="inline-flex items-center gap-1 rounded-lg bg-violet-50 dark:bg-violet-500/10 px-2 py-1 text-[11px] font-mono text-violet-800 dark:text-violet-300 hover:bg-violet-100 dark:hover:bg-violet-500/20 transition-colors"
+                    title="Tải về"
+                  >
+                    <Download className="h-3 w-3" />
+                    {p.split("/").pop()}
+                  </button>
                 ))}
               </div>
             </li>
