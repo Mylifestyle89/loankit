@@ -33,8 +33,12 @@ export async function saveManualValues(values: ManualValues, filePath = REPORT_M
   const parsed = manualValuesSchema.parse(values);
   await fileLockService.acquireLock("report_assets");
   try {
-  await fs.mkdir(path.dirname(filePath), { recursive: true });
-  await fs.writeFile(filePath, JSON.stringify(parsed, null, 2), "utf-8");
+    await fs.mkdir(path.dirname(filePath), { recursive: true });
+    await fs.writeFile(filePath, JSON.stringify(parsed, null, 2), "utf-8");
+  } catch (err) {
+    const code = (err as NodeJS.ErrnoException).code;
+    if (code !== "EROFS" && code !== "EPERM" && code !== "ENOENT") throw err;
+    // Vercel read-only FS — manual values not persisted to file
   } finally {
     await fileLockService.releaseLock("report_assets");
   }

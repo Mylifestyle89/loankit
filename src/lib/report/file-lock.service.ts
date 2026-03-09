@@ -59,7 +59,7 @@ export class FileLockService {
       await fs.mkdir(LOCK_DIR, { recursive: true });
     } catch (err) {
       const code = (err as NodeJS.ErrnoException).code;
-      if (code === "EROFS" || code === "EPERM") return; // Read-only FS (Vercel)
+      if (code === "EROFS" || code === "EPERM" || code === "ENOENT") return; // Read-only FS (Vercel)
       throw err;
     }
 

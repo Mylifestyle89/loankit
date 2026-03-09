@@ -26,8 +26,11 @@ export async function saveFieldFormulas(
   const parsed = fieldFormulasSchema.parse(formulas);
   await fileLockService.acquireLock("report_assets");
   try {
-  await fs.mkdir(path.dirname(filePath), { recursive: true });
-  await fs.writeFile(filePath, JSON.stringify(parsed, null, 2), "utf-8");
+    await fs.mkdir(path.dirname(filePath), { recursive: true });
+    await fs.writeFile(filePath, JSON.stringify(parsed, null, 2), "utf-8");
+  } catch (err) {
+    const code = (err as NodeJS.ErrnoException).code;
+    if (code !== "EROFS" && code !== "EPERM" && code !== "ENOENT") throw err;
   } finally {
     await fileLockService.releaseLock("report_assets");
   }
