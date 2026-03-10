@@ -21,11 +21,18 @@ const updateCustomerSchema = z.object({
 });
 
 export async function GET(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const { id } = await params;
+    const full = req.nextUrl.searchParams.get("full") === "true";
+
+    if (full) {
+      const profile = await customerService.getFullProfile(id);
+      return NextResponse.json({ ok: true, customer: profile });
+    }
+
     const customer = await customerService.getCustomerById(id);
     const payload = {
       ...customer,

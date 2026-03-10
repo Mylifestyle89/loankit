@@ -1,25 +1,17 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, Geist_Mono, Geist } from "next/font/google";
 
 import { LanguageProvider } from "@/components/language-provider";
 import { ThemeProvider } from "@/components/theme-provider";
 import "../../node_modules/@eigenpal/docx-js-editor/dist/styles.css";
 import "./globals.css";
 
-const inter = Inter({
-  variable: "--font-inter",
-  subsets: ["latin", "vietnamese"],
-});
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+// Fallback fonts for offline/restricted environments
+// In production, consider using local font files via @font-face
+const fontVariables = {
+  inter: "--font-inter",
+  geistSans: "--font-geist-sans",
+  geistMono: "--font-geist-mono",
+};
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -45,8 +37,16 @@ export default function RootLayout({
             __html: `try{const t=localStorage.getItem('app_theme');const d=t==='dark'||(t==='system'||!t)&&window.matchMedia('(prefers-color-scheme: dark)').matches;if(d)document.documentElement.classList.add('dark');}catch{}`,
           }}
         />
+        {/* CSS variables for font fallbacks */}
+        <style>{`
+          :root {
+            --font-inter: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            --font-geist-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            --font-geist-mono: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+          }
+        `}</style>
       </head>
-      <body className={`${inter.variable} ${geistSans.variable} ${geistMono.variable} antialiased`}>
+      <body className="antialiased">
         <ThemeProvider>
           <LanguageProvider>{children}</LanguageProvider>
         </ThemeProvider>

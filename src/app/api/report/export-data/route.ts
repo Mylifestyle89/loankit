@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { toHttpError } from "@/core/errors/app-error";
 import { reportService } from "@/services/report.service";
+import { exportCustomersToXlsx } from "@/services/report/customer-xlsx-io.service";
 
 export async function GET() {
   try {
@@ -19,10 +20,36 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
-    const body = (await req.json()) as { customerIds?: string[]; templateIds?: string[] };
+    const body = (await req.json()) as {
+      customerIds?: string[];
+      templateIds?: string[];
+      format?: "json" | "xlsx";
+      includeRelations?: boolean;
+    };
+
+    const format = body.format ?? "json";
+    const includeRelations = body.includeRelations ?? true;
+
+    if (format === "xlsx") {
+      // XLSX export: fetch full data then convert to workbook
+      const data = await reportService.exportData({
+        customerIds: Array.isArray(body.customerIds) ? body.customerIds : [],
+        templateIds: Array.isArray(body.templateIds) ? body.templateIds : [],
+      });
+      const xlsxBuffer = exportCustomersToXlsx(data.customers);
+      return new NextResponse(new Uint8Array(xlsxBuffer), {
+        headers: {
+          "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+          "Content-Disposition": `attachment; filename="data_export_${Date.now()}.xlsx"`,
+        },
+      });
+    }
+
+    // JSON export (streaming)
     const stream = await reportService.exportDataStream({
       customerIds: Array.isArray(body.customerIds) ? body.customerIds : [],
       templateIds: Array.isArray(body.templateIds) ? body.templateIds : [],
+      includeRelations,
     });
     return new NextResponse(stream, {
       headers: {
