@@ -178,16 +178,29 @@ function wrapTableRowsWithLoop(xml, prefix) {
 
   console.log(`Found ${rows.length} row(s) with [${prefix}.xxx] placeholders`);
 
-  // For each matched row, wrap it with loop paragraph tags
-  // We need to add a paragraph before the row with [#prefix] and after with [/prefix]
-  // In docxtemplater, loop tags in tables should be in their own table rows
+  // Inject loop open/close tags INSIDE the data row's first/last cells
+  // This avoids extra empty rows that paragraphLoop creates for standalone loop-tag rows
   for (let i = rows.length - 1; i >= 0; i--) {
     const row = rows[i];
-    const loopOpenRow = createLoopTagRow(xml, row.content, `[#${prefix}]`);
-    const loopCloseRow = createLoopTagRow(xml, row.content, `[/${prefix}]`);
+    let newRow = row.content;
+
+    // Insert [#prefix] as first paragraph in first <w:tc>
+    newRow = newRow.replace(
+      /<w:tc\b[^>]*>/,
+      (match) => `${match}<w:p><w:r><w:t xml:space="preserve">[#${prefix}]</w:t></w:r></w:p>`,
+    );
+
+    // Insert [/prefix] as last paragraph in last <w:tc> (before </w:tc>)
+    const lastTcClose = newRow.lastIndexOf("</w:tc>");
+    if (lastTcClose >= 0) {
+      newRow =
+        newRow.substring(0, lastTcClose) +
+        `<w:p><w:r><w:t xml:space="preserve">[/${prefix}]</w:t></w:r></w:p>` +
+        newRow.substring(lastTcClose);
+    }
 
     const insertAfterPos = row.index + row.content.length;
-    modified = modified.substring(0, row.index) + loopOpenRow + row.content + loopCloseRow + modified.substring(insertAfterPos);
+    modified = modified.substring(0, row.index) + newRow + modified.substring(insertAfterPos);
   }
 
   return modified;
