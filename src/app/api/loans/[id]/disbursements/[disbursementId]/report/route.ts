@@ -30,7 +30,9 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
       },
     });
   } catch (error) {
+    console.error("[Report API] Error:", error);
     const httpError = toHttpError(error, "Failed to generate report.");
-    return NextResponse.json({ ok: false, error: httpError.message }, { status: httpError.status });
+    const detail = error instanceof Error ? error.message : String(error);
+    return NextResponse.json({ ok: false, error: httpError.message, detail }, { status: httpError.status });
   }
 }
