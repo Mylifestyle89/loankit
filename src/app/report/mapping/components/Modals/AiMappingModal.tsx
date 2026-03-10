@@ -560,7 +560,7 @@ export function AiMappingModal({
 
           {/* Modal panel – slide up + glassmorphism */}
           <motion.div
-            className="relative flex max-h-[92vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl border border-slate-200/50 bg-white/70 shadow-xl backdrop-blur-xl dark:border-white/[0.07] dark:bg-[#141414]/90"
+            className="relative flex max-h-[92vh] w-full max-w-[95vw] md:max-w-4xl flex-col overflow-hidden rounded-2xl border border-slate-200/50 bg-white/70 shadow-xl backdrop-blur-xl dark:border-white/[0.07] dark:bg-[#141414]/90"
             initial={{ opacity: 0, y: 32, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 24, scale: 0.98 }}

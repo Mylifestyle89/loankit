@@ -64,13 +64,13 @@ export function MappingSidebar({
             {isOpen ? (
               <motion.div
                 initial={{ x: "100%" }}
-                animate={{ x: 0, width: 380 }}
+                animate={{ x: 0 }}
                 exit={{ x: "100%" }}
                 transition={{ type: "spring", damping: 28, stiffness: 300 }}
                 role="dialog"
                 aria-modal="true"
                 aria-label="Tùy chọn khác"
-                className="fixed inset-y-0 right-0 z-[101] flex h-screen flex-col border-l border-slate-200/60 dark:border-white/[0.07] bg-slate-50/80 dark:bg-[#141414]/90 shadow-2xl backdrop-blur-xl"
+                className="fixed inset-y-0 right-0 z-[101] flex h-screen w-full max-w-[380px] flex-col border-l border-slate-200/60 dark:border-white/[0.07] bg-slate-50/80 dark:bg-[#141414]/90 shadow-2xl backdrop-blur-xl"
               >
                 {/* Header */}
                 <div className="flex shrink-0 items-center justify-between border-b border-slate-200/60 dark:border-white/[0.07] px-4 py-3">

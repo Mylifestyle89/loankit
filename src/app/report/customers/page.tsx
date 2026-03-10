@@ -265,8 +265,8 @@ export default function CustomersPage() {
       )}
 
       {exportModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-          <div className="w-full max-w-3xl rounded-2xl bg-white dark:bg-[#161616] shadow-xl flex flex-col h-[80vh]">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4">
+          <div className="w-full max-w-[95vw] md:max-w-3xl rounded-2xl bg-white dark:bg-[#161616] shadow-xl flex flex-col h-[80vh]">
             <div className="flex items-center justify-between border-b border-zinc-100 dark:border-white/[0.07] px-6 py-4">
               <h3 className="text-lg font-semibold bg-gradient-to-r from-violet-700 to-fuchsia-600 dark:from-violet-400 dark:to-fuchsia-400 bg-clip-text text-transparent">Tùy chọn xuất dữ liệu</h3>
               <button
