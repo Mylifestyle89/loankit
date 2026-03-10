@@ -8,6 +8,11 @@ type PrismaGlobal = {
 
 const globalForPrisma = globalThis as unknown as PrismaGlobal;
 
+function sanitizeEnv(value?: string): string | undefined {
+  // Vercel env values can occasionally include escaped newlines like "\n".
+  return value?.replace(/\\r/g, "").replace(/\\n/g, "").trim();
+}
+
 function resolveSqliteUrl(rawUrl?: string): string {
   const fallbackPath = path.resolve(process.cwd(), "dev.db");
   const value = rawUrl?.trim();
@@ -50,10 +55,10 @@ function createPrismaClient(): PrismaClient {
 }
 
 function getPrismaConfig(): { key: string; factory: () => PrismaClient } {
-  const configuredDbUrl = process.env.DATABASE_URL?.trim();
-  const useTursoExplicitly = process.env.PRISMA_USE_TURSO === "true";
-  const tursoUrl = process.env.TURSO_DATABASE_URL?.trim();
-  const tursoToken = process.env.TURSO_AUTH_TOKEN?.trim();
+  const configuredDbUrl = sanitizeEnv(process.env.DATABASE_URL);
+  const useTursoExplicitly = sanitizeEnv(process.env.PRISMA_USE_TURSO)?.toLowerCase() === "true";
+  const tursoUrl = sanitizeEnv(process.env.TURSO_DATABASE_URL);
+  const tursoToken = sanitizeEnv(process.env.TURSO_AUTH_TOKEN);
   const dbUrlLooksLikeLibsql =
     configuredDbUrl?.startsWith("libsql://") ||
     configuredDbUrl?.startsWith("http://") ||

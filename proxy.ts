@@ -15,13 +15,6 @@ export function proxy(request: NextRequest) {
 
   // Skip public paths
   if (PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(p + "/"))) {
-    // Redirect authenticated users away from /login
-    if (pathname === "/login") {
-      const sessionCookie = getSessionCookie(request);
-      if (sessionCookie) {
-        return NextResponse.redirect(new URL("/report/mapping", request.url));
-      }
-    }
     return NextResponse.next();
   }
 
