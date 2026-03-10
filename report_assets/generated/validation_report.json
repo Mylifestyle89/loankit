@@ -1,0 +1,73 @@
+{
+  "is_valid": false,
+  "errors_count": 11,
+  "warnings_count": 0,
+  "issues": [
+    {
+      "type": "ERROR",
+      "code": "REQUIRED_MISSING",
+      "field": "A.general.customer_name",
+      "message": "Required field is missing: A.general.customer_name"
+    },
+    {
+      "type": "ERROR",
+      "code": "REQUIRED_MISSING",
+      "field": "A.general.customer_code",
+      "message": "Required field is missing: A.general.customer_code"
+    },
+    {
+      "type": "ERROR",
+      "code": "REQUIRED_MISSING",
+      "field": "A.general.address",
+      "message": "Required field is missing: A.general.address"
+    },
+    {
+      "type": "ERROR",
+      "code": "REQUIRED_MISSING",
+      "field": "A.general.main_business",
+      "message": "Required field is missing: A.general.main_business"
+    },
+    {
+      "type": "ERROR",
+      "code": "REQUIRED_MISSING",
+      "field": "A.general.owner_equity_latest",
+      "message": "Required field is missing: A.general.owner_equity_latest"
+    },
+    {
+      "type": "ERROR",
+      "code": "REQUIRED_MISSING",
+      "field": "A.credit.debt_group_latest",
+      "message": "Required field is missing: A.credit.debt_group_latest"
+    },
+    {
+      "type": "ERROR",
+      "code": "REQUIRED_MISSING",
+      "field": "A.proposal.loan_purpose",
+      "message": "Required field is missing: A.proposal.loan_purpose"
+    },
+    {
+      "type": "ERROR",
+      "code": "REQUIRED_MISSING",
+      "field": "A.proposal.loan_amount_agribank",
+      "message": "Required field is missing: A.proposal.loan_amount_agribank"
+    },
+    {
+      "type": "ERROR",
+      "code": "REQUIRED_MISSING",
+      "field": "A.proposal.total_credit_demand",
+      "message": "Required field is missing: A.proposal.total_credit_demand"
+    },
+    {
+      "type": "ERROR",
+      "code": "REQUIRED_MISSING",
+      "field": "B.plan.hmtd.recommended_limit",
+      "message": "Required field is missing: B.plan.hmtd.recommended_limit"
+    },
+    {
+      "type": "ERROR",
+      "code": "REQUIRED_MISSING",
+      "field": "A.collateral.total_collateral_value",
+      "message": "Required field is missing: A.collateral.total_collateral_value"
+    }
+  ]
+}

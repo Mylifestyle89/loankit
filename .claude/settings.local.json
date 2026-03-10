@@ -38,7 +38,8 @@
       "Bash(npx vercel project ls)",
       "Bash(npx vercel ls --prod)",
       "Bash(npx vercel logs cong-cu-tao-bcdxcv-uplhzcshh-mylifestyle89s-projects.vercel.app --output raw)",
-      "Bash(git show:*)"
+      "Bash(git show:*)",
+      "Bash(npx vercel:*)"
     ]
   }
 }

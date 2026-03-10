@@ -958,3 +958,7 @@
 {"ts":"2026-03-10T14:40:56.431Z","hook":"scout-block","tool":"Bash","dur":7,"status":"ok","exit":0,"error":""}
 {"ts":"2026-03-10T14:41:23.018Z","hook":"scout-block","tool":"Bash","dur":8,"status":"ok","exit":0,"error":""}
 {"ts":"2026-03-10T14:41:28.754Z","hook":"scout-block","tool":"Bash","dur":8,"status":"ok","exit":0,"error":""}
+{"ts":"2026-03-10T15:08:17.152Z","hook":"scout-block","tool":"Bash","dur":4,"status":"ok","exit":0,"error":""}
+{"ts":"2026-03-10T15:08:47.814Z","hook":"scout-block","tool":"Bash","dur":1,"status":"ok","exit":0,"error":""}
+{"ts":"2026-03-10T15:08:57.041Z","hook":"scout-block","tool":"Bash","dur":1,"status":"ok","exit":0,"error":""}
+{"ts":"2026-03-10T15:18:09.866Z","hook":"scout-block","tool":"Glob","dur":7,"status":"block","exit":2,"error":""}

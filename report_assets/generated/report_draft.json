@@ -1,0 +1,434 @@
+{
+  "meta": {
+    "generated_at_utc": "2026-03-09T02:09:18.672661+00:00",
+    "mapping_file": "C:\\Users\\Quan\\cong-cu-tao-bcdxcv\\report_assets\\config\\mapping_master.json",
+    "summary": {
+      "total_fields": 46,
+      "resolved_fields": 0,
+      "unresolved_fields": 44,
+      "declared_missing_fields": 2
+    }
+  },
+  "report_draft": {},
+  "report_draft_flat": {},
+  "unresolved_fields": [
+    "A.general.customer_name",
+    "A.general.customer_code",
+    "A.general.address",
+    "A.general.main_business",
+    "A.general.charter_capital",
+    "A.general.legal_representative_name",
+    "A.general.legal_representative_title",
+    "A.general.organization_type",
+    "A.general.total_assets_latest",
+    "A.general.owner_equity_latest",
+    "A.credit.current_credit_relationship",
+    "A.credit.outstanding_agri",
+    "A.credit.outstanding_other_banks",
+    "A.credit.debt_group_latest",
+    "A.credit.rating_agribank",
+    "A.credit.rating_cic",
+    "A.proposal.loan_purpose",
+    "A.proposal.loan_tenor_or_limit_term",
+    "A.proposal.loan_amount_agribank",
+    "A.proposal.total_credit_demand",
+    "A.management.executive_team",
+    "A.management.major_shareholders",
+    "A.management.related_parties",
+    "A.economic_docs.invoices",
+    "A.economic_docs.payment_beneficiaries",
+    "A.economic_docs.invoice_total_for_disbursement",
+    "B.financial.balance_sheet.short_term_assets",
+    "B.financial.balance_sheet.long_term_assets",
+    "B.financial.balance_sheet.short_term_liabilities",
+    "B.financial.income_statement.revenue",
+    "B.financial.income_statement.gross_profit",
+    "B.financial.income_statement.profit_before_tax",
+    "B.financial.ratios.current_ratio",
+    "B.financial.ratios.quick_ratio",
+    "B.financial.ratios.debt_to_equity",
+    "B.financial.ratios.roe",
+    "B.plan.hmtd.working_capital_plan",
+    "B.plan.hmtd.counterpart_capital",
+    "B.plan.hmtd.other_bank_loans",
+    "B.plan.hmtd.recommended_limit",
+    "A.collateral.assets",
+    "A.collateral.total_collateral_value",
+    "A.collateral.secured_obligation_total",
+    "A.collateral.insurance_status"
+  ],
+  "declared_missing_fields": [
+    "B.risk.market_input_output_assessment",
+    "B.risk.mitigation_plan"
+  ],
+  "resolution_log": [
+    {
+      "field": "A.general.customer_name",
+      "resolved": false,
+      "status": "READY",
+      "value_raw": null,
+      "value_normalized": null,
+      "resolved_from": null
+    },
+    {
+      "field": "A.general.customer_code",
+      "resolved": false,
+      "status": "READY",
+      "value_raw": null,
+      "value_normalized": null,
+      "resolved_from": null
+    },
+    {
+      "field": "A.general.address",
+      "resolved": false,
+      "status": "READY",
+      "value_raw": null,
+      "value_normalized": null,
+      "resolved_from": null
+    },
+    {
+      "field": "A.general.main_business",
+      "resolved": false,
+      "status": "READY",
+      "value_raw": null,
+      "value_normalized": null,
+      "resolved_from": null
+    },
+    {
+      "field": "A.general.charter_capital",
+      "resolved": false,
+      "status": "READY_TRANSFORM",
+      "value_raw": null,
+      "value_normalized": null,
+      "resolved_from": null
+    },
+    {
+      "field": "A.general.legal_representative_name",
+      "resolved": false,
+      "status": "READY",
+      "value_raw": null,
+      "value_normalized": null,
+      "resolved_from": null
+    },
+    {
+      "field": "A.general.legal_representative_title",
+      "resolved": false,
+      "status": "READY",
+      "value_raw": null,
+      "value_normalized": null,
+      "resolved_from": null
+    },
+    {
+      "field": "A.general.organization_type",
+      "resolved": false,
+      "status": "READY",
+      "value_raw": null,
+      "value_normalized": null,
+      "resolved_from": null
+    },
+    {
+      "field": "A.general.total_assets_latest",
+      "resolved": false,
+      "status": "READY_TRANSFORM",
+      "value_raw": null,
+      "value_normalized": null,
+      "resolved_from": null
+    },
+    {
+      "field": "A.general.owner_equity_latest",
+      "resolved": false,
+      "status": "READY_TRANSFORM",
+      "value_raw": null,
+      "value_normalized": null,
+      "resolved_from": null
+    },
+    {
+      "field": "A.credit.current_credit_relationship",
+      "resolved": false,
+      "status": "READY",
+      "value_raw": null,
+      "value_normalized": null,
+      "resolved_from": null
+    },
+    {
+      "field": "A.credit.outstanding_agri",
+      "resolved": false,
+      "status": "READY_TRANSFORM",
+      "value_raw": null,
+      "value_normalized": null,
+      "resolved_from": null
+    },
+    {
+      "field": "A.credit.outstanding_other_banks",
+      "resolved": false,
+      "status": "READY_TRANSFORM",
+      "value_raw": null,
+      "value_normalized": null,
+      "resolved_from": null
+    },
+    {
+      "field": "A.credit.debt_group_latest",
+      "resolved": false,
+      "status": "READY",
+      "value_raw": null,
+      "value_normalized": null,
+      "resolved_from": null
+    },
+    {
+      "field": "A.credit.rating_agribank",
+      "resolved": false,
+      "status": "READY",
+      "value_raw": null,
+      "value_normalized": null,
+      "resolved_from": null
+    },
+    {
+      "field": "A.credit.rating_cic",
+      "resolved": false,
+      "status": "READY",
+      "value_raw": null,
+      "value_normalized": null,
+      "resolved_from": null
+    },
+    {
+      "field": "A.proposal.loan_purpose",
+      "resolved": false,
+      "status": "READY",
+      "value_raw": null,
+      "value_normalized": null,
+      "resolved_from": null
+    },
+    {
+      "field": "A.proposal.loan_tenor_or_limit_term",
+      "resolved": false,
+      "status": "READY_TRANSFORM",
+      "value_raw": null,
+      "value_normalized": null,
+      "resolved_from": null
+    },
+    {
+      "field": "A.proposal.loan_amount_agribank",
+      "resolved": false,
+      "status": "READY_TRANSFORM",
+      "value_raw": null,
+      "value_normalized": null,
+      "resolved_from": null
+    },
+    {
+      "field": "A.proposal.total_credit_demand",
+      "resolved": false,
+      "status": "READY_TRANSFORM",
+      "value_raw": null,
+      "value_normalized": null,
+      "resolved_from": null
+    },
+    {
+      "field": "A.management.executive_team",
+      "resolved": false,
+      "status": "READY",
+      "value_raw": null,
+      "value_normalized": null,
+      "resolved_from": null
+    },
+    {
+      "field": "A.management.major_shareholders",
+      "resolved": false,
+      "status": "READY",
+      "value_raw": null,
+      "value_normalized": null,
+      "resolved_from": null
+    },
+    {
+      "field": "A.management.related_parties",
+      "resolved": false,
+      "status": "PARTIAL",
+      "value_raw": null,
+      "value_normalized": null,
+      "resolved_from": null
+    },
+    {
+      "field": "A.economic_docs.invoices",
+      "resolved": false,
+      "status": "READY",
+      "value_raw": null,
+      "value_normalized": null,
+      "resolved_from": null
+    },
+    {
+      "field": "A.economic_docs.payment_beneficiaries",
+      "resolved": false,
+      "status": "READY",
+      "value_raw": null,
+      "value_normalized": null,
+      "resolved_from": null
+    },
+    {
+      "field": "A.economic_docs.invoice_total_for_disbursement",
+      "resolved": false,
+      "status": "READY_TRANSFORM",
+      "value_raw": null,
+      "value_normalized": null,
+      "resolved_from": null
+    },
+    {
+      "field": "B.financial.balance_sheet.short_term_assets",
+      "resolved": false,
+      "status": "READY_TRANSFORM",
+      "value_raw": null,
+      "value_normalized": null,
+      "resolved_from": null
+    },
+    {
+      "field": "B.financial.balance_sheet.long_term_assets",
+      "resolved": false,
+      "status": "READY_TRANSFORM",
+      "value_raw": null,
+      "value_normalized": null,
+      "resolved_from": null
+    },
+    {
+      "field": "B.financial.balance_sheet.short_term_liabilities",
+      "resolved": false,
+      "status": "READY_TRANSFORM",
+      "value_raw": null,
+      "value_normalized": null,
+      "resolved_from": null
+    },
+    {
+      "field": "B.financial.income_statement.revenue",
+      "resolved": false,
+      "status": "READY_TRANSFORM",
+      "value_raw": null,
+      "value_normalized": null,
+      "resolved_from": null
+    },
+    {
+      "field": "B.financial.income_statement.gross_profit",
+      "resolved": false,
+      "status": "READY_TRANSFORM",
+      "value_raw": null,
+      "value_normalized": null,
+      "resolved_from": null
+    },
+    {
+      "field": "B.financial.income_statement.profit_before_tax",
+      "resolved": false,
+      "status": "READY_TRANSFORM",
+      "value_raw": null,
+      "value_normalized": null,
+      "resolved_from": null
+    },
+    {
+      "field": "B.financial.ratios.current_ratio",
+      "resolved": false,
+      "status": "READY_TRANSFORM",
+      "value_raw": null,
+      "value_normalized": null,
+      "resolved_from": null
+    },
+    {
+      "field": "B.financial.ratios.quick_ratio",
+      "resolved": false,
+      "status": "READY_TRANSFORM",
+      "value_raw": null,
+      "value_normalized": null,
+      "resolved_from": null
+    },
+    {
+      "field": "B.financial.ratios.debt_to_equity",
+      "resolved": false,
+      "status": "READY_TRANSFORM",
+      "value_raw": null,
+      "value_normalized": null,
+      "resolved_from": null
+    },
+    {
+      "field": "B.financial.ratios.roe",
+      "resolved": false,
+      "status": "READY_TRANSFORM",
+      "value_raw": null,
+      "value_normalized": null,
+      "resolved_from": null
+    },
+    {
+      "field": "B.plan.hmtd.working_capital_plan",
+      "resolved": false,
+      "status": "READY_TRANSFORM",
+      "value_raw": null,
+      "value_normalized": null,
+      "resolved_from": null
+    },
+    {
+      "field": "B.plan.hmtd.counterpart_capital",
+      "resolved": false,
+      "status": "READY_TRANSFORM",
+      "value_raw": null,
+      "value_normalized": null,
+      "resolved_from": null
+    },
+    {
+      "field": "B.plan.hmtd.other_bank_loans",
+      "resolved": false,
+      "status": "READY_TRANSFORM",
+      "value_raw": null,
+      "value_normalized": null,
+      "resolved_from": null
+    },
+    {
+      "field": "B.plan.hmtd.recommended_limit",
+      "resolved": false,
+      "status": "READY_TRANSFORM",
+      "value_raw": null,
+      "value_normalized": null,
+      "resolved_from": null
+    },
+    {
+      "field": "A.collateral.assets",
+      "resolved": false,
+      "status": "READY",
+      "value_raw": null,
+      "value_normalized": null,
+      "resolved_from": null
+    },
+    {
+      "field": "A.collateral.total_collateral_value",
+      "resolved": false,
+      "status": "READY_TRANSFORM",
+      "value_raw": null,
+      "value_normalized": null,
+      "resolved_from": null
+    },
+    {
+      "field": "A.collateral.secured_obligation_total",
+      "resolved": false,
+      "status": "READY_TRANSFORM",
+      "value_raw": null,
+      "value_normalized": null,
+      "resolved_from": null
+    },
+    {
+      "field": "A.collateral.insurance_status",
+      "resolved": false,
+      "status": "READY",
+      "value_raw": null,
+      "value_normalized": null,
+      "resolved_from": null
+    },
+    {
+      "field": "B.risk.market_input_output_assessment",
+      "resolved": false,
+      "status": "MISSING",
+      "value_raw": null,
+      "value_normalized": null,
+      "resolved_from": null
+    },
+    {
+      "field": "B.risk.mitigation_plan",
+      "resolved": false,
+      "status": "MISSING",
+      "value_raw": null,
+      "value_normalized": null,
+      "resolved_from": null
+    }
+  ]
+}
