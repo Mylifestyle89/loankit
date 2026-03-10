@@ -417,7 +417,7 @@ export function FinancialAnalysisModal({
       aria-label="Phân tích Tài chính BCTC"
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
     >
-      <div className="flex w-full max-w-3xl flex-col rounded-2xl bg-white dark:bg-[#141414] shadow-2xl max-h-[92vh]">
+      <div className="flex w-full max-w-[95vw] md:max-w-3xl flex-col rounded-2xl bg-white dark:bg-[#141414] shadow-2xl max-h-[92vh]">
 
         {/* Header */}
         <div className="flex flex-shrink-0 items-center justify-between border-b border-slate-200 dark:border-white/[0.07] px-5 py-3.5">

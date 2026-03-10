@@ -255,7 +255,7 @@ export function DisbursementFormModal({ loanId, loanAmount = 0, editDisbursement
 
   return (
     <div ref={backdropRef} onClick={(e) => { if (e.target === backdropRef.current) onClose(); }} className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-      <div className="w-full max-w-3xl max-h-[90vh] flex flex-col rounded-2xl bg-white dark:bg-[#141414]/90 shadow-xl">
+      <div className="w-full max-w-[95vw] md:max-w-3xl max-h-[90vh] flex flex-col rounded-2xl bg-white dark:bg-[#141414]/90 shadow-xl">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-zinc-200 dark:border-white/[0.07] px-6 py-4 shrink-0">
           <h3 className="text-lg font-semibold">{isEdit ? (t("disbursements.edit") ?? "Sửa giải ngân") : (t("disbursements.add") ?? "Thêm giải ngân")}</h3>
