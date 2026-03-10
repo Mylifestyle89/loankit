@@ -287,7 +287,17 @@ export const docxEngine = {
       throw new DataPlaceholderMismatchError(templatePath, details);
     }
 
-    return (doc.getZip() as PizZip).generate({
+    // Fix invalid self-closing <w:p/> tags left after loop tag removal
+    const docZip = doc.getZip() as PizZip;
+    const docXml = docZip.file("word/document.xml");
+    if (docXml) {
+      const xmlStr = docXml.asText();
+      if (xmlStr.includes("<w:p/>")) {
+        docZip.file("word/document.xml", xmlStr.replace(/<w:p\/>/g, ""));
+      }
+    }
+
+    return docZip.generate({
       type: "nodebuffer",
       compression: "DEFLATE",
     });
