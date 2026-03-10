@@ -46,8 +46,18 @@ export default function ReportLayout({ children }: { children: React.ReactNode }
   const isMappingPage = pathname.startsWith("/report/mapping");
   const [hovered, setHovered] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const { data: session } = authClient.useSession();
   useCustomerData(); // Populate shared customer store once for all tabs
+
+  // Detect mobile viewport (<768px) to avoid Framer Motion inline style conflicts
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 767px)");
+    setIsMobile(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
 
   // Close mobile sidebar on route change
   useEffect(() => { setMobileOpen(false); }, [pathname]);
@@ -104,12 +114,16 @@ export default function ReportLayout({ children }: { children: React.ReactNode }
 
       {/* ── Sidebar ── */}
       <motion.aside
-        onMouseEnter={() => setHovered(true)}
-        onMouseLeave={() => setHovered(false)}
-        animate={{ width: expanded ? SIDEBAR_EXPANDED : SIDEBAR_COLLAPSED }}
+        onMouseEnter={() => !isMobile && setHovered(true)}
+        onMouseLeave={() => !isMobile && setHovered(false)}
+        animate={
+          isMobile
+            ? { x: mobileOpen ? 0 : "-100%", width: SIDEBAR_EXPANDED }
+            : { width: expanded ? SIDEBAR_EXPANDED : SIDEBAR_COLLAPSED }
+        }
         transition={sidebarSpring}
-        className={`fixed inset-y-0 left-0 z-40 flex flex-col overflow-hidden border-r border-slate-200/50 bg-white/90 backdrop-blur-xl dark:border-white/[0.08] dark:bg-[#141414]/90 transition-transform duration-200 max-md:z-50 max-md:w-[240px] max-md:shadow-2xl ${mobileOpen ? "max-md:translate-x-0" : "max-md:-translate-x-full"}`}
-        style={{ willChange: "width" }}
+        className="fixed inset-y-0 left-0 z-40 flex flex-col overflow-hidden border-r border-slate-200/50 bg-white/90 backdrop-blur-xl dark:border-white/[0.08] dark:bg-[#141414]/90 max-md:z-50 max-md:shadow-2xl"
+        style={{ willChange: isMobile ? "transform" : "width" }}
       >
         {/* Shadow when expanded — pure CSS instead of AnimatePresence */}
         <div
