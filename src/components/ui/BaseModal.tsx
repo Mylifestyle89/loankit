@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { useEffect, type ReactNode } from "react";
+import { type ReactNode } from "react";
 
 type BaseModalProps = {
   open: boolean;
@@ -20,15 +20,6 @@ export function BaseModal({
   footer,
   maxWidthClassName = "max-w-2xl",
 }: BaseModalProps) {
-  useEffect(() => {
-    if (!open) return;
-    const handleEsc = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", handleEsc);
-    return () => window.removeEventListener("keydown", handleEsc);
-  }, [onClose, open]);
-
   return (
     <AnimatePresence>
       {open ? (
@@ -38,13 +29,13 @@ export function BaseModal({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
         >
-          <motion.button
-            aria-label="Close modal backdrop"
+          {/* Backdrop - click outside disabled to prevent accidental data loss */}
+          <motion.div
+            aria-hidden="true"
             className="absolute inset-0 bg-slate-900/25 backdrop-blur-sm dark:bg-black/50"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            onClick={onClose}
           />
           <motion.div
             role="dialog"
