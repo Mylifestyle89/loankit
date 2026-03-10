@@ -2,9 +2,6 @@
  * Disbursement report service — generates DOCX reports from template + DB data.
  * Template config: ./disbursement-report-template-config.ts
  */
-import fs from "node:fs/promises";
-import path from "node:path";
-
 import JSZip from "jszip";
 
 import { NotFoundError } from "@/core/errors/app-error";
@@ -213,17 +210,8 @@ async function generateSingleDocx(
   data: Record<string, unknown>,
   label: string,
 ): Promise<{ buffer: Buffer; filename: string }> {
-  const tmpDir = path.join(process.cwd(), "report_assets", "generated");
-  await fs.mkdir(tmpDir, { recursive: true });
-
-  const ts = Date.now();
-  const tmpFile = path.join(tmpDir, `report-${ts}.docx`);
-  const tmpRel = path.relative(process.cwd(), tmpFile).replaceAll("\\", "/");
-
-  await docxEngine.generateDocx(templatePath, data, tmpRel);
-
-  const buffer = await fs.readFile(tmpFile);
-  await fs.unlink(tmpFile).catch(() => {});
+  // Use in-memory buffer generation — no filesystem write (Vercel-safe)
+  const buffer = await docxEngine.generateDocxBuffer(templatePath, data);
 
   const customerName = String(data["Tên khách hàng"] ?? "Report");
   const dateStr = fmtDateCompact(new Date());

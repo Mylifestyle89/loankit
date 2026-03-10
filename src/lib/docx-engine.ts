@@ -232,6 +232,67 @@ export const docxEngine = {
     await fs.writeFile(outputAbs, buffer);
   },
 
+  /** Generate DOCX and return Buffer directly — no filesystem write (Vercel-safe) */
+  async generateDocxBuffer<TFlat extends FlatTemplateData>(
+    templatePath: string,
+    data: DocxTemplateData<TFlat>,
+  ): Promise<Buffer> {
+    const templateAbs = resolveWorkspacePath(templatePath);
+
+    let templateBuffer: Buffer;
+    try {
+      templateBuffer = await fs.readFile(templateAbs);
+    } catch (error) {
+      if (error && typeof error === "object" && "code" in error && (error as { code?: string }).code === "ENOENT") {
+        throw new TemplateNotFoundError(templatePath);
+      }
+      throw error;
+    }
+
+    let zip: PizZip;
+    try {
+      zip = new PizZip(templateBuffer);
+    } catch (error) {
+      throw new CorruptedTemplateError(templatePath, error);
+    }
+
+    const renderData = toEngineData(data);
+    let doc: InstanceType<typeof Docxtemplater>;
+    try {
+      doc = new Docxtemplater(zip, {
+        paragraphLoop: true,
+        linebreaks: true,
+        delimiters: { start: "[", end: "]" },
+        nullGetter() {
+          return "";
+        },
+      });
+    } catch (error) {
+      const details =
+        error && typeof error === "object" && "properties" in error
+          ? (error as { properties?: { errors?: unknown } }).properties?.errors ?? error
+          : error;
+      console.error("[DOCX Engine] Docxtemplater init error:", details);
+      throw new DataPlaceholderMismatchError(templatePath, details);
+    }
+
+    try {
+      doc.render(renderData);
+    } catch (error) {
+      const details =
+        error && typeof error === "object" && "properties" in error
+          ? (error as { properties?: { errors?: unknown } }).properties?.errors ?? error
+          : error;
+      console.error("[DOCX Engine] Render error:", details);
+      throw new DataPlaceholderMismatchError(templatePath, details);
+    }
+
+    return (doc.getZip() as PizZip).generate({
+      type: "nodebuffer",
+      compression: "DEFLATE",
+    });
+  },
+
   async writeJson(relPath: string, data: unknown): Promise<void> {
     const abs = resolveWorkspacePath(relPath);
     await ensureDir(path.dirname(abs));

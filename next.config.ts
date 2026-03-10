@@ -31,6 +31,11 @@ const nextConfig: NextConfig = {
     "@libsql/client",
     "@prisma/adapter-libsql",
   ],
+  outputFileTracingIncludes: {
+    "/api/loans/\\[id\\]/disbursements/\\[disbursementId\\]/report": [
+      "./report_assets/Disbursement templates/**",
+    ],
+  },
   outputFileTracingExcludes: {
     "/proxy": ["./node_modules/better-sqlite3/**", "./node_modules/@prisma/**", "./prisma/**"],
   },
