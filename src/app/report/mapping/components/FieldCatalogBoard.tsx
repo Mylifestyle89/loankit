@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { Plus, Pencil, Trash2, ChevronUp, ChevronDown, ChevronsUp, ChevronsDown, Layers } from "lucide-react";
 import { motion } from "framer-motion";
 import { DndContext, closestCenter, type DragEndEvent, type SensorDescriptor, type SensorOptions } from "@dnd-kit/core";
@@ -53,7 +54,7 @@ type FieldCatalogBoardProps = {
   onDeclineOcrSuggestion: (fieldKey: string) => void;
 };
 
-export function FieldCatalogBoard({
+export const FieldCatalogBoard = memo(function FieldCatalogBoard({
   t,
   sensors,
   onDragEnd,
@@ -94,7 +95,7 @@ export function FieldCatalogBoard({
   return (
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd} modifiers={[restrictToVerticalAxis]}>
       <motion.div
-        key={fieldCatalog.map((f) => f.field_key).join("|")}
+        key={fieldCatalog.map((f) => f.field_key).join(",")}
         initial={{ opacity: 0.35 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.22, ease: "easeOut" }}
@@ -391,4 +392,4 @@ export function FieldCatalogBoard({
       </motion.div>
     </DndContext>
   );
-}
+});

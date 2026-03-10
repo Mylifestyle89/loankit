@@ -16,7 +16,29 @@
       "Bash(npm install jsonwebtoken)",
       "Bash(npm install -D @types/jsonwebtoken)",
       "Bash(docker run -d --name onlyoffice -p 8080:80 onlyoffice/documentserver)",
-      "Bash(docker exec onlyoffice bash -c 'cat /etc/onlyoffice/documentserver/local.json 2>/dev/null | python3 -m json.tool 2>/dev/null || cat /etc/onlyoffice/documentserver/local.json 2>/dev/null || echo \"\"File not found\"\"')"
+      "Bash(docker exec onlyoffice bash -c 'cat /etc/onlyoffice/documentserver/local.json 2>/dev/null | python3 -m json.tool 2>/dev/null || cat /etc/onlyoffice/documentserver/local.json 2>/dev/null || echo \"\"File not found\"\"')",
+      "Bash(powershell -Command \"[math]::Round\\(\\(Get-ChildItem ''c:\\\\Users\\\\Quan\\\\cong-cu-tao-bcdxcv\\\\.git'' -Recurse -File -ErrorAction SilentlyContinue | Measure-Object -Property Length -Sum\\).Sum/1MB,1\\)\")",
+      "Bash(powershell -Command \"[math]::Round\\(\\(Get-ChildItem ''c:\\\\Users\\\\Quan\\\\cong-cu-tao-bcdxcv\\\\.next'' -Recurse -File -ErrorAction SilentlyContinue | Measure-Object -Property Length -Sum\\).Sum/1MB,1\\)\")",
+      "WebSearch",
+      "Bash(npx tsc --noEmit --project tsconfig.json)",
+      "Bash(ls \"c:\\\\Users\\\\Quan\\\\cong-cu-tao-bcdxcv\\\\src\\\\app\\\\report\\\\mapping\\\\components\"\" 2>/dev/null && echo \"---\" && ls \"c:UsersQuancong-cu-tao-bcdxcvsrcappreportmappingcomponentssidebar\" 2>/dev/null || echo \"sidebar dir not found \")",
+      "Bash(wc -l src/app/report/mapping/components/MappingSidebar.tsx src/app/report/mapping/components/MappingVisualToolbar.tsx src/app/report/mapping/components/MappingHeader.tsx src/app/report/mapping/components/sidebar/*.tsx src/app/report/mapping/components/Modals/DocxMergeModal.tsx src/app/report/mapping/stores/use-ui-store.ts)",
+      "Bash(where turso)",
+      "Bash(npm install @libsql/client @prisma/adapter-libsql)",
+      "Bash(vercel whoami)",
+      "Bash(vercel deploy --prod)",
+      "WebFetch(domain:cong-cu-tao-bcdxcv.vercel.app)",
+      "Bash(npx next build)",
+      "Bash(git commit:*)",
+      "Bash(npx vercel ls)",
+      "Bash(git push)",
+      "Bash(npx vercel --prod)",
+      "Bash(npx vercel --prod --force)",
+      "Bash(curl -sv -X POST \"https://cong-cu-tao-bcdxcv.vercel.app/api/auth/sign-in/email\" -H \"Content-Type: application/json\" -d '{\"\"email\"\":\"\"admin@company.com\"\",\"\"password\"\":\"\"changeme123!\"\"}')",
+      "Bash(npx vercel project ls)",
+      "Bash(npx vercel ls --prod)",
+      "Bash(npx vercel logs cong-cu-tao-bcdxcv-uplhzcshh-mylifestyle89s-projects.vercel.app --output raw)",
+      "Bash(git show:*)"
     ]
   }
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useLanguage } from "@/components/language-provider";
 
@@ -340,6 +340,38 @@ function MappingPageContent() {
     return () => window.removeEventListener("keydown", handler);
   }, [undoLastAction]);
 
+  // ── Memoized callbacks to prevent child re-renders ──────────────────────
+  const handleOpenCustomerPicker = useCallback(() => setCustomerPickerOpen(true), []);
+  const handleOpenTemplatePicker = useCallback(() => setTemplatePickerOpen(true), []);
+  const handleUploadDocument = useCallback(() => toolbarUploadRef.current?.click(), []);
+  const handleOpenFinancialAnalysis = useCallback(() => {
+    if (!selectedCustomerId) {
+      useUiStore.getState().setStatus({ error: "Xin hãy chọn khách hàng trước khi sử dụng Phân tích tài chính." });
+      return;
+    }
+    setFinancialAnalysisOpen(true);
+  }, [selectedCustomerId]);
+  const handleOpenOcrReview = useCallback(() => useUiStore.getState().setModals({ ocrReview: true }), []);
+  const handleSaveEditedFieldTemplate = useCallback(() => void saveEditedFieldTemplate(), [saveEditedFieldTemplate]);
+  const handlePromoteToMasterTemplate = useCallback(() => void promoteToMasterTemplate(), [promoteToMasterTemplate]);
+  const handleOpenFormulaModal = useCallback(
+    (fieldKey: string) => useUiStore.getState().setContext({ formulaFieldKey: fieldKey }),
+    [],
+  );
+  const handleAcceptOcrSuggestion = useCallback(
+    (fk: string) => void useOcrStore.getState().acceptSuggestion(fk),
+    [],
+  );
+  const handleDeclineOcrSuggestion = useCallback(
+    (fk: string) => useOcrStore.getState().declineSuggestion(fk),
+    [],
+  );
+
+  const isEditingMaster = useMemo(
+    () => allFieldTemplates.some((i) => i.id === editingFieldTemplateId),
+    [allFieldTemplates, editingFieldTemplateId],
+  );
+
   const mappedFieldCount = useMemo(() => {
     if (!fieldCatalog.length) return 0;
     return fieldCatalog.filter((f) => {
@@ -370,16 +402,10 @@ function MappingPageContent() {
           setShowUnmappedOnly={setShowUnmappedOnly}
           showTechnicalKeys={showTechnicalKeys}
           setShowTechnicalKeys={setShowTechnicalKeys}
-          onOpenCustomerPicker={() => setCustomerPickerOpen(true)}
-          onOpenTemplatePicker={() => setTemplatePickerOpen(true)}
-          onUploadDocument={() => toolbarUploadRef.current?.click()}
-          onOpenFinancialAnalysis={() => {
-            if (!selectedCustomerId) {
-              useUiStore.getState().setStatus({ error: "Xin hãy chọn khách hàng trước khi sử dụng Phân tích tài chính." });
-              return;
-            }
-            setFinancialAnalysisOpen(true);
-          }}
+          onOpenCustomerPicker={handleOpenCustomerPicker}
+          onOpenTemplatePicker={handleOpenTemplatePicker}
+          onUploadDocument={handleUploadDocument}
+          onOpenFinancialAnalysis={handleOpenFinancialAnalysis}
           onToggleSidebar={toggleSidebar}
           hasCustomer={!!selectedCustomerId}
           hasTemplate={!!selectedFieldTemplateId || !!editingFieldTemplateId}
@@ -414,7 +440,7 @@ function MappingPageContent() {
           undoHistoryLength={undoHistory.length}
           pendingOcrCount={pendingOcrCount}
           ocrLogCount={ocrLogs.length}
-          onOpenOcrReview={() => useUiStore.getState().setModals({ ocrReview: true })}
+          onOpenOcrReview={handleOpenOcrReview}
           fieldCount={fieldCatalog.length}
           mappedFieldCount={mappedFieldCount}
         />
@@ -429,12 +455,12 @@ function MappingPageContent() {
         editingFieldTemplateId={editingFieldTemplateId}
         editingFieldTemplateName={editingFieldTemplateName}
         savingEditedTemplate={savingEditedTemplate}
-        saveEditedFieldTemplate={() => void saveEditedFieldTemplate()}
+        saveEditedFieldTemplate={handleSaveEditedFieldTemplate}
         stopEditingFieldTemplate={stopEditingFieldTemplate}
         openImportGroupModal={openImportGroupModal}
         openDeleteGenericTemplateModal={openDeleteGenericTemplateModal}
-        isEditingMaster={allFieldTemplates.some((i) => i.id === editingFieldTemplateId)}
-        promoteToMasterTemplate={() => void promoteToMasterTemplate()}
+        isEditingMaster={isEditingMaster}
+        promoteToMasterTemplate={handlePromoteToMasterTemplate}
         promotingToMaster={promotingToMaster}
         sensors={sensors}
         handleDragEnd={handleDragEnd}
@@ -452,9 +478,7 @@ function MappingPageContent() {
         values={effectiveValues}
         fieldCatalog={fieldCatalog}
         formulas={formulas}
-        onOpenFormulaModal={(fieldKey) =>
-          useUiStore.getState().setContext({ formulaFieldKey: fieldKey })
-        }
+        onOpenFormulaModal={handleOpenFormulaModal}
         confidenceByField={confidenceByField}
         sampleByField={sampleByField}
         typeLabels={typeLabels}
@@ -468,8 +492,8 @@ function MappingPageContent() {
         openChangeGroupModal={openChangeGroupModal}
         deleteField={deleteField}
         ocrSuggestionsByField={ocrSuggestionsByField}
-        onAcceptOcrSuggestion={(fk) => void useOcrStore.getState().acceptSuggestion(fk)}
-        onDeclineOcrSuggestion={(fk) => useOcrStore.getState().declineSuggestion(fk)}
+        onAcceptOcrSuggestion={handleAcceptOcrSuggestion}
+        onDeclineOcrSuggestion={handleDeclineOcrSuggestion}
       />
 
       <MappingModals

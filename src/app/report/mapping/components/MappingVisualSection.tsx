@@ -1,4 +1,4 @@
-import type { Dispatch, SetStateAction } from "react";
+import { memo, type Dispatch, type SetStateAction } from "react";
 import type { DragEndEvent, SensorDescriptor, SensorOptions } from "@dnd-kit/core";
 import type { FieldCatalogItem } from "@/lib/report/config-schema";
 import type { TypeLabelMap } from "../helpers";
@@ -61,7 +61,7 @@ type MappingVisualSectionProps = {
   onDeclineOcrSuggestion: (fieldKey: string) => void;
 };
 
-export function MappingVisualSection({
+export const MappingVisualSection = memo(function MappingVisualSection({
   t,
   hasContext,
   setAddingFieldModal,
@@ -167,4 +167,4 @@ export function MappingVisualSection({
       />
     </section>
   );
-}
+});

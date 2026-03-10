@@ -1,60 +1,72 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
-@import "../../node_modules/@eigenpal/docx-js-editor/dist/styles.css";
 
 /* ── Dark mode: apply when <html> has class="dark" ── */
 @custom-variant dark (&:is(.dark *));
 
 /* ── Semantic design tokens ── */
 :root {
-  --bg-base:      #fafafa;
-  --surface:      #ffffff;
-  --surface-2:    #f8fafc;
-  --surface-3:    #f1f5f9;
+  --bg-base: #fafafa;
+  --surface: #ffffff;
+  --surface-2: #f8fafc;
+  --surface-3: #f1f5f9;
   --surface-overlay: rgb(255 255 255 / 0.80);
-  --surface-inset:   #f8fafc;
-  --border-sub:   rgb(226 232 240 / 0.6);
-  --border-str:   rgb(226 232 240 / 0.8);
+  --surface-inset: #f8fafc;
+  --border-sub: rgb(226 232 240 / 0.6);
+  --border-str: rgb(226 232 240 / 0.8);
   --border-strong: rgb(226 232 240 / 1.0);
-  --text-1:       #0f172a;
-  --text-2:       #64748b;
-  --glow:         0 0 20px rgb(99 102 241 / 0.2);
-  --glow-lg:      0 0 32px rgb(99 102 241 / 0.25);
+  --text-1: #0f172a;
+  --text-2: #64748b;
+  --glow: 0 0 20px rgb(99 102 241 / 0.2);
+  --glow-lg: 0 0 32px rgb(99 102 241 / 0.25);
 
   /* Type scale (14px base for SaaS UI) */
-  --text-xs:   0.75rem;      /* 12px */
-  --text-sm:   0.8125rem;    /* 13px */
-  --text-base: 0.875rem;     /* 14px */
-  --text-lg:   1rem;          /* 16px */
-  --text-xl:   1.25rem;       /* 20px */
-  --text-2xl:  1.5rem;        /* 24px */
+  --text-xs: 0.75rem;
+  /* 12px */
+  --text-sm: 0.8125rem;
+  /* 13px */
+  --text-base: 0.875rem;
+  /* 14px */
+  --text-lg: 1rem;
+  /* 16px */
+  --text-xl: 1.25rem;
+  /* 20px */
+  --text-2xl: 1.5rem;
+  /* 24px */
 
   /* Easing curves */
-  --ease-out:     cubic-bezier(0.16, 1, 0.3, 1);
-  --ease-in-out:  cubic-bezier(0.4, 0, 0.2, 1);
-  --ease-spring:  cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 
   /* Letter-spacing */
-  --tracking-tight:  -0.025em;
-  --tracking-normal:  0em;
-  --tracking-wide:    0.05em;
+  --tracking-tight: -0.025em;
+  --tracking-normal: 0em;
+  --tracking-wide: 0.05em;
 }
 
 html.dark {
-  color-scheme: dark;                               /* native controls dark */
-  --bg-base:      #0a0a0a;                          /* neutral black      */
-  --surface:      #141414;                          /* card / panel       */
-  --surface-2:    #1a1a1a;                          /* elevated surface   */
-  --surface-3:    #1e1e1e;
+  color-scheme: dark;
+  /* native controls dark */
+  --bg-base: #0a0a0a;
+  /* neutral black      */
+  --surface: #141414;
+  /* card / panel       */
+  --surface-2: #1a1a1a;
+  /* elevated surface   */
+  --surface-3: #1e1e1e;
   --surface-overlay: rgb(20 20 20 / 0.85);
-  --surface-inset:   #0e0e0e;
-  --border-sub:   rgb(255 255 255 / 0.10);
-  --border-str:   rgb(255 255 255 / 0.15);
+  --surface-inset: #0e0e0e;
+  --border-sub: rgb(255 255 255 / 0.10);
+  --border-str: rgb(255 255 255 / 0.15);
   --border-strong: rgb(255 255 255 / 0.20);
-  --text-1:       #e2e8f0;                          /* slate-200         */
-  --text-2:       #64748b;                          /* slate-500         */
-  --glow:         0 0 12px rgb(99 102 241 / 0.15);  /* subtle in dark    */
-  --glow-lg:      0 0 20px rgb(99 102 241 / 0.20);
+  --text-1: #e2e8f0;
+  /* slate-200         */
+  --text-2: #64748b;
+  /* slate-500         */
+  --glow: 0 0 12px rgb(99 102 241 / 0.15);
+  /* subtle in dark    */
+  --glow-lg: 0 0 20px rgb(99 102 241 / 0.20);
 }
 
 @theme inline {
@@ -105,11 +117,11 @@ html.dark {
   --color-zinc-950: #09090b;
 
   /* Elevation shadows (layered, realistic depth) */
-  --shadow-xs:  0 1px 2px rgb(0 0 0 / 0.04);
-  --shadow-sm:  0 1px 3px rgb(0 0 0 / 0.06), 0 1px 2px rgb(0 0 0 / 0.04);
-  --shadow-md:  0 4px 6px rgb(0 0 0 / 0.05), 0 2px 4px rgb(0 0 0 / 0.04);
-  --shadow-lg:  0 10px 15px rgb(0 0 0 / 0.06), 0 4px 6px rgb(0 0 0 / 0.04);
-  --shadow-xl:  0 20px 25px rgb(0 0 0 / 0.08), 0 8px 10px rgb(0 0 0 / 0.04);
+  --shadow-xs: 0 1px 2px rgb(0 0 0 / 0.04);
+  --shadow-sm: 0 1px 3px rgb(0 0 0 / 0.06), 0 1px 2px rgb(0 0 0 / 0.04);
+  --shadow-md: 0 4px 6px rgb(0 0 0 / 0.05), 0 2px 4px rgb(0 0 0 / 0.04);
+  --shadow-lg: 0 10px 15px rgb(0 0 0 / 0.06), 0 4px 6px rgb(0 0 0 / 0.04);
+  --shadow-xl: 0 20px 25px rgb(0 0 0 / 0.08), 0 8px 10px rgb(0 0 0 / 0.04);
 
   /* Glow utility */
   --shadow-glow: var(--glow);
@@ -148,7 +160,10 @@ body {
 }
 
 /* ── Heading typography ── */
-h1, h2, h3, h4 {
+h1,
+h2,
+h3,
+h4 {
   font-family: var(--font-heading), sans-serif;
   letter-spacing: var(--tracking-tight);
 }
@@ -158,6 +173,7 @@ h1, h2, h3, h4 {
 .dark select {
   color-scheme: dark;
 }
+
 .dark option {
   background-color: #141414;
   color: #e2e8f0;
@@ -167,6 +183,7 @@ h1, h2, h3, h4 {
 .shadow-glow {
   box-shadow: var(--glow);
 }
+
 .shadow-glow-lg {
   box-shadow: var(--glow-lg);
 }
@@ -184,6 +201,7 @@ h1, h2, h3, h4 {
     stroke-dashoffset: -20;
   }
 }
+
 .animate-dash-flow {
   animation: dash-flow 2.5s ease-in-out infinite;
 }
@@ -193,6 +211,7 @@ h1, h2, h3, h4 {
     transform: translate3d(0, 0, 0) scale(0.97);
     opacity: 0;
   }
+
   100% {
     transform: translate3d(0, 0, 0) scale(1);
     opacity: 0.95;
@@ -204,6 +223,7 @@ h1, h2, h3, h4 {
     transform: translateY(8px) scale(0.9);
     opacity: 0;
   }
+
   100% {
     transform: translateY(0) scale(1);
     opacity: 0.85;
@@ -214,6 +234,7 @@ h1, h2, h3, h4 {
   0% {
     opacity: 0;
   }
+
   100% {
     opacity: 0.4;
   }
@@ -225,11 +246,13 @@ h1, h2, h3, h4 {
       0 12px 40px rgb(99 102 241 / 0.3),
       inset 0 1px 0 rgb(255 255 255 / 0.35);
   }
+
   50% {
     box-shadow:
       0 18px 56px rgb(99 102 241 / 0.45),
       inset 0 1px 0 rgb(255 255 255 / 0.45);
   }
+
   100% {
     box-shadow:
       0 12px 40px rgb(99 102 241 / 0.3),
@@ -262,28 +285,35 @@ h1, h2, h3, h4 {
 /* 1. CSS variable override for eigenpal's shadcn-style tokens */
 html.dark .ep-root {
   /* Surface — neutral grays */
-  --background:              0 0% 8%;       /* #141414 */
-  --foreground:              214 32% 91%;   /* slate-200 */
+  --background: 0 0% 8%;
+  /* #141414 */
+  --foreground: 214 32% 91%;
+  /* slate-200 */
   /* Primary – Indigo */
-  --primary:                 239 84% 67%;   /* indigo-400 */
-  --primary-foreground:      0   0%  100%;
+  --primary: 239 84% 67%;
+  /* indigo-400 */
+  --primary-foreground: 0 0% 100%;
   /* Secondary / muted */
-  --secondary:               0 0% 10%;     /* #1a1a1a */
-  --secondary-foreground:    214 32% 78%;
-  --muted:                   0 0% 10%;
-  --muted-foreground:        215 16% 47%;   /* slate-500 */
+  --secondary: 0 0% 10%;
+  /* #1a1a1a */
+  --secondary-foreground: 214 32% 78%;
+  --muted: 0 0% 10%;
+  --muted-foreground: 215 16% 47%;
+  /* slate-500 */
   /* Accent (hover bg) */
-  --accent:                  0 0% 14%;     /* #242424 */
-  --accent-foreground:       214 32% 91%;
+  --accent: 0 0% 14%;
+  /* #242424 */
+  --accent-foreground: 214 32% 91%;
   /* Destructive */
-  --destructive:             0   63% 55%;
-  --destructive-foreground:  0   0%  100%;
+  --destructive: 0 63% 55%;
+  --destructive-foreground: 0 0% 100%;
   /* Borders / inputs / ring */
-  --border:                  0 0% 18%;     /* #2e2e2e */
-  --input:                   0 0% 18%;
-  --ring:                    239 84% 67%;
+  --border: 0 0% 18%;
+  /* #2e2e2e */
+  --input: 0 0% 18%;
+  --ring: 239 84% 67%;
   /* Radius (preserve existing) */
-  --radius:                  0.5rem;
+  --radius: 0.5rem;
 }
 
 /* 2. Toolbar buttons / dropdowns extra overrides
@@ -291,28 +321,37 @@ html.dark .ep-root {
 html.dark .ep-root .bg-white {
   background-color: #141414 !important;
 }
+
 html.dark .ep-root .bg-slate-100 {
   background-color: #1e1e1e !important;
 }
+
 html.dark .ep-root .bg-slate-200 {
   background-color: #252525 !important;
 }
+
 html.dark .ep-root .border-slate-200,
 html.dark .ep-root .border-slate-200\/50 {
   border-color: rgba(255, 255, 255, 0.08) !important;
 }
+
 html.dark .ep-root .border-slate-300 {
   border-color: rgba(255, 255, 255, 0.12) !important;
 }
+
 html.dark .ep-root .text-slate-700 {
-  color: #cbd5e1 !important;   /* slate-300 */
+  color: #cbd5e1 !important;
+  /* slate-300 */
 }
+
 html.dark .ep-root .text-slate-500 {
   color: #64748b !important;
 }
+
 html.dark .ep-root .text-slate-400 {
   color: #475569 !important;
 }
+
 html.dark .ep-root .hover\:bg-slate-100:hover,
 html.dark .ep-root .hover\:bg-slate-100\/80:hover,
 html.dark .ep-root .hover\:bg-slate-50:hover,
@@ -320,16 +359,20 @@ html.dark .ep-root .focus\:bg-slate-100:focus,
 html.dark .ep-root .focus\:bg-slate-100\/80:focus {
   background-color: rgba(255, 255, 255, 0.07) !important;
 }
+
 html.dark .ep-root .hover\:bg-slate-800:hover {
   background-color: #1e1e1e !important;
 }
+
 html.dark .ep-root .hover\:text-slate-900:hover {
   color: #e2e8f0 !important;
 }
+
 html.dark .ep-root .shadow-lg,
 html.dark .ep-root .shadow {
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5) !important;
 }
+
 html.dark .ep-root .shadow-sm {
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4) !important;
 }
@@ -349,13 +392,14 @@ html.dark .docx-editor-wrap .layout-page {
 /* 4. Section-break dividers inside document */
 html.dark .docx-editor-wrap .docx-section-break::after {
   --doc-text-muted: #9ca3af;
-  --doc-border:     #d1d5db;
+  --doc-border: #d1d5db;
 }
 
 /* 5. Find-highlight colours stay visible on white pages */
 html.dark .docx-editor-wrap .docx-find-highlight {
   background-color: rgba(253, 224, 71, 0.55) !important;
 }
+
 html.dark .docx-editor-wrap .docx-find-highlight-current {
   background-color: rgba(251, 146, 60, 0.65) !important;
 }
@@ -370,7 +414,7 @@ html.dark .docx-editor-wrap .docx-find-highlight-current {
   padding: 3px;
   border-radius: 10px;
   background: #f0f0f0;
-  box-shadow: inset 0 0.5px 2px rgba(0,0,0,0.06), 0 0 0 0.5px rgba(0,0,0,0.04);
+  box-shadow: inset 0 0.5px 2px rgba(0, 0, 0, 0.06), 0 0 0 0.5px rgba(0, 0, 0, 0.04);
 }
 
 .seg-slider {
@@ -381,12 +425,12 @@ html.dark .docx-editor-wrap .docx-find-highlight-current {
   border-radius: 8px;
   background: #ffffff;
   box-shadow:
-    0 1px 3px rgba(0,0,0,0.08),
-    0 1px 2px rgba(0,0,0,0.04),
-    0 0 0 0.5px rgba(0,0,0,0.04);
+    0 1px 3px rgba(0, 0, 0, 0.08),
+    0 1px 2px rgba(0, 0, 0, 0.04),
+    0 0 0 0.5px rgba(0, 0, 0, 0.04);
   transition:
     transform 0.35s cubic-bezier(0.4, 0, 0.15, 1),
-    width     0.3s  cubic-bezier(0.4, 0, 0.15, 1);
+    width 0.3s cubic-bezier(0.4, 0, 0.15, 1);
   z-index: 0;
 }
 
@@ -435,14 +479,14 @@ html.dark .docx-editor-wrap .docx-find-highlight-current {
 /* Dark variant */
 html.dark .seg-root {
   background: #2c2c2e;
-  box-shadow: inset 0 0.5px 2px rgba(0,0,0,0.2), 0 0 0 0.5px rgba(255,255,255,0.05);
+  box-shadow: inset 0 0.5px 2px rgba(0, 0, 0, 0.2), 0 0 0 0.5px rgba(255, 255, 255, 0.05);
 }
 
 html.dark .seg-slider {
   background: #3a3a3c;
   box-shadow:
-    0 1px 4px rgba(0,0,0,0.3),
-    0 0 0 0.5px rgba(255,255,255,0.06);
+    0 1px 4px rgba(0, 0, 0, 0.3),
+    0 0 0 0.5px rgba(255, 255, 255, 0.06);
 }
 
 html.dark .seg-item {
