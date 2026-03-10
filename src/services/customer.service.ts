@@ -211,6 +211,69 @@ export const customerService = {
     });
   },
 
+  /** Fetch customer with ALL relations: loans, disbursements, invoices, beneficiaries, mapping instances */
+  async getFullProfile(id: string) {
+    const customer = await prisma.customer.findUnique({
+      where: { id },
+      include: {
+        loans: {
+          orderBy: { createdAt: "desc" },
+          include: {
+            beneficiaries: true,
+            disbursements: {
+              orderBy: { disbursementDate: "desc" },
+              include: {
+                invoices: true,
+                beneficiaryLines: {
+                  include: { invoices: true },
+                },
+              },
+            },
+          },
+        },
+        mapping_instances: {
+          orderBy: { updatedAt: "desc" },
+          include: { master: true },
+        },
+      },
+    });
+    if (!customer) throw new NotFoundError("Customer not found.");
+
+    // Compute summary stats
+    const loans = customer.loans;
+    let totalDisbursements = 0;
+    let totalInvoices = 0;
+    let totalDisbursedAmount = 0;
+    let totalInvoiceAmount = 0;
+    let overdueInvoices = 0;
+
+    for (const loan of loans) {
+      totalDisbursements += loan.disbursements.length;
+      for (const d of loan.disbursements) {
+        totalDisbursedAmount += d.amount;
+        totalInvoices += d.invoices.length;
+        for (const inv of d.invoices) {
+          totalInvoiceAmount += inv.amount;
+          if (inv.status === "overdue") overdueInvoices++;
+        }
+      }
+    }
+
+    const summary = {
+      totalLoans: loans.length,
+      activeLoans: loans.filter((l: { status: string }) => l.status === "active").length,
+      totalLoanAmount: loans.reduce((s: number, l: { loanAmount: number }) => s + l.loanAmount, 0),
+      totalDisbursements,
+      totalDisbursedAmount,
+      totalInvoices,
+      totalInvoiceAmount,
+      overdueInvoices,
+      totalMappingInstances: customer.mapping_instances.length,
+    };
+
+    return { ...customer, summary };
+  },
+
   async toDraft(params: { customerId?: string; customerName?: string }): Promise<{ customer: Customer; values: Record<string, unknown> }> {
     if (!params.customerId && !params.customerName) {
       throw new ValidationError("customer_id hoặc customer_name phải được cung cấp.");
