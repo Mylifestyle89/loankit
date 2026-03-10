@@ -287,14 +287,19 @@ export const docxEngine = {
       throw new DataPlaceholderMismatchError(templatePath, details);
     }
 
-    // Fix invalid self-closing <w:p/> tags left after loop tag removal
+    // Post-render cleanup: remove empty table rows left by loop tag removal
     const docZip = doc.getZip() as PizZip;
     const docXml = docZip.file("word/document.xml");
     if (docXml) {
-      const xmlStr = docXml.asText();
-      if (xmlStr.includes("<w:p/>")) {
-        docZip.file("word/document.xml", xmlStr.replace(/<w:p\/>/g, ""));
-      }
+      let xmlStr = docXml.asText();
+      // Remove self-closing <w:p/> (invalid OOXML)
+      xmlStr = xmlStr.replace(/<w:p\/>/g, "");
+      // Remove table rows whose only text content is empty (loop tag rows after rendering)
+      xmlStr = xmlStr.replace(/<w:tr\b[^>]*>[\s\S]*?<\/w:tr>/g, (row) => {
+        const text = row.replace(/<[^>]+>/g, "").trim();
+        return text === "" ? "" : row;
+      });
+      docZip.file("word/document.xml", xmlStr);
     }
 
     return docZip.generate({
