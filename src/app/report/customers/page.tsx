@@ -13,6 +13,7 @@ type Customer = {
   id: string;
   customer_code: string;
   customer_name: string;
+  customer_type: string;
   address: string | null;
   main_business: string | null;
   charter_capital: number | null;
@@ -46,12 +47,14 @@ export default function CustomersPage() {
   const [success, setSuccess] = useState("");
   const [importing, setImporting] = useState(false);
   const [exportModalOpen, setExportModalOpen] = useState(false);
+  const [typeFilter, setTypeFilter] = useState<"all" | "corporate" | "individual">("all");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const loadCustomers = useCallback(async () => {
     setLoading(true);
     setError("");
-    const res = await fetch("/api/customers", { cache: "no-store" });
+    const url = typeFilter === "all" ? "/api/customers" : `/api/customers?type=${typeFilter}`;
+    const res = await fetch(url, { cache: "no-store" });
     const data = (await res.json()) as ApiResponse;
     if (!data.ok) {
       setError(data.error ?? t("customers.err.load"));
@@ -60,7 +63,7 @@ export default function CustomersPage() {
     }
     setCustomers(data.customers ?? []);
     setLoading(false);
-  }, [t]);
+  }, [t, typeFilter]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -88,34 +91,78 @@ export default function CustomersPage() {
     setError("");
     setSuccess("");
     try {
+      const isBk = file.name.endsWith(".bk");
       const isXlsx = file.name.endsWith(".xlsx") || file.name.endsWith(".xls");
 
-      let res: Response;
-      if (isXlsx) {
-        // XLSX: send as multipart/form-data
+      if (isBk) {
+        // .BK: parse all clients → save each
         const formData = new FormData();
-        formData.append("file", file);
-        res = await fetch("/api/report/import-data", { method: "POST", body: formData });
+        formData.append("bkFile", file);
+        const bkRes = await fetch("/api/report/import/bk", { method: "POST", body: formData });
+        const bkData = (await bkRes.json()) as {
+          status: string; message?: string;
+          clients?: { status: string; values: Record<string, unknown>; assetGroups?: Record<string, Record<string, string>[]> }[];
+          totalClients?: number;
+        };
+        if (bkData.status === "error") throw new Error(bkData.message || "Import .bk failed");
+
+        const clientList = (bkData.clients ?? []).filter((c) => c.status !== "error");
+
+        if (clientList.length === 0) throw new Error("Không tìm thấy khách hàng hợp lệ trong file .bk");
+
+        let created = 0;
+        let updated = 0;
+        const errors: string[] = [];
+
+        for (const client of clientList) {
+          try {
+            const saveRes = await fetch("/api/customers/from-draft", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ values: client.values, assetGroups: client.assetGroups }),
+            });
+            const saveData = (await saveRes.json()) as { ok: boolean; error?: string; created?: boolean };
+            if (!saveData.ok) {
+              errors.push(saveData.error || "Lưu thất bại");
+              continue;
+            }
+            if (saveData.created) created++; else updated++;
+          } catch {
+            errors.push(`Lỗi lưu khách hàng`);
+          }
+        }
+
+        const parts: string[] = [];
+        if (created > 0) parts.push(`tạo mới ${created}`);
+        if (updated > 0) parts.push(`cập nhật ${updated}`);
+        if (errors.length > 0) parts.push(`${errors.length} lỗi`);
+        setSuccess(`Import .bk: ${parts.join(", ")} (tổng ${clientList.length} khách hàng).`);
       } else {
-        // JSON: parse and send as JSON body
-        const text = await file.text();
-        const parsed = JSON.parse(text);
-        res = await fetch("/api/report/import-data", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(parsed),
-        });
+        let res: Response;
+        if (isXlsx) {
+          const formData = new FormData();
+          formData.append("file", file);
+          res = await fetch("/api/report/import-data", { method: "POST", body: formData });
+        } else {
+          const text = await file.text();
+          const parsed = JSON.parse(text);
+          res = await fetch("/api/report/import-data", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(parsed),
+          });
+        }
+
+        const data = (await res.json()) as { ok: boolean; error?: string; imported?: ImportResult };
+        if (!data.ok) throw new Error(data.error || "Import failed");
+
+        const imp = data.imported!;
+        const parts = [`${imp.customers} khách hàng`, `${imp.templates} mẫu dữ liệu`];
+        if (imp.loans) parts.push(`${imp.loans} khoản vay`);
+        if (imp.disbursements) parts.push(`${imp.disbursements} giải ngân`);
+        if (imp.invoices) parts.push(`${imp.invoices} hoá đơn`);
+        setSuccess(`Đã import thành công: ${parts.join(", ")}.`);
       }
-
-      const data = (await res.json()) as { ok: boolean; error?: string; imported?: ImportResult };
-      if (!data.ok) throw new Error(data.error || "Import failed");
-
-      const imp = data.imported!;
-      const parts = [`${imp.customers} khách hàng`, `${imp.templates} mẫu dữ liệu`];
-      if (imp.loans) parts.push(`${imp.loans} khoản vay`);
-      if (imp.disbursements) parts.push(`${imp.disbursements} giải ngân`);
-      if (imp.invoices) parts.push(`${imp.invoices} hoá đơn`);
-      setSuccess(`Đã import thành công: ${parts.join(", ")}.`);
       void loadCustomers();
     } catch (err) {
       setError(err instanceof Error ? err.message : "File import không hợp lệ.");
@@ -162,6 +209,28 @@ export default function CustomersPage() {
         </div>
       </div>
 
+      {/* Type filter tabs */}
+      <div className="flex items-center gap-2">
+        {([
+          { key: "all", label: "Tất cả" },
+          { key: "corporate", label: "Doanh nghiệp" },
+          { key: "individual", label: "Cá nhân" },
+        ] as const).map((tab) => (
+          <button
+            key={tab.key}
+            type="button"
+            onClick={() => setTypeFilter(tab.key)}
+            className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors duration-150 ${
+              typeFilter === tab.key
+                ? "bg-violet-100 text-violet-700 dark:bg-violet-500/15 dark:text-violet-400"
+                : "text-zinc-500 dark:text-slate-400 hover:bg-zinc-100 dark:hover:bg-white/[0.06]"
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
       {/* Toolbar */}
       <div className="flex items-center gap-3">
         <button
@@ -173,7 +242,7 @@ export default function CustomersPage() {
           Xuất Dữ Liệu
         </button>
 
-        <input type="file" accept=".json,.xlsx,.xls" className="hidden" ref={fileInputRef} onChange={handleImport} />
+        <input type="file" accept=".json,.xlsx,.xls,.bk" className="hidden" ref={fileInputRef} onChange={handleImport} />
         <button
           type="button"
           onClick={() => fileInputRef.current?.click()}
@@ -181,7 +250,7 @@ export default function CustomersPage() {
           className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] px-3 py-2 text-sm shadow-sm transition-all duration-150 hover:border-violet-200 dark:hover:border-violet-500/20 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40"
         >
           <Upload className="h-4 w-4" />
-          {importing ? "Đang import..." : "Nhập Dữ Liệu (JSON/XLSX)"}
+          {importing ? "Đang import..." : "Nhập Dữ Liệu (JSON/XLSX/BK)"}
         </button>
       </div>
 
@@ -211,6 +280,13 @@ export default function CustomersPage() {
                     <h3 className="truncate font-semibold text-zinc-900 dark:text-white">{c.customer_name}</h3>
                     <span className="inline-flex items-center rounded-full bg-violet-50 dark:bg-violet-500/10 px-2 py-0.5 text-xs font-medium text-violet-700 dark:text-violet-400 ring-1 ring-violet-500/20">
                       {c.customer_code}
+                    </span>
+                    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ring-1 ${
+                      c.customer_type === "individual"
+                        ? "bg-emerald-50 text-emerald-700 ring-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-400"
+                        : "bg-blue-50 text-blue-700 ring-blue-500/20 dark:bg-blue-500/10 dark:text-blue-400"
+                    }`}>
+                      {c.customer_type === "individual" ? "Cá nhân" : "DN"}
                     </span>
                   </div>
                   <p className="mt-0.5 text-sm text-zinc-500 dark:text-slate-400">{c.address ?? "—"}</p>

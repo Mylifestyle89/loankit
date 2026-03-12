@@ -7,9 +7,12 @@ export const runtime = "nodejs";
 
 export async function POST(req: NextRequest) {
   try {
-    const body = (await req.json()) as { values?: Record<string, unknown> };
+    const body = (await req.json()) as {
+      values?: Record<string, unknown>;
+      assetGroups?: Record<string, Record<string, string>[]>;
+    };
     const values = body.values ?? {};
-    const result = await customerService.saveFromDraft(values);
+    const result = await customerService.saveFromDraft(values, body.assetGroups);
     return NextResponse.json({
       ok: true,
       customer: result.customer,
