@@ -89,6 +89,7 @@ model Customer {
 
   customer_code  String   @unique
   customer_name  String
+  customer_type  String   @default("corporate") // "corporate" | "individual"
   address        String?
   main_business  String?
   charter_capital Float?
@@ -96,14 +97,44 @@ model Customer {
   legal_representative_title String?
   organization_type          String?
 
+  // Individual-specific fields (nullable, ignored for corporate)
+  cccd               String?   // CCCD/CMND number
+  cccd_old           String?   // CMND cũ (9 số)
+  cccd_issued_date   String?   // Ngày cấp CCCD (e.g. "13/04/2021")
+  cccd_issued_place  String?   // Nơi cấp CCCD
+  date_of_birth      String?   // Năm sinh (e.g. "1969")
+  gender             String?   // "male" | "female"
+  phone              String?   // Số điện thoại
+  marital_status     String?   // "single" | "married" | "divorced" | "widowed"
+  spouse_name        String?   // Họ tên vợ/chồng
+  spouse_cccd        String?   // CCCD vợ/chồng
+  bank_account       String?   // Số tài khoản ngân hàng
+  bank_name          String?   // Nơi mở tài khoản
+
   email    String?   // Email nhan thong bao hoa don
+
+  // Branch & staff assignment
+  active_branch_id      String?  // FK to Branch (selected active branch)
+  active_branch         Branch?  @relation(fields: [active_branch_id], references: [id], onDelete: SetNull)
+  relationship_officer  String?  // Cán bộ quan hệ khách hàng
+  appraiser             String?  // Người thẩm định
+  approver_name         String?  // Người phê duyệt
+  approver_title        String?  // Chức vụ: "Giám đốc" | "Phó Giám đốc"
 
   /// JSON object: extra attributes (report field_key -> value) for mapping/export
   data_json String? @default("{}")
 
   mapping_instances MappingInstance[]
   loans            Loan[]
+  loan_plans       LoanPlan[]
+  collaterals      Collateral[]
+  co_borrowers     CoBorrower[]
+  related_persons  RelatedPerson[]
+  credit_agribank  CreditAtAgribank[]
+  credit_other     CreditAtOther[]
 
+  @@index([customer_type])
+  @@index([active_branch_id])
   @@map("customers")
 }
 
@@ -119,16 +150,46 @@ model Loan {
   startDate       DateTime
   endDate         DateTime
   purpose              String?
+  loan_method          String   @default("tung_lan") // tung_lan | han_muc | trung_dai | tieu_dung
   disbursementCount    String?
   collateralValue      Float?
   securedObligation    Float?
   disbursementLimitByAsset Float?
   status               String   @default("active") // active | completed | cancelled
+
+  // Điều kiện cho vay
+  lending_method       String?  // Phương thức cho vay
+  tcmblm_reason        String?  // Lý do đáp ứng/không đáp ứng TCMBLM
+  interest_method      String?  // Phương thức áp dụng LS
+  principal_schedule   String?  // Định kỳ trả gốc
+  interest_schedule    String?  // Định kỳ trả lãi
+  policy_program       String?  // Chương trình cho vay theo chính sách
+
+  // Nguồn vốn & Vốn đối ứng
+  total_capital_need   Float?   // Tổng nhu cầu vốn
+  equity_amount        Float?   // Vốn đối ứng
+  cash_equity          Float?   // Vốn bằng tiền
+  labor_equity         Float?   // Vốn bằng sức lao động
+  other_loan           Float?   // Vốn vay TCTD khác
+  other_asset_equity   Float?   // Vốn bằng tài sản khác
+
+  // Hiệu quả & Xếp hạng
+  expected_revenue     Float?   // Tổng doanh thu dự kiến
+  expected_cost        Float?   // Tổng chi phí dự kiến
+  expected_profit      Float?   // Lợi nhuận dự kiến
+  from_project         String?  // Từ phương án, dự án
+  other_income         String?  // Thu nhập khác
+  other_income_detail  String?  // Cụ thể về thu nhập khác
+  customer_rating      String?  // Xếp hạng khách hàng
+  debt_group           String?  // Nhóm nợ
+  scoring_period       String?  // Kỳ chấm điểm
+
   disbursements     Disbursement[]
   beneficiaries     Beneficiary[]
 
   @@index([customerId])
   @@index([status])
+  @@index([loan_method])
   @@map("loans")
 }
 
@@ -293,4 +354,192 @@ model ReportConfig {
   updatedAt DateTime @updatedAt
 
   @@map("report_configs")
+}
+
+// ─── Loan Plan (Phương án vay vốn) ─────────────────────────
+
+model LoanPlanTemplate {
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  name        String   // e.g. "Trồng hoa Cát tường", "Kinh doanh tạp hóa"
+  category    String   // nong_nghiep | kinh_doanh | chan_nuoi | an_uong | xay_dung | han_muc
+  description String?
+
+  /// JSON: default cost items [{ name, unit, default_price }]
+  cost_items_template_json String @default("[]")
+  /// JSON: revenue template [{ description, formula }]
+  revenue_template_json    String @default("[]")
+  /// JSON: default values { interest_rate, tax_rate, ... }
+  defaults_json            String @default("{}")
+
+  loan_plans LoanPlan[]
+
+  @@index([category])
+  @@map("loan_plan_templates")
+}
+
+model LoanPlan {
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  customerId  String
+  customer    Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  templateId  String?
+  template    LoanPlanTemplate? @relation(fields: [templateId], references: [id], onDelete: SetNull)
+
+  name        String  @default("")  // e.g. "PA trồng 6 sào hoa Cát tường"
+  loan_method String  @default("tung_lan") // tung_lan | han_muc | trung_dai | tieu_dung
+  status      String  @default("draft")    // draft | approved
+
+  /// JSON: cost line items [{ name, unit, qty, unit_price, amount }]
+  cost_items_json    String @default("[]")
+  /// JSON: revenue line items [{ description, qty, unit_price, amount }]
+  revenue_items_json String @default("[]")
+  /// JSON: computed financials { totalCost, revenue, profit, loanAmount, counterpartCapital, ... }
+  financials_json    String @default("{}")
+
+  @@index([customerId])
+  @@index([status])
+  @@map("loan_plans")
+}
+
+/// Tài sản bảo đảm — JSON properties for type-specific fields
+model Collateral {
+  id              String   @id @default(cuid())
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  customerId      String
+  customer        Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  collateral_type String   // "qsd_dat" | "tiet_kiem" | "dong_san" | "tai_san_khac"
+  name            String   @default("") // Tên TSBĐ
+  total_value     Float?   // Tổng giá trị TS
+  obligation      Float?   // Nghĩa vụ bảo đảm
+
+  /// JSON: type-specific properties (e.g. land: { address, area, lot_number, ... })
+  properties_json String   @default("{}")
+
+  @@index([customerId])
+  @@index([collateral_type])
+  @@map("collaterals")
+}
+
+/// Người đồng vay vốn
+model CoBorrower {
+  id              String   @id @default(cuid())
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  customerId      String
+  customer        Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  title           String?  // Danh xưng (Ông/Bà)
+  full_name       String   // Họ và tên
+  id_type         String?  // Loại giấy tờ tùy thân
+  id_number       String?  // CMND/CCCD
+  id_issued_date  String?  // Ngày cấp
+  id_old          String?  // CMND cũ
+  id_issued_place String?  // Nơi cấp
+  birth_year      String?  // Năm sinh
+  phone           String?  // Số điện thoại
+  current_address String?  // Địa chỉ hiện tại
+  permanent_address String? // Nơi thường trú
+  relationship    String?  // Mối quan hệ với KH vay
+  agribank_debt   String?  // Dư nợ tại Agribank
+  agribank_branch String?  // Tên chi nhánh Agribank
+
+  @@index([customerId])
+  @@map("co_borrowers")
+}
+
+/// Người có liên quan
+model RelatedPerson {
+  id              String   @id @default(cuid())
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  customerId      String
+  customer        Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  name            String   // Tên tổ chức/Cá nhân
+  id_number       String?  // Số ĐKKD/CMND
+  address         String?  // Địa chỉ
+  relation_type   String?  // Mối liên quan
+  agribank_debt   String?  // Dư nợ tại Agribank
+  agribank_branch String?  // Tên chi nhánh Agribank
+
+  @@index([customerId])
+  @@map("related_persons")
+}
+
+/// Thông tin tín dụng tại Agribank
+model CreditAtAgribank {
+  id              String   @id @default(cuid())
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  customerId      String
+  customer        Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  branch_name      String?  // Tại chi nhánh/PGD
+  debt_group       String?  // Nhóm nợ
+  loan_term        String?  // Thời hạn vay
+  debt_amount      String?  // Dư nợ
+  loan_purpose     String?  // Mục đích vay
+  repayment_source String?  // Nguồn trả nợ
+
+  @@index([customerId])
+  @@map("credit_at_agribank")
+}
+
+/// Thông tin tín dụng tại TCTD khác
+model CreditAtOther {
+  id              String   @id @default(cuid())
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  customerId      String
+  customer        Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  institution_name String? // Tên TCTD
+  debt_group       String? // Nhóm nợ
+  loan_term        String? // Thời hạn vay
+  debt_amount      String? // Dư nợ
+  loan_purpose     String? // Mục đích vay
+  repayment_source String? // Nguồn trả nợ
+
+  @@index([customerId])
+  @@map("credit_at_other")
+}
+
+/// Generic dropdown options - user-managed per field_key
+model DropdownOption {
+  id         String @id @default(cuid())
+  field_key  String // e.g. "approver_title", "debt_group"
+  label      String // display text
+  sort_order Int    @default(0)
+
+  @@unique([field_key, label])
+  @@index([field_key])
+  @@map("dropdown_options")
+}
+
+/// Chi nhánh / Phòng giao dịch
+model Branch {
+  id              String   @id @default(cuid())
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  name            String   // Tên chi nhánh/PGD
+  name_uppercase  String?  // Tên gọi in hoa
+  address         String?  // Địa chỉ trụ sở
+  branch_code     String?  // Mã CN
+  phone           String?  // Điện thoại
+  fax             String?  // Fax
+  tax_code        String?  // Mã số thuế CN
+  tax_issued_date String?  // Ngày cấp MST
+  tax_issued_place String? // Nơi cấp MST
+  district        String?  // Quận/Huyện
+  province        String?  // Tỉnh/TP
+
+  customers       Customer[]
+
+  @@map("branches")
 }

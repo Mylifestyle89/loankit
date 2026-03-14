@@ -41,6 +41,10 @@ src/
 │   │   ├── admin/                    # Admin pages
 │   │   │   └── users/                # User management (admin only)
 │   │   ├── customers/                # Customer list/new/detail pages
+│   │   │   └── [id]/                 # Customer detail with KHCN sections
+│   │   │       ├── loan-plans/       # Loan plan management (KHCN)
+│   │   │       ├── components/       # Collateral, co-borrower, credit info sections
+│   │   │       └── khcn-doc-checklist.tsx
 │   │   ├── loans/                    # Loan list/new/detail pages
 │   │   ├── disbursements/            # Disbursement detail page
 │   │   ├── invoices/                 # Invoice overview page
@@ -105,6 +109,12 @@ src/
 │   ├── disbursement.service.ts       # Disbursement CRUD service
 │   ├── invoice.service.ts            # Invoice CRUD + summary + duplicate detection
 │   ├── notification.service.ts       # Notification CRUD + read status
+│   ├── customer.service.ts           # Customer CRUD + collateral management
+│   │
+│   ├── khcn-report.service.ts        # KHCN-specific report compilation
+│   ├── khcn-report-data-builders.ts  # KHCN field data builders (owners, collaterals, etc.)
+│   ├── khcn-template-registry.ts     # KHCN DOCX template registry
+│   ├── khcn-asset-template-registry.ts # Asset-specific templates (7 categories)
 │   │
 │   ├── report/
 │   │   ├── build.service.ts          # Report compilation with formula evaluation
@@ -439,9 +449,9 @@ npx prisma studio      # Prisma data browser
 - **Error Handling:** Custom AppError classes
 - **Testing:** Jest configuration with test coverage
 
-## Recent Additions (Invoice Tracking)
+## Recent Additions
 
-**New in This Release:**
+### Invoice Tracking (Phase 48-49)
 1. Four Prisma models: Loan, Disbursement, Invoice, AppNotification
 2. Four services for CRUD + business logic
 3. 11 API route files with full REST endpoints
@@ -451,6 +461,21 @@ npx prisma studio      # Prisma data browser
 7. 7 shared components under `src/components/invoice-tracking/`
 8. NotificationBell with 60s polling interval
 9. Full i18n support for all new features
+
+### KHCN Collateral Data Management (Phase 56)
+1. **khcn-report-data-builders.ts** (~350 LOC): Data builders for KHCN-specific fields
+   - `parseOwners()` & `buildOwnerFields()` helpers (DRY extraction)
+   - `buildMovableCollateralData()` - Multi-vehicle with DS_CHI_TIET loop arrays
+   - `buildSavingsCollateralData()` - TK.* prefixed savings account fields
+   - `buildOtherCollateralData()` - TSK.* prefixed generic collateral fields
+   - Field key mappings: manufacture_year, seat_count, mortgage_name, etc.
+2. **khcn-asset-template-registry.ts**: 70+ DOCX templates for 7 asset categories
+   - tai_san, ts_qsd_bv, ts_qsd_bt3, ts_glvd_bv, ts_glvd_bt3, ts_ptgt_bv, ts_ptgt_bt3
+3. **khcn-template-registry.ts**: Merges asset + base templates for report generation
+4. **Modularized Components**: customer-collateral-section.tsx split into
+   - collateral-config.ts (constants), collateral-form.tsx, collateral-display.tsx
+5. **Database**: 9 Prisma migrations for Collateral, CoBorrower, CreditInfo models
+6. **Seed Script**: dong_san dropdown options (manufacture year, seat count, etc.)
 
 ## Known Limitations
 

@@ -172,6 +172,8 @@ export const docxEngine = {
     data: DocxTemplateData<TFlat>,
     outputPath: string,
   ): Promise<void> {
+    // Path traversal protection
+    if (!isSafeDocxPath(templatePath)) throw new TemplateNotFoundError(templatePath);
     const templateAbs = resolveWorkspacePath(templatePath);
     const outputAbs = resolveWorkspacePath(outputPath);
 
@@ -236,7 +238,10 @@ export const docxEngine = {
   async generateDocxBuffer<TFlat extends FlatTemplateData>(
     templatePath: string,
     data: DocxTemplateData<TFlat>,
+    options?: { preProcessZip?: (zip: PizZip) => void },
   ): Promise<Buffer> {
+    // Path traversal protection
+    if (!isSafeDocxPath(templatePath)) throw new TemplateNotFoundError(templatePath);
     const templateAbs = resolveWorkspacePath(templatePath);
 
     let templateBuffer: Buffer;
@@ -254,6 +259,11 @@ export const docxEngine = {
       zip = new PizZip(templateBuffer);
     } catch (error) {
       throw new CorruptedTemplateError(templatePath, error);
+    }
+
+    // Pre-process hook (e.g., clone sections for multi-asset templates)
+    if (options?.preProcessZip) {
+      options.preProcessZip(zip);
     }
 
     const renderData = toEngineData(data);

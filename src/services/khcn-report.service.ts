@@ -1,0 +1,233 @@
+/**
+ * KHCN (individual customer) report service — generates DOCX from templates + DB data.
+ * Builds data dict from all customer tabs: info, branch/staff, co-borrowers,
+ * related persons, credit info, loans, collaterals, loan plans.
+ */
+import { NotFoundError } from "@/core/errors/app-error";
+import { docxEngine } from "@/lib/docx-engine";
+import { cloneSectionsForAssets, CATEGORY_TO_PREFIX, CATEGORY_TO_COLLATERAL_TYPE } from "@/lib/docx-section-cloner";
+import { KHCN_TEMPLATES } from "@/lib/loan-plan/khcn-template-registry";
+import { ASSET_CATEGORY_KEYS } from "@/lib/loan-plan/khcn-asset-template-registry";
+import { numberToVietnameseWords } from "@/lib/number-to-vietnamese-words";
+import { prisma } from "@/lib/prisma";
+import { fmtDate, fmtDateCompact, today } from "@/lib/report/report-date-utils";
+
+import {
+  buildBeneficiaryLoopData,
+  buildBranchStaffData,
+  buildCoBorrowerData,
+  buildCreditAgribankData,
+  buildCreditOtherData,
+  buildCustomerAliases,
+  buildDisbursementExtendedData,
+  buildLandCollateralData,
+  buildLoanExtendedData,
+  buildLoanPlanExtendedData,
+  buildMovableCollateralData,
+  buildOtherCollateralData,
+  buildRelatedPersonData,
+  buildSavingsCollateralData,
+} from "./khcn-report-data-builders";
+
+// ── Load full customer with ALL relations needed for templates ──
+
+async function loadFullCustomer(customerId: string, loanId?: string) {
+  const c = await prisma.customer.findUnique({
+    where: { id: customerId },
+    include: {
+      active_branch: true,
+      loans: {
+        where: loanId ? { id: loanId } : undefined,
+        take: 1,
+        include: {
+          disbursements: { orderBy: { disbursementDate: "desc" }, take: 1 },
+          beneficiaries: true,
+        },
+        orderBy: { startDate: "desc" },
+      },
+      collaterals: { orderBy: { createdAt: "asc" } },
+      loan_plans: { orderBy: { createdAt: "desc" }, take: 1 },
+      co_borrowers: { orderBy: { createdAt: "asc" } },
+      related_persons: { orderBy: { createdAt: "asc" } },
+      credit_agribank: { orderBy: { createdAt: "asc" } },
+      credit_other: { orderBy: { createdAt: "asc" } },
+    },
+  });
+  if (!c) throw new NotFoundError("Customer not found.");
+  return c;
+}
+
+// ── Build flat data dict for KHCN template rendering ──
+
+export async function buildKhcnReportData(
+  customerId: string,
+  loanId?: string,
+  overrides?: Record<string, string>,
+): Promise<Record<string, unknown>> {
+  const c = await loadFullCustomer(customerId, loanId);
+  const t = today();
+
+  const loan = c.loans[0]; // Already filtered by loanId in query
+  const latestPlan = c.loan_plans[0];
+
+  const data: Record<string, unknown> = {
+    // ── Date literals ──
+    Ngày: t.dd,
+    Tháng: t.mm,
+    Năm: t.yyyy,
+    năm: t.yyyy, // lowercase alias used in some templates
+
+    // ── Customer (individual) fields ──
+    "Tên khách hàng": c.customer_name,
+    "Mã khách hàng": c.customer_code,
+    "Địa chỉ": c.address ?? "",
+    CCCD: c.cccd ?? "",
+    "Ngày cấp CCCD": c.cccd_issued_date ?? "",
+    "Nơi cấp CCCD": c.cccd_issued_place ?? "",
+    "Năm sinh": c.date_of_birth ?? "",
+    "Giới tính": c.gender === "male" ? "Nam" : c.gender === "female" ? "Nữ" : "",
+    "Số điện thoại": c.phone ?? "",
+    "Tình trạng hôn nhân": c.marital_status ?? "",
+    "Họ tên vợ/chồng": c.spouse_name ?? "",
+    "CCCD vợ/chồng": c.spouse_cccd ?? "",
+    "Số tài khoản": c.bank_account ?? "",
+    "Nơi mở tài khoản": c.bank_name ?? "",
+  };
+
+  // Customer aliases (CMND, Danh xưng, Tên gọi in hoa, etc.)
+  buildCustomerAliases(c, data);
+
+  // ── Branch & Staff ──
+  buildBranchStaffData(c.active_branch, {
+    relationship_officer: c.relationship_officer,
+    appraiser: c.appraiser,
+    approver_name: c.approver_name,
+    approver_title: c.approver_title,
+  }, data);
+
+  // ── Loan (HĐTD) fields ──
+  if (loan) {
+    data["HĐTD.Số HĐ tín dụng"] = loan.contractNumber;
+    data["HĐTD.Ngày ký HĐTD"] = fmtDate(loan.startDate);
+    data["HĐTD.Số tiền vay"] = loan.loanAmount;
+    data["HĐTD.STvay bằng chữ"] = numberToVietnameseWords(loan.loanAmount);
+    data["HĐTD.Mục đích vay"] = loan.purpose ?? "";
+    data["HĐTD.Thời hạn vay"] = loan.endDate
+      ? `${Math.round((loan.endDate.getTime() - loan.startDate.getTime()) / (30.44 * 24 * 3600000))} tháng`
+      : "";
+    data["HĐTD.Hạn trả cuối"] = fmtDate(loan.endDate);
+    data["HĐTD.Lãi suất vay"] = loan.interestRate ?? "";
+    data["HĐTD.Phương thức cho vay"] = loan.loan_method ?? "";
+    data["HĐTD.Tổng giá trị TSBĐ"] = loan.collateralValue ?? "";
+    data["HĐTD.Tổng nghĩa vụ bảo đảm"] = loan.securedObligation ?? "";
+
+    // Extended HĐTD fields (lending terms, equity, rating, etc.)
+    buildLoanExtendedData(loan, data);
+
+    // Latest disbursement snapshot
+    const latestDisb = loan.disbursements[0];
+    if (latestDisb) {
+      data["GN.Dư nợ hiện tại"] = latestDisb.currentOutstanding ?? 0;
+      data["GN.Số tiền nhận nợ"] = latestDisb.debtAmount ?? latestDisb.amount;
+      data["GN.STNN bằng chữ"] = numberToVietnameseWords(latestDisb.debtAmount ?? latestDisb.amount);
+      data["GN.Mục đích"] = latestDisb.purpose ?? "";
+      buildDisbursementExtendedData(latestDisb, data);
+    }
+
+    // Beneficiaries loop (with extended UNC fields)
+    data.UNC = buildBeneficiaryLoopData(loan.beneficiaries);
+  }
+
+  // ── Collateral (TSBĐ) loop ──
+  data.TSBD = c.collaterals.map((col, i) => {
+    const props = JSON.parse(col.properties_json || "{}");
+    return {
+      STT: i + 1,
+      "Tên TSBĐ": col.name,
+      "Loại TSBĐ": col.collateral_type,
+      "Tổng giá trị TS": col.total_value ?? "",
+      "TGTTS bằng chữ": col.total_value ? numberToVietnameseWords(col.total_value) : "",
+      "Nghĩa vụ bảo đảm": col.obligation ?? "",
+      ...(typeof props === "object" && props !== null ? props : {}),
+    };
+  });
+
+  // Total collateral summary
+  const totalCollateralValue = c.collaterals.reduce((s, col) => s + (col.total_value ?? 0), 0);
+  const totalObligation = c.collaterals.reduce((s, col) => s + (col.obligation ?? 0), 0);
+  data["Tổng giá trị TSBĐ"] = totalCollateralValue || "";
+  data["Tổng giá trị TSBĐ bằng chữ"] = totalCollateralValue ? numberToVietnameseWords(totalCollateralValue) : "";
+  data["Tổng nghĩa vụ bảo đảm"] = totalObligation || "";
+
+  // Type-specific collateral flat fields
+  buildLandCollateralData(c.collaterals, data);
+  buildMovableCollateralData(c.collaterals, data);
+  buildSavingsCollateralData(c.collaterals, data);
+  buildOtherCollateralData(c.collaterals, data);
+
+  // ── CoBorrower (TV = Thành viên đồng vay) ──
+  buildCoBorrowerData(c.co_borrowers, data);
+
+  // ── RelatedPerson (NLQ = Người liên quan) ──
+  buildRelatedPersonData(c.related_persons, data);
+
+  // ── Credit info (VBA = Agribank, TCTD = other) ──
+  buildCreditAgribankData(c.credit_agribank, data);
+  buildCreditOtherData(c.credit_other, data);
+
+  // ── Loan plan (Phương án) fields — all PA.* handled by builder ──
+  if (latestPlan) {
+    buildLoanPlanExtendedData(latestPlan, data);
+  }
+
+  // Merge manual overrides (last, so they can override any computed value)
+  if (overrides) {
+    for (const [key, val] of Object.entries(overrides)) {
+      if (val !== undefined && val !== "") data[key] = val;
+    }
+  }
+
+  return data;
+}
+
+// ── Generate DOCX buffer ──
+
+export type KhcnReportResult = { buffer: Buffer; filename: string; contentType: string };
+
+export async function generateKhcnReport(
+  customerId: string,
+  templatePath: string,
+  templateLabel: string,
+  loanId?: string,
+  overrides?: Record<string, string>,
+): Promise<KhcnReportResult> {
+  const data = await buildKhcnReportData(customerId, loanId, overrides);
+
+  // Detect asset template category for multi-asset cloning
+  const templateEntry = KHCN_TEMPLATES.find((t) => t.path === templatePath);
+  const category = templateEntry?.category;
+  const isAssetTemplate = category ? ASSET_CATEGORY_KEYS.has(category) : false;
+  const prefix = category ? CATEGORY_TO_PREFIX[category] : undefined;
+  const collateralType = category ? CATEGORY_TO_COLLATERAL_TYPE[category] : undefined;
+
+  // Count collaterals of matching type for clone count
+  const collaterals = data.TSBD as Array<{ "Loại TSBĐ": string }> | undefined;
+  const count = (isAssetTemplate && prefix && collateralType && collaterals)
+    ? collaterals.filter((c) => c["Loại TSBĐ"] === collateralType).length
+    : 0;
+
+  const buffer = await docxEngine.generateDocxBuffer(templatePath, data, {
+    preProcessZip: (count > 1 && prefix)
+      ? (zip) => cloneSectionsForAssets(zip, prefix, count)
+      : undefined,
+  });
+
+  const customerName = String(data["Tên khách hàng"] ?? "KHCN");
+  const filename = `${customerName}_${templateLabel}_${fmtDateCompact(new Date())}.docx`;
+
+  return {
+    buffer,
+    filename,
+    contentType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  };
+}

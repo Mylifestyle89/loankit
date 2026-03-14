@@ -97,6 +97,23 @@ This is a Next.js-based financial reporting and invoice tracking application bui
 - **Status Values:** draft | published
 - **Ownership:** `createdBy` tracks the user who created the mapping
 
+### Collateral (KHCN)
+- **Purpose:** Loan collateral (movable, savings, land, other assets)
+- **Fields:** ID, customerId (FK), loanPlanId (FK), type, owner_info, asset_details (JSON)
+- **Types:** dong_san (vehicles), tien_gui (savings), dat (land), khac (other)
+- **Relations:** Belongs to Customer and LoanPlan
+- **Asset Details:** Manufacture year, seat count, mortgage holder, certificate dates, etc.
+
+### CoBorrower (KHCN)
+- **Purpose:** Co-borrower relationships for joint loans
+- **Fields:** ID, customerId (FK), loanPlanId (FK), relationship, name, id_number
+- **Relations:** Belongs to Customer and LoanPlan
+
+### CreditInfo (KHCN)
+- **Purpose:** Customer credit history and agribank/other credit records
+- **Fields:** ID, customerId (FK), type (agribank|other), credit_data (JSON)
+- **Relations:** Belongs to Customer
+
 ## Deadline Scheduler
 
 **Location:** `src/lib/notifications/deadline-scheduler.ts`
@@ -439,6 +456,44 @@ This is a Next.js-based financial reporting and invoice tracking application bui
 - Notification metadata is JSON-stringified (not exposed to frontend)
 - Cookie caching reduces DB load (5-min TTL)
 
+## KHCN Data Builder Architecture
+
+**Purpose:** Modularized builders for KHCN-specific loan plan data extraction and transformation.
+
+**Main Components:**
+
+1. **khcn-report-data-builders.ts** (~350 LOC)
+   - `parseOwners()` - Extract owner info from raw object (name, id_number, relationship)
+   - `buildOwnerFields()` - Transform owners array into prefixed fields (CHUDAN_*, CDAI_*)
+   - `buildMovableCollateralData()` - Multi-vehicle loop array (DS_CHI_TIET) with field mappings
+   - `buildSavingsCollateralData()` - Savings collateral fields (TK.* prefix)
+   - `buildOtherCollateralData()` - Generic collateral fields (TSK.* prefix)
+   - All builders use consistent field key mapping pattern
+
+2. **khcn-asset-template-registry.ts** (~70 templates)
+   - 7 asset categories: tai_san, ts_qsd_bv, ts_qsd_bt3, ts_glvd_bv, ts_glvd_bt3, ts_ptgt_bv, ts_ptgt_bt3
+   - ~10 templates per category for different DOCX formats
+   - Templates include certificate fields (issue_date, issuing_authority)
+
+3. **khcn-template-registry.ts**
+   - Imports and merges base + asset templates
+   - Used by khcn-report.service.ts for report generation
+
+4. **DOCX Section Cloner** (`src/lib/docx-engine.ts`)
+   - `cloneDocxSections()` utility clones template body N times for N collaterals
+   - Rewrites prefixed placeholders to indexed form (e.g., `[SĐ.field]` → `[SĐ_1.field]`, `[SĐ_2.field]`)
+   - Handles delimiter detection (`[` and `]`) and prefix scanning (SĐ., ĐS., TK., TSK.)
+   - Preserves page settings (`<w:sectPr>`) and maintains XML structure integrity
+   - Backward compatible: 1 collateral = no cloning behavior
+
+**Data Flow:**
+1. khcn-report.service.ts calls data builders with collateral count
+2. Builders extract and transform raw database objects, emit indexed keys
+3. Transformed data assigned to field keys (e.g., DS_CHI_TIET[0].HANG_HOA, SĐ_1.field, SĐ_2.field)
+4. docx-engine clones template sections before render
+5. docxtemplater injects field values into indexed placeholders
+6. Final DOCX contains all collaterals rendered sequentially
+
 ## Performance Optimizations
 
 - Service layer caching reduces repeated DB queries
@@ -446,6 +501,7 @@ This is a Next.js-based financial reporting and invoice tracking application bui
 - Indexes on foreign keys and status fields for fast filtering
 - Select queries include only necessary fields
 - Pagination support in notification retrieval (limit 50)
+- Data builder functions use extracted helpers (parseOwners) for DRY extraction
 
 ## Deployment
 
