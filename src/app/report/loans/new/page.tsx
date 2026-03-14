@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 
 import { useLanguage } from "@/components/language-provider";
 import { fmtNumber, parseNumber, formatDateInput, dmy2iso } from "@/lib/invoice-tracking-format-helpers";
@@ -9,10 +9,15 @@ import { fmtNumber, parseNumber, formatDateInput, dmy2iso } from "@/lib/invoice-
 type Customer = { id: string; customer_name: string };
 
 export default function NewLoanPage() {
+  return <Suspense><NewLoanForm /></Suspense>;
+}
+
+function NewLoanForm() {
   const { t } = useLanguage();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [customers, setCustomers] = useState<Customer[]>([]);
-  const [customerId, setCustomerId] = useState("");
+  const [customerId, setCustomerId] = useState(searchParams.get("customerId") ?? "");
   const [contractNumber, setContractNumber] = useState("");
   const [loanAmount, setLoanAmount] = useState("");
   const [interestRate, setInterestRate] = useState("");
