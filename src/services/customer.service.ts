@@ -175,11 +175,15 @@ function toUpdateDbData(input: UpdateCustomerInput) {
 }
 
 export const customerService = {
-  async listCustomers(filter?: { customer_type?: string }): Promise<Customer[]> {
-    return prisma.customer.findMany({
-      where: filter?.customer_type ? { customer_type: filter.customer_type } : undefined,
-      orderBy: { updatedAt: "desc" },
-    });
+  async listCustomers(filter?: { customer_type?: string; page?: number; limit?: number }) {
+    const take = Math.min(filter?.limit ?? 50, 200);
+    const skip = ((filter?.page ?? 1) - 1) * take;
+    const where = filter?.customer_type ? { customer_type: filter.customer_type } : undefined;
+    const [data, total] = await Promise.all([
+      prisma.customer.findMany({ where, orderBy: { updatedAt: "desc" }, take, skip }),
+      prisma.customer.count({ where }),
+    ]);
+    return { data, total, page: filter?.page ?? 1, limit: take };
   },
 
   async getCustomerById(id: string): Promise<Customer> {
@@ -378,6 +382,7 @@ export const customerService = {
             },
           },
         },
+        co_borrowers: { select: { id: true } },
         mapping_instances: {
           orderBy: { updatedAt: "desc" },
           include: { master: true },
@@ -406,9 +411,20 @@ export const customerService = {
       }
     }
 
+    // KHCN-specific computed fields
+    const activeLoans = loans.filter((l: { status: string }) => l.status === "active");
+    const debtGroups = activeLoans
+      .map((l: { debt_group: string | null }) => l.debt_group)
+      .filter((d: string | null): d is string => d !== null && d !== "")
+      .sort((a: string, b: string) => Number(b) - Number(a));
+    const nearestEndDate = activeLoans
+      .map((l: { endDate: Date | null }) => l.endDate)
+      .filter((d: Date | null): d is Date => d !== null)
+      .sort((a: Date, b: Date) => a.getTime() - b.getTime())[0] ?? null;
+
     const summary = {
       totalLoans: loans.length,
-      activeLoans: loans.filter((l: { status: string }) => l.status === "active").length,
+      activeLoans: activeLoans.length,
       totalLoanAmount: loans.reduce((s: number, l: { loanAmount: number }) => s + l.loanAmount, 0),
       totalDisbursements,
       totalDisbursedAmount,
@@ -416,6 +432,10 @@ export const customerService = {
       totalInvoiceAmount,
       overdueInvoices,
       totalMappingInstances: customer.mapping_instances.length,
+      debtGroup: debtGroups[0] ?? null,
+      nearestMaturity: nearestEndDate?.toISOString() ?? null,
+      coBorrowerCount: customer.co_borrowers.length,
+      outstandingBalance: activeLoans.reduce((s: number, l: { loanAmount: number }) => s + l.loanAmount, 0),
     };
 
     return { ...customer, summary };
