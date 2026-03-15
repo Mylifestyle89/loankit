@@ -40,10 +40,10 @@ export function KhcnDocChecklist({
 
   useEffect(() => {
     if (!customerId) return;
-    fetch(`/api/customers/${customerId}`, { cache: "no-store" })
+    fetch(`/api/loans?customerId=${customerId}`, { cache: "no-store" })
       .then((r) => r.json())
       .then((d) => {
-        const loanList: LoanOption[] = (d.customer?.loans ?? []).map((l: Record<string, unknown>) => ({
+        const loanList: LoanOption[] = (d.loans ?? []).map((l: Record<string, unknown>) => ({
           id: l.id as string,
           contractNumber: l.contractNumber as string,
           loanAmount: l.loanAmount as number,
