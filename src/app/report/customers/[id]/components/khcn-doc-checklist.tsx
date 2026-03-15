@@ -5,6 +5,7 @@ import { Download, FileText, Check, Sparkles } from "lucide-react";
 
 import { DocxPreviewModal } from "@/components/docx-preview-modal";
 import { METHOD_OPTIONS } from "@/lib/loan-plan/loan-plan-constants";
+import { KhcnPlaceholderPanel } from "./khcn-placeholder-panel";
 
 type DocTemplate = { path: string; name: string };
 type Category = { key: string; label: string; isAsset?: boolean; templates: DocTemplate[] };
@@ -19,10 +20,12 @@ type TabKey = (typeof TABS)[number]["key"];
  * KHCN document checklist — shows DOCX templates filtered by loan method.
  * Users can check off completed documents and download templates.
  */
+type LoanOption = { id: string; contractNumber: string; loanAmount: number; status: string };
+
 export function KhcnDocChecklist({
   loanMethod: initialMethod,
   customerId,
-  loanId,
+  loanId: initialLoanId,
 }: {
   loanMethod?: string;
   customerId?: string;
@@ -30,6 +33,29 @@ export function KhcnDocChecklist({
 }) {
   const [method, setMethod] = useState(initialMethod ?? "tung_lan");
   const [tab, setTab] = useState<TabKey>("docs");
+
+  // Active loan selection
+  const [loans, setLoans] = useState<LoanOption[]>([]);
+  const [selectedLoanId, setSelectedLoanId] = useState(initialLoanId ?? "");
+
+  useEffect(() => {
+    if (!customerId) return;
+    fetch(`/api/customers/${customerId}`, { cache: "no-store" })
+      .then((r) => r.json())
+      .then((d) => {
+        const loanList: LoanOption[] = (d.customer?.loans ?? []).map((l: Record<string, unknown>) => ({
+          id: l.id as string,
+          contractNumber: l.contractNumber as string,
+          loanAmount: l.loanAmount as number,
+          status: l.status as string,
+        }));
+        setLoans(loanList);
+        if (!selectedLoanId && loanList.length > 0) setSelectedLoanId(loanList[0].id);
+      })
+      .catch(() => {});
+  }, [customerId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const loanId = selectedLoanId || initialLoanId;
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [checked, setChecked] = useState<Set<string>>(new Set());
@@ -134,6 +160,24 @@ export function KhcnDocChecklist({
         </div>
       </div>
 
+      {/* Active loan selector */}
+      {loans.length > 0 && (
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-medium text-zinc-500">HĐTD:</span>
+          <select
+            value={selectedLoanId}
+            onChange={(e) => setSelectedLoanId(e.target.value)}
+            className="rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] px-3 py-1.5 text-xs font-medium text-zinc-700 dark:text-zinc-300 focus:outline-none focus:ring-2 focus:ring-violet-500/40"
+          >
+            {loans.map((l) => (
+              <option key={l.id} value={l.id}>
+                {l.contractNumber} — {new Intl.NumberFormat("vi-VN").format(l.loanAmount)}đ
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+
       {/* Doc / TSBĐ tabs */}
       <div className="flex rounded-lg border border-zinc-200 dark:border-white/[0.09] overflow-hidden w-fit">
         {TABS.map((t) => (
@@ -223,6 +267,9 @@ export function KhcnDocChecklist({
           ))}
         </div>
       )}
+      {/* Placeholder reference panel */}
+      <KhcnPlaceholderPanel />
+
       {/* Preview modal */}
       {preview && (
         <DocxPreviewModal

@@ -30,6 +30,7 @@ export function buildCustomerAliases(c: {
   data["Danh xưng"] = c.gender === "male" ? "Ông" : c.gender === "female" ? "Bà" : "";
   data["Tên gọi in hoa"] = c.customer_name?.toUpperCase() ?? "";
   data["TÊN KHÁCH HÀNG"] = c.customer_name?.toUpperCase() ?? "";
+  data["Tên khách hàng in hoa"] = c.customer_name?.toUpperCase() ?? "";
   data["Nơi thường trú"] = c.address ?? "";
   data["Điện thoại"] = c.phone ?? "";
 }
@@ -56,11 +57,14 @@ export function buildBranchStaffData(
   data["Địa bàn"] = branch?.province ?? "";
   data["Fax"] = branch?.fax ?? "";
   data["Mã số thuế CN"] = branch?.tax_code ?? "";
+  data["Ngày cấp MST"] = ""; // Filled via override if applicable
+  data["Nơi cấp MST"] = ""; // Filled via override if applicable
 
   // Staff
   data["Tên người dùng"] = staff.relationship_officer ?? "";
   data["Người kiểm soát"] = staff.appraiser ?? "";
   data["Người phê duyệt"] = staff.approver_name ?? "";
+  data["Người phê duyệt in hoa"] = (staff.approver_name ?? "").toUpperCase();
   data["Chức vụ NPD"] = staff.approver_title ?? "";
   data["Danh xưng NPD"] = ""; // Not tracked
 }
@@ -239,6 +243,7 @@ function extractLandFields(
     STT: index + 1,
     "Tên TSBĐ": col.name,
     "Tên Giấy chứng nhận": p.certificate_name ?? "",
+    "Tên giấy chứng nhận": p.certificate_name ?? "", // lowercase alias
     "Số seri": p.serial ?? p.serial_number ?? "",
     "Cấp ngày": p.certificate_issue_date ?? p.issued_date ?? "",
     "Cơ quan cấp": p.issuing_authority ?? "",
@@ -263,14 +268,32 @@ function extractLandFields(
     "Cấp nhà ở": p.house_level ?? p.house_grade ?? "",
     "Loại nhà ở": p.house_type ?? "",
     "Hình thức sở hữu nhà": p.house_ownership ?? "",
+    "Thời hạn sở hữu": p.ownership_term ?? "",
     "Năm hoàn thành xây dựng": p.year_built ?? "",
     "Sử dụng chung": p.shared_area ?? "",
     "Sử dụng riêng": p.private_area ?? "",
     "Khái quát về lợi thế": p.advantage_summary ?? p.advantage ?? "",
+    "Thời hạn XĐ lại GTTS": p.revaluation_deadline ?? p.revaluation_period ?? "",
     "Ghi chú": p.notes ?? "",
     "Mua bảo hiểm TSBĐ": p.insurance_status ?? p.insurance ?? "",
     "Tình trạng sử dụng TS": p.asset_usage_status ?? p.asset_condition ?? "",
     "Giấy tờ về quyền bề mặt": p.surface_rights_doc ?? "",
+    // Thẩm định & khấu hao
+    "Mục đích thẩm định TSBĐ": p.appraisal_purpose ?? "",
+    "TSBĐ chính thức/bổ sung": p.collateral_category ?? "",
+    "Hình thức sở hữu TSBĐ": p.collateral_ownership_form ?? "",
+    "Mối quan hệ giữa chủ sở hữu TS với bên vay": p.owner_relationship ?? "",
+    "Thời gian đã sử dụng": p.used_duration ?? "",
+    "Thời gian sử dụng còn lại": p.remaining_duration ?? "",
+    "Thời gian khấu hao": p.depreciation_period ?? "",
+    "Tỷ lệ khấu hao": p.depreciation_rate ?? "",
+    "Giá trị khấu hao hàng năm": p.annual_depreciation ?? "",
+    "Giá trị còn lại": p.residual_value ?? "",
+    // Xóa thế chấp (HĐTC cũ)
+    "Số HĐTC cũ": p.old_mortgage_number ?? "",
+    "Tên HĐTC cũ": p.old_mortgage_name ?? "",
+    "Ngày ký HĐTC cũ": p.old_mortgage_date ?? "",
+    "Ngày giao/nhận": p.handover_date ?? "",
     // Valuation
     "Tổng giá trị TS": col.total_value ?? "",
     "TGTTS bằng chữ": col.total_value ? numberToVietnameseWords(col.total_value) : "",
@@ -283,14 +306,21 @@ function extractLandFields(
     "Loại đất 2": p.land_type_2 ?? "", "Đơn giá đất 2": p.land_unit_price_2 ?? "", "Giá trị đất 2": p.land_value_2 ?? "",
     "Loại đất 3": p.land_type_3 ?? "", "Đơn giá đất 3": p.land_unit_price_3 ?? "", "Giá trị đất 3": p.land_value_3 ?? "",
     "Giá trị đất": p.land_value ?? "",
+    "Đơn giá xây dựng": p.construction_unit_price ?? "",
     "Giá trị nhà": p.house_value ?? "",
     "Giá trị xây dựng ban đầu": p.initial_construction_value ?? "",
     "Công trình xây dựng khác": p.other_construction ?? "",
     "Giá trị Công trình XD khác": p.other_construction_value ?? "",
     // HĐ thế chấp
+    "BBXĐ giá trị tài sản số": p.valuation_report_number ?? "",
     "Tên HĐ thế chấp": p.mortgage_name ?? "",
+    "TÊN HĐ THẾ CHẤP": (p.mortgage_name ?? "").toUpperCase(),
     "Số HĐ thế chấp": p.mortgage_contract ?? "",
     "Ngày ký HĐTC": p.mortgage_date ?? "",
+    "Ngày HĐTC": p.mortgage_date ?? "", // alias
+    "HĐ sửa đổi bổ sung số": p.amendment_number ?? "",
+    "Ngày ký HĐ SĐBS": p.amendment_date ?? "",
+    "Ngày định giá lại TS": p.revaluation_date ?? "",
     "Nơi đăng ký giao dịch BĐ": p.guarantee_registry_place ?? "",
     // Owner detail fields (ĐSH prefix — for BT3 templates)
     ...buildOwnerFields(owners),
@@ -344,6 +374,35 @@ export function buildLandCollateralData(
   // Loop array for templates with [#TSBD_CHI_TIET]...[/TSBD_CHI_TIET]
   data["TSBD_CHI_TIET"] = allLandFields;
 
+  // Valuation breakdown loop — [#DINH_GIA]...[/DINH_GIA] for land types + house
+  const valuationRows: Array<Record<string, unknown>> = [];
+  for (const col of lands) {
+    const p = JSON.parse(col.properties_json || "{}");
+    // Land type rows
+    for (let i = 1; i <= 5; i++) {
+      const type = p[`land_type_${i}`];
+      if (!type) break;
+      valuationRows.push({
+        STT: valuationRows.length + 1,
+        "Loại": type,
+        "Diện tích": p[`land_area_${i}`] ?? p.land_area ?? "",
+        "Đơn giá": p[`land_unit_price_${i}`] ?? "",
+        "Giá trị": p[`land_value_${i}`] ?? "",
+      });
+    }
+    // House/building row (if exists)
+    if (p.house_value || p.floor_area) {
+      valuationRows.push({
+        STT: valuationRows.length + 1,
+        "Loại": "TS gắn liền với đất",
+        "Diện tích": p.floor_area ?? "",
+        "Đơn giá": p.construction_unit_price ?? "",
+        "Giá trị": p.house_value ?? "",
+      });
+    }
+  }
+  data["DINH_GIA"] = valuationRows;
+
   // Consolidated valuation table — one row per land collateral
   data["TSBD_DINH_GIA"] = lands.map((col, i) => {
     const f = allLandFields[i];
@@ -371,6 +430,14 @@ export function buildLandCollateralData(
   if (allLandFields.length > 0) {
     emitFlatFields(data, "SĐ", allLandFields[0]);
   }
+
+  // Sum totals for land collaterals
+  const landTotalValue = lands.reduce((s, c) => s + (c.total_value ?? 0), 0);
+  const landTotalObligation = lands.reduce((s, c) => s + (c.obligation ?? 0), 0);
+  data["SĐ.Tổng giá trị tất cả TS"] = landTotalValue || "";
+  data["SĐ.Tổng GTTS bằng chữ"] = landTotalValue ? numberToVietnameseWords(landTotalValue) : "";
+  data["SĐ.Tổng NVBĐ"] = landTotalObligation || "";
+  data["SĐ.Tổng NVBĐ bằng chữ"] = landTotalObligation ? numberToVietnameseWords(landTotalObligation) : "";
 }
 
 // ── Helper: extract movable collateral fields ──
@@ -435,6 +502,14 @@ export function buildMovableCollateralData(
   if (allFields.length > 0) {
     emitFlatFields(data, "ĐS", allFields[0]);
   }
+
+  // Sum totals for movable collaterals
+  const movTotalValue = vehicles.reduce((s, c) => s + (c.total_value ?? 0), 0);
+  const movTotalObl = vehicles.reduce((s, c) => s + (c.obligation ?? 0), 0);
+  data["ĐS.Tổng giá trị tất cả TS"] = movTotalValue || "";
+  data["ĐS.Tổng GTTS bằng chữ"] = movTotalValue ? numberToVietnameseWords(movTotalValue) : "";
+  data["ĐS.Tổng NVBĐ"] = movTotalObl || "";
+  data["ĐS.Tổng NVBĐ bằng chữ"] = movTotalObl ? numberToVietnameseWords(movTotalObl) : "";
 }
 
 // ── Helper: extract savings collateral fields ──
@@ -478,6 +553,13 @@ export function buildSavingsCollateralData(
   if (allFields.length > 0) {
     emitFlatFields(data, "TK", allFields[0]);
   }
+
+  const tkTotalValue = items.reduce((s, c) => s + (c.total_value ?? 0), 0);
+  const tkTotalObl = items.reduce((s, c) => s + (c.obligation ?? 0), 0);
+  data["TK.Tổng giá trị tất cả TS"] = tkTotalValue || "";
+  data["TK.Tổng GTTS bằng chữ"] = tkTotalValue ? numberToVietnameseWords(tkTotalValue) : "";
+  data["TK.Tổng NVBĐ"] = tkTotalObl || "";
+  data["TK.Tổng NVBĐ bằng chữ"] = tkTotalObl ? numberToVietnameseWords(tkTotalObl) : "";
 }
 
 // ── Helper: extract other collateral fields ──
@@ -517,6 +599,13 @@ export function buildOtherCollateralData(
   if (allFields.length > 0) {
     emitFlatFields(data, "TSK", allFields[0]);
   }
+
+  const tskTotalValue = items.reduce((s, c) => s + (c.total_value ?? 0), 0);
+  const tskTotalObl = items.reduce((s, c) => s + (c.obligation ?? 0), 0);
+  data["TSK.Tổng giá trị tất cả TS"] = tskTotalValue || "";
+  data["TSK.Tổng GTTS bằng chữ"] = tskTotalValue ? numberToVietnameseWords(tskTotalValue) : "";
+  data["TSK.Tổng NVBĐ"] = tskTotalObl || "";
+  data["TSK.Tổng NVBĐ bằng chữ"] = tskTotalObl ? numberToVietnameseWords(tskTotalObl) : "";
 }
 
 // ── CoBorrower (TV = Thành viên đồng vay) ──
@@ -538,6 +627,7 @@ export function buildCoBorrowerData(
     data["TV.STT"] = "1";
     data["TV.Danh xưng"] = first.title ?? "";
     data["TV.Họ và tên"] = first.full_name;
+    data["TV.Họ và tên in hoa"] = first.full_name.toUpperCase();
     data["TV.Loại giấy tờ tùy thân"] = first.id_type ?? "";
     data["TV.CMND"] = first.id_number ?? "";
     data["TV.CMND cũ"] = first.id_old ?? "";
@@ -555,6 +645,7 @@ export function buildCoBorrowerData(
     STT: i + 1,
     "Danh xưng": cb.title ?? "",
     "Họ và tên": cb.full_name,
+    "Họ và tên in hoa": cb.full_name.toUpperCase(),
     "Loại giấy tờ tùy thân": cb.id_type ?? "",
     "CMND": cb.id_number ?? "",
     "CMND cũ": cb.id_old ?? "",
@@ -623,6 +714,20 @@ export function buildCreditAgribankData(
   // HĐTD alias for Agribank debt total
   const totalDebt = credits.reduce((s, c) => s + (parseFloat(c.debt_amount ?? "0") || 0), 0);
   if (totalDebt) data["HĐTD.Dư nợ của KH và NLQ tại Agribank"] = totalDebt;
+  data["VBA.Tổng dư nợ"] = totalDebt || "";
+
+  // VBA flat fields for BCĐX template (split short/long term from loan_term)
+  if (credits.length > 0) {
+    const shortTerm = credits.filter((c) => (c.loan_term ?? "").includes("ngắn"));
+    const longTerm = credits.filter((c) => !(c.loan_term ?? "").includes("ngắn"));
+    const shortDebt = shortTerm.reduce((s, c) => s + (parseFloat(c.debt_amount ?? "0") || 0), 0);
+    const longDebt = longTerm.reduce((s, c) => s + (parseFloat(c.debt_amount ?? "0") || 0), 0);
+    data["VBA.Dư nợ ngắn hạn"] = shortDebt || "";
+    data["VBA.Dư nợ trung dài hạn"] = longDebt || "";
+    data["VBA.Mục đích ngắn hạn"] = shortTerm.map((c) => c.loan_purpose).filter(Boolean).join("; ") || "";
+    data["VBA.Mục đích trung dài hạn"] = longTerm.map((c) => c.loan_purpose).filter(Boolean).join("; ") || "";
+    data["VBA.Nguồn trả nợ"] = credits.map((c) => c.repayment_source).filter(Boolean).join("; ") || "";
+  }
 }
 
 // ── CreditAtOther (TCTD = Tổ chức tín dụng khác) ──
@@ -647,6 +752,20 @@ export function buildCreditOtherData(
   // HĐTD alias
   const totalDebt = credits.reduce((s, c) => s + (parseFloat(c.debt_amount ?? "0") || 0), 0);
   if (totalDebt) data["HĐTD.Dư nợ tại TCTD khác"] = totalDebt;
+  data["TCTD.Tổng dư nợ"] = totalDebt || "";
+
+  // TCTD flat fields for BCĐX template (split short/long term)
+  if (credits.length > 0) {
+    const shortTerm = credits.filter((c) => (c.loan_term ?? "").includes("ngắn"));
+    const longTerm = credits.filter((c) => !(c.loan_term ?? "").includes("ngắn"));
+    const shortDebt = shortTerm.reduce((s, c) => s + (parseFloat(c.debt_amount ?? "0") || 0), 0);
+    const longDebt = longTerm.reduce((s, c) => s + (parseFloat(c.debt_amount ?? "0") || 0), 0);
+    data["TCTD.Dư nợ ngắn hạn"] = shortDebt || "";
+    data["TCTD.Dư nợ trung dài hạn"] = longDebt || "";
+    data["TCTD.Mục đích ngắn hạn"] = shortTerm.map((c) => c.loan_purpose).filter(Boolean).join("; ") || "";
+    data["TCTD.Mục đích trung dài hạn"] = longTerm.map((c) => c.loan_purpose).filter(Boolean).join("; ") || "";
+    data["TCTD.Nguồn trả nợ"] = credits.map((c) => c.repayment_source).filter(Boolean).join("; ") || "";
+  }
 }
 
 // ── Extended Loan Plan (PA) cost items ──

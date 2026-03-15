@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
-import { Plus, FileText, Trash2 } from "lucide-react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import { Plus, FileText, Trash2, Sparkles } from "lucide-react";
 import { useXlsxLoanPlanImport } from "@/lib/hooks/use-xlsx-loan-plan-import";
 import { XlsxImportButton, XlsxImportPreviewModal } from "@/components/loan-plan/xlsx-import-preview-modal";
 
@@ -33,6 +33,9 @@ export default function LoanPlansListPage() {
   const [plans, setPlans] = useState<LoanPlan[]>([]);
   const [loading, setLoading] = useState(true);
   const xlsxImport = useXlsxLoanPlanImport(customerId);
+  const aiInputRef = useRef<HTMLInputElement>(null);
+  const [aiAnalyzing, setAiAnalyzing] = useState(false);
+  const [aiError, setAiError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -50,6 +53,49 @@ export default function LoanPlansListPage() {
     void load();
   }
 
+  /** Upload XLSX → AI analyze → create new loan plan → reload */
+  async function handleAiAnalyze(file: File) {
+    setAiAnalyzing(true);
+    setAiError(null);
+    try {
+      // Step 1: Create a draft plan
+      const createRes = await fetch("/api/loan-plans", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ customerId, name: "AI đang phân tích...", costItems: [], revenueItems: [] }),
+      });
+      const createData = await createRes.json();
+      if (!createData.ok) throw new Error(createData.error || "Không tạo được PA");
+      const newPlanId = createData.plan?.id;
+
+      // Step 2: AI analyze
+      const formData = new FormData();
+      formData.append("xlsxFile", file);
+      const aiRes = await fetch(`/api/loan-plans/${newPlanId}/ai-analyze`, { method: "POST", body: formData });
+      const aiData = await aiRes.json();
+      if (!aiData.ok) throw new Error(aiData.error || "AI phân tích thất bại");
+
+      // Step 3: Save AI results to the plan
+      await fetch(`/api/loan-plans/${newPlanId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: aiData.name || "Phương án (AI)",
+          loanAmount: aiData.loanAmount,
+          costItems: aiData.costItems,
+          revenueItems: aiData.revenueItems,
+        }),
+      });
+
+      void load();
+    } catch (err) {
+      setAiError(err instanceof Error ? err.message : "AI phân tích thất bại");
+    } finally {
+      setAiAnalyzing(false);
+      if (aiInputRef.current) aiInputRef.current.value = "";
+    }
+  }
+
   return (
     <section className="space-y-5">
       <div className="flex items-center justify-between">
@@ -61,6 +107,18 @@ export default function LoanPlansListPage() {
         </div>
         <div className="flex items-center gap-2">
           <XlsxImportButton onFileSelect={xlsxImport.uploadFile} isUploading={xlsxImport.isUploading} />
+          {/* AI Analyze button */}
+          <input type="file" accept=".xlsx,.xls" className="hidden" ref={aiInputRef}
+            onChange={(e) => { const f = e.target.files?.[0]; if (f) void handleAiAnalyze(f); }} />
+          <button
+            type="button"
+            disabled={aiAnalyzing}
+            onClick={() => aiInputRef.current?.click()}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-amber-200 dark:border-amber-500/20 bg-amber-50 dark:bg-amber-500/10 px-3 py-2 text-sm font-medium text-amber-700 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-500/20 disabled:opacity-50"
+          >
+            <Sparkles className="h-4 w-4" />
+            {aiAnalyzing ? "AI đang phân tích..." : "Phân tích AI"}
+          </button>
           <Link
             href={`/report/customers/${customerId}/loan-plans/new`}
             className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-violet-600 to-fuchsia-600 px-4 py-2 text-sm font-medium text-white shadow-sm shadow-violet-500/25 hover:brightness-110"
@@ -118,6 +176,14 @@ export default function LoanPlansListPage() {
               </div>
             );
           })}
+        </div>
+      )}
+
+      {/* AI analyze error */}
+      {aiError && (
+        <div className="rounded-lg bg-amber-50 dark:bg-amber-500/10 p-3 text-sm text-amber-700 dark:text-amber-400">
+          {aiError}
+          <button type="button" onClick={() => setAiError(null)} className="ml-2 underline">Đóng</button>
         </div>
       )}
 

@@ -2,7 +2,7 @@
 
 import type { CostItem, RevenueItem } from "@/lib/loan-plan/loan-plan-types";
 
-export type XlsxDetectedType = "A" | "B" | "C" | "unknown";
+export type XlsxDetectedType = "A" | "B" | "S" | "C" | "unknown";
 
 export type XlsxParseMeta = {
   name?: string;

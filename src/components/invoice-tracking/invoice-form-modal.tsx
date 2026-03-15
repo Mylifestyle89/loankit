@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { X } from "lucide-react";
 import { useLanguage } from "@/components/language-provider";
 import { fmtNumber, parseNumber, formatDateInput, dmy2iso } from "@/lib/invoice-tracking-format-helpers";
@@ -17,7 +17,6 @@ const labelCls = "text-xs font-medium text-zinc-600 dark:text-slate-400";
 
 export function InvoiceFormModal({ disbursementId, onClose, onCreated }: Props) {
   const { t } = useLanguage();
-  const backdropRef = useRef<HTMLDivElement>(null);
   const [invoiceNumber, setInvoiceNumber] = useState("");
   const [supplierName, setSupplierName] = useState("");
   const [amount, setAmount] = useState("");
@@ -28,18 +27,6 @@ export function InvoiceFormModal({ disbursementId, onClose, onCreated }: Props) 
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [duplicateWarning, setDuplicateWarning] = useState("");
-
-  useEffect(() => {
-    function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") onClose();
-    }
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [onClose]);
-
-  function handleBackdropClick(e: React.MouseEvent) {
-    if (e.target === backdropRef.current) onClose();
-  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -93,7 +80,7 @@ export function InvoiceFormModal({ disbursementId, onClose, onCreated }: Props) 
   }
 
   return (
-    <div ref={backdropRef} onClick={handleBackdropClick} className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
       <div className="w-full max-w-lg rounded-2xl bg-white dark:bg-[#141414]/90 shadow-xl">
         <div className="flex items-center justify-between border-b border-zinc-200 dark:border-white/[0.07] px-6 py-4">
           <h3 className="text-lg font-semibold">{t("invoices.add")}</h3>

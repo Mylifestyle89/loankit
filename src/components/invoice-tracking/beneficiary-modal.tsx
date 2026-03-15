@@ -28,7 +28,6 @@ const btnCls =
 
 export function BeneficiaryModal({ loanId, contractNumber, onClose }: Props) {
   const { t } = useLanguage();
-  const backdropRef = useRef<HTMLDivElement>(null);
 
   const [rows, setRows] = useState<Beneficiary[]>([]);
   const [loading, setLoading] = useState(true);
@@ -56,16 +55,6 @@ export function BeneficiaryModal({ loanId, contractNumber, onClose }: Props) {
   }, [loanId]);
 
   useEffect(() => { void loadBeneficiaries(); }, [loadBeneficiaries]);
-
-  useEffect(() => {
-    function onKey(e: KeyboardEvent) { if (e.key === "Escape") onClose(); }
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [onClose]);
-
-  function handleBackdropClick(e: React.MouseEvent) {
-    if (e.target === backdropRef.current) onClose();
-  }
 
   // --- Add new row ---
   async function handleAddRow() {
@@ -167,7 +156,7 @@ export function BeneficiaryModal({ loanId, contractNumber, onClose }: Props) {
   }
 
   return (
-    <div ref={backdropRef} onClick={handleBackdropClick} className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
       <div className="w-full max-w-2xl max-h-[85vh] flex flex-col rounded-2xl bg-white dark:bg-[#141414]/90 shadow-xl">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-zinc-200 dark:border-white/[0.07] px-6 py-4">

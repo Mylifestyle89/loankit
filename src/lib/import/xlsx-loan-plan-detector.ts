@@ -40,13 +40,31 @@ function countTableHeaderMatches(headers: string[]): number {
   return TYPE_B_PATTERNS.filter((pat) => headers.some((h) => pat.test(h))).length;
 }
 
+/** Check if file matches Type S standard template: sheet named "Chi phí - Doanh thu" or "Thông tin vay" */
+function isStandardTemplate(wb: WorkBook): boolean {
+  const hasSheet1 = wb.SheetNames.some((n) => /chi ph[ií].*doanh thu/i.test(n));
+  const hasSheet2 = wb.SheetNames.some((n) => /thông tin vay/i.test(n));
+  if (hasSheet1 && hasSheet2) return true;
+
+  // Also detect by row 3 "Số sào đất:" pattern in first sheet
+  const ws = wb.Sheets[wb.SheetNames[0]];
+  const rows = XLSX.utils.sheet_to_json<string[]>(ws, { header: 1, defval: "" });
+  if (rows[2] && /s[oố]\s*s[aà]o\s*[đd][aấ]t/i.test(String(rows[2][0]))) return true;
+
+  return false;
+}
+
 /**
  * Detect XLSX structure type.
+ * - S: Standard template (TEMPLATE-*.xlsx) with "Chi phí - Doanh thu" + "Thông tin vay" sheets
  * - A: Row1 has _DG/_SL/_TT suffixed headers (horizontal key-value)
  * - B: Has table headers like STT, Tên hàng, ĐVT, SL, ĐG, TT (vertical table)
  * - C: Unrecognized structure
  */
 export function detectXlsxType(wb: WorkBook): XlsxDetectedType {
+  // Check Type S first (standard template) — highest priority
+  if (isStandardTemplate(wb)) return "S";
+
   const headers = getFirstRowHeaders(wb);
   if (headers.length === 0) return "C";
 

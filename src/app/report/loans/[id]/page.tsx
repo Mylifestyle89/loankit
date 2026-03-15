@@ -145,7 +145,7 @@ export default function LoanDetailPage() {
           {/* Top row: back + title + actions */}
           <div className="flex items-start justify-between gap-4">
             <div className="flex items-start gap-3">
-              <Link href="/report/loans"
+              <Link href={loan.customer?.id ? `/report/customers/${loan.customer.id}?tab=loans` : "/report/loans"}
                 className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/80 dark:bg-white/[0.06] border border-zinc-200 dark:border-white/[0.08] text-zinc-500 dark:text-slate-400 transition-colors hover:bg-violet-50 dark:hover:bg-violet-500/10 hover:text-violet-600 dark:hover:text-violet-400">
                 <ArrowLeft className="h-4 w-4" />
               </Link>
@@ -311,6 +311,7 @@ export default function LoanDetailPage() {
       {showEditModal && (
         <LoanEditModal
           loan={loan}
+          customerId={loan.customer?.id}
           onClose={() => setShowEditModal(false)}
           onUpdated={() => void loadLoan()}
         />

@@ -92,6 +92,7 @@ export async function buildKhcnReportData(
     "CCCD vợ/chồng": c.spouse_cccd ?? "",
     "Số tài khoản": c.bank_account ?? "",
     "Nơi mở tài khoản": c.bank_name ?? "",
+    "Văn bản ủy quyền số": "", // Filled via override if applicable
   };
 
   // Customer aliases (CMND, Danh xưng, Tên gọi in hoa, etc.)
@@ -156,8 +157,10 @@ export async function buildKhcnReportData(
   const totalCollateralValue = c.collaterals.reduce((s, col) => s + (col.total_value ?? 0), 0);
   const totalObligation = c.collaterals.reduce((s, col) => s + (col.obligation ?? 0), 0);
   data["Tổng giá trị TSBĐ"] = totalCollateralValue || "";
+  data["HĐTD.Tổng giá trị TSBĐ"] = totalCollateralValue || "";
   data["Tổng giá trị TSBĐ bằng chữ"] = totalCollateralValue ? numberToVietnameseWords(totalCollateralValue) : "";
   data["Tổng nghĩa vụ bảo đảm"] = totalObligation || "";
+  data["HĐTD.Tổng nghĩa vụ bảo đảm"] = totalObligation || "";
 
   // Type-specific collateral flat fields
   buildLandCollateralData(c.collaterals, data);

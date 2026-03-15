@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Plus, X } from "lucide-react";
 import { useLanguage } from "@/components/language-provider";
 import { fmtNumber, parseNumber, formatDateInput, dmy2iso, fmtDisplay, isoToDisplay } from "@/lib/invoice-tracking-format-helpers";
@@ -30,7 +30,6 @@ function num(s: string): number { return Number(parseNumber(s)) || 0; }
 
 export function DisbursementFormModal({ loanId, loanAmount = 0, editDisbursementId, onClose, onCreated }: Props) {
   const { t } = useLanguage();
-  const backdropRef = useRef<HTMLDivElement>(null);
   const isEdit = !!editDisbursementId;
 
   // Section 1: Disbursement info
@@ -123,12 +122,6 @@ export function DisbursementFormModal({ loanId, loanAmount = 0, editDisbursement
       } catch { /* ignore */ }
     })();
   }, [loanId]);
-
-  useEffect(() => {
-    function onKey(e: KeyboardEvent) { if (e.key === "Escape") onClose(); }
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [onClose]);
 
   // Auto-calculations
   const outstandingNum = num(currentOutstanding);
@@ -254,7 +247,7 @@ export function DisbursementFormModal({ loanId, loanAmount = 0, editDisbursement
   }
 
   return (
-    <div ref={backdropRef} onClick={(e) => { if (e.target === backdropRef.current) onClose(); }} className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
       <div className="w-full max-w-[95vw] md:max-w-3xl max-h-[90vh] flex flex-col rounded-2xl bg-white dark:bg-[#141414]/90 shadow-xl">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-zinc-200 dark:border-white/[0.07] px-6 py-4 shrink-0">

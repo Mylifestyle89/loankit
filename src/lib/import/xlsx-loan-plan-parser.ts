@@ -5,6 +5,7 @@ import * as XLSX from "xlsx";
 import { detectXlsxType } from "./xlsx-loan-plan-detector";
 import { parseTypeA } from "./xlsx-loan-plan-parser-type-a";
 import { parseTypeB } from "./xlsx-loan-plan-parser-type-b";
+import { parseTypeS } from "./xlsx-loan-plan-parser-type-s";
 import type { XlsxParseResult } from "./xlsx-loan-plan-types";
 
 /**
@@ -41,6 +42,7 @@ export function parseXlsxLoanPlan(buffer: Buffer): XlsxParseResult {
       };
     }
 
+    if (detectedType === "S") return parseTypeS(wb);
     return detectedType === "A" ? parseTypeA(wb) : parseTypeB(wb);
   } catch (error) {
     console.error("[XLSX Loan Plan Parser] Error:", error);
