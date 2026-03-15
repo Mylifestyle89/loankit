@@ -1,7 +1,5 @@
 "use client";
 
-import { useCallback, useState } from "react";
-import { RefreshCw } from "lucide-react";
 import { fmtNumber, parseNumber } from "@/lib/invoice-tracking-format-helpers";
 import { SmartField } from "@/components/smart-field";
 
@@ -12,38 +10,6 @@ const labelCls = "text-xs font-medium text-zinc-600 dark:text-slate-400";
 type Fields = Record<string, string>;
 type SetFields = (fn: (prev: Fields) => Fields) => void;
 
-/** Fetch first loan plan financials for a customer */
-async function fetchPlanFinancials(customerId: string) {
-  const res = await fetch(`/api/loan-plans?customerId=${customerId}`, { cache: "no-store" });
-  const data = await res.json();
-  if (!data.ok || !data.plans?.length) return null;
-  // Use first plan (most recent)
-  const plan = data.plans[0];
-  const fin = JSON.parse(plan.financials_json || "{}");
-  return fin as {
-    totalDirectCost?: number;
-    totalIndirectCost?: number;
-    totalCost?: number;
-    revenue?: number;
-    profit?: number;
-    loanNeed?: number;
-    loanAmount?: number;
-    counterpartCapital?: number;
-    turnoverCycles?: number;
-    interest?: number;
-  };
-}
-
-/** "Đồng bộ từ PA" button */
-function SyncFromPlanButton({ onClick, loading }: { onClick: () => void; loading: boolean }) {
-  return (
-    <button type="button" onClick={onClick} disabled={loading}
-      className="inline-flex items-center gap-1 rounded-md border border-violet-200 dark:border-violet-500/20 bg-violet-50 dark:bg-violet-500/10 px-2.5 py-1 text-[11px] font-medium text-violet-700 dark:text-violet-400 hover:bg-violet-100 disabled:opacity-50">
-      <RefreshCw className={`h-3 w-3 ${loading ? "animate-spin" : ""}`} />
-      {loading ? "Đang lấy..." : "Đồng bộ từ PA"}
-    </button>
-  );
-}
 
 function set(setF: SetFields, key: string, val: string) {
   setF((p) => ({ ...p, [key]: val }));
@@ -112,39 +78,15 @@ export function LoanConditionsTab({ fields, setFields }: { fields: Fields; setFi
 }
 
 /** Subtab 3: Nguồn vốn & Vốn đối ứng */
-export function LoanCapitalTab({ fields, setFields, customerId }: { fields: Fields; setFields: SetFields; customerId?: string }) {
-  const [syncing, setSyncing] = useState(false);
-
+export function LoanCapitalTab({ fields, setFields }: { fields: Fields; setFields: SetFields }) {
   const totalNeed = Number(parseNumber(fields.total_capital_need ?? "0")) || 0;
   const cashEquity = Number(parseNumber(fields.cash_equity ?? "0")) || 0;
   const equityAmount = Number(parseNumber(fields.equity_amount ?? "0")) || 0;
   const laborEquity = equityAmount - cashEquity;
   const counterpartRatio = totalNeed > 0 ? ((equityAmount / totalNeed) * 100).toFixed(1) : "0";
 
-  const handleSync = useCallback(async () => {
-    if (!customerId) return;
-    setSyncing(true);
-    try {
-      const fin = await fetchPlanFinancials(customerId);
-      if (!fin) { alert("Chưa có phương án vay vốn nào"); return; }
-      const turnover = fin.turnoverCycles || 1;
-      const need = Math.round((fin.totalDirectCost || 0) / turnover);
-      const equity = need - (fin.loanAmount || 0);
-      setFields((p) => ({
-        ...p,
-        total_capital_need: fmtNumber(String(need)),
-        equity_amount: fmtNumber(String(Math.max(0, equity))),
-      }));
-    } finally { setSyncing(false); }
-  }, [customerId, setFields]);
-
   return (
     <div className="space-y-3">
-      {customerId && (
-        <div className="flex justify-end">
-          <SyncFromPlanButton onClick={handleSync} loading={syncing} />
-        </div>
-      )}
       <div className="grid grid-cols-2 gap-3">
         <Field label="Tổng nhu cầu vốn" name="total_capital_need" fields={fields} setFields={setFields} type="number" />
         <Field label="Vốn đối ứng" name="equity_amount" fields={fields} setFields={setFields} type="number" />
@@ -164,34 +106,9 @@ export function LoanCapitalTab({ fields, setFields, customerId }: { fields: Fiel
 }
 
 /** Subtab 4: Hiệu quả & Xếp hạng */
-export function LoanEfficiencyTab({ fields, setFields, customerId }: { fields: Fields; setFields: SetFields; customerId?: string }) {
-  const [syncing, setSyncing] = useState(false);
-
-  const handleSync = useCallback(async () => {
-    if (!customerId) return;
-    setSyncing(true);
-    try {
-      const fin = await fetchPlanFinancials(customerId);
-      if (!fin) { alert("Chưa có phương án vay vốn nào"); return; }
-      const revenue = fin.revenue || 0;
-      const cost = (fin.totalDirectCost || 0) + (fin.totalIndirectCost || 0);
-      const profit = revenue - cost;
-      setFields((p) => ({
-        ...p,
-        expected_revenue: fmtNumber(String(revenue)),
-        expected_cost: fmtNumber(String(cost)),
-        expected_profit: fmtNumber(String(profit)),
-      }));
-    } finally { setSyncing(false); }
-  }, [customerId, setFields]);
-
+export function LoanEfficiencyTab({ fields, setFields }: { fields: Fields; setFields: SetFields }) {
   return (
     <div className="space-y-3">
-      {customerId && (
-        <div className="flex justify-end">
-          <SyncFromPlanButton onClick={handleSync} loading={syncing} />
-        </div>
-      )}
       <div className="grid grid-cols-2 gap-3">
         <Field label="Doanh thu dự kiến" name="expected_revenue" fields={fields} setFields={setFields} type="number" />
         <Field label="Chi phí dự kiến" name="expected_cost" fields={fields} setFields={setFields} type="number" />

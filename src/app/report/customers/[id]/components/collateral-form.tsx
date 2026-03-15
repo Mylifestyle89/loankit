@@ -11,6 +11,7 @@ import {
   NUMBER_KEYS, DECIMAL_KEYS, DATE_KEYS, fmtNumber, fmtDate,
   type OwnerEntry, type CollateralItem,
 } from "./collateral-config";
+import { numberToVietnameseWords } from "@/lib/number-to-vietnamese-words";
 
 /* ── Owner inline row (repeater) ── */
 function OwnerRow({ owner, index, onChange, onRemove }: {
@@ -232,7 +233,18 @@ export function CollateralForm({ customerId, initial, onSaved, onCancel }: {
         <label key={key} className="block">
           <span className="text-xs font-medium text-zinc-600 dark:text-zinc-400">{label}</span>
           <input type="text" value={rawVal}
-            onChange={(e) => { const v = e.target.value.replace(/[^\d.,]/g, ""); setProps((p) => ({ ...p, [key]: v })); }}
+            onChange={(e) => {
+              const v = e.target.value.replace(/[^\d.,]/g, "");
+              setProps((p) => {
+                const next = { ...p, [key]: v };
+                // Auto-calc "diện tích bằng chữ" when land_area changes
+                if (key === "land_area") {
+                  const num = parseFloat(v.replace(/,/g, ".")) || 0;
+                  next.land_area_words = num > 0 ? numberToVietnameseWords(num, "mét vuông") : "";
+                }
+                return next;
+              });
+            }}
             className={inputCls} />
         </label>
       );

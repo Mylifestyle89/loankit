@@ -41,7 +41,7 @@ export const PROPERTY_LABELS: Record<string, string> = {
   issuing_authority: "Cơ quan cấp", certificate_issue_date: "Ngày cấp GCN",
   registry_number: "Số vào sổ",
   // Đất
-  land_address: "Địa chỉ đất", land_area: "Diện tích đất",
+  land_address: "Địa chỉ đất", land_area: "Diện tích đất", land_area_words: "Diện tích bằng chữ",
   lot_number: "Số thửa", map_sheet: "Số tờ bản đồ",
   land_purpose: "Mục đích sử dụng", land_origin: "Nguồn gốc",
   land_use_term: "Thời hạn sử dụng", ownership_form: "Hình thức sở hữu (Đất)",
@@ -96,6 +96,7 @@ export const FORM_FIELDS: Record<string, { key: string; label: string }[]> = {
     { key: "issuing_authority", label: "Cơ quan cấp" },
     { key: "land_address", label: "Địa chỉ đất" },
     { key: "land_area", label: "Diện tích đất" },
+    { key: "land_area_words", label: "Diện tích bằng chữ" },
     { key: "lot_number", label: "Số thửa" },
     { key: "map_sheet", label: "Số tờ bản đồ" },
     { key: "land_purpose", label: "Mục đích sử dụng" },
@@ -158,7 +159,7 @@ export const FORM_FIELDS: Record<string, { key: string; label: string }[]> = {
 
 /* ── Field grouping keys for form sections ── */
 export const QSD_CERT_KEYS = ["certificate_name", "serial", "certificate_issue_date", "issuing_authority"];
-export const QSD_LAND_KEYS = ["land_address", "land_area", "lot_number", "map_sheet", "land_purpose", "shared_area", "private_area"];
+export const QSD_LAND_KEYS = ["land_address", "land_area", "land_area_words", "lot_number", "map_sheet", "land_purpose", "shared_area", "private_area"];
 export const QSD_HOUSE_KEYS = ["house_type", "construction_area", "floor_area", "house_structure", "house_ownership", "house_level", "floor_number", "house_value", "year_built", "initial_construction_value", "other_construction", "other_construction_value", "surface_rights_doc"];
 export const QSD_CONTRACT_KEYS = ["mortgage_name", "mortgage_contract", "mortgage_date", "guarantee_registry_place"];
 

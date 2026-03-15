@@ -98,7 +98,12 @@ export function buildLoanExtendedData(
   data["HĐTD.Lãi suất quá hạn"] = ""; // Same
   data["HĐTD.Phí khác (nếu có)"] = "";
   data["HĐTD.Bổ sung vào HĐTD"] = "";
+  data["HĐTD.Bổ sung BCĐX cho vay"] = "";
   data["HĐTD.Giấy tờ ủy quyền"] = "";
+  // TNCV = Tổng nhu cầu vốn (alias bằng chữ)
+  data["HĐTD.TNCV bằng chữ"] = loan.total_capital_need
+    ? numberToVietnameseWords(Number(loan.total_capital_need))
+    : "";
   data["HĐTD.Ngày giao/nhận"] = "";
   data["HĐTD.STT"] = "";
 
@@ -318,6 +323,7 @@ function extractLandFields(
     "Số HĐ thế chấp": p.mortgage_contract ?? "",
     "Ngày ký HĐTC": p.mortgage_date ?? "",
     "Ngày HĐTC": p.mortgage_date ?? "", // alias
+    "Văn bản sửa đổi, bổ sung": p.amendment_number ? `Văn bản sửa đổi, bổ sung số ${p.amendment_number} ngày ${p.amendment_date ?? ""}` : "",
     "HĐ sửa đổi bổ sung số": p.amendment_number ?? "",
     "Ngày ký HĐ SĐBS": p.amendment_date ?? "",
     "Ngày định giá lại TS": p.revaluation_date ?? "",
@@ -371,8 +377,9 @@ export function buildLandCollateralData(
   // Pre-compute all land fields once (avoids repeated JSON.parse + extractLandFields)
   const allLandFields = lands.map((col, i) => extractLandFields(col, i));
 
-  // Loop array for templates with [#TSBD_CHI_TIET]...[/TSBD_CHI_TIET]
+  // Loop arrays for templates: [#TSBD_CHI_TIET], [#SĐ]
   data["TSBD_CHI_TIET"] = allLandFields;
+  data["SĐ"] = allLandFields;
 
   // Valuation breakdown loop — [#DINH_GIA]...[/DINH_GIA] for land types + house
   const valuationRows: Array<Record<string, unknown>> = [];
@@ -469,6 +476,7 @@ function extractMovableFields(
     "Số HĐ thế chấp": p.mortgage_contract ?? p.mortgage_contract_number ?? "",
     "Tên HĐ thế chấp": p.mortgage_name ?? p.mortgage_contract_name ?? "",
     "Ngày ký HĐTC": p.mortgage_date ?? "",
+    "Văn bản sửa đổi, bổ sung": p.amendment_number ? `Văn bản sửa đổi, bổ sung số ${p.amendment_number} ngày ${p.amendment_date ?? ""}` : "",
     "Nơi ĐKGD bảo đảm": p.guarantee_registry_place ?? "",
     "Mua bảo hiểm TSBĐ": p.insurance_status ?? p.insurance ?? "",
     "Số tiền bảo hiểm": p.insurance_amount ?? "",
@@ -492,8 +500,9 @@ export function buildMovableCollateralData(
   // Pre-compute all movable fields once (avoids repeated JSON.parse)
   const allFields = vehicles.map((col, i) => extractMovableFields(col, i));
 
-  // Loop array for templates with [#DS_CHI_TIET]...[/DS_CHI_TIET]
+  // Loop arrays for templates: [#DS_CHI_TIET], [#ĐS]
   data["DS_CHI_TIET"] = allFields;
+  data["ĐS"] = allFields;
   allFields.forEach((fields, i) => {
     emitIndexedFields(data, "ĐS", fields, i + 1);
   });
@@ -799,6 +808,8 @@ export function buildLoanPlanExtendedData(
       ? numberToVietnameseWords(financials.totalCost)
       : "";
     data["PA.Số tiền đặt cọc"] = financials.deposit ?? "";
+    data["PA.Số HĐTD cũ"] = financials.oldContractNumber ?? "";
+    data["PA.Ngày HĐTD cũ"] = financials.oldContractDate ?? "";
     data["PA.Số tiền hợp đồng cung ứng"] = financials.supplyContractAmount ?? "";
     data["PA.Số tiền hợp đồng cung ứng bằng chữ"] = financials.supplyContractAmount
       ? numberToVietnameseWords(financials.supplyContractAmount)

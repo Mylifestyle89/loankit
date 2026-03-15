@@ -160,17 +160,17 @@ export default function LoanDetailPage() {
               </div>
             </div>
             <div className="flex items-center gap-2">
+              <button type="button" onClick={() => setShowEditModal(true)}
+                className="rounded-lg bg-gradient-to-r from-violet-600 to-fuchsia-600 px-4 py-1.5 text-xs font-medium text-white shadow-sm shadow-violet-500/25 transition-all hover:shadow-md hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40">
+                Thông tin hợp đồng tín dụng
+              </button>
               <button type="button" onClick={() => setShowBeneficiaryModal(true)}
-                className="rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-white/80 dark:bg-white/[0.05] px-3 py-1.5 text-xs font-medium text-zinc-600 dark:text-slate-300 transition-colors hover:bg-violet-50 dark:hover:bg-violet-500/10 hover:text-violet-700 dark:hover:text-violet-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40">
+                className="rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-white/80 dark:bg-white/[0.05] px-3 py-1.5 text-xs font-medium text-zinc-600 dark:text-slate-300 transition-colors hover:bg-violet-50 dark:hover:bg-violet-500/10 hover:text-violet-700 dark:hover:text-violet-400">
                 {t("beneficiaries.title") ?? "Đơn vị thụ hưởng"}
               </button>
-              <button type="button" onClick={() => setShowEditModal(true)}
-                className="rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-white/80 dark:bg-white/[0.05] px-3 py-1.5 text-xs font-medium text-zinc-600 dark:text-slate-300 transition-colors hover:bg-violet-50 dark:hover:bg-violet-500/10 hover:text-violet-700 dark:hover:text-violet-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40">
-                {t("common.edit")}
-              </button>
               <Link href={`/report/invoices?customerId=${loan.customer.id}`}
-                className="rounded-lg bg-gradient-to-r from-violet-600 to-fuchsia-600 px-3 py-1.5 text-xs font-medium text-white shadow-sm shadow-violet-500/25 transition-all hover:shadow-md hover:brightness-110">
-                {t("invoices.manage") ?? "Quản lý hóa đơn"}
+                className="rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-white/80 dark:bg-white/[0.05] px-3 py-1.5 text-xs font-medium text-zinc-500 dark:text-slate-400 transition-colors hover:bg-zinc-50 dark:hover:bg-white/[0.06]">
+                Hóa đơn
               </Link>
             </div>
           </div>

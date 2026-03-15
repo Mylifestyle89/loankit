@@ -74,7 +74,22 @@ export function numberToVietnameseWords(n: number, suffix = "đồng"): string {
     }
   }
 
-  const result = words.join(" ").replace(/\s+/g, " ").trim();
+  let result = words.join(" ").replace(/\s+/g, " ").trim();
+
+  // Handle decimal part: 231.94 → "phẩy chín mươi bốn"
+  const decStr = String(n).replace(/,/g, ".");
+  const dotIdx = decStr.indexOf(".");
+  if (dotIdx >= 0) {
+    const decPart = decStr.slice(dotIdx + 1).replace(/0+$/, ""); // trim trailing zeros
+    if (decPart.length > 0) {
+      const decNum = parseInt(decPart, 10);
+      if (decNum > 0) {
+        const decWords = numberToVietnameseWords(decNum, "").toLowerCase();
+        result += ` phẩy ${decWords}`;
+      }
+    }
+  }
+
   // Capitalize first letter
   const capitalized = result.charAt(0).toUpperCase() + result.slice(1);
   return suffix ? `${capitalized} ${suffix}` : capitalized;

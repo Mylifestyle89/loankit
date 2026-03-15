@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
+import { RefreshCw } from "lucide-react";
 import { X } from "lucide-react";
 import { useLanguage } from "@/components/language-provider";
 import {
@@ -64,6 +65,43 @@ export function LoanEditModal({ loan, customerId, onClose, onUpdated }: Props) {
   const [extFields, setExtFields] = useState(() => loanToExtFields(loan));
 
   // Modal only closes via X button - no Escape or backdrop click
+  const [syncing, setSyncing] = useState(false);
+
+  /** Sync ALL loan contract fields from latest loan plan (one button for all tabs) */
+  const handleSyncFromPlan = useCallback(async () => {
+    if (!customerId) return;
+    setSyncing(true);
+    try {
+      const res = await fetch(`/api/loan-plans?customerId=${customerId}`, { cache: "no-store" });
+      const data = await res.json();
+      if (!data.ok || !data.plans?.length) { alert("Chưa có phương án vay vốn nào"); return; }
+      const fin = JSON.parse(data.plans[0].financials_json || "{}");
+
+      // Tab 1: Thông tin cơ bản
+      if (fin.loanAmount) setLoanAmount(fmtNumber(String(fin.loanAmount)));
+      if (fin.interestRate) setInterestRate(String(fin.interestRate));
+      if (fin.purpose) setPurpose(fin.purpose);
+
+      // Tab 3: Nguồn vốn & VĐƯ
+      const turnover = fin.turnoverCycles || 1;
+      const need = Math.round((fin.totalDirectCost || 0) / turnover);
+      const equity = need - (fin.loanAmount || 0);
+
+      // Tab 4: Hiệu quả
+      const revenue = fin.revenue || 0;
+      const cost = (fin.totalDirectCost || 0) + (fin.totalIndirectCost || 0);
+      const profit = revenue - cost;
+
+      setExtFields((p) => ({
+        ...p,
+        total_capital_need: fmtNumber(String(need)),
+        equity_amount: fmtNumber(String(Math.max(0, equity))),
+        expected_revenue: fmtNumber(String(revenue)),
+        expected_cost: fmtNumber(String(cost)),
+        expected_profit: fmtNumber(String(profit)),
+      }));
+    } finally { setSyncing(false); }
+  }, [customerId, setExtFields]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -115,9 +153,18 @@ export function LoanEditModal({ loan, customerId, onClose, onUpdated }: Props) {
       <div className="w-full max-w-2xl rounded-2xl bg-white dark:bg-[#141414]/90 shadow-xl">
         <div className="flex items-center justify-between border-b border-zinc-200 dark:border-white/[0.07] px-6 py-4">
           <h3 className="text-lg font-semibold">{t("common.edit")} - {loan.contractNumber}</h3>
-          <button onClick={onClose} className="cursor-pointer rounded-lg p-1.5 text-zinc-400 transition-colors duration-150 hover:bg-zinc-100 dark:hover:bg-white/[0.06] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40">
-            <X className="h-5 w-5" />
-          </button>
+          <div className="flex items-center gap-2">
+            {customerId && (
+              <button type="button" onClick={handleSyncFromPlan} disabled={syncing}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-violet-200 dark:border-violet-500/20 bg-violet-50 dark:bg-violet-500/10 px-3 py-1.5 text-xs font-medium text-violet-700 dark:text-violet-400 hover:bg-violet-100 disabled:opacity-50">
+                <RefreshCw className={`h-3.5 w-3.5 ${syncing ? "animate-spin" : ""}`} />
+                {syncing ? "Đang đồng bộ..." : "Đồng bộ từ PA"}
+              </button>
+            )}
+            <button onClick={onClose} className="cursor-pointer rounded-lg p-1.5 text-zinc-400 transition-colors duration-150 hover:bg-zinc-100 dark:hover:bg-white/[0.06] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40">
+              <X className="h-5 w-5" />
+            </button>
+          </div>
         </div>
 
         {/* Subtab navigation */}
@@ -142,7 +189,7 @@ export function LoanEditModal({ loan, customerId, onClose, onUpdated }: Props) {
               </label>
               <label className="block">
                 <span className={labelCls}>{t("loans.interestRate")}</span>
-                <input type="number" step="0.01" value={interestRate} onChange={(e) => setInterestRate(e.target.value)} placeholder="0" className={inputCls} />
+                <input type="text" inputMode="decimal" value={interestRate.replace(".", ",")} onChange={(e) => setInterestRate(e.target.value.replace(",", "."))} placeholder="0" className={inputCls} />
               </label>
             </div>
             <div className="grid grid-cols-2 gap-3">
@@ -193,10 +240,10 @@ export function LoanEditModal({ loan, customerId, onClose, onUpdated }: Props) {
           {activeSubtab === 1 && <LoanConditionsTab fields={extFields} setFields={setExtFields} />}
 
           {/* Subtab 2: Nguồn vốn & Vốn đối ứng */}
-          {activeSubtab === 2 && <LoanCapitalTab fields={extFields} setFields={setExtFields} customerId={customerId} />}
+          {activeSubtab === 2 && <LoanCapitalTab fields={extFields} setFields={setExtFields} />}
 
           {/* Subtab 3: Hiệu quả & Xếp hạng */}
-          {activeSubtab === 3 && <LoanEfficiencyTab fields={extFields} setFields={setExtFields} customerId={customerId} />}
+          {activeSubtab === 3 && <LoanEfficiencyTab fields={extFields} setFields={setExtFields} />}
 
           <div className="flex justify-end gap-3 pt-2">
             <button type="button" onClick={onClose} className="cursor-pointer rounded-lg px-4 py-2 text-sm text-zinc-500 dark:text-slate-400 transition-colors duration-150 hover:bg-zinc-100 dark:hover:bg-white/[0.06] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40">
