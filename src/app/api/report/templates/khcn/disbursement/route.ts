@@ -6,6 +6,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { generateKhcnDisbursementReport } from "@/services/khcn-report.service";
 import { KHCN_DISBURSEMENT_TEMPLATES, type KhcnDisbursementTemplateKey } from "@/services/khcn-disbursement-template-config";
+import { prisma } from "@/lib/prisma";
 
 export const runtime = "nodejs";
 
@@ -20,11 +21,18 @@ export async function POST(req: NextRequest) {
       overrides?: Record<string, string>;
     };
 
-    if (!customerId || !templateKey) {
-      return NextResponse.json(
-        { ok: false, error: "customerId and templateKey are required" },
-        { status: 400 },
-      );
+    if (!templateKey) {
+      return NextResponse.json({ ok: false, error: "templateKey is required" }, { status: 400 });
+    }
+
+    // Resolve customerId from loanId if not provided
+    let resolvedCustomerId = customerId;
+    if (!resolvedCustomerId && loanId) {
+      const loan = await prisma.loan.findUnique({ where: { id: loanId }, select: { customerId: true } });
+      resolvedCustomerId = loan?.customerId;
+    }
+    if (!resolvedCustomerId) {
+      return NextResponse.json({ ok: false, error: "customerId or loanId is required" }, { status: 400 });
     }
 
     if (!(templateKey in KHCN_DISBURSEMENT_TEMPLATES)) {
@@ -35,7 +43,7 @@ export async function POST(req: NextRequest) {
     }
 
     const result = await generateKhcnDisbursementReport(
-      customerId,
+      resolvedCustomerId,
       templateKey as KhcnDisbursementTemplateKey,
       loanId,
       disbursementId,
