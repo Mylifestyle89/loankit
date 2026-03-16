@@ -85,7 +85,12 @@ export const loanService = {
       },
     });
     if (!loan) throw new NotFoundError("Loan not found.");
-    return loan;
+    // Check if customer is KHCN (has record in customers table)
+    const khcnCustomer = await prisma.customer.findUnique({
+      where: { id: loan.customerId },
+      select: { id: true },
+    });
+    return { ...loan, isKhcn: !!khcnCustomer };
   },
 
   async create(input: CreateLoanInput) {

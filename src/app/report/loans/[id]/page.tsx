@@ -10,6 +10,7 @@ import { LoanEditModal } from "@/components/invoice-tracking/loan-edit-modal";
 import { DisbursementFormModal } from "@/components/invoice-tracking/disbursement-form-modal";
 import { BeneficiaryModal } from "@/components/invoice-tracking/beneficiary-modal";
 import { DisbursementReportModal } from "@/components/invoice-tracking/disbursement-report-modal";
+import { KhcnDisbursementReportModal } from "@/components/invoice-tracking/khcn-disbursement-report-modal";
 import { AddInvoiceFromLoanModal } from "@/components/invoice-tracking/add-invoice-from-loan-modal";
 import { PaginationControls } from "@/components/invoice-tracking/pagination-controls";
 import { DisbursementTable, type DisbursementRow } from "@/components/invoice-tracking/loan-detail-disbursement-table";
@@ -36,6 +37,7 @@ type Loan = {
   disbursementLimitByAsset: number | null;
   status: string;
   customer: { id: string; customer_name: string };
+  isKhcn?: boolean;
 };
 
 const PAGE_SIZE = 20;
@@ -336,11 +338,19 @@ export default function LoanDetailPage() {
       )}
 
       {reportDisbursementId && (
-        <DisbursementReportModal
-          loanId={loan.id}
-          disbursementId={reportDisbursementId}
-          onClose={() => setReportDisbursementId(null)}
-        />
+        loan.isKhcn ? (
+          <KhcnDisbursementReportModal
+            loanId={loan.id}
+            disbursementId={reportDisbursementId}
+            onClose={() => setReportDisbursementId(null)}
+          />
+        ) : (
+          <DisbursementReportModal
+            loanId={loan.id}
+            disbursementId={reportDisbursementId}
+            onClose={() => setReportDisbursementId(null)}
+          />
+        )
       )}
 
       {invoiceTarget && (
