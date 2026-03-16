@@ -28,10 +28,14 @@ import {
   buildRelatedPersonData,
   buildSavingsCollateralData,
 } from "./khcn-report-data-builders";
+import {
+  KHCN_DISBURSEMENT_TEMPLATES,
+  type KhcnDisbursementTemplateKey,
+} from "./khcn-disbursement-template-config";
 
 // ── Load full customer with ALL relations needed for templates ──
 
-async function loadFullCustomer(customerId: string, loanId?: string) {
+async function loadFullCustomer(customerId: string, loanId?: string, disbursementId?: string) {
   const c = await prisma.customer.findUnique({
     where: { id: customerId },
     include: {
@@ -40,7 +44,9 @@ async function loadFullCustomer(customerId: string, loanId?: string) {
         where: loanId ? { id: loanId } : undefined,
         take: 1,
         include: {
-          disbursements: { orderBy: { disbursementDate: "desc" }, take: 1 },
+          disbursements: disbursementId
+            ? { where: { id: disbursementId }, take: 1 }
+            : { orderBy: { disbursementDate: "desc" }, take: 1 },
           beneficiaries: true,
         },
         orderBy: { startDate: "desc" },
@@ -63,8 +69,9 @@ export async function buildKhcnReportData(
   customerId: string,
   loanId?: string,
   overrides?: Record<string, string>,
+  disbursementId?: string,
 ): Promise<Record<string, unknown>> {
-  const c = await loadFullCustomer(customerId, loanId);
+  const c = await loadFullCustomer(customerId, loanId, disbursementId);
   const t = today();
 
   const loan = c.loans[0]; // Already filtered by loanId in query
@@ -238,6 +245,30 @@ export async function generateKhcnReport(
 
   const customerName = String(data["Tên khách hàng"] ?? "KHCN");
   const filename = `${customerName}_${templateLabel}_${fmtDateCompact(new Date())}.docx`;
+
+  return {
+    buffer,
+    filename,
+    contentType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  };
+}
+
+// ── Generate KHCN disbursement DOCX ──
+
+export async function generateKhcnDisbursementReport(
+  customerId: string,
+  templateKey: KhcnDisbursementTemplateKey,
+  loanId?: string,
+  disbursementId?: string,
+  overrides?: Record<string, string>,
+): Promise<KhcnReportResult> {
+  const template = KHCN_DISBURSEMENT_TEMPLATES[templateKey];
+  const data = await buildKhcnReportData(customerId, loanId, overrides, disbursementId);
+
+  const buffer = await docxEngine.generateDocxBuffer(template.path, data);
+
+  const customerName = String(data["Tên khách hàng"] ?? "KHCN");
+  const filename = `${customerName}_${template.label}_${fmtDateCompact(new Date())}.docx`;
 
   return {
     buffer,

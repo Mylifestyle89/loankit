@@ -18,6 +18,7 @@ import { CustomerRelatedPersonSection } from "./components/customer-related-pers
 import { CustomerBranchStaffSection } from "./components/customer-branch-staff-section";
 import { CustomerCreditInfoSection } from "./components/customer-credit-info-section";
 import { KhcnProfileCard } from "./components/khcn-profile-card";
+import { CustomerDisbursementSection } from "./components/customer-disbursement-section";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 type FullCustomer = {
@@ -92,7 +93,7 @@ export default function EditCustomerPage() {
   const [error, setError] = useState("");
   const [activeTab, setActiveTab] = useState<TabKey>(rawTab);
   const [infoSubTab, setInfoSubTab] = useState<"general" | "co-borrower" | "related">("general");
-  const [loansCreditSubTab, setLoansCreditSubTab] = useState<"loans" | "credit">(rawTab === "credit" ? "credit" : "loans");
+  const [loansCreditSubTab, setLoansCreditSubTab] = useState<"loans" | "credit" | "disbursement">(rawTab === "credit" ? "credit" : "loans");
   const [customer, setCustomer] = useState<FullCustomer | null>(null);
   const [form, setForm] = useState({
     customer_code: "",
@@ -398,6 +399,7 @@ export default function EditCustomerPage() {
             {([
               { key: "loans" as const, label: "Khoản vay" },
               { key: "credit" as const, label: "Thông tin tín dụng" },
+              { key: "disbursement" as const, label: "Giải ngân" },
             ]).map((st) => (
               <button
                 key={st.key}
@@ -415,6 +417,12 @@ export default function EditCustomerPage() {
           </div>
           {loansCreditSubTab === "loans" && <CustomerLoansSection loans={customer.loans} customerId={id} />}
           {loansCreditSubTab === "credit" && <CustomerCreditInfoSection customerId={id} />}
+          {loansCreditSubTab === "disbursement" && (
+            <CustomerDisbursementSection
+              customerId={id}
+              loanId={customer.loans?.[0]?.id ?? null}
+            />
+          )}
         </div>
       )}
 
