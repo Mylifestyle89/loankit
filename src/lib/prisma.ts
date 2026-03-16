@@ -63,15 +63,17 @@ function getPrismaConfig(): { key: string; factory: () => PrismaClient } {
     configuredDbUrl?.startsWith("libsql://") ||
     configuredDbUrl?.startsWith("http://") ||
     configuredDbUrl?.startsWith("https://");
+  const shouldUseLibsql = useTursoExplicitly || dbUrlLooksLikeLibsql || Boolean(tursoUrl);
+  const resolvedLibsqlUrl = tursoUrl ?? (dbUrlLooksLikeLibsql ? configuredDbUrl : undefined);
 
-  // Use Turso only when explicitly requested or when DATABASE_URL points to libsql/http.
-  if ((useTursoExplicitly || dbUrlLooksLikeLibsql) && tursoUrl && tursoToken) {
+  // Cloud (Turso/LibSQL): accept either TURSO_DATABASE_URL or DATABASE_URL=libsql://...
+  if (shouldUseLibsql && resolvedLibsqlUrl) {
     return {
-      key: `turso:${tursoUrl}`,
+      key: `libsql:${resolvedLibsqlUrl}`,
       factory: () => {
         // eslint-disable-next-line @typescript-eslint/no-require-imports
         const { PrismaLibSql } = require("@prisma/adapter-libsql");
-        const adapter = new PrismaLibSql({ url: tursoUrl, authToken: tursoToken });
+        const adapter = new PrismaLibSql({ url: resolvedLibsqlUrl, authToken: tursoToken });
         return new PrismaClient({ adapter });
       },
     };

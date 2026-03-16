@@ -86,6 +86,8 @@ export function buildLoanExtendedData(
     other_income?: string | null; customer_rating?: string | null;
     debt_group?: string | null; scoring_period?: string | null;
     collateralValue?: number | null; securedObligation?: number | null;
+    prior_contract_number?: string | null; prior_contract_date?: string | null;
+    prior_outstanding?: number | null;
   },
   data: Data,
 ) {
@@ -157,6 +159,13 @@ export function buildLoanExtendedData(
   // Dư nợ tín dụng — populated separately from credit info
   data["HĐTD.Dư nợ của KH và NLQ tại Agribank"] = "";
   data["HĐTD.Dư nợ tại TCTD khác"] = "";
+
+  // HĐ cũ (gia hạn, tái cơ cấu)
+  data["PA.HĐ cũ Số"] = loan.prior_contract_number ?? "";
+  data["PA.HĐ cũ Ngày"] = loan.prior_contract_date ?? "";
+  data["PA.Dư nợ cũ"] = loan.prior_outstanding ?? "";
+  data["HĐTD.Số HĐ cũ"] = loan.prior_contract_number ?? "";
+  data["HĐTD.Ngày HĐ cũ"] = loan.prior_contract_date ?? "";
 }
 
 // ── Extended Disbursement (GN) fields ──
@@ -316,6 +325,27 @@ function extractLandFields(
     "Giá trị xây dựng ban đầu": p.initial_construction_value ?? "",
     "Công trình xây dựng khác": p.other_construction ?? "",
     "Giá trị Công trình XD khác": p.other_construction_value ?? "",
+    // Văn bản sửa đổi — loop array (stored as _amendments JSON)
+    ...(() => {
+      try {
+        const list: Array<{ name: string; date: string }> = JSON.parse(p._amendments ?? "[]");
+        const result: Record<string, unknown> = {};
+        list.forEach((a, i) => {
+          result[`Văn bản sửa đổi ${i + 1}`] = a.name ?? "";
+          result[`Ngày sửa đổi ${i + 1}`] = a.date ?? "";
+        });
+        // Flat first-entry aliases
+        result["SĐ.Văn bản sửa đổi"] = list[0]?.name ?? "";
+        result["SĐ.Ngày sửa đổi"] = list[0]?.date ?? "";
+        // Combined string (legacy placeholder)
+        if (list.length > 0) {
+          result["Văn bản sửa đổi, bổ sung"] = list
+            .map((a) => `${a.name}${a.date ? ` ngày ${a.date}` : ""}`)
+            .join("; ");
+        }
+        return result;
+      } catch { return {}; }
+    })(),
     // HĐ thế chấp
     "BBXĐ giá trị tài sản số": p.valuation_report_number ?? "",
     "Tên HĐ thế chấp": p.mortgage_name ?? "",
@@ -476,7 +506,13 @@ function extractMovableFields(
     "Số HĐ thế chấp": p.mortgage_contract ?? p.mortgage_contract_number ?? "",
     "Tên HĐ thế chấp": p.mortgage_name ?? p.mortgage_contract_name ?? "",
     "Ngày ký HĐTC": p.mortgage_date ?? "",
-    "Văn bản sửa đổi, bổ sung": p.amendment_number ? `Văn bản sửa đổi, bổ sung số ${p.amendment_number} ngày ${p.amendment_date ?? ""}` : "",
+    "Văn bản sửa đổi, bổ sung": (() => {
+      try {
+        const list: Array<{ name: string; date: string }> = JSON.parse(p._amendments ?? "[]");
+        if (list.length > 0) return list.map((a) => `${a.name}${a.date ? ` ngày ${a.date}` : ""}`).join("; ");
+      } catch { /* fallback */ }
+      return p.amendment_number ? `Văn bản sửa đổi, bổ sung số ${p.amendment_number} ngày ${p.amendment_date ?? ""}` : "";
+    })(),
     "Nơi ĐKGD bảo đảm": p.guarantee_registry_place ?? "",
     "Mua bảo hiểm TSBĐ": p.insurance_status ?? p.insurance ?? "",
     "Số tiền bảo hiểm": p.insurance_amount ?? "",

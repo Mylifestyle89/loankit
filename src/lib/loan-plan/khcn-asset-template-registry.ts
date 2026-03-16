@@ -17,19 +17,17 @@ export const ASSET_TEMPLATES: KhcnDocTemplate[] = [
   { path: `${QSD_BV}/2899.01.TSBD Danh muc ho so bao dam.docx`, name: "Danh mục hồ sơ bảo đảm", category: "tai_san", methods: [] },
   { path: `${QSD_BV}/2899.02.TSBD De nghi hach toan the chap.docx`, name: "Đề nghị hạch toán thế chấp", category: "tai_san", methods: [] },
   { path: `${QSD_BV}/2899.08.TSBD De nghi tang giam thay doi thong tin TSBD.docx`, name: "Đề nghị tăng giảm/thay đổi TT TSBĐ", category: "tai_san", methods: [] },
-  { path: `${QSD_BV}/2268.08 Giay uy quyen vay von.docx`, name: "Giấy ủy quyền vay vốn", category: "tai_san", methods: [] },
   { path: `${TS}/2929.34.MB.BBXDL BB noi bo XD lai GT QSD dat va TS.docx`, name: "BB nội bộ XĐ lại GT QSD đất + TS", category: "tai_san", methods: [] },
   { path: `${TS}/2929.34.MB.BBXDL BB noi bo XD lai GT dong san.docx`, name: "BB nội bộ XĐ lại GT động sản", category: "tai_san", methods: [] },
 
   // ══ BĐS: Thế chấp QSD đất — Bên vay ══
   { path: `${QSD_BV}/2929.01.MB.HDBD HDTC QSD dat va TS GLVD cua ben vay.docx`, name: "HĐTC QSD đất + TS GLVĐ (bên vay)", category: "ts_qsd_bv", methods: [] },
   { path: `${QSD_BV}/2929.03.MB.HDBD HDTC QSD dat cua ben vay.docx`, name: "HĐTC QSD đất (bên vay)", category: "ts_qsd_bv", methods: [] },
-  { path: `${QSD_BV}/2929.05.MB.HDBD HDTC QSD dat cua ben vay 2 chu so huu.docx`, name: "HĐTC QSD đất 2 chủ sở hữu (bên vay)", category: "ts_qsd_bv", methods: [] },
   { path: `${QSD_BV}/2929.28.MB.BCTD Bao cao tham dinh QSD dat va TS.docx`, name: "BC thẩm định QSD đất + TS", category: "ts_qsd_bv", methods: [] },
   { path: `${QSD_BV}/2929.30.MB.BBDG Bien ban xac dinh GTTS QSD dat va TS.docx`, name: "BB xác định GTTS QSD đất + TS", category: "ts_qsd_bv", methods: [] },
-  { path: `${QSD_BV}/2929.33.MB.BBXDL Bien ban xac dinh lai GTTS QSD dat va TS.docx`, name: "BB xác định lại GTTS QSD đất + TS", category: "ts_qsd_bv", methods: [] },
   { path: `${QSD_BV}/2929.34.MB.BBXDL BB noi bo XD lai GT QSD dat va TS.docx`, name: "BB nội bộ XĐ lại GT QSD đất + TS", category: "ts_qsd_bv", methods: [] },
-  { path: `${QSD_BV}/99.2022.01a Dang ky the chap QSD dat.docx`, name: "Đăng ký thế chấp QSD đất", category: "ts_qsd_bv", methods: [] },
+  { path: `${QSD_BV}/99.2022.01a Dang ky the chap QSD dat - ok.docx`, name: "Đăng ký thế chấp QSD đất", category: "ts_qsd_bv", methods: [] },
+  { path: `${QSD_BV}/99.2022.01a Dang ky the chap QSD dat - co TS tren dat .docx`, name: "Đăng ký TC QSD đất - có TS trên đất", category: "ts_qsd_bv", methods: [] },
   { path: `${QSD_BV}/99.2022.03a Xoa the chap QSD dat, TSGLVD.docx`, name: "Xóa thế chấp QSD đất, TS GLVĐ", category: "ts_qsd_bv", methods: [] },
   { path: `${QSD_BV}/HD sua doi bo sung HDTC dat.docx`, name: "HĐ sửa đổi bổ sung HĐTC đất", category: "ts_qsd_bv", methods: [] },
 

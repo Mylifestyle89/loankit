@@ -1,12 +1,15 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Play, Eye, Download, RotateCcw } from "lucide-react";
 
 import { useLanguage } from "@/components/language-provider";
 import { OnlyOfficeEditorModal } from "@/components/onlyoffice-editor-modal";
 import { useMappingDataStore } from "@/app/report/mapping/stores/use-mapping-data-store";
 import { getSignedFileUrl } from "@/lib/report/signed-file-url";
+import { CoverageProgressBar } from "@/components/coverage-progress-bar";
+import { computeFieldCoverage } from "@/lib/report/field-sync-utils";
+import { computeEffectiveValues } from "@/core/use-cases/formula-processor";
 
 type TemplateProfile = { id: string; template_name: string; docx_path: string; active: boolean };
 
@@ -58,6 +61,19 @@ async function flushZustandDraft(): Promise<void> {
 
 export function BuildExportTab({ templates, activeTemplateId, onMessage, onError }: BuildExportTabProps) {
   const { t } = useLanguage();
+
+  // Field coverage indicator — shows how many fields have data before building
+  const fieldCatalog = useMappingDataStore((s) => s.fieldCatalog);
+  const values = useMappingDataStore((s) => s.values);
+  const formulas = useMappingDataStore((s) => s.formulas);
+  const effectiveValues = useMemo(
+    () => computeEffectiveValues({ values, formulas, fieldCatalog }),
+    [values, formulas, fieldCatalog],
+  );
+  const coverage = useMemo(
+    () => computeFieldCoverage(fieldCatalog, effectiveValues),
+    [fieldCatalog, effectiveValues],
+  );
   const [runs, setRuns] = useState<RunLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [runningBuild, setRunningBuild] = useState(false);
@@ -140,6 +156,24 @@ export function BuildExportTab({ templates, activeTemplateId, onMessage, onError
         <OnlyOfficeEditorModal docxPath={onlyOfficePreviewPath}
           onClose={() => setPreviewClosed(true)}
           onSaved={() => { void loadRuns(); void loadFreshness(); }} />
+      )}
+
+      {/* Field coverage indicator */}
+      {coverage.total > 0 && (
+        <div className={`rounded-xl border px-3 py-2 text-sm ${
+          coverage.coveragePercent >= 80
+            ? "border-emerald-300/70 bg-emerald-50/80 text-emerald-800 dark:border-emerald-400/40 dark:bg-emerald-500/10 dark:text-emerald-200"
+            : coverage.coveragePercent >= 50
+              ? "border-amber-300/70 bg-amber-50/80 text-amber-800 dark:border-amber-400/40 dark:bg-amber-500/10 dark:text-amber-200"
+              : "border-red-300/70 bg-red-50/80 text-red-800 dark:border-red-400/40 dark:bg-red-500/10 dark:text-red-200"
+        }`}>
+          <CoverageProgressBar filled={coverage.filled} total={coverage.total} barWidth="w-24" />
+          {coverage.empty > 0 && (
+            <p className="mt-1 text-xs opacity-80">
+              {coverage.empty} field chưa điền — báo cáo có thể thiếu thông tin.
+            </p>
+          )}
+        </div>
       )}
 
       {/* Freshness status */}

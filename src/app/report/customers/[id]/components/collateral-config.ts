@@ -25,6 +25,13 @@ export const EMPTY_OWNER: OwnerEntry = {
   cmnd_old: "", birth_year: "", address: "", current_address: "", phone: "",
 };
 
+export type AmendmentEntry = {
+  name: string;   // Tên văn bản sửa đổi
+  date: string;   // Ngày sửa đổi
+};
+
+export const EMPTY_AMENDMENT: AmendmentEntry = { name: "", date: "" };
+
 export type CollateralItem = {
   id: string;
   collateral_type: string;
@@ -209,7 +216,7 @@ export const DECIMAL_KEYS = new Set([
 
 export const DATE_KEYS = new Set([
   "mortgage_date", "certificate_issue_date", "issue_date", "maturity_date",
-  "doc_date", "registration_date", "insurance_renewal_date",
+  "doc_date", "registration_date", "insurance_renewal_date", "old_mortgage_date",
 ]);
 
 export function formatValue(key: string, value: string): string {

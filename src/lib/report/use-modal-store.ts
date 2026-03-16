@@ -42,6 +42,7 @@ export type AiMappingPayload = {
     newFields?: FieldCatalogItem[];
     templateName?: string;
   }) => void;
+  onApplyToFieldTemplate?: (fields: FieldCatalogItem[]) => void;
 };
 
 export type ModalPayloadMap = {

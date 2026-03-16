@@ -79,18 +79,55 @@ export function computeEffectiveValues(params: {
     params.fieldCatalog.filter((f) => f.label_vi).map((f) => [f.field_key, f.label_vi]),
   );
   const formulaEntries = Object.entries(params.formulas);
+  const formulaKeys = new Set(formulaEntries.map(([k]) => k));
 
-  // 2-pass evaluation: resolves formula dependencies regardless of insertion order.
-  // Pass 1 computes what it can; pass 2 picks up formulas that depend on pass 1 results.
-  for (let pass = 0; pass < 2; pass++) {
-    for (const [fieldKey, formula] of formulaEntries) {
-      const fieldType = fieldTypeMap.get(fieldKey) ?? "text";
-      const v = evaluateFieldFormula(formula, base, fieldType);
-      if (v !== null) {
-        base[fieldKey] = v;
-        const labelVi = labelMap.get(fieldKey);
-        if (labelVi) base[labelVi] = v;
+  // Topological sort: resolve formulas in dependency order
+  // A formula depends on another if its expression references that formula's field key
+  const deps = new Map<string, string[]>();
+  for (const [fieldKey, formula] of formulaEntries) {
+    const fieldDeps: string[] = [];
+    for (const otherKey of formulaKeys) {
+      if (otherKey !== fieldKey && formula.includes(otherKey)) {
+        fieldDeps.push(otherKey);
       }
+    }
+    deps.set(fieldKey, fieldDeps);
+  }
+
+  // Kahn's algorithm for topological sort with cycle detection
+  const inDegree = new Map<string, number>();
+  for (const [k, d] of deps) inDegree.set(k, d.length);
+  const queue: string[] = [];
+  for (const [k, deg] of inDegree) { if (deg === 0) queue.push(k); }
+  const sorted: string[] = [];
+  while (queue.length > 0) {
+    const node = queue.shift()!;
+    sorted.push(node);
+    for (const [k, d] of deps) {
+      if (d.includes(node)) {
+        const newDeg = (inDegree.get(k) ?? 0) - 1;
+        inDegree.set(k, newDeg);
+        if (newDeg === 0) queue.push(k);
+      }
+    }
+  }
+  // Append any remaining (cyclic) formulas at the end — they'll evaluate with whatever is available
+  for (const [fieldKey] of formulaEntries) {
+    if (!sorted.includes(fieldKey)) {
+      console.warn(`[formula-processor] Circular dependency detected for: ${fieldKey}`);
+      sorted.push(fieldKey);
+    }
+  }
+
+  const formulaMap = new Map(formulaEntries);
+  for (const fieldKey of sorted) {
+    const formula = formulaMap.get(fieldKey)!;
+    const fieldType = fieldTypeMap.get(fieldKey) ?? "text";
+    const v = evaluateFieldFormula(formula, base, fieldType);
+    if (v !== null) {
+      base[fieldKey] = v;
+      const labelVi = labelMap.get(fieldKey);
+      if (labelVi) base[labelVi] = v;
     }
   }
   return base;

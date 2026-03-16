@@ -167,10 +167,10 @@ export function importBkFileMulti(jsonContent: string): BkMultiImportResult {
       totalClients: clients.length,
     };
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Unknown error during import";
+    console.error("[BK Import] Parse error:", error);
     return {
       status: "error",
-      message: `Failed to import .BK file: ${message}`,
+      message: "Failed to parse import data",
       clients: [],
       totalClients: 0,
     };

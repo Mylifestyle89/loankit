@@ -60,6 +60,9 @@ export function getClientIp(req: NextRequest): string {
       "anonymous"
     );
   }
-  // Direct exposure — client controls forwarded headers, ignore them.
+  // Direct exposure — use request IP from Next.js if available, else fallback to global
+  const ip = req.headers.get("x-real-ip");
+  if (ip) return ip;
+  console.warn("[rate-limiter] No client IP available, using global key — all users share one bucket");
   return "global";
 }

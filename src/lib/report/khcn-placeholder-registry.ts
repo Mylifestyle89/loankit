@@ -59,6 +59,8 @@ export const KHCN_PLACEHOLDER_GROUPS: PlaceholderGroup[] = [
       "HĐTD.Tr.đó: Vốn bằng tiền", "HĐTD.Vốn bằng sức lao động",
       "HĐTD.Xếp hạng khách hàng", "HĐTD.Nhóm nợ", "HĐTD.Kỳ chấm điểm",
       "HĐTD.Dư nợ của KH và NLQ tại Agribank", "HĐTD.Dư nợ tại TCTD khác",
+      "HĐTD.Doanh thu dự kiến", "HĐTD.Chi phí dự kiến", "HĐTD.Lợi nhuận dự kiến",
+      "HĐTD.Số HĐ cũ", "HĐTD.Ngày HĐ cũ",
     ],
   },
   {
@@ -99,7 +101,8 @@ export const KHCN_PLACEHOLDER_GROUPS: PlaceholderGroup[] = [
       "SĐ.Thời hạn sử dụng", "SĐ.Nguồn gốc",
       "SĐ.Kết cấu nhà", "SĐ.Số tầng", "SĐ.Diện tích XD", "SĐ.Diện tích sàn",
       "SĐ.Cấp nhà ở", "SĐ.Loại nhà ở",
-      "SĐ.Số HĐ thế chấp", "SĐ.Ngày ký HĐTC",
+      "SĐ.Số HĐ thế chấp", "SĐ.Ngày ký HĐTC", "SĐ.Tên HĐ thế chấp",
+      "SĐ.Văn bản sửa đổi", "SĐ.Ngày sửa đổi",
       "SĐ.Tổng giá trị TS", "SĐ.TGTTS bằng chữ",
       "SĐ.Nghĩa vụ bảo đảm", "SĐ.NVBĐ bằng chữ",
       "SĐ.Thời hạn XĐ lại GTTS", "SĐ.Ghi chú",
@@ -203,6 +206,7 @@ export const KHCN_PLACEHOLDER_GROUPS: PlaceholderGroup[] = [
       "PA.Thu nhập", "PA.Sản lượng", "PA.Vòng quay vốn",
       "PA.Số sào đất", "PA.Địa chỉ đất NN",
       "PA.Số tiền hợp đồng cung ứng", "PA.Số tiền đặt cọc",
+      "PA.HĐ cũ Số", "PA.HĐ cũ Ngày", "PA.Dư nợ cũ",
     ],
   },
 ];

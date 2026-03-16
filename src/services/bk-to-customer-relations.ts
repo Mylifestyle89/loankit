@@ -85,21 +85,21 @@ export const extractAllCoBorrowers = (i: Record<string, unknown>[]) => extractAl
 type CreditAgribankData = {
   branch_name?: string | null;
   debt_group?: string | null;
-  total_debt?: string | null;
-  short_term_debt?: string | null;
-  long_term_debt?: string | null;
+  debt_amount?: string | null;
+  loan_term?: string | null;
+  loan_purpose?: string | null;
 };
 
 export function extractCreditAgribank(values: Record<string, unknown>): CreditAgribankData | null {
   const bankName = str(values["A.credit.vba_bank_name"]);
-  const totalDebt = str(values["A.credit.vba_total_outstanding"]);
-  if (!bankName && !totalDebt) return null;
+  const debtAmount = str(values["A.credit.vba_total_outstanding"]);
+  if (!bankName && !debtAmount) return null;
   return {
     branch_name: bankName,
     debt_group: str(values["A.credit.vba_debt_group"]),
-    total_debt: totalDebt,
-    short_term_debt: str(values["A.credit.vba_short_term_outstanding"]),
-    long_term_debt: str(values["A.credit.vba_long_term_outstanding"]),
+    debt_amount: debtAmount,
+    loan_term: str(values["A.credit.vba_loan_term"]),
+    loan_purpose: str(values["A.credit.vba_loan_purpose"]),
   };
 }
 
@@ -110,21 +110,21 @@ export const extractAllCreditAgribank = (i: Record<string, unknown>[]) => extrac
 type CreditOtherData = {
   institution_name?: string | null;
   debt_group?: string | null;
-  total_debt?: string | null;
-  short_term_debt?: string | null;
-  long_term_debt?: string | null;
+  debt_amount?: string | null;
+  loan_term?: string | null;
+  loan_purpose?: string | null;
 };
 
 export function extractCreditOther(values: Record<string, unknown>): CreditOtherData | null {
   const bankName = str(values["A.credit.other_bank_name"]);
-  const totalDebt = str(values["A.credit.other_total_outstanding"]);
-  if (!bankName && !totalDebt) return null;
+  const debtAmount = str(values["A.credit.other_total_outstanding"]);
+  if (!bankName && !debtAmount) return null;
   return {
     institution_name: bankName,
     debt_group: str(values["A.credit.other_debt_group"]),
-    total_debt: totalDebt,
-    short_term_debt: str(values["A.credit.other_short_term_outstanding"]),
-    long_term_debt: str(values["A.credit.other_long_term_outstanding"]),
+    debt_amount: debtAmount,
+    loan_term: str(values["A.credit.other_loan_term"]),
+    loan_purpose: str(values["A.credit.other_loan_purpose"]),
   };
 }
 

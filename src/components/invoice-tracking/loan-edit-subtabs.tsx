@@ -119,6 +119,10 @@ export function LoanEfficiencyTab({ fields, setFields }: { fields: Fields; setFi
         <Field label="Xếp hạng tín dụng KH" name="customer_rating" fields={fields} setFields={setFields} />
         <Field label="Nhóm nợ" name="debt_group" fields={fields} setFields={setFields} />
         <Field label="Kỳ chấm điểm" name="scoring_period" fields={fields} setFields={setFields} />
+        {/* HĐ cũ — cho vay gia hạn/tái cơ cấu */}
+        <Field label="Số HĐ cũ" name="prior_contract_number" fields={fields} setFields={setFields} />
+        <Field label="Ngày HĐ cũ" name="prior_contract_date" fields={fields} setFields={setFields} />
+        <Field label="Dư nợ cũ" name="prior_outstanding" fields={fields} setFields={setFields} type="number" />
       </div>
     </div>
   );
@@ -132,6 +136,7 @@ export function loanToExtFields(loan: Record<string, unknown>): Fields {
     "cash_equity", "labor_equity", "other_loan", "other_asset_equity",
     "expected_revenue", "expected_cost", "expected_profit", "from_project",
     "other_income", "other_income_detail", "customer_rating", "debt_group", "scoring_period",
+    "prior_contract_number", "prior_contract_date", "prior_outstanding",
   ];
   const result: Fields = {};
   for (const k of keys) {
@@ -148,6 +153,7 @@ export function extFieldsToPayload(fields: Fields): Record<string, unknown> {
   const numKeys = new Set([
     "total_capital_need", "equity_amount", "cash_equity", "labor_equity",
     "other_loan", "other_asset_equity", "expected_revenue", "expected_cost", "expected_profit",
+    "prior_outstanding",
   ]);
   const result: Record<string, unknown> = {};
   for (const [k, v] of Object.entries(fields)) {

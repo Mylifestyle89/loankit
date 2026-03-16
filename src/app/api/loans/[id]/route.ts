@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
 import { toHttpError, ValidationError } from "@/core/errors/app-error";
+import { requireEditorOrAdmin, requireAdmin } from "@/lib/auth-guard";
 import { TRACKING_STATUSES } from "@/lib/invoice-tracking-format-helpers";
 import { loanService } from "@/services/loan.service";
 
@@ -19,6 +20,30 @@ const updateSchema = z.object({
   securedObligation: z.number().optional().nullable(),
   disbursementLimitByAsset: z.number().optional().nullable(),
   status: z.enum(TRACKING_STATUSES).optional(),
+  lending_method: z.string().optional().nullable(),
+  tcmblm_reason: z.string().optional().nullable(),
+  interest_method: z.string().optional().nullable(),
+  principal_schedule: z.string().optional().nullable(),
+  interest_schedule: z.string().optional().nullable(),
+  policy_program: z.string().optional().nullable(),
+  total_capital_need: z.number().optional().nullable(),
+  equity_amount: z.number().optional().nullable(),
+  cash_equity: z.number().optional().nullable(),
+  labor_equity: z.number().optional().nullable(),
+  other_loan: z.number().optional().nullable(),
+  other_asset_equity: z.number().optional().nullable(),
+  expected_revenue: z.number().optional().nullable(),
+  expected_cost: z.number().optional().nullable(),
+  expected_profit: z.number().optional().nullable(),
+  from_project: z.string().optional().nullable(),
+  other_income: z.string().optional().nullable(),
+  other_income_detail: z.string().optional().nullable(),
+  customer_rating: z.string().optional().nullable(),
+  debt_group: z.string().optional().nullable(),
+  scoring_period: z.string().optional().nullable(),
+  prior_contract_number: z.string().optional().nullable(),
+  prior_contract_date: z.string().optional().nullable(),
+  prior_outstanding: z.number().optional().nullable(),
 });
 
 export async function GET(
@@ -40,6 +65,7 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
+    await requireEditorOrAdmin();
     const { id } = await params;
     const body = await req.json();
     const parsed = updateSchema.parse(body);
@@ -60,6 +86,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
+    await requireAdmin();
     const { id } = await params;
     await loanService.delete(id);
     return NextResponse.json({ ok: true });

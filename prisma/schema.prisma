@@ -184,6 +184,11 @@ model Loan {
   debt_group           String?  // Nhóm nợ
   scoring_period       String?  // Kỳ chấm điểm
 
+  // HĐ cũ (cho vay tái cơ cấu, gia hạn)
+  prior_contract_number String?  // Số HĐ cũ
+  prior_contract_date   String?  // Ngày HĐ cũ
+  prior_outstanding     Float?   // Dư nợ cũ
+
   disbursements     Disbursement[]
   beneficiaries     Beneficiary[]
 

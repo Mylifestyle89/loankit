@@ -31,7 +31,8 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        {/* Apply dark class before first paint — prevents flash of wrong theme */}
+        {/* Intentional dangerouslySetInnerHTML: theme flash prevention.
+            Hardcoded string only — no user input, no XSS risk. */}
         <script
           dangerouslySetInnerHTML={{
             __html: `try{const t=localStorage.getItem('app_theme');const d=t==='dark'||(t==='system'||!t)&&window.matchMedia('(prefers-color-scheme: dark)').matches;if(d)document.documentElement.classList.add('dark');}catch{}`,

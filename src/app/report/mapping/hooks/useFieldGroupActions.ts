@@ -3,6 +3,7 @@ import { useMappingDataStore } from "../stores/use-mapping-data-store";
 import { useGroupUiStore } from "../stores/use-group-ui-store";
 import { useUiStore } from "../stores/use-ui-store";
 import { useUndoStore } from "../stores/use-undo-store";
+import { useFieldUsageStore } from "../stores/use-field-usage-store";
 import { useModalStore } from "@/lib/report/use-modal-store";
 import type { FieldCatalogItem } from "@/lib/report/config-schema";
 import { normalizeInputByType, buildInternalFieldKey, toInternalType } from "../helpers";
@@ -166,7 +167,12 @@ export function useFieldGroupActions({ t }: UseFieldGroupActionsProps) {
 
     const deleteField = useCallback(
         (fieldKey: string) => {
-            if (typeof window !== "undefined" && !window.confirm(t("mapping.deleteFieldConfirm")))
+            // Reverse sync warning: check if field is used in templates
+            const usage = useFieldUsageStore.getState().usageMap[fieldKey];
+            const usageWarning = usage?.length
+                ? `\n\n⚠️ Field này đang được dùng trong ${usage.length} mẫu: ${usage.join(", ")}`
+                : "";
+            if (typeof window !== "undefined" && !window.confirm(t("mapping.deleteFieldConfirm") + usageWarning))
                 return;
             pushUndoSnapshot();
             const { setFieldCatalog, setValues, setManualValues, setFormulas, setMappingText } =

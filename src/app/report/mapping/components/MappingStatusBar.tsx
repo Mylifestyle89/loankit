@@ -1,5 +1,9 @@
+import { useMemo } from "react";
 import { Undo2 } from "lucide-react";
 import { useLanguage } from "@/components/language-provider";
+import { CoverageProgressBar } from "@/components/coverage-progress-bar";
+import { computeFieldCoverage } from "@/lib/report/field-sync-utils";
+import type { FieldCatalogItem } from "@/lib/report/config-schema";
 
 type MappingStatusBarProps = {
   undoLastAction: () => void;
@@ -9,6 +13,9 @@ type MappingStatusBarProps = {
   onOpenOcrReview: () => void;
   fieldCount: number;
   mappedFieldCount: number;
+  /** Field catalog + effective values for coverage indicator */
+  fieldCatalog?: FieldCatalogItem[];
+  effectiveValues?: Record<string, unknown>;
 };
 
 export function MappingStatusBar({
@@ -19,8 +26,15 @@ export function MappingStatusBar({
   onOpenOcrReview,
   fieldCount,
   mappedFieldCount,
+  fieldCatalog,
+  effectiveValues,
 }: MappingStatusBarProps) {
   const { t } = useLanguage();
+
+  const coverage = useMemo(
+    () => fieldCatalog && effectiveValues ? computeFieldCoverage(fieldCatalog, effectiveValues) : null,
+    [fieldCatalog, effectiveValues],
+  );
 
   return (
     <div className="sticky bottom-0 z-10 flex items-center justify-between border-t border-zinc-200 dark:border-white/[0.08] bg-white/80 dark:bg-[#141414]/90 px-4 py-2 backdrop-blur-sm text-xs">
@@ -54,12 +68,18 @@ export function MappingStatusBar({
         )}
       </div>
 
-      {/* Right: Field count */}
-      <div className="flex items-center gap-1.5 text-slate-600 dark:text-slate-300">
-        <span className="font-semibold text-violet-600 dark:text-violet-400">{mappedFieldCount}</span>
-        <span>/</span>
-        <span>{fieldCount}</span>
-        <span className="text-slate-500 dark:text-slate-400">fields mapped</span>
+      {/* Right: Field coverage + count */}
+      <div className="flex items-center gap-3 text-slate-600 dark:text-slate-300">
+        {coverage && coverage.total > 0 && (
+          <CoverageProgressBar filled={coverage.filled} total={coverage.total} />
+        )}
+        <span className="text-slate-400 dark:text-slate-500">|</span>
+        <div className="flex items-center gap-1.5">
+          <span className="font-semibold text-violet-600 dark:text-violet-400">{mappedFieldCount}</span>
+          <span>/</span>
+          <span>{fieldCount}</span>
+          <span className="text-slate-500 dark:text-slate-400">mapped</span>
+        </div>
       </div>
     </div>
   );

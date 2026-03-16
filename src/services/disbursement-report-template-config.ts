@@ -21,6 +21,10 @@ export const DISBURSEMENT_TEMPLATES = {
     label: "In UNC",
     path: "report_assets/Disbursement templates/in UNC.docx",
   },
+  cam_ket_bo_sung_chung_tu: {
+    label: "Cam kết bổ sung chứng từ",
+    path: "report_assets/Disbursement templates/Cam ket bo sung chung tu.docx",
+  },
 } as const;
 
 export type TemplateKey = keyof typeof DISBURSEMENT_TEMPLATES;
@@ -41,4 +45,8 @@ export const ALLOWED_OVERRIDE_KEYS: Record<TemplateKey, string[]> = {
   ],
   danh_muc_ho_so: ["Số điện thoại", "Tên người dùng"],
   in_unc: [],
+  cam_ket_bo_sung_chung_tu: [
+    "Loại giấy tờ tùy thân", "CMND", "nơi cấp", "ngày cấp",
+    "Tên chi nhánh/PGD",
+  ],
 };

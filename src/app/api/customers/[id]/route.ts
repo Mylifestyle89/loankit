@@ -17,6 +17,11 @@ const updateCustomerSchema = z.object({
   legal_representative_title: z.string().optional().nullable(),
   organization_type: z.string().optional().nullable(),
   email: z.string().email().optional().nullable(),
+  active_branch_id: z.string().optional().nullable(),
+  relationship_officer: z.string().optional().nullable(),
+  appraiser: z.string().optional().nullable(),
+  approver_name: z.string().optional().nullable(),
+  approver_title: z.string().optional().nullable(),
   data_json: z.record(z.string(), z.unknown()).optional(),
 });
 
@@ -73,6 +78,11 @@ export async function PATCH(
       legal_representative_title: parsed.legal_representative_title,
       organization_type: parsed.organization_type,
       email: parsed.email,
+      active_branch_id: parsed.active_branch_id,
+      relationship_officer: parsed.relationship_officer,
+      appraiser: parsed.appraiser,
+      approver_name: parsed.approver_name,
+      approver_title: parsed.approver_title,
       data_json: parsed.data_json,
     });
     return NextResponse.json({ ok: true, customer });

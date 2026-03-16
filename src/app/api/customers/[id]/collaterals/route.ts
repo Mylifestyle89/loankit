@@ -1,0 +1,58 @@
+import { NextRequest, NextResponse } from "next/server";
+import { requireEditorOrAdmin } from "@/lib/auth-guard";
+import { prisma } from "@/lib/prisma";
+
+type Ctx = { params: Promise<{ id: string }> };
+
+/** GET /api/customers/:id/collaterals — list all collaterals for a customer */
+export async function GET(_req: NextRequest, ctx: Ctx) {
+  try {
+    const { id } = await ctx.params;
+    const collaterals = await prisma.collateral.findMany({
+      where: { customerId: id },
+      orderBy: { createdAt: "desc" },
+    });
+    // Parse JSON properties for client
+    const items = collaterals.map((c) => {
+      let properties = {};
+      try { properties = JSON.parse(c.properties_json || "{}"); } catch { /* malformed JSON — default to empty */ }
+      return { ...c, properties };
+    });
+    return NextResponse.json({ ok: true, collaterals: items });
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : "Unknown error";
+    return NextResponse.json({ ok: false, error: msg }, { status: 500 });
+  }
+}
+
+/** POST /api/customers/:id/collaterals — create a new collateral */
+export async function POST(req: NextRequest, ctx: Ctx) {
+  try {
+    await requireEditorOrAdmin();
+    const { id } = await ctx.params;
+    const body = await req.json();
+    const { collateral_type, name, total_value, obligation, properties } = body;
+
+    if (!collateral_type || !name) {
+      return NextResponse.json(
+        { ok: false, error: "collateral_type and name are required" },
+        { status: 400 },
+      );
+    }
+
+    const collateral = await prisma.collateral.create({
+      data: {
+        customerId: id,
+        collateral_type,
+        name,
+        total_value: total_value ?? null,
+        obligation: obligation ?? null,
+        properties_json: JSON.stringify(properties ?? {}),
+      },
+    });
+    return NextResponse.json({ ok: true, collateral });
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : "Unknown error";
+    return NextResponse.json({ ok: false, error: msg }, { status: 500 });
+  }
+}

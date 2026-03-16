@@ -1,8 +1,9 @@
 import { memo, useCallback, useMemo, useRef, useState } from "react";
-import { Pencil, Trash2, GripVertical, FunctionSquare, Check, X } from "lucide-react";
+import { Pencil, Trash2, GripVertical, FunctionSquare, Check, X, FileText } from "lucide-react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import type { FieldCatalogItem } from "@/lib/report/config-schema";
+import { useFieldUsageStore } from "../stores/use-field-usage-store";
 import {
     formatNumberVnDisplay,
     formatPercentVnDisplay,
@@ -81,6 +82,9 @@ export const FieldRow = memo(function FieldRow({
     onAcceptOcrSuggestion,
     onDeclineOcrSuggestion,
 }: FieldRowProps) {
+    // Reverse sync: which templates use this field
+    const templateUsage = useFieldUsageStore((s) => s.usageMap[field.field_key]);
+
     const sortableId = dndId || field.field_key;
     const {
         attributes,
@@ -292,6 +296,15 @@ export const FieldRow = memo(function FieldRow({
                         <p className="truncate text-[10px] text-zinc-400 dark:text-slate-500" title={sampleData || "Chưa có dữ liệu mẫu"}>
                             Sample Data: {sampleData || "—"}
                         </p>
+                        {templateUsage && templateUsage.length > 0 && (
+                            <span
+                                className="inline-flex flex-shrink-0 items-center gap-0.5 rounded-full bg-violet-100 dark:bg-violet-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-violet-700 dark:text-violet-400"
+                                title={`Dùng trong: ${templateUsage.join(", ")}`}
+                            >
+                                <FileText className="h-2.5 w-2.5" />
+                                {templateUsage.length}
+                            </span>
+                        )}
                         <span
                             className={`inline-flex flex-shrink-0 items-center rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${confidenceScore >= 90
                                     ? "bg-emerald-100 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"

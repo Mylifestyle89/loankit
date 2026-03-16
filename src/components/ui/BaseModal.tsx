@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { type ReactNode } from "react";
+import { type ReactNode, useEffect, useRef } from "react";
 
 type BaseModalProps = {
   open: boolean;
@@ -20,6 +20,20 @@ export function BaseModal({
   footer,
   maxWidthClassName = "max-w-2xl",
 }: BaseModalProps) {
+  const dialogRef = useRef<HTMLDivElement>(null);
+
+  // Close on Escape key
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", handler);
+    // Focus the dialog on mount for accessibility
+    dialogRef.current?.focus();
+    return () => document.removeEventListener("keydown", handler);
+  }, [open, onClose]);
+
   return (
     <AnimatePresence>
       {open ? (
@@ -38,8 +52,10 @@ export function BaseModal({
             exit={{ opacity: 0 }}
           />
           <motion.div
+            ref={dialogRef}
             role="dialog"
             aria-modal="true"
+            tabIndex={-1}
             className={`relative w-full ${maxWidthClassName} max-h-[calc(100vh-2rem)] overflow-y-auto rounded-2xl border border-slate-200/60 bg-white/80 shadow-[0_8px_30px_rgb(0,0,0,0.04)] backdrop-blur-md dark:border-white/[0.08] dark:bg-[#141414]/90 dark:shadow-[0_8px_40px_rgb(0,0,0,0.5)]`}
             initial={{ opacity: 0, y: 20, scale: 0.99 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { ChevronDown, ChevronRight } from "lucide-react";
+import { ChevronDown, ChevronRight, Plus } from "lucide-react";
 
 type Loan = {
   id: string;
@@ -67,7 +67,7 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
-function LoanRow({ loan }: { loan: Loan }) {
+function LoanRow({ loan, loanPlansHref }: { loan: Loan; loanPlansHref?: string }) {
   const [expanded, setExpanded] = useState(false);
 
   return (
@@ -150,40 +150,70 @@ function LoanRow({ loan }: { loan: Loan }) {
             <p className="text-xs text-zinc-400 dark:text-slate-500">Chưa có giải ngân</p>
           )}
 
-          <Link
-            href={`/report/loans/${loan.id}`}
-            className="inline-flex items-center text-xs text-violet-600 dark:text-violet-400 hover:underline"
-          >
-            Xem chi tiết khoản vay →
-          </Link>
+          <div className="flex items-center gap-4">
+            <Link
+              href={`/report/loans/${loan.id}`}
+              className="inline-flex items-center text-xs text-violet-600 dark:text-violet-400 hover:underline"
+            >
+              Xem chi tiết khoản vay →
+            </Link>
+            {loanPlansHref && (
+              <Link
+                href={loanPlansHref}
+                className="inline-flex items-center text-xs text-fuchsia-600 dark:text-fuchsia-400 hover:underline"
+              >
+                Phương án vay vốn →
+              </Link>
+            )}
+          </div>
         </div>
       )}
     </div>
   );
 }
 
-export function CustomerLoansSection({ loans }: { loans: Loan[] }) {
-  if (loans.length === 0) {
-    return (
-      <div className="rounded-xl border border-dashed border-zinc-300 dark:border-white/[0.08] py-8 text-center">
-        <p className="text-sm text-zinc-400 dark:text-slate-500">Chưa có khoản vay nào</p>
-      </div>
-    );
-  }
+export function CustomerLoansSection({ loans, customerId }: { loans: Loan[]; customerId?: string }) {
+  const addLoanHref = customerId
+    ? `/report/loans/new?customerId=${customerId}`
+    : "/report/loans/new";
 
   return (
-    <div className="space-y-2">
-      {/* Header */}
-      <div className="grid grid-cols-5 gap-2 px-4 py-2 text-xs font-medium text-zinc-500 dark:text-slate-400">
-        <span>Số hợp đồng</span>
-        <span>Số tiền vay</span>
-        <span>Ngày bắt đầu</span>
-        <span>Ngày kết thúc</span>
-        <span>Trạng thái</span>
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <h3 className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">
+          Khoản vay ({loans.length})
+        </h3>
+        <Link
+          href={addLoanHref}
+          className="rounded-lg px-4 py-2 text-sm font-medium inline-flex items-center gap-1.5 bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white shadow-sm shadow-violet-500/25 hover:brightness-110 transition-all duration-150"
+        >
+          <Plus className="h-3.5 w-3.5" /> Thêm khoản vay
+        </Link>
       </div>
-      {loans.map((loan) => (
-        <LoanRow key={loan.id} loan={loan} />
-      ))}
+
+      {loans.length === 0 ? (
+        <div className="rounded-xl border border-dashed border-zinc-300 dark:border-white/[0.08] py-8 text-center">
+          <p className="text-sm text-zinc-400 dark:text-slate-500">Chưa có khoản vay nào</p>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {/* Header */}
+          <div className="grid grid-cols-5 gap-2 px-4 py-2 text-xs font-medium text-zinc-500 dark:text-slate-400">
+            <span>Số hợp đồng</span>
+            <span>Số tiền vay</span>
+            <span>Ngày bắt đầu</span>
+            <span>Ngày kết thúc</span>
+            <span>Trạng thái</span>
+          </div>
+          {loans.map((loan) => (
+            <LoanRow
+              key={loan.id}
+              loan={loan}
+              loanPlansHref={customerId ? `/report/customers/${customerId}/loan-plans` : undefined}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

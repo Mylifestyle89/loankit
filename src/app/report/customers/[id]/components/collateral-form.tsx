@@ -5,11 +5,11 @@ import { Plus, Trash2 } from "lucide-react";
 import { inputCls, btnCls } from "./shared-form-styles";
 import { SmartField } from "@/components/smart-field";
 import {
-  COLLATERAL_TYPES, FORM_FIELDS, EMPTY_OWNER,
+  COLLATERAL_TYPES, FORM_FIELDS, EMPTY_OWNER, EMPTY_AMENDMENT,
   QSD_CERT_KEYS, QSD_LAND_KEYS, QSD_HOUSE_KEYS, QSD_CONTRACT_KEYS,
   DS_VEHICLE_KEYS, DS_REG_KEYS, DS_CONTRACT_KEYS, DS_INSURANCE_KEYS,
   NUMBER_KEYS, DECIMAL_KEYS, DATE_KEYS, fmtNumber, fmtDate,
-  type OwnerEntry, type CollateralItem,
+  type OwnerEntry, type AmendmentEntry, type CollateralItem,
 } from "./collateral-config";
 import { numberToVietnameseWords } from "@/lib/number-to-vietnamese-words";
 
@@ -70,6 +70,34 @@ function OwnerRow({ owner, index, onChange, onRemove }: {
           <input value={owner.current_address} onChange={(e) => set("current_address", e.target.value)} className={inputCls} />
         </label>
       </div>
+    </div>
+  );
+}
+
+/* ── Amendment row (Văn bản sửa đổi) ── */
+function AmendmentRow({ amendment, index, onChange, onRemove }: {
+  amendment: AmendmentEntry; index: number;
+  onChange: (idx: number, patch: Partial<AmendmentEntry>) => void;
+  onRemove: (idx: number) => void;
+}) {
+  return (
+    <div className="flex items-center gap-2">
+      <span className="text-[11px] text-zinc-400 w-4 shrink-0">{index + 1}.</span>
+      <input
+        value={amendment.name}
+        onChange={(e) => onChange(index, { name: e.target.value })}
+        placeholder="Tên văn bản sửa đổi"
+        className={`${inputCls} flex-1`}
+      />
+      <input
+        value={amendment.date}
+        onChange={(e) => onChange(index, { date: e.target.value })}
+        placeholder="Ngày (dd/mm/yyyy)"
+        className={`${inputCls} w-32`}
+      />
+      <button type="button" onClick={() => onRemove(index)} className="p-1 rounded hover:bg-red-50 dark:hover:bg-red-500/10 shrink-0">
+        <Trash2 className="h-3 w-3 text-red-400" />
+      </button>
     </div>
   );
 }
@@ -182,6 +210,11 @@ export function CollateralForm({ customerId, initial, onSaved, onCancel }: {
     try { return JSON.parse(initial?.properties?._owners ?? "[]"); } catch { return []; }
   });
 
+  // Amendments repeater (JSON in properties._amendments)
+  const [amendments, setAmendments] = useState<AmendmentEntry[]>(() => {
+    try { return JSON.parse(initial?.properties?._amendments ?? "[]"); } catch { return []; }
+  });
+
   const fields = FORM_FIELDS[type] ?? [];
 
   function handleOwnerChange(idx: number, patch: Partial<OwnerEntry>) {
@@ -189,6 +222,12 @@ export function CollateralForm({ customerId, initial, onSaved, onCancel }: {
   }
   function handleOwnerRemove(idx: number) {
     setOwners((prev) => prev.filter((_, i) => i !== idx));
+  }
+  function handleAmendmentChange(idx: number, patch: Partial<AmendmentEntry>) {
+    setAmendments((prev) => prev.map((a, i) => (i === idx ? { ...a, ...patch } : a)));
+  }
+  function handleAmendmentRemove(idx: number) {
+    setAmendments((prev) => prev.filter((_, i) => i !== idx));
   }
 
   async function handleSave() {
@@ -198,6 +237,8 @@ export function CollateralForm({ customerId, initial, onSaved, onCancel }: {
       const finalProps = { ...props };
       if (owners.length > 0) finalProps._owners = JSON.stringify(owners);
       else delete finalProps._owners;
+      if (amendments.length > 0) finalProps._amendments = JSON.stringify(amendments);
+      else delete finalProps._amendments;
       // Clear house fields if unchecked
       if (type === "qsd_dat" && !hasAssetOnLand) {
         for (const k of QSD_HOUSE_KEYS) delete finalProps[k];
@@ -347,6 +388,19 @@ export function CollateralForm({ customerId, initial, onSaved, onCancel }: {
           <div>
             <SectionHeader title="Hợp đồng bảo đảm" />
             {renderGroup(QSD_CONTRACT_KEYS)}
+            {/* Văn bản sửa đổi */}
+            <div className="mt-3 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-semibold text-zinc-500">Văn bản sửa đổi, bổ sung</span>
+                <button type="button" onClick={() => setAmendments((prev) => [...prev, { ...EMPTY_AMENDMENT }])}
+                  className={`${btnCls} inline-flex items-center gap-1 text-[11px] border border-zinc-200 dark:border-white/[0.09]`}>
+                  <Plus className="h-3 w-3" /> Thêm
+                </button>
+              </div>
+              {amendments.map((a, i) => (
+                <AmendmentRow key={i} amendment={a} index={i} onChange={handleAmendmentChange} onRemove={handleAmendmentRemove} />
+              ))}
+            </div>
           </div>
         </div>
       )}
@@ -365,6 +419,19 @@ export function CollateralForm({ customerId, initial, onSaved, onCancel }: {
           <div>
             <SectionHeader title="Hợp đồng bảo đảm" />
             {renderGroup(DS_CONTRACT_KEYS)}
+            {/* Văn bản sửa đổi */}
+            <div className="mt-3 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-semibold text-zinc-500">Văn bản sửa đổi, bổ sung</span>
+                <button type="button" onClick={() => setAmendments((prev) => [...prev, { ...EMPTY_AMENDMENT }])}
+                  className={`${btnCls} inline-flex items-center gap-1 text-[11px] border border-zinc-200 dark:border-white/[0.09]`}>
+                  <Plus className="h-3 w-3" /> Thêm
+                </button>
+              </div>
+              {amendments.map((a, i) => (
+                <AmendmentRow key={i} amendment={a} index={i} onChange={handleAmendmentChange} onRemove={handleAmendmentRemove} />
+              ))}
+            </div>
           </div>
           <div>
             <SectionHeader title="Bảo hiểm" />

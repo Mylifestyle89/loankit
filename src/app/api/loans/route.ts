@@ -21,8 +21,10 @@ const createSchema = z.object({
 export async function GET(req: NextRequest) {
   try {
     const customerId = req.nextUrl.searchParams.get("customerId") ?? undefined;
-    const loans = await loanService.list(customerId);
-    return NextResponse.json({ ok: true, loans });
+    const page = Number(req.nextUrl.searchParams.get("page")) || 1;
+    const limit = Number(req.nextUrl.searchParams.get("limit")) || 50;
+    const result = await loanService.list({ customerId, page, limit });
+    return NextResponse.json({ ok: true, loans: result.data, total: result.total, page: result.page, limit: result.limit });
   } catch (error) {
     const httpError = toHttpError(error, "Failed to list loans.");
     return NextResponse.json({ ok: false, error: httpError.message }, { status: httpError.status });

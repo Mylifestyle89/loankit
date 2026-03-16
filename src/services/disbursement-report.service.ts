@@ -16,32 +16,7 @@ import {
 
 export { DISBURSEMENT_TEMPLATES, type TemplateKey } from "./disbursement-report-template-config";
 
-// ---------------------------------------------------------------------------
-// Date helpers
-// ---------------------------------------------------------------------------
-
-function fmtDate(d: Date | string | null | undefined): string {
-  if (!d) return "";
-  const date = typeof d === "string" ? new Date(d) : d;
-  if (isNaN(date.getTime())) return "";
-  const dd = String(date.getDate()).padStart(2, "0");
-  const mm = String(date.getMonth() + 1).padStart(2, "0");
-  const yyyy = String(date.getFullYear());
-  return `${dd}/${mm}/${yyyy}`;
-}
-
-function monthsBetween(start: Date, end: Date): number {
-  return (end.getFullYear() - start.getFullYear()) * 12 + (end.getMonth() - start.getMonth());
-}
-
-function today() {
-  const now = new Date();
-  return {
-    dd: String(now.getDate()).padStart(2, "0"),
-    mm: String(now.getMonth() + 1).padStart(2, "0"),
-    yyyy: String(now.getFullYear()),
-  };
-}
+import { fmtDate, fmtDateCompact, monthsBetween, today } from "@/lib/report/report-date-utils";
 
 // ---------------------------------------------------------------------------
 // Data fetcher — loads full disbursement with all relations needed for reports
@@ -151,6 +126,8 @@ export async function buildReportData(
     "GN.Lãi suất vay": loan.interestRate ?? "",
     "GN.Tổng mức cấp tín dụng": loan.loanAmount,
     "GN.Tổng Số tiền hóa đơn": totalInvoiceAmount,
+    "GN.Số tiền nợ hóa đơn": totalInvoiceAmount,
+    "GN.Số tiền nợ hóa đơn bằng chữ": numberToVietnameseWords(totalInvoiceAmount),
 
     // --- Loan misc ---
     "Số giải ngân": disbNumber,
@@ -198,12 +175,6 @@ export async function buildReportData(
 // Generate report DOCX → return Buffer
 // ---------------------------------------------------------------------------
 
-function fmtDateCompact(d: Date): string {
-  const dd = String(d.getDate()).padStart(2, "0");
-  const mm = String(d.getMonth() + 1).padStart(2, "0");
-  const yyyy = String(d.getFullYear());
-  return `${dd}-${mm}-${yyyy}`;
-}
 
 async function generateSingleDocx(
   templatePath: string,

@@ -181,6 +181,17 @@ export async function buildKhcnReportData(
   // ── Loan plan (Phương án) fields — all PA.* handled by builder ──
   if (latestPlan) {
     buildLoanPlanExtendedData(latestPlan, data);
+
+    // Map PA financials → HĐTD aliases (only if not already set from loan extended fields)
+    const paRevenue = Number(data["PA.Tổng doanh thu dự kiến"]) || 0;
+    const paDirectCost = Number(data["PA.Tổng chi phí trực tiếp"]) || 0;
+    const paInterest = Number(data["PA.Lãi vay NH"]) || 0;
+    const paCost = paDirectCost + paInterest || Number(data["PA.Tổng chi phí dự kiến"]) || 0;
+    const paProfit = paRevenue && paCost ? paRevenue - paCost : Number(data["PA.Lợi nhuận dự kiến"]) || 0;
+
+    if (paRevenue && !data["HĐTD.Doanh thu dự kiến"]) data["HĐTD.Doanh thu dự kiến"] = paRevenue;
+    if (paCost && !data["HĐTD.Chi phí dự kiến"]) data["HĐTD.Chi phí dự kiến"] = paCost;
+    if (paProfit && !data["HĐTD.Lợi nhuận dự kiến"]) data["HĐTD.Lợi nhuận dự kiến"] = paProfit;
   }
 
   // Merge manual overrides (last, so they can override any computed value)

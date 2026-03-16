@@ -1,7 +1,9 @@
 "use client";
 
+import { useCallback, useEffect, useState } from "react";
 import { useLanguage } from "@/components/language-provider";
 import { FieldInjectionToolbar } from "./field-injection-toolbar";
+import { FieldCoveragePanel } from "./field-coverage-panel";
 
 type FieldCatalogItem = { field_key: string; label_vi: string; group: string; type: string };
 type FieldTemplateItem = { id: string; name: string; field_catalog: FieldCatalogItem[] };
@@ -42,9 +44,28 @@ export function ConfiguredTemplatesTab({
 }: ConfiguredTemplatesTabProps) {
   const { t } = useLanguage();
 
+  // Fetch placeholders for the active template (for coverage panel)
+  const [placeholders, setPlaceholders] = useState<string[]>([]);
+  const fetchPlaceholders = useCallback(async (templateId: string) => {
+    if (!templateId) { setPlaceholders([]); return; }
+    try {
+      const res = await fetch(`/api/report/template/placeholders?template_id=${encodeURIComponent(templateId)}`);
+      const data = await res.json();
+      if (data.ok) setPlaceholders(data.placeholders ?? []);
+    } catch { /* best-effort */ }
+  }, []);
+
+  useEffect(() => {
+    void fetchPlaceholders(activeTemplateId);
+  }, [activeTemplateId, fetchPlaceholders]);
+
   if (templates.length === 0) return null;
 
   return (
+    <div className="space-y-4">
+    {/* Coverage panel — shows which placeholders have data */}
+    {placeholders.length > 0 && <FieldCoveragePanel placeholders={placeholders} />}
+
     <div className="rounded-2xl border border-zinc-200 dark:border-white/[0.07] bg-white dark:bg-[#161616] p-4 shadow-sm">
       <h3 className="text-base font-bold tracking-tight">{t("template.editor.title")}</h3>
       <p className="mt-1 text-sm text-zinc-500 dark:text-slate-400">{t("template.editor.desc")}</p>
@@ -78,6 +99,7 @@ export function ConfiguredTemplatesTab({
         fieldsInSelectedGroup={fi.fieldsInSelectedGroup} selectedFieldKey={fi.selectedFieldKey} onFieldKeyChange={fi.setSelectedFieldKey}
         onInject={fi.injectField} copyFeedback={fi.copyFeedback} fieldCatalogEmpty={fi.fieldCatalog.length === 0}
       />
+    </div>
     </div>
   );
 }

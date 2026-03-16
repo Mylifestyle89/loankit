@@ -159,6 +159,75 @@ async function pruneOldBackups(dirPath: string, keepLatest = 50): Promise<void> 
   await Promise.all(toDelete.map((file) => fs.unlink(path.join(dirPath, file)).catch(() => undefined)));
 }
 
+/**
+ * Merge adjacent <w:r> runs with identical <w:rPr> formatting in OOXML.
+ * Word often splits placeholder text (especially Vietnamese Đ/đ) across
+ * multiple runs, breaking docxtemplater tag detection. This pre-processing
+ * step concatenates text of consecutive runs that share the same formatting.
+ */
+function mergeAdjacentRuns(xml: string): string {
+  // Fix split placeholders: Word splits [placeholder] across multiple <w:r> runs.
+  // Process each paragraph independently — collect <w:t> texts, find unclosed [,
+  // merge text into the first <w:t> and empty subsequent ones until ] is found.
+
+  return xml.replace(/<w:p\b[^>]*>[\s\S]*?<\/w:p>/g, (paragraph) => {
+    // Quick check: does this paragraph have any [ at all?
+    const textContent = paragraph.replace(/<[^>]+>/g, "");
+    if (!textContent.includes("[")) return paragraph;
+
+    // Collect all <w:t> nodes with their positions within the paragraph
+    type TNode = { start: number; end: number; text: string; tag: string };
+    const tRegex = /(<w:t(?:\s[^>]*)?>)([\s\S]*?)(<\/w:t>)/g;
+    const nodes: TNode[] = [];
+    let m: RegExpExecArray | null;
+    while ((m = tRegex.exec(paragraph)) !== null) {
+      nodes.push({ start: m.index, end: m.index + m[0].length, text: m[2], tag: m[1] });
+    }
+
+    if (nodes.length < 2) return paragraph;
+
+    // Find split placeholders and merge
+    const textMods = nodes.map((n) => ({ ...n, newText: n.text }));
+    for (let i = 0; i < textMods.length; i++) {
+      const cur = textMods[i].newText;
+      // Count unclosed [ in this node
+      let depth = 0;
+      for (const ch of cur) {
+        if (ch === "[") depth++;
+        else if (ch === "]") depth--;
+      }
+      if (depth <= 0) continue;
+
+      // Merge subsequent nodes until all [ are closed
+      for (let j = i + 1; j < textMods.length && depth > 0; j++) {
+        textMods[i].newText += textMods[j].newText;
+        textMods[j].newText = "";
+        for (const ch of nodes[j].text) {
+          if (ch === "[") depth++;
+          else if (ch === "]") depth--;
+        }
+      }
+    }
+
+    // Check if any changes were made
+    const changed = textMods.some((n, idx) => n.newText !== nodes[idx].text);
+    if (!changed) return paragraph;
+
+    // Rebuild paragraph with modified text
+    let result = "";
+    let pos = 0;
+    for (let i = 0; i < nodes.length; i++) {
+      result += paragraph.substring(pos, nodes[i].start);
+      const needSpace = textMods[i].newText.includes(" ");
+      const tOpen = needSpace ? '<w:t xml:space="preserve">' : nodes[i].tag;
+      result += `${tOpen}${textMods[i].newText}</w:t>`;
+      pos = nodes[i].end;
+    }
+    result += paragraph.substring(pos);
+    return result;
+  });
+}
+
 function isSafeDocxPath(relPath: string): boolean {
   const normalized = normalizeRelPath(relPath);
   if (!normalized.startsWith("report_assets/")) return false;
@@ -192,6 +261,12 @@ export const docxEngine = {
       zip = new PizZip(templateBuffer);
     } catch (error) {
       throw new CorruptedTemplateError(templatePath, error);
+    }
+
+    // Pre-process: merge split XML runs so placeholders aren't broken
+    for (const xmlFile of ["word/document.xml", "word/header1.xml", "word/header2.xml", "word/footer1.xml", "word/footer2.xml"]) {
+      const entry = zip.file(xmlFile);
+      if (entry) zip.file(xmlFile, mergeAdjacentRuns(entry.asText()));
     }
 
     const renderData = toEngineData(data);
@@ -259,6 +334,12 @@ export const docxEngine = {
       zip = new PizZip(templateBuffer);
     } catch (error) {
       throw new CorruptedTemplateError(templatePath, error);
+    }
+
+    // Pre-process: merge split XML runs so placeholders aren't broken
+    for (const xmlFile of ["word/document.xml", "word/header1.xml", "word/header2.xml", "word/footer1.xml", "word/footer2.xml"]) {
+      const entry = zip.file(xmlFile);
+      if (entry) zip.file(xmlFile, mergeAdjacentRuns(entry.asText()));
     }
 
     // Pre-process hook (e.g., clone sections for multi-asset templates)

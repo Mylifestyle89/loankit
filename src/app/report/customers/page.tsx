@@ -113,8 +113,10 @@ export default function CustomersPage() {
         let created = 0;
         let updated = 0;
         const errors: string[] = [];
+        const names: string[] = [];
 
         for (const client of clientList) {
+          const name = (client.values?.["A.general.customer_name"] as string) || "Không rõ tên";
           try {
             const saveRes = await fetch("/api/customers/from-draft", {
               method: "POST",
@@ -127,6 +129,7 @@ export default function CustomersPage() {
               continue;
             }
             if (saveData.created) created++; else updated++;
+            names.push(name);
           } catch {
             errors.push(`Lỗi lưu khách hàng`);
           }
@@ -136,7 +139,8 @@ export default function CustomersPage() {
         if (created > 0) parts.push(`tạo mới ${created}`);
         if (updated > 0) parts.push(`cập nhật ${updated}`);
         if (errors.length > 0) parts.push(`${errors.length} lỗi`);
-        setSuccess(`Import .bk: ${parts.join(", ")} (tổng ${clientList.length} khách hàng).`);
+        const nameInfo = names.length <= 5 ? `: ${names.join(", ")}` : "";
+        setSuccess(`Import .bk: ${parts.join(", ")} (tổng ${clientList.length} khách hàng${nameInfo}).`);
       } else {
         let res: Response;
         if (isXlsx) {

@@ -10,19 +10,27 @@ export const runtime = "nodejs";
 const createCustomerSchema = z.object({
   customer_code: z.string().min(1),
   customer_name: z.string().min(1),
+  customer_type: z.enum(["corporate", "individual"]).optional(),
   address: z.string().optional(),
   main_business: z.string().optional(),
   charter_capital: z.number().optional(),
   legal_representative_name: z.string().optional(),
   legal_representative_title: z.string().optional(),
   organization_type: z.string().optional(),
+  cccd: z.string().optional(),
+  date_of_birth: z.string().optional(),
+  phone: z.string().optional(),
   data_json: z.record(z.string(), z.unknown()).optional(),
 });
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
-    const customers = await customerService.listCustomers();
-    return NextResponse.json({ ok: true, customers });
+    const rawType = req.nextUrl.searchParams.get("type");
+    const type = rawType === "corporate" || rawType === "individual" ? rawType : undefined;
+    const page = Number(req.nextUrl.searchParams.get("page")) || 1;
+    const limit = Number(req.nextUrl.searchParams.get("limit")) || 50;
+    const result = await customerService.listCustomers({ customer_type: type, page, limit });
+    return NextResponse.json({ ok: true, customers: result.data, total: result.total, page: result.page, limit: result.limit });
   } catch (error) {
     const httpError = toHttpError(error, "Failed to list customers.");
     return NextResponse.json(
@@ -43,12 +51,16 @@ export async function POST(req: NextRequest) {
     const customer = await customerService.createCustomer({
       customer_code: parsed.customer_code,
       customer_name: parsed.customer_name,
+      customer_type: parsed.customer_type,
       address: parsed.address ?? null,
       main_business: parsed.main_business ?? null,
       charter_capital: parsed.charter_capital ?? null,
       legal_representative_name: parsed.legal_representative_name ?? null,
       legal_representative_title: parsed.legal_representative_title ?? null,
       organization_type: parsed.organization_type ?? null,
+      cccd: parsed.cccd ?? null,
+      date_of_birth: parsed.date_of_birth ?? null,
+      phone: parsed.phone ?? null,
       data_json: parsed.data_json ?? {},
     });
     return NextResponse.json({ ok: true, customer });

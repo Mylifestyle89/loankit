@@ -52,6 +52,7 @@ import { useCustomerStore } from "./stores/use-customer-store";
 import { useFieldTemplateStore } from "./stores/use-field-template-store";
 import { useGroupUiStore } from "./stores/use-group-ui-store";
 import { useUndoStore } from "./stores/use-undo-store";
+import { useFieldUsageStore } from "./stores/use-field-usage-store";
 import { useMappingDispatches } from "./hooks/useMappingDispatches";
 import { useMappingComputed } from "./hooks/useMappingComputed";
 import { useFieldGroupActions } from "./hooks/useFieldGroupActions";
@@ -328,6 +329,29 @@ function MappingPageContent() {
     ocrLogEndRef,
   });
 
+  // ── Fetch field usage map (reverse sync: which templates use which fields) ──
+  const fetchFieldUsage = useFieldUsageStore((s) => s.fetchUsage);
+  useEffect(() => { void fetchFieldUsage(); }, [fetchFieldUsage]);
+
+  // ── Focus field from URL param (quick navigation from Template page) ──────
+  useEffect(() => {
+    const focusKey = searchParams.get("focus");
+    if (!focusKey) return;
+
+    // Wait for DOM to render fields, then scroll + highlight
+    const timer = setTimeout(() => {
+      const row = document.querySelector<HTMLElement>(`[data-field-row="${CSS.escape(focusKey)}"]`);
+      if (!row) return;
+      row.scrollIntoView({ behavior: "smooth", block: "center" });
+      row.classList.add("ring-2", "ring-violet-500", "ring-offset-1", "bg-violet-50/50", "dark:bg-violet-500/10");
+      // Remove highlight after 3 seconds
+      setTimeout(() => {
+        row.classList.remove("ring-2", "ring-violet-500", "ring-offset-1", "bg-violet-50/50", "dark:bg-violet-500/10");
+      }, 3000);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [searchParams]);
+
   // ── Ctrl+Z undo shortcut ──────────────────────────────────────────────────
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -443,6 +467,8 @@ function MappingPageContent() {
           onOpenOcrReview={handleOpenOcrReview}
           fieldCount={fieldCatalog.length}
           mappedFieldCount={mappedFieldCount}
+          fieldCatalog={fieldCatalog}
+          effectiveValues={effectiveValues}
         />
       </div>
 

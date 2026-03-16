@@ -10,9 +10,26 @@ type CommandResult = {
   exitCode: number;
 };
 
+/** Only allow known pipeline scripts */
+const ALLOWED_SCRIPTS = new Set(["run_pipeline.py"]);
+
+/** Reject shell metacharacters in args */
+function validateArgs(args: string[]): void {
+  const dangerous = /[;|&$`\\'"<>(){}!#]/;
+  for (const arg of args) {
+    if (dangerous.test(arg)) {
+      throw new Error(`Invalid argument: contains shell metacharacters`);
+    }
+  }
+}
+
 async function runPythonScript(script: string, args: string[]): Promise<CommandResult> {
+  if (!ALLOWED_SCRIPTS.has(script)) {
+    throw new Error(`Script not allowed: ${script}`);
+  }
+  validateArgs(args);
   return await new Promise((resolve, reject) => {
-    const child = spawn("python", [script, ...args], { cwd: process.cwd() });
+    const child = spawn("python", [script, ...args], { cwd: process.cwd(), shell: false });
     let stdout = "";
     let stderr = "";
     child.stdout.on("data", (chunk) => {

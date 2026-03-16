@@ -32,6 +32,8 @@ export const KHCN_TEMPLATES: KhcnDocTemplate[] = [
 
   // Hợp đồng tín dụng — method-specific
   { path: `${BASE}/Hợp đồng tín dụng/2268.06E HDTD vay tung lan co TSBD.docx`, name: "HĐTD vay từng lần có TSBĐ (2268.06E)", category: "hop_dong", methods: ["tung_lan", "trung_dai", "tieu_dung"] },
+  { path: `${BASE}/Hợp đồng tín dụng/2268.06A HDTD vay theo Han muc co TSBD.docx`, name: "HĐTD vay theo hạn mức có TSBĐ (2268.06A)", category: "hop_dong", methods: ["han_muc"] },
+  { path: `${BASE}/Hợp đồng tín dụng/2268.07 BCDXGN kiem GNN han muc SXKD.docx`, name: "BCĐXGN kiểm GNN hạn mức SXKD (2268.07)", category: "hop_dong", methods: ["han_muc"] },
   { path: `${BASE}/Hợp đồng tín dụng/2268.06 Phu luc nhan tien vay.docx`, name: "Phụ lục nhận tiền vay (2268.06)", category: "hop_dong", methods: [] },
 
   // Phương án sử dụng vốn — SXKD methods only (not tiêu dùng)

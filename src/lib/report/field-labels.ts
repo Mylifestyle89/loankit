@@ -8,6 +8,7 @@ const GROUP_LABEL_VI_BY_KEY: Record<string, string> = {
   "A.economic_docs": "Hồ sơ kinh tế",
   "A.collateral": "Tài sản bảo đảm",
   "B.financial": "Phân tích tài chính",
+  "A.plan": "Phương án vay vốn",
   "B.plan": "Kế hoạch hạn mức",
   "B.risk": "Đánh giá rủi ro",
 };

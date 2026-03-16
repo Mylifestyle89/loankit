@@ -113,6 +113,24 @@ export function useAiOcrActions({
         setValues((prev) => ({ ...prev, ...aiValues }));
     }, []);
 
+    /** Áp dụng matched fields vào field_catalog của field template đang chọn */
+    const handleApplyToFieldTemplate = useCallback(
+        (newFields: import("@/lib/report/config-schema").FieldCatalogItem[]) => {
+            const { fieldCatalog, setFieldCatalog } = useMappingDataStore.getState();
+            const { setStatus } = useUiStore.getState();
+            // Merge: chỉ thêm fields chưa tồn tại, không ghi đè
+            const existingKeys = new Set(fieldCatalog.map((f) => f.field_key));
+            const toAdd = newFields.filter((f) => !existingKeys.has(f.field_key));
+            if (toAdd.length > 0) {
+                setFieldCatalog([...fieldCatalog, ...toAdd]);
+            }
+            setStatus({
+                message: `Đã thêm ${toAdd.length} trường vào field template (bỏ qua ${newFields.length - toAdd.length} trường đã tồn tại).`,
+            });
+        },
+        [],
+    );
+
     const runAiSuggestion = useCallback(() => {
         const { autoProcessJob, autoProcessing: isAuto } = useOcrStore.getState();
         const { fieldCatalog: cat } = useMappingDataStore.getState();
@@ -130,6 +148,7 @@ export function useAiOcrActions({
             fieldCatalog: cat,
             onApplyFinancialValues: handleApplyFinancialValues,
             onApplyBkImport: handleApplyBkImport,
+            onApplyToFieldTemplate: handleApplyToFieldTemplate,
         });
     }, [
         aiPlaceholders,
@@ -138,6 +157,7 @@ export function useAiOcrActions({
         getAutoProcessAssets,
         handleApplyBkImport,
         handleApplyFinancialValues,
+        handleApplyToFieldTemplate,
         openAutoProcessResultFolder,
         openModal,
         runSmartAutoBatchFlow,
@@ -265,6 +285,7 @@ export function useAiOcrActions({
         runSmartAutoBatchFlow,
         openAutoProcessResultFolder,
         handleApplyFinancialValues,
+        handleApplyToFieldTemplate,
         runAiSuggestion,
         handleOcrFileSelected,
     };

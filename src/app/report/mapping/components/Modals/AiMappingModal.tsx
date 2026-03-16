@@ -13,6 +13,7 @@ import { suggestAliasForPlaceholder } from "@/lib/report/placeholder-utils";
 import { MappingCanvas, type MappingLink } from "../MappingCanvas";
 import { useAutoTagging } from "../../hooks/useAutoTagging";
 import { getSignedFileUrl } from "@/lib/report/signed-file-url";
+import { AiSuggestReviewTable, buildReviewItems, type SuggestReviewItem } from "./ai-suggest-review-table";
 import { SystemLogCard, type SystemLogEntry, type SystemLogType } from "../SystemLogCard";
 import { FinancialAnalysisModal } from "./FinancialAnalysisModal";
 
@@ -42,6 +43,8 @@ type Props = {
     newFields?: FieldCatalogItem[];
     templateName?: string;
   }) => void;
+  /** Áp dụng matched fields vào field_catalog của field template đang chọn */
+  onApplyToFieldTemplate?: (fields: FieldCatalogItem[]) => void;
 };
 
 function parseHeaders(raw: string): string[] {
@@ -160,10 +163,12 @@ export function AiMappingModal({
   fieldCatalog = [],
   onApplyFinancialValues,
   onApplyBkImport,
+  onApplyToFieldTemplate,
 }: Props) {
   const [headersRaw, setHeadersRaw] = useState("");
   const [includeGrouping, setIncludeGrouping] = useState(true);
   const [loading, setLoading] = useState(false);
+  const [showReview, setShowReview] = useState(false);
   const [error, setError] = useState("");
   const [suggestion, setSuggestion] = useState<Record<string, string>>({});
   const [grouping, setGrouping] = useState<{ groupKey: string; repeatKey: string } | undefined>(undefined);
@@ -380,7 +385,39 @@ export function AiMappingModal({
   }
 
   function acceptSuggestion() {
+    if (onApplyToFieldTemplate && Object.keys(suggestion).length > 0) {
+      // Hiện bảng review để user chọn fields trước khi áp dụng
+      setShowReview(true);
+      return;
+    }
+    // Fallback: áp dụng trực tiếp vào mapping sources (flow cũ)
     onApply({ suggestion, grouping });
+    onClose();
+  }
+
+  /** Callback khi user confirm từ review table */
+  function handleReviewConfirm(
+    selected: SuggestReviewItem[],
+    groupLabels: Record<string, string>,
+  ) {
+    // Tạo FieldCatalogItem[] từ selected items với group label đã tùy chỉnh
+    const newFields: FieldCatalogItem[] = selected.map((item) => ({
+      field_key: item.fieldKey,
+      label_vi: item.labelVi,
+      group: groupLabels[item.group] ?? item.group,
+      type: item.type,
+      required: false,
+      examples: [],
+    }));
+    onApplyToFieldTemplate!(newFields);
+
+    // Cũng áp dụng mapping sources cho các field đã chọn
+    const filteredSuggestion: Record<string, string> = {};
+    for (const item of selected) {
+      filteredSuggestion[item.fieldKey] = item.excelHeader;
+    }
+    onApply({ suggestion: filteredSuggestion, grouping });
+    setShowReview(false);
     onClose();
   }
 
@@ -1540,8 +1577,19 @@ export function AiMappingModal({
               </div>
             ) : null}
 
-            {/* Footer — only for suggest tab */}
-            {activeSection === "suggest" && (
+            {/* Review table — hiện sau khi user bấm "Chấp nhận gợi ý" */}
+            {activeSection === "suggest" && showReview && (
+              <div className="border-t border-violet-200/50 px-4 py-3 dark:border-white/[0.07]">
+                <AiSuggestReviewTable
+                  items={buildReviewItems(suggestion, fieldCatalog)}
+                  onConfirm={handleReviewConfirm}
+                  onCancel={() => setShowReview(false)}
+                />
+              </div>
+            )}
+
+            {/* Footer — only for suggest tab, hidden when review is showing */}
+            {activeSection === "suggest" && !showReview && (
               <div className="flex justify-end gap-2 border-t border-white/40 px-4 py-3 dark:border-white/[0.07]">
                 <button
                   type="button"
