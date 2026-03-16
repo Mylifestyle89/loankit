@@ -231,6 +231,19 @@ export async function generateKhcnReport(
   const prefix = category ? CATEGORY_TO_PREFIX[category] : undefined;
   const collateralType = category ? CATEGORY_TO_COLLATERAL_TYPE[category] : undefined;
 
+  // Flatten first beneficiary into UNC.* flat placeholders
+  if (Array.isArray(data.UNC) && data.UNC.length > 0) {
+    const b = data.UNC[0] as Record<string, unknown>;
+    data["UNC.STT"] = b["STT"] ?? 1;
+    data["UNC.Khách hàng thụ hưởng"] = b["Khách hàng thụ hưởng"] ?? "";
+    data["UNC.Số tài khoản"] = b["Số tài khoản"] ?? "";
+    data["UNC.Nơi mở tài khoản"] = b["Nơi mở tài khoản"] ?? "";
+    const uncAmount = overrides?.["UNC.Số tiền"] || data["GN.Số tiền nhận nợ"] || b["Số tiền"] || "";
+    data["UNC.Số tiền"] = uncAmount;
+    data["UNC.ST bằng chữ"] = uncAmount ? numberToVietnameseWords(Number(uncAmount)) : "";
+    data["UNC.Nội dung"] = b["Nội dung"] ?? overrides?.["UNC.Nội dung"] ?? "";
+  }
+
   // Count collaterals of matching type for clone count
   const collaterals = data.TSBD as Array<{ "Loại TSBĐ": string }> | undefined;
   const count = (isAssetTemplate && prefix && collateralType && collaterals)
@@ -265,9 +278,10 @@ export async function generateKhcnDisbursementReport(
   const template = KHCN_DISBURSEMENT_TEMPLATES[templateKey];
   const data = await buildKhcnReportData(customerId, loanId, overrides, disbursementId);
 
-  // For UNC templates: flatten first beneficiary into UNC.* flat placeholders
-  if ((templateKey === "unc" || templateKey === "unc_a4") && Array.isArray(data.UNC) && data.UNC.length > 0) {
+  // Flatten first beneficiary into UNC.* flat placeholders (used by BCDXGN, UNC, etc.)
+  if (Array.isArray(data.UNC) && data.UNC.length > 0) {
     const b = data.UNC[0] as Record<string, unknown>;
+    data["UNC.STT"] = b["STT"] ?? 1;
     data["UNC.Khách hàng thụ hưởng"] = b["Khách hàng thụ hưởng"] ?? "";
     data["UNC.Số tài khoản"] = b["Số tài khoản"] ?? "";
     data["UNC.Nơi mở tài khoản"] = b["Nơi mở tài khoản"] ?? "";
