@@ -1,7 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
+import { Download, Loader2 } from "lucide-react";
 import { BaseModal } from "@/components/ui/BaseModal";
+import { DocxPreviewModal } from "@/components/docx-preview-modal";
 import { KHCN_DISBURSEMENT_TEMPLATES, type KhcnDisbursementTemplateKey } from "@/services/khcn-disbursement-template-config";
 
 type Props = {
@@ -16,8 +18,9 @@ export function KhcnDisbursementReportModal({ loanId, disbursementId, onClose }:
   const [selectedKey, setSelectedKey] = useState<KhcnDisbursementTemplateKey>("bcdxgn");
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState("");
+  const [preview, setPreview] = useState<{ buffer: ArrayBuffer; fileName: string } | null>(null);
 
-  async function handleGenerate() {
+  const handleGenerate = useCallback(async () => {
     setGenerating(true);
     setError("");
     try {
@@ -31,18 +34,39 @@ export function KhcnDisbursementReportModal({ loanId, disbursementId, onClose }:
         throw new Error(data?.error ?? "Tạo báo cáo thất bại");
       }
       const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `${KHCN_DISBURSEMENT_TEMPLATES[selectedKey].label}.docx`;
-      a.click();
-      URL.revokeObjectURL(url);
-      onClose();
+      const disposition = res.headers.get("Content-Disposition") ?? "";
+      const match = disposition.match(/filename\*?=(?:UTF-8'')?([^;\s]+)/);
+      const fileName = match ? decodeURIComponent(match[1]) : `${KHCN_DISBURSEMENT_TEMPLATES[selectedKey].label}.docx`;
+      const buffer = await blob.arrayBuffer();
+      setPreview({ buffer, fileName });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Lỗi không xác định");
     } finally {
       setGenerating(false);
     }
+  }, [loanId, disbursementId, selectedKey]);
+
+  const handleDownload = useCallback(() => {
+    if (!preview) return;
+    const blob = new Blob([preview.buffer], { type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = preview.fileName;
+    a.click();
+    URL.revokeObjectURL(url);
+  }, [preview]);
+
+  // Show preview if available
+  if (preview) {
+    return (
+      <DocxPreviewModal
+        documentBuffer={preview.buffer}
+        fileName={preview.fileName}
+        onClose={() => { setPreview(null); onClose(); }}
+        onDownload={handleDownload}
+      />
+    );
   }
 
   return (
@@ -54,7 +78,7 @@ export function KhcnDisbursementReportModal({ loanId, disbursementId, onClose }:
             key={key}
             className={`flex cursor-pointer items-center gap-3 rounded-lg border p-3 transition ${
               selectedKey === key
-                ? "border-purple-500 bg-purple-50 dark:bg-purple-900/20"
+                ? "border-violet-500 bg-violet-50/30 dark:bg-violet-900/20"
                 : "border-zinc-200 hover:border-zinc-300 dark:border-slate-600"
             }`}
           >
@@ -63,25 +87,30 @@ export function KhcnDisbursementReportModal({ loanId, disbursementId, onClose }:
               name="khcn-template"
               checked={selectedKey === key}
               onChange={() => setSelectedKey(key)}
-              className="accent-purple-600"
+              className="accent-violet-600"
             />
             <span className="text-sm font-medium">{tpl.label}</span>
           </label>
         ))}
 
-        {error && <p className="text-sm text-red-600">{error}</p>}
+        {error && (
+          <div className="rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/40 px-3 py-2 text-sm text-red-700 dark:text-red-400">
+            {error}
+          </div>
+        )}
 
         <div className="flex justify-end gap-2 pt-2">
-          <button type="button" onClick={onClose} className="rounded-lg border px-4 py-2 text-sm">
+          <button type="button" onClick={onClose} className="rounded-lg border border-zinc-300 dark:border-white/10 px-4 py-2 text-sm hover:bg-zinc-100 dark:hover:bg-white/5 transition-colors">
             Hủy
           </button>
           <button
             type="button"
             onClick={handleGenerate}
             disabled={generating}
-            className="rounded-lg bg-purple-600 px-4 py-2 text-sm font-medium text-white hover:bg-purple-700 disabled:opacity-50"
+            className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-violet-600 to-fuchsia-600 px-4 py-2 text-sm font-medium text-white hover:brightness-110 disabled:opacity-50 transition-all"
           >
-            {generating ? "Đang tạo..." : "Tạo báo cáo"}
+            {generating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+            {generating ? "Đang tạo..." : "Xem trước & Tải xuống"}
           </button>
         </div>
       </div>
