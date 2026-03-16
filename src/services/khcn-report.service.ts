@@ -265,6 +265,18 @@ export async function generateKhcnDisbursementReport(
   const template = KHCN_DISBURSEMENT_TEMPLATES[templateKey];
   const data = await buildKhcnReportData(customerId, loanId, overrides, disbursementId);
 
+  // For UNC templates: flatten first beneficiary into UNC.* flat placeholders
+  if ((templateKey === "unc" || templateKey === "unc_a4") && Array.isArray(data.UNC) && data.UNC.length > 0) {
+    const b = data.UNC[0] as Record<string, unknown>;
+    data["UNC.Khách hàng thụ hưởng"] = b["Khách hàng thụ hưởng"] ?? "";
+    data["UNC.Số tài khoản"] = b["Số tài khoản"] ?? "";
+    data["UNC.Nơi mở tài khoản"] = b["Nơi mở tài khoản"] ?? "";
+    const uncAmount = overrides?.["UNC.Số tiền"] || data["GN.Số tiền nhận nợ"] || b["Số tiền"] || "";
+    data["UNC.Số tiền"] = uncAmount;
+    data["UNC.ST bằng chữ"] = overrides?.["UNC.ST bằng chữ"] || (uncAmount ? numberToVietnameseWords(Number(uncAmount)) : "");
+    data["UNC.Nội dung"] = b["Nội dung"] ?? overrides?.["UNC.Nội dung"] ?? "";
+  }
+
   const buffer = await docxEngine.generateDocxBuffer(template.path, data);
 
   const customerName = String(data["Tên khách hàng"] ?? "KHCN");
