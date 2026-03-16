@@ -211,6 +211,24 @@ export async function buildKhcnReportData(
   return data;
 }
 
+// ── Flatten first beneficiary into UNC.* flat placeholders ──
+
+function flattenUncPlaceholders(
+  data: Record<string, unknown>,
+  overrides?: Record<string, string>,
+): void {
+  if (!Array.isArray(data.UNC) || data.UNC.length === 0) return;
+  const b = data.UNC[0] as Record<string, unknown>;
+  data["UNC.STT"] = b["STT"] ?? 1;
+  data["UNC.Khách hàng thụ hưởng"] = b["Khách hàng thụ hưởng"] ?? "";
+  data["UNC.Số tài khoản"] = b["Số tài khoản"] ?? "";
+  data["UNC.Nơi mở tài khoản"] = b["Nơi mở tài khoản"] ?? "";
+  const uncAmount = overrides?.["UNC.Số tiền"] || data["GN.Số tiền nhận nợ"] || b["Số tiền"] || "";
+  data["UNC.Số tiền"] = uncAmount;
+  data["UNC.ST bằng chữ"] = overrides?.["UNC.ST bằng chữ"] || (uncAmount ? numberToVietnameseWords(Number(uncAmount)) : "");
+  data["UNC.Nội dung"] = b["Nội dung"] ?? overrides?.["UNC.Nội dung"] ?? "";
+}
+
 // ── Generate DOCX buffer ──
 
 export type KhcnReportResult = { buffer: Buffer; filename: string; contentType: string };
@@ -232,17 +250,7 @@ export async function generateKhcnReport(
   const collateralType = category ? CATEGORY_TO_COLLATERAL_TYPE[category] : undefined;
 
   // Flatten first beneficiary into UNC.* flat placeholders
-  if (Array.isArray(data.UNC) && data.UNC.length > 0) {
-    const b = data.UNC[0] as Record<string, unknown>;
-    data["UNC.STT"] = b["STT"] ?? 1;
-    data["UNC.Khách hàng thụ hưởng"] = b["Khách hàng thụ hưởng"] ?? "";
-    data["UNC.Số tài khoản"] = b["Số tài khoản"] ?? "";
-    data["UNC.Nơi mở tài khoản"] = b["Nơi mở tài khoản"] ?? "";
-    const uncAmount = overrides?.["UNC.Số tiền"] || data["GN.Số tiền nhận nợ"] || b["Số tiền"] || "";
-    data["UNC.Số tiền"] = uncAmount;
-    data["UNC.ST bằng chữ"] = uncAmount ? numberToVietnameseWords(Number(uncAmount)) : "";
-    data["UNC.Nội dung"] = b["Nội dung"] ?? overrides?.["UNC.Nội dung"] ?? "";
-  }
+  flattenUncPlaceholders(data, overrides);
 
   // Count collaterals of matching type for clone count
   const collaterals = data.TSBD as Array<{ "Loại TSBĐ": string }> | undefined;
@@ -279,17 +287,7 @@ export async function generateKhcnDisbursementReport(
   const data = await buildKhcnReportData(customerId, loanId, overrides, disbursementId);
 
   // Flatten first beneficiary into UNC.* flat placeholders (used by BCDXGN, UNC, etc.)
-  if (Array.isArray(data.UNC) && data.UNC.length > 0) {
-    const b = data.UNC[0] as Record<string, unknown>;
-    data["UNC.STT"] = b["STT"] ?? 1;
-    data["UNC.Khách hàng thụ hưởng"] = b["Khách hàng thụ hưởng"] ?? "";
-    data["UNC.Số tài khoản"] = b["Số tài khoản"] ?? "";
-    data["UNC.Nơi mở tài khoản"] = b["Nơi mở tài khoản"] ?? "";
-    const uncAmount = overrides?.["UNC.Số tiền"] || data["GN.Số tiền nhận nợ"] || b["Số tiền"] || "";
-    data["UNC.Số tiền"] = uncAmount;
-    data["UNC.ST bằng chữ"] = overrides?.["UNC.ST bằng chữ"] || (uncAmount ? numberToVietnameseWords(Number(uncAmount)) : "");
-    data["UNC.Nội dung"] = b["Nội dung"] ?? overrides?.["UNC.Nội dung"] ?? "";
-  }
+  flattenUncPlaceholders(data, overrides);
 
   const buffer = await docxEngine.generateDocxBuffer(template.path, data);
 

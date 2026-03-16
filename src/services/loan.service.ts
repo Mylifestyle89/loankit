@@ -81,16 +81,12 @@ export const loanService = {
     const loan = await prisma.loan.findUnique({
       where: { id },
       include: {
-        customer: { select: { id: true, customer_name: true } },
+        customer: { select: { id: true, customer_name: true, customer_type: true } },
       },
     });
     if (!loan) throw new NotFoundError("Loan not found.");
-    // Check if customer is KHCN (has record in customers table)
-    const khcnCustomer = await prisma.customer.findUnique({
-      where: { id: loan.customerId },
-      select: { id: true },
-    });
-    return { ...loan, isKhcn: !!khcnCustomer };
+    // KHCN = individual customer (customer_type === "individual")
+    return { ...loan, isKhcn: loan.customer.customer_type === "individual" };
   },
 
   async create(input: CreateLoanInput) {

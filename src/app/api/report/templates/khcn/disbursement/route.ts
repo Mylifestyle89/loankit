@@ -6,12 +6,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { generateKhcnDisbursementReport } from "@/services/khcn-report.service";
 import { KHCN_DISBURSEMENT_TEMPLATES, type KhcnDisbursementTemplateKey } from "@/services/khcn-disbursement-template-config";
+import { requireEditorOrAdmin } from "@/lib/auth-guard";
 import { prisma } from "@/lib/prisma";
 
 export const runtime = "nodejs";
 
 export async function POST(req: NextRequest) {
   try {
+    await requireEditorOrAdmin();
     const body = await req.json();
     const { customerId, templateKey, loanId, disbursementId, overrides } = body as {
       customerId?: string;
