@@ -119,17 +119,13 @@ export function KhcnDocChecklist({
     setGenerating(null);
   }, [customerId, loanId]);
 
-  const handlePreviewDownload = useCallback(() => {
+  const handlePreviewDownload = useCallback(async () => {
     if (!preview) return;
+    const { saveFileWithPicker } = await import("@/lib/save-file-with-picker");
     const blob = new Blob([preview.buffer], {
       type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
     });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = preview.filename;
-    a.click();
-    URL.revokeObjectURL(url);
+    await saveFileWithPicker(blob, preview.filename);
   }, [preview]);
 
   return (

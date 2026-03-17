@@ -58,6 +58,7 @@ export type CreateCustomerInput = {
   organization_type?: string | null;
   // Individual-specific
   cccd?: string | null;
+  cccd_old?: string | null;
   cccd_issued_date?: string | null;
   cccd_issued_place?: string | null;
   date_of_birth?: string | null;
@@ -127,6 +128,7 @@ function toCreateDbData(input: CreateCustomerInput) {
     legal_representative_title: input.legal_representative_title ?? null,
     organization_type: input.organization_type ?? null,
     cccd: input.cccd ?? null,
+    cccd_old: input.cccd_old ?? null,
     cccd_issued_date: input.cccd_issued_date ?? null,
     cccd_issued_place: input.cccd_issued_place ?? null,
     date_of_birth: input.date_of_birth ?? null,
@@ -154,6 +156,7 @@ function toUpdateDbData(input: UpdateCustomerInput) {
   if (input.legal_representative_title !== undefined) data.legal_representative_title = input.legal_representative_title;
   if (input.organization_type !== undefined) data.organization_type = input.organization_type;
   if (input.cccd !== undefined) data.cccd = input.cccd;
+  if (input.cccd_old !== undefined) data.cccd_old = input.cccd_old;
   if (input.cccd_issued_date !== undefined) data.cccd_issued_date = input.cccd_issued_date;
   if (input.cccd_issued_place !== undefined) data.cccd_issued_place = input.cccd_issued_place;
   if (input.date_of_birth !== undefined) data.date_of_birth = input.date_of_birth;

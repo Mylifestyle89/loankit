@@ -45,8 +45,8 @@ async function loadFullCustomer(customerId: string, loanId?: string, disbursemen
         take: 1,
         include: {
           disbursements: disbursementId
-            ? { where: { id: disbursementId }, take: 1 }
-            : { orderBy: { disbursementDate: "desc" }, take: 1 },
+            ? { where: { id: disbursementId }, take: 1, include: { beneficiaryLines: true } }
+            : { orderBy: { disbursementDate: "desc" }, take: 1, include: { beneficiaryLines: true } },
           beneficiaries: true,
         },
         orderBy: { startDate: "desc" },
@@ -124,8 +124,29 @@ export async function buildKhcnReportData(
       ? `${Math.round((loan.endDate.getTime() - loan.startDate.getTime()) / (30.44 * 24 * 3600000))} tháng`
       : "";
     data["HĐTD.Hạn trả cuối"] = fmtDate(loan.endDate);
-    data["HĐTD.Lãi suất vay"] = loan.interestRate ?? "";
-    data["HĐTD.Phương thức cho vay"] = loan.loan_method ?? "";
+    // Format lãi suất: 9.5 → "9,5%/năm"
+    const rate = loan.interestRate;
+    data["HĐTD.Lãi suất vay"] = typeof rate === "number" && rate > 0
+      ? `${parseFloat((rate < 1 ? rate * 100 : rate).toFixed(2)).toString().replace(".", ",")}%/năm`
+      : "";
+    // Lãi suất quá hạn = 150% lãi suất trong hạn (theo quy định Agribank)
+    data["HĐTD.Lãi suất quá hạn"] = typeof rate === "number" && rate > 0
+      ? `${parseFloat(((rate < 1 ? rate * 100 : rate) * 1.5).toFixed(2)).toString().replace(".", ",")}%/năm`
+      : "";
+    // Lãi chậm trả = 130% lãi suất trong hạn
+    data["HĐTD.Lãi suất chậm trả"] = typeof rate === "number" && rate > 0
+      ? `${parseFloat(((rate < 1 ? rate * 100 : rate) * 1.3).toFixed(2)).toString().replace(".", ",")}%/năm`
+      : "";
+    // Map lending_method enum → tiếng Việt
+    const lendingMethodMap: Record<string, string> = {
+      tung_lan: "Cho vay từng lần",
+      han_muc: "Cho vay theo hạn mức tín dụng",
+      du_an: "Cho vay theo dự án đầu tư",
+      hop_von: "Cho vay hợp vốn",
+      tra_gop: "Cho vay trả góp",
+      the_chap: "Cho vay thế chấp",
+    };
+    data["HĐTD.Phương thức cho vay"] = lendingMethodMap[loan.loan_method ?? ""] ?? loan.loan_method ?? "";
     data["HĐTD.Tổng giá trị TSBĐ"] = loan.collateralValue ?? "";
     data["HĐTD.Tổng nghĩa vụ bảo đảm"] = loan.securedObligation ?? "";
 
@@ -142,8 +163,19 @@ export async function buildKhcnReportData(
       buildDisbursementExtendedData(latestDisb, data);
     }
 
-    // Beneficiaries loop (with extended UNC fields)
-    data.UNC = buildBeneficiaryLoopData(loan.beneficiaries);
+    // Beneficiaries: prefer disbursement-specific lines over loan-level
+    const latestBenefLines = latestDisb?.beneficiaryLines;
+    if (latestBenefLines && latestBenefLines.length > 0) {
+      data.UNC = buildBeneficiaryLoopData(
+        latestBenefLines.map((bl) => ({
+          name: bl.beneficiaryName,
+          accountNumber: bl.accountNumber,
+          bankName: bl.bankName,
+        })),
+      );
+    } else {
+      data.UNC = buildBeneficiaryLoopData(loan.beneficiaries);
+    }
   }
 
   // ── Collateral (TSBĐ) loop ──
@@ -188,6 +220,19 @@ export async function buildKhcnReportData(
   // ── Loan plan (Phương án) fields — all PA.* handled by builder ──
   if (latestPlan) {
     buildLoanPlanExtendedData(latestPlan, data);
+
+    // Fallback PA fields from loan if not set by plan financials
+    if (loan) {
+      if (!data["PA.Mục đích vay"]) data["PA.Mục đích vay"] = loan.purpose ?? "";
+      if (!data["PA.Thời hạn vay"] && loan.endDate) {
+        const months = Math.round((loan.endDate.getTime() - loan.startDate.getTime()) / (30.44 * 24 * 3600000));
+        data["PA.Thời hạn vay"] = months > 0 ? String(months) : "";
+      }
+      if (!data["PA.Lãi suất vay"] && loan.interestRate) {
+        const rate = loan.interestRate;
+        data["PA.Lãi suất vay"] = `${parseFloat((rate < 1 ? rate * 100 : rate).toFixed(2))}%/năm`;
+      }
+    }
 
     // Map PA financials → HĐTD aliases (only if not already set from loan extended fields)
     const paRevenue = Number(data["PA.Tổng doanh thu dự kiến"]) || 0;

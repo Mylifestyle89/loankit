@@ -26,11 +26,12 @@ export const EMPTY_OWNER: OwnerEntry = {
 };
 
 export type AmendmentEntry = {
-  name: string;   // Tên văn bản sửa đổi
-  date: string;   // Ngày sửa đổi
+  name: string;   // Tên văn bản sửa đổi (VD: Hợp đồng sửa đổi Hợp đồng thế chấp...)
+  number: string; // Số văn bản (VD: 3286/1)
+  date: string;   // Ngày văn bản (dd/mm/yyyy)
 };
 
-export const EMPTY_AMENDMENT: AmendmentEntry = { name: "", date: "" };
+export const EMPTY_AMENDMENT: AmendmentEntry = { name: "", number: "", date: "" };
 
 export type CollateralItem = {
   id: string;

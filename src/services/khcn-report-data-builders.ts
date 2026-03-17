@@ -4,7 +4,7 @@
  * Extracted from khcn-report.service.ts for modularity.
  */
 import { numberToVietnameseWords } from "@/lib/number-to-vietnamese-words";
-import { fmtDate } from "@/lib/report/report-date-utils";
+
 
 type Data = Record<string, unknown>;
 
@@ -28,7 +28,7 @@ export function buildCustomerAliases(c: {
   data["Nơi cấp"] = c.cccd_issued_place ?? "";
   data["Loại giấy tờ tùy thân"] = c.cccd ? "CCCD" : "";
   data["Danh xưng"] = c.gender === "male" ? "Ông" : c.gender === "female" ? "Bà" : "";
-  data["Tên gọi in hoa"] = c.customer_name?.toUpperCase() ?? "";
+  // "Tên gọi in hoa" is set by buildBranchStaffData (branch name in header)
   data["TÊN KHÁCH HÀNG"] = c.customer_name?.toUpperCase() ?? "";
   data["Tên khách hàng in hoa"] = c.customer_name?.toUpperCase() ?? "";
   data["Nơi thường trú"] = c.address ?? "";
@@ -96,8 +96,9 @@ export function buildLoanExtendedData(
   data["HĐTD.Phương thức áp dụng LS"] = loan.interest_method ?? "";
   data["HĐTD.Định kỳ trả gốc"] = loan.principal_schedule ?? "";
   data["HĐTD.Định kỳ trả lãi"] = loan.interest_schedule ?? "";
-  data["HĐTD.Lãi suất chậm trả"] = ""; // Derived from interestRate policy, leave for override
-  data["HĐTD.Lãi suất quá hạn"] = ""; // Same
+  // Lãi suất chậm trả & quá hạn — set by khcn-report.service.ts, keep existing if already set
+  if (!data["HĐTD.Lãi suất chậm trả"]) data["HĐTD.Lãi suất chậm trả"] = "";
+  if (!data["HĐTD.Lãi suất quá hạn"]) data["HĐTD.Lãi suất quá hạn"] = "";
   data["HĐTD.Phí khác (nếu có)"] = "";
   data["HĐTD.Bổ sung vào HĐTD"] = "";
   data["HĐTD.Bổ sung BCĐX cho vay"] = "";
@@ -127,7 +128,12 @@ export function buildLoanExtendedData(
     ? `${Math.round((loan.equity_amount / loan.total_capital_need) * 100)}%`
     : "";
   data["HĐTD.Tr.đó: Vốn bằng tiền"] = loan.cash_equity ?? "";
-  data["HĐTD.Vốn bằng sức lao động"] = loan.labor_equity ?? "";
+  // Fallback: tính labor_equity = equity_amount - cash_equity nếu chưa lưu
+  const laborEquity = loan.labor_equity
+    ?? (loan.equity_amount != null && loan.cash_equity != null
+      ? Math.max(0, Number(loan.equity_amount) - Number(loan.cash_equity))
+      : "");
+  data["HĐTD.Vốn bằng sức lao động"] = laborEquity;
   data["HĐTD.Vốn vay TCTD khác"] = loan.other_loan ?? "";
   data["HĐTD.Vốn bằng tài sản khác"] = loan.other_asset_equity ?? "";
 
@@ -328,19 +334,26 @@ function extractLandFields(
     // Văn bản sửa đổi — loop array (stored as _amendments JSON)
     ...(() => {
       try {
-        const list: Array<{ name: string; date: string }> = JSON.parse(p._amendments ?? "[]");
+        const list: Array<{ name: string; number?: string; date: string }> = JSON.parse(p._amendments ?? "[]");
         const result: Record<string, unknown> = {};
         list.forEach((a, i) => {
           result[`Văn bản sửa đổi ${i + 1}`] = a.name ?? "";
+          result[`Số văn bản sửa đổi ${i + 1}`] = a.number ?? "";
           result[`Ngày sửa đổi ${i + 1}`] = a.date ?? "";
         });
         // Flat first-entry aliases
         result["SĐ.Văn bản sửa đổi"] = list[0]?.name ?? "";
+        result["SĐ.Số văn bản sửa đổi"] = list[0]?.number ?? "";
         result["SĐ.Ngày sửa đổi"] = list[0]?.date ?? "";
-        // Combined string (legacy placeholder)
+        // Combined string for template: "Hợp đồng sửa đổi... số 3286/1 ngày 21/3/2024"
         if (list.length > 0) {
           result["Văn bản sửa đổi, bổ sung"] = list
-            .map((a) => `${a.name}${a.date ? ` ngày ${a.date}` : ""}`)
+            .map((a) => {
+              let s = a.name ?? "";
+              if (a.number) s += ` số ${a.number}`;
+              if (a.date) s += ` ngày ${a.date}`;
+              return s;
+            })
             .join("; ");
         }
         return result;
@@ -353,7 +366,10 @@ function extractLandFields(
     "Số HĐ thế chấp": p.mortgage_contract ?? "",
     "Ngày ký HĐTC": p.mortgage_date ?? "",
     "Ngày HĐTC": p.mortgage_date ?? "", // alias
-    "Văn bản sửa đổi, bổ sung": p.amendment_number ? `Văn bản sửa đổi, bổ sung số ${p.amendment_number} ngày ${p.amendment_date ?? ""}` : "",
+    // Fallback: only use legacy p.amendment_number if _amendments was empty
+    ...(!p._amendments && p.amendment_number
+      ? { "Văn bản sửa đổi, bổ sung": `Văn bản sửa đổi, bổ sung số ${p.amendment_number} ngày ${p.amendment_date ?? ""}` }
+      : {}),
     "HĐ sửa đổi bổ sung số": p.amendment_number ?? "",
     "Ngày ký HĐ SĐBS": p.amendment_date ?? "",
     "Ngày định giá lại TS": p.revaluation_date ?? "",
@@ -413,28 +429,26 @@ export function buildLandCollateralData(
 
   // Valuation breakdown loop — [#DINH_GIA]...[/DINH_GIA] for land types + house
   const valuationRows: Array<Record<string, unknown>> = [];
-  for (const col of lands) {
-    const p = JSON.parse(col.properties_json || "{}");
-    // Land type rows
+  for (const f of allLandFields) {
+    const ff = f as Record<string, unknown>;
     for (let i = 1; i <= 5; i++) {
-      const type = p[`land_type_${i}`];
+      const type = ff[`Loại đất ${i}`];
       if (!type) break;
       valuationRows.push({
         STT: valuationRows.length + 1,
         "Loại": type,
-        "Diện tích": p[`land_area_${i}`] ?? p.land_area ?? "",
-        "Đơn giá": p[`land_unit_price_${i}`] ?? "",
-        "Giá trị": p[`land_value_${i}`] ?? "",
+        "Diện tích": ff["Diện tích đất"] ?? "",
+        "Đơn giá": ff[`Đơn giá đất ${i}`] ?? "",
+        "Giá trị": ff[`Giá trị đất ${i}`] ?? "",
       });
     }
-    // House/building row (if exists)
-    if (p.house_value || p.floor_area) {
+    if (ff["Giá trị nhà"] || ff["Diện tích sàn"]) {
       valuationRows.push({
         STT: valuationRows.length + 1,
         "Loại": "TS gắn liền với đất",
-        "Diện tích": p.floor_area ?? "",
-        "Đơn giá": p.construction_unit_price ?? "",
-        "Giá trị": p.house_value ?? "",
+        "Diện tích": ff["Diện tích sàn"] ?? "",
+        "Đơn giá": ff["Đơn giá xây dựng"] ?? "",
+        "Giá trị": ff["Giá trị nhà"] ?? "",
       });
     }
   }
@@ -736,6 +750,25 @@ export function buildRelatedPersonData(
   }));
 }
 
+// ── Helper: split credits by short/long term and emit prefixed debt breakdown ──
+
+type CreditEntry = {
+  loan_term?: string | null; debt_amount?: string | null;
+  loan_purpose?: string | null; repayment_source?: string | null;
+};
+
+function emitCreditTermBreakdown(credits: CreditEntry[], prefix: string, data: Data): void {
+  if (credits.length === 0) return;
+  const shortTerm = credits.filter((c) => (c.loan_term ?? "").includes("ngắn"));
+  const longTerm = credits.filter((c) => !(c.loan_term ?? "").includes("ngắn"));
+  const sumDebt = (arr: CreditEntry[]) => arr.reduce((s, c) => s + (parseFloat(c.debt_amount ?? "0") || 0), 0);
+  data[`${prefix}.Dư nợ ngắn hạn`] = sumDebt(shortTerm) || "";
+  data[`${prefix}.Dư nợ trung dài hạn`] = sumDebt(longTerm) || "";
+  data[`${prefix}.Mục đích ngắn hạn`] = shortTerm.map((c) => c.loan_purpose).filter(Boolean).join("; ") || "";
+  data[`${prefix}.Mục đích trung dài hạn`] = longTerm.map((c) => c.loan_purpose).filter(Boolean).join("; ") || "";
+  data[`${prefix}.Nguồn trả nợ`] = credits.map((c) => c.repayment_source).filter(Boolean).join("; ") || "";
+}
+
 // ── CreditAtAgribank (VBA = Vay vốn tại Agribank) ──
 
 export function buildCreditAgribankData(
@@ -746,7 +779,6 @@ export function buildCreditAgribankData(
   }>,
   data: Data,
 ) {
-  // VBA loop array for DOCX table: [#VBA]...[/VBA]
   data["VBA"] = credits.map((c, i) => ({
     STT: i + 1,
     "Tại chi nhánh/PGD": c.branch_name ?? "",
@@ -756,23 +788,10 @@ export function buildCreditAgribankData(
     "Nguồn trả nợ": c.repayment_source ?? "",
     "Nhóm nợ": c.debt_group ?? "",
   }));
-  // HĐTD alias for Agribank debt total
   const totalDebt = credits.reduce((s, c) => s + (parseFloat(c.debt_amount ?? "0") || 0), 0);
   if (totalDebt) data["HĐTD.Dư nợ của KH và NLQ tại Agribank"] = totalDebt;
   data["VBA.Tổng dư nợ"] = totalDebt || "";
-
-  // VBA flat fields for BCĐX template (split short/long term from loan_term)
-  if (credits.length > 0) {
-    const shortTerm = credits.filter((c) => (c.loan_term ?? "").includes("ngắn"));
-    const longTerm = credits.filter((c) => !(c.loan_term ?? "").includes("ngắn"));
-    const shortDebt = shortTerm.reduce((s, c) => s + (parseFloat(c.debt_amount ?? "0") || 0), 0);
-    const longDebt = longTerm.reduce((s, c) => s + (parseFloat(c.debt_amount ?? "0") || 0), 0);
-    data["VBA.Dư nợ ngắn hạn"] = shortDebt || "";
-    data["VBA.Dư nợ trung dài hạn"] = longDebt || "";
-    data["VBA.Mục đích ngắn hạn"] = shortTerm.map((c) => c.loan_purpose).filter(Boolean).join("; ") || "";
-    data["VBA.Mục đích trung dài hạn"] = longTerm.map((c) => c.loan_purpose).filter(Boolean).join("; ") || "";
-    data["VBA.Nguồn trả nợ"] = credits.map((c) => c.repayment_source).filter(Boolean).join("; ") || "";
-  }
+  emitCreditTermBreakdown(credits, "VBA", data);
 }
 
 // ── CreditAtOther (TCTD = Tổ chức tín dụng khác) ──
@@ -794,23 +813,10 @@ export function buildCreditOtherData(
     data["TCTD.Mục đích vay"] = first.loan_purpose ?? "";
     data["TCTD.Nguồn trả nợ"] = first.repayment_source ?? "";
   }
-  // HĐTD alias
   const totalDebt = credits.reduce((s, c) => s + (parseFloat(c.debt_amount ?? "0") || 0), 0);
   if (totalDebt) data["HĐTD.Dư nợ tại TCTD khác"] = totalDebt;
   data["TCTD.Tổng dư nợ"] = totalDebt || "";
-
-  // TCTD flat fields for BCĐX template (split short/long term)
-  if (credits.length > 0) {
-    const shortTerm = credits.filter((c) => (c.loan_term ?? "").includes("ngắn"));
-    const longTerm = credits.filter((c) => !(c.loan_term ?? "").includes("ngắn"));
-    const shortDebt = shortTerm.reduce((s, c) => s + (parseFloat(c.debt_amount ?? "0") || 0), 0);
-    const longDebt = longTerm.reduce((s, c) => s + (parseFloat(c.debt_amount ?? "0") || 0), 0);
-    data["TCTD.Dư nợ ngắn hạn"] = shortDebt || "";
-    data["TCTD.Dư nợ trung dài hạn"] = longDebt || "";
-    data["TCTD.Mục đích ngắn hạn"] = shortTerm.map((c) => c.loan_purpose).filter(Boolean).join("; ") || "";
-    data["TCTD.Mục đích trung dài hạn"] = longTerm.map((c) => c.loan_purpose).filter(Boolean).join("; ") || "";
-    data["TCTD.Nguồn trả nợ"] = credits.map((c) => c.repayment_source).filter(Boolean).join("; ") || "";
-  }
+  emitCreditTermBreakdown(credits, "TCTD", data);
 }
 
 // ── Extended Loan Plan (PA) cost items ──
@@ -824,79 +830,129 @@ export function buildLoanPlanExtendedData(
 ) {
   if (!plan) return;
 
+  let financials: Record<string, unknown>;
+  try { financials = JSON.parse(plan.financials_json || "{}"); }
+  catch { return; }
+
+  // Extended PA flat fields
+  data["PA.Mục đích vay"] = financials.purpose ?? "";
+  data["PA.Thời hạn vay"] = financials.loanTerm ?? "";
+  // Format interest rate: 0.09 → "9%/năm"
+  const rawRate = financials.interestRate;
+  data["PA.Lãi suất vay"] = typeof rawRate === "number" && rawRate > 0
+    ? `${parseFloat((rawRate < 1 ? rawRate * 100 : rawRate).toFixed(2))}%/năm`
+    : rawRate ?? "";
+  data["PA.Lãi vay NH"] = financials.interestCost ?? "";
+  data["PA.Lãi vay"] = financials.interestCost ?? "";
+  data["PA.Thu nhập"] = financials.income ?? financials.revenue ?? "";
+  data["PA.Sản lượng"] = financials.yield ?? "";
+  data["PA.Số sào đất"] = financials.landArea ?? "";
+  data["PA.Địa chỉ đất NN"] = financials.farmAddress ?? "";
+  data["PA.Số tiền vay bằng chữ"] = financials.loanAmount
+    ? numberToVietnameseWords(financials.loanAmount as number)
+    : "";
+  data["PA.Tổng nhu cầu vốn bằng chữ"] = financials.totalCost
+    ? numberToVietnameseWords(financials.totalCost as number)
+    : "";
+  data["PA.Số tiền đặt cọc"] = financials.deposit ?? "";
+  data["PA.Số HĐTD cũ"] = financials.oldContractNumber ?? "";
+  data["PA.Ngày HĐTD cũ"] = financials.oldContractDate ?? "";
+  data["PA.Số tiền hợp đồng cung ứng"] = financials.supplyContractAmount ?? "";
+  data["PA.Số tiền hợp đồng cung ứng bằng chữ"] = financials.supplyContractAmount
+    ? numberToVietnameseWords(financials.supplyContractAmount as number)
+    : "";
+
+  // Consolidated flat PA.* financials (single source of truth)
+  data["PA.Tên phương án"] = plan.name;
+  data["PA.Tổng nhu cầu vốn"] = financials.totalCost ?? "";
+  data["PA.Số tiền vay"] = financials.loanAmount ?? "";
+  data["PA.Vốn đối ứng"] = financials.counterpartCapital ?? "";
+  // Auto-calculate counterpart ratio: vốn đối ứng / tổng nhu cầu vốn
+  const cpCapital = Number(financials.counterpartCapital) || 0;
+  const totalCost = Number(financials.totalCost) || Number(financials.loanNeed) || 0;
+  const cpRatioRaw = financials.counterpartRatio ?? (totalCost > 0 ? cpCapital / totalCost : 0);
+  const cpNum = typeof cpRatioRaw === "string" ? parseFloat(cpRatioRaw) : Number(cpRatioRaw) || 0;
+  data["PA.Tỷ lệ vốn đối ứng"] = cpNum > 0
+    ? `${parseFloat((cpNum < 1 ? cpNum * 100 : cpNum).toFixed(2))}%`
+    : "";
+  data["PA.Tỷ lệ vốn tự có"] = data["PA.Tỷ lệ vốn đối ứng"]; // alias
+  data["PA.Tổng doanh thu dự kiến"] = financials.revenue ?? "";
+  data["PA.Tổng chi phí dự kiến"] = financials.totalExpenses ?? financials.totalCost ?? "";
+  data["PA.Lợi nhuận dự kiến"] = financials.profit ?? "";
+  data["PA.Tổng chi phí trực tiếp"] = financials.totalDirectCost ?? "";
+  data["PA.Tổng chi phí gián tiếp"] = financials.totalIndirectCost ?? "";
+  data["PA.Tổng chi phí"] = financials.totalCost ?? "";
+  data["PA.Thuế"] = financials.tax ?? "";
+  data["PA.Nhu cầu vốn vay"] = financials.loanNeed ?? financials.loanAmount ?? "";
+  data["PA.Vòng quay vốn"] = financials.turnoverCycles ?? "";
+
+  // Build combined PA_CHIPHI table: I. Costs → II. Revenue → III. Profit
   try {
-    const financials = JSON.parse(plan.financials_json || "{}");
-
-    // Extended PA flat fields
-    data["PA.Mục đích vay"] = financials.purpose ?? "";
-    data["PA.Thời hạn vay"] = financials.loanTerm ?? "";
-    data["PA.Lãi suất vay"] = financials.interestRate ?? "";
-    data["PA.Lãi vay NH"] = financials.interestCost ?? "";
-    data["PA.Lãi vay"] = financials.interestCost ?? "";
-    data["PA.Thu nhập"] = financials.income ?? financials.revenue ?? "";
-    data["PA.Sản lượng"] = financials.yield ?? "";
-    data["PA.Số sào đất"] = financials.landArea ?? "";
-    data["PA.Địa chỉ đất NN"] = financials.farmAddress ?? "";
-    data["PA.Số tiền vay bằng chữ"] = financials.loanAmount
-      ? numberToVietnameseWords(financials.loanAmount)
-      : "";
-    data["PA.Tổng nhu cầu vốn bằng chữ"] = financials.totalCost
-      ? numberToVietnameseWords(financials.totalCost)
-      : "";
-    data["PA.Số tiền đặt cọc"] = financials.deposit ?? "";
-    data["PA.Số HĐTD cũ"] = financials.oldContractNumber ?? "";
-    data["PA.Ngày HĐTD cũ"] = financials.oldContractDate ?? "";
-    data["PA.Số tiền hợp đồng cung ứng"] = financials.supplyContractAmount ?? "";
-    data["PA.Số tiền hợp đồng cung ứng bằng chữ"] = financials.supplyContractAmount
-      ? numberToVietnameseWords(financials.supplyContractAmount)
-      : "";
-
-    // Consolidated flat PA.* financials (single source of truth)
-    data["PA.Tên phương án"] = plan.name;
-    data["PA.Tổng nhu cầu vốn"] = financials.totalCost ?? "";
-    data["PA.Số tiền vay"] = financials.loanAmount ?? "";
-    data["PA.Vốn đối ứng"] = financials.counterpartCapital ?? "";
-    data["PA.Tỷ lệ vốn đối ứng"] = financials.counterpartRatio ?? "";
-    data["PA.Tổng doanh thu dự kiến"] = financials.revenue ?? "";
-    data["PA.Tổng chi phí dự kiến"] = financials.totalExpenses ?? financials.totalCost ?? "";
-    data["PA.Lợi nhuận dự kiến"] = financials.profit ?? "";
-    data["PA.Tổng chi phí trực tiếp"] = financials.totalDirectCost ?? "";
-    data["PA.Tổng chi phí gián tiếp"] = financials.totalIndirectCost ?? "";
-    data["PA.Tổng chi phí"] = financials.totalCost ?? "";
-    data["PA.Thuế"] = financials.tax ?? "";
-    data["PA.Nhu cầu vốn vay"] = financials.loanNeed ?? financials.loanAmount ?? "";
-    data["PA.Vòng quay vốn"] = financials.turnoverCycles ?? "";
-    const loanNeed = Number(financials.loanNeed) || 0;
-    const counterpart = Number(financials.counterpartCapital) || 0;
-    data["PA.Tỷ lệ vốn tự có"] = loanNeed > 0 && counterpart > 0
-      ? ((counterpart / loanNeed) * 100).toFixed(1) + "%"
-      : "";
-  } catch { /* ignore */ }
-
-  // Cost items loop — universal for all categories
-  try {
-    const costItems: Array<{ name: string; unit?: string; qty?: number; unit_price?: number; amount?: number }> =
+    const costItems: Array<{ name: string; unit?: string; qty?: number; unitPrice?: number; unit_price?: number; amount?: number }> =
       JSON.parse(plan.cost_items_json || "[]");
-    data["PA_CHIPHI"] = costItems.map((c, i) => ({
-      STT: i + 1,
-      "Hạng mục": c.name,
-      "ĐVT": c.unit ?? "",
-      "Số lượng": c.qty ?? "",
-      "Đơn giá": c.unit_price ?? "",
-      "Thành tiền": c.amount ?? "",
-    }));
-  } catch { data["PA_CHIPHI"] = []; }
-
-  // Revenue items loop
-  try {
-    const revenueItems: Array<{ description: string; qty?: number; unit_price?: number; amount?: number }> =
+    const revenueItems: Array<{ description: string; unit?: string; qty?: number; unitPrice?: number; unit_price?: number; amount?: number }> =
       JSON.parse(plan.revenue_items_json || "[]");
+
+    const totalDirectCost = costItems.reduce((s, c) => s + (c.amount ?? 0), 0);
+    const interestCost = Number(financials.interestCost) || 0;
+    const totalCostAll = totalDirectCost + interestCost;
+    const totalRevenue = revenueItems.reduce((s, r) => s + (r.amount ?? 0), 0);
+    const profit = totalRevenue - totalCostAll;
+
+    // Format interest rate for display
+    const rateStr = typeof rawRate === "number" && (rawRate as number) > 0
+      ? `${parseFloat(((rawRate as number) < 1 ? (rawRate as number) * 100 : (rawRate as number)).toFixed(2))}%/năm`
+      : "";
+
+    const rows: Array<Record<string, unknown>> = [];
+
+    // I. TỔNG CHI PHÍ (section header)
+    rows.push({ STT: "I", "Hạng mục": "TỔNG CHI PHÍ", ĐVT: "", "Đơn giá": "", "Số lượng": "", "Thành tiền": totalCostAll || "" });
+    let idx = 1;
+    rows.push({ STT: idx++, "Hạng mục": "Cộng chi phí trực tiếp", ĐVT: "", "Đơn giá": "", "Số lượng": "", "Thành tiền": totalDirectCost || "" });
+    for (const c of costItems) {
+      rows.push({
+        STT: "", "Hạng mục": `  - ${c.name}`,
+        ĐVT: c.unit ?? "", "Đơn giá": c.unitPrice ?? c.unit_price ?? "",
+        "Số lượng": c.qty ?? "", "Thành tiền": c.amount ?? "",
+      });
+    }
+    if (interestCost > 0) {
+      rows.push({
+        STT: idx++, "Hạng mục": "Chi phí gián tiếp (Lãi vay NH)",
+        ĐVT: "đ", "Đơn giá": rateStr,
+        "Số lượng": financials.loanAmount ?? "", "Thành tiền": interestCost,
+      });
+    }
+
+    // II. THU NHẬP (section header)
+    rows.push({ STT: "II", "Hạng mục": "THU NHẬP", ĐVT: "", "Đơn giá": "", "Số lượng": "", "Thành tiền": totalRevenue || "" });
+    let revIdx = 1;
+    for (const r of revenueItems) {
+      rows.push({
+        STT: revIdx++, "Hạng mục": r.description,
+        ĐVT: r.unit ?? "đ", "Đơn giá": r.unitPrice ?? r.unit_price ?? "",
+        "Số lượng": r.qty ?? "", "Thành tiền": r.amount ?? "",
+      });
+    }
+
+    // III. LÃI(+), LỖ(-)
+    rows.push({ STT: "III", "Hạng mục": "LÃI(+), LỖ(-)", ĐVT: "", "Đơn giá": "", "Số lượng": "", "Thành tiền": profit });
+
+    data["PA_CHIPHI"] = rows;
+
     data["PA_DOANHTHU"] = revenueItems.map((r, i) => ({
-      STT: i + 1,
-      "Mô tả": r.description,
-      "Số lượng": r.qty ?? "",
-      "Đơn giá": r.unit_price ?? "",
+      STT: i + 1, "Mô tả": r.description,
+      "Số lượng": r.qty ?? "", "Đơn giá": r.unitPrice ?? r.unit_price ?? "",
       "Thành tiền": r.amount ?? "",
     }));
-  } catch { data["PA_DOANHTHU"] = []; }
+
+    // Update flat fields from calculated values
+    if (!data["PA.Tổng chi phí trực tiếp"]) data["PA.Tổng chi phí trực tiếp"] = totalDirectCost || "";
+    if (!data["PA.Tổng chi phí gián tiếp"]) data["PA.Tổng chi phí gián tiếp"] = interestCost || "";
+    if (!data["PA.Lợi nhuận dự kiến"] || data["PA.Lợi nhuận dự kiến"] === "") data["PA.Lợi nhuận dự kiến"] = profit;
+  } catch {
+    data["PA_CHIPHI"] = [];
+    data["PA_DOANHTHU"] = [];
+  }
 }

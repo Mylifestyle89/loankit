@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { RefreshCw } from "lucide-react";
 import { X } from "lucide-react";
 import { useLanguage } from "@/components/language-provider";
@@ -63,6 +63,25 @@ export function LoanEditModal({ loan, customerId, onClose, onUpdated }: Props) {
   const [error, setError] = useState("");
   const [activeSubtab, setActiveSubtab] = useState(0);
   const [extFields, setExtFields] = useState(() => loanToExtFields(loan));
+
+  // Auto-fill collateral totals from TSBĐ tab if fields are empty/zero
+  useEffect(() => {
+    if (!customerId) return;
+    const hasValue = collateralValue && Number(parseNumber(collateralValue)) > 0;
+    const hasObligation = securedObligation && Number(parseNumber(securedObligation)) > 0;
+    if (hasValue && hasObligation) return; // already filled
+    fetch(`/api/customers/${customerId}/collaterals`)
+      .then((r) => r.json())
+      .then((data: { ok: boolean; collaterals?: Array<{ total_value?: number | null; obligation?: number | null }> }) => {
+        if (!data.ok || !data.collaterals?.length) return;
+        const totalValue = data.collaterals.reduce((s, c) => s + (c.total_value ?? 0), 0);
+        const totalObligation = data.collaterals.reduce((s, c) => s + (c.obligation ?? 0), 0);
+        if (!hasValue && totalValue > 0) setCollateralValue(fmtNumber(String(totalValue)));
+        if (!hasObligation && totalObligation > 0) setSecuredObligation(fmtNumber(String(totalObligation)));
+      })
+      .catch(() => {/* ignore */});
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [customerId]);
 
   // Modal only closes via X button - no Escape or backdrop click
   const [syncing, setSyncing] = useState(false);

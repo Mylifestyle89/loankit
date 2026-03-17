@@ -206,74 +206,122 @@ h4 {
   animation: dash-flow 2.5s ease-in-out infinite;
 }
 
+/* Landing: gradient aurora drift — continuous, organic */
 @keyframes landing-gradient-shift {
   0% {
     transform: translate3d(0, 0, 0) scale(0.97);
     opacity: 0;
   }
-
+  15% {
+    opacity: 0.9;
+  }
+  50% {
+    transform: translate3d(12px, -8px, 0) scale(1.03);
+    opacity: 0.7;
+  }
   100% {
-    transform: translate3d(0, 0, 0) scale(1);
-    opacity: 0.95;
+    transform: translate3d(0, 0, 0) scale(0.97);
+    opacity: 0.9;
   }
 }
 
+/* Landing: nodes gently bob up and down */
 @keyframes landing-node-float {
   0% {
-    transform: translateY(8px) scale(0.9);
-    opacity: 0;
+    transform: translateY(0) scale(1);
+    opacity: 0.6;
   }
-
+  50% {
+    transform: translateY(-6px) scale(1.15);
+    opacity: 1;
+  }
   100% {
     transform: translateY(0) scale(1);
-    opacity: 0.85;
+    opacity: 0.6;
   }
 }
 
+/* Landing: lines slowly breathe in/out */
 @keyframes landing-line-breathe {
   0% {
-    opacity: 0;
+    opacity: 0.2;
+    stroke-dashoffset: 0;
   }
-
+  50% {
+    opacity: 0.55;
+    stroke-dashoffset: 40;
+  }
   100% {
-    opacity: 0.4;
+    opacity: 0.2;
+    stroke-dashoffset: 0;
   }
 }
 
+/* Landing: button glow pulses */
 @keyframes landing-button-pulse {
   0% {
     box-shadow:
-      0 12px 40px rgb(99 102 241 / 0.3),
-      inset 0 1px 0 rgb(255 255 255 / 0.35);
+      0 12px 40px rgb(99 102 241 / 0.25),
+      inset 0 1px 0 rgb(255 255 255 / 0.3);
   }
-
   50% {
     box-shadow:
-      0 18px 56px rgb(99 102 241 / 0.45),
-      inset 0 1px 0 rgb(255 255 255 / 0.45);
+      0 20px 60px rgb(99 102 241 / 0.5),
+      inset 0 1px 0 rgb(255 255 255 / 0.5);
   }
-
   100% {
     box-shadow:
-      0 12px 40px rgb(99 102 241 / 0.3),
-      inset 0 1px 0 rgb(255 255 255 / 0.35);
+      0 12px 40px rgb(99 102 241 / 0.25),
+      inset 0 1px 0 rgb(255 255 255 / 0.3);
+  }
+}
+
+/* Landing: shimmer light sweep across hero */
+@keyframes landing-shimmer {
+  0% {
+    transform: translateX(-100%) rotate(12deg);
+  }
+  100% {
+    transform: translateX(200%) rotate(12deg);
   }
 }
 
 .landing-gradient-shift {
-  animation: landing-gradient-shift 2s var(--ease-out) 1 forwards;
+  animation: landing-gradient-shift 8s ease-in-out infinite;
 }
 
 .landing-node-float {
-  animation: landing-node-float 1.8s var(--ease-out) 1 forwards;
+  animation: landing-node-float 3s ease-in-out infinite;
 }
 
 .landing-line-breathe {
-  animation: landing-line-breathe 2s var(--ease-out) 1 forwards;
+  animation: landing-line-breathe 5s ease-in-out infinite;
 }
 
 .landing-button-pulse {
-  animation: landing-button-pulse 1.5s var(--ease-out) 1 forwards;
+  animation: landing-button-pulse 3s ease-in-out infinite;
+}
+
+/* Respect reduced-motion preference */
+@media (prefers-reduced-motion: reduce) {
+  .landing-gradient-shift,
+  .landing-node-float,
+  .landing-line-breathe,
+  .landing-button-pulse {
+    animation: none;
+  }
+}
+
+/* Card stagger entrance animation */
+@keyframes fadeSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* ════════════════════════════════════════════════════════════════

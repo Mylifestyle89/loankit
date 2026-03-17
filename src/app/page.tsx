@@ -14,7 +14,7 @@ export default function Home() {
       {/* SVG animated network lines */}
       <div className="pointer-events-none absolute inset-0 opacity-45">
         <svg className="h-full w-full" viewBox="0 0 1600 900" preserveAspectRatio="none" aria-hidden="true">
-          <g className="landing-line-breathe" fill="none" stroke="rgba(148,163,184,0.3)" strokeWidth="1">
+          <g className="landing-line-breathe" fill="none" stroke="rgba(148,163,184,0.3)" strokeWidth="1" strokeDasharray="12 8">
             <path d="M120 700 C320 520, 520 640, 760 460 S1180 360, 1480 520" />
             <path d="M60 520 C340 360, 540 420, 780 300 S1180 220, 1500 340" />
             <path d="M180 800 C460 700, 680 760, 940 620 S1260 560, 1540 640" />
@@ -40,15 +40,19 @@ export default function Home() {
         <div className="relative w-full max-w-[1500px]">
           {/* Glassmorphism card — hidden on mobile, visible on sm+ */}
           <div className="hidden sm:flex w-full items-center justify-center overflow-hidden rounded-[32px] border border-white/10 bg-white/[0.02] shadow-[0_30px_120px_rgba(2,6,23,0.75)] backdrop-blur-[1px]">
+            {/* Shimmer sweep */}
+            <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-[32px]">
+              <div className="absolute inset-0 w-1/3 bg-gradient-to-r from-transparent via-white/[0.06] to-transparent [animation:landing-shimmer_6s_ease-in-out_infinite]" />
+            </div>
             <div className="relative z-10 flex aspect-[16/9] w-full flex-col items-center justify-center px-8 text-center">
-              <p className="mb-4 text-xs font-semibold uppercase tracking-[0.3em] text-indigo-400/80">Corporate Loan Platform</p>
+              <p className="mb-4 text-xs font-semibold uppercase tracking-[0.3em] text-indigo-400/80">Loan Documents Creator</p>
               <h1 className="bg-gradient-to-b from-white via-slate-100 to-slate-400 bg-clip-text text-5xl font-bold tracking-tight text-transparent sm:text-6xl lg:text-7xl xl:text-8xl">
                 Simple. Powerful.
                 <br />
                 <span className="bg-gradient-to-r from-indigo-400 via-violet-400 to-fuchsia-400 bg-clip-text">Yours.</span>
               </h1>
               <p className="mt-6 max-w-md text-base font-medium text-slate-300/70">
-                Nền tảng quản lý hồ sơ tín dụng doanh nghiệp thế hệ mới
+                Nền tảng tạo hồ sơ vay thế hệ mới
               </p>
               <div className="absolute bottom-12 left-1/2 -translate-x-1/2">
                 <Link
@@ -66,13 +70,13 @@ export default function Home() {
 
           {/* Mobile layout — no card, full-bleed content */}
           <div className="flex sm:hidden flex-col items-center justify-center text-center">
-            <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.3em] text-indigo-400/80">Corporate Loan Platform</p>
+            <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.3em] text-indigo-400/80">Loan Documents Creator</p>
             <h1 className="bg-gradient-to-b from-white via-slate-100 to-slate-400 bg-clip-text text-4xl font-bold tracking-tight text-transparent">
               Simple.<br />Powerful.<br />
               <span className="bg-gradient-to-r from-indigo-400 via-violet-400 to-fuchsia-400 bg-clip-text">Yours.</span>
             </h1>
             <p className="mt-4 max-w-xs text-sm font-medium text-slate-300/70">
-              Nền tảng quản lý hồ sơ tín dụng doanh nghiệp thế hệ mới
+              Nền tảng tạo hồ sơ vay thế hệ mới
             </p>
             <div className="mt-10">
               <Link

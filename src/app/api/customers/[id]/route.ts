@@ -10,6 +10,7 @@ export const runtime = "nodejs";
 const updateCustomerSchema = z.object({
   customer_code: z.string().min(1).optional(),
   customer_name: z.string().min(1).optional(),
+  customer_type: z.enum(["corporate", "individual"]).optional(),
   address: z.string().optional().nullable(),
   main_business: z.string().optional().nullable(),
   charter_capital: z.number().optional().nullable(),
@@ -22,6 +23,14 @@ const updateCustomerSchema = z.object({
   appraiser: z.string().optional().nullable(),
   approver_name: z.string().optional().nullable(),
   approver_title: z.string().optional().nullable(),
+  cccd: z.string().optional().nullable(),
+  cccd_old: z.string().optional().nullable(),
+  cccd_issued_date: z.string().optional().nullable(),
+  cccd_issued_place: z.string().optional().nullable(),
+  date_of_birth: z.string().optional().nullable(),
+  phone: z.string().optional().nullable(),
+  bank_account: z.string().optional().nullable(),
+  bank_name: z.string().optional().nullable(),
   data_json: z.record(z.string(), z.unknown()).optional(),
 });
 
@@ -68,23 +77,7 @@ export async function PATCH(
     const { id } = await params;
     const body = await req.json();
     const parsed = updateCustomerSchema.parse(body);
-    const customer = await customerService.updateCustomer(id, {
-      customer_code: parsed.customer_code,
-      customer_name: parsed.customer_name,
-      address: parsed.address,
-      main_business: parsed.main_business,
-      charter_capital: parsed.charter_capital,
-      legal_representative_name: parsed.legal_representative_name,
-      legal_representative_title: parsed.legal_representative_title,
-      organization_type: parsed.organization_type,
-      email: parsed.email,
-      active_branch_id: parsed.active_branch_id,
-      relationship_officer: parsed.relationship_officer,
-      appraiser: parsed.appraiser,
-      approver_name: parsed.approver_name,
-      approver_title: parsed.approver_title,
-      data_json: parsed.data_json,
-    });
+    const customer = await customerService.updateCustomer(id, parsed);
     return NextResponse.json({ ok: true, customer });
   } catch (error) {
     if (error instanceof z.ZodError) {

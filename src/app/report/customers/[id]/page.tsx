@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
 import { useLanguage } from "@/components/language-provider";
@@ -20,7 +20,6 @@ import { CustomerCreditInfoSection } from "./components/customer-credit-info-sec
 import { KhcnProfileCard } from "./components/khcn-profile-card";
 import { CustomerDisbursementSection } from "./components/customer-disbursement-section";
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
 type FullCustomer = {
   id: string;
   customer_code: string;
@@ -33,8 +32,13 @@ type FullCustomer = {
   legal_representative_title: string | null;
   organization_type: string | null;
   cccd: string | null;
+  cccd_old: string | null;
+  cccd_issued_date: string | null;
+  cccd_issued_place: string | null;
   date_of_birth: string | null;
   phone: string | null;
+  bank_account: string | null;
+  bank_name: string | null;
   active_branch_id: string | null;
   relationship_officer: string | null;
   appraiser: string | null;
@@ -62,6 +66,14 @@ type FullCustomer = {
 const inputCls =
   "mt-1 w-full rounded-md border border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] text-zinc-900 dark:text-slate-100 px-3 py-2 shadow-sm transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40";
 
+/** Auto-insert "/" separators as user types a date in dd/mm/yyyy format */
+function formatDateInput(raw: string): string {
+  const digits = raw.replace(/\D/g, "").slice(0, 8);
+  if (digits.length <= 2) return digits;
+  if (digits.length <= 4) return `${digits.slice(0, 2)}/${digits.slice(2)}`;
+  return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
+}
+
 const allTabs = [
   { key: "branch", label: "Nơi cho vay" },
   { key: "info", label: "Người vay" },
@@ -84,12 +96,12 @@ type TabKey = (typeof allTabs)[number]["key"] | (typeof khcnTabs)[number]["key"]
 export default function EditCustomerPage() {
   const { t } = useLanguage();
   const params = useParams();
-  const router = useRouter();
   const searchParams = useSearchParams();
   const id = params.id as string;
   const rawTab = (searchParams.get("tab") as TabKey) || "info";
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
   const [activeTab, setActiveTab] = useState<TabKey>(rawTab);
   const [infoSubTab, setInfoSubTab] = useState<"general" | "co-borrower" | "related">("general");
@@ -107,8 +119,12 @@ export default function EditCustomerPage() {
     organization_type: "",
     cccd: "",
     cccd_old: "",
+    cccd_issued_date: "",
+    cccd_issued_place: "",
     date_of_birth: "",
     phone: "",
+    bank_account: "",
+    bank_name: "",
   });
 
   const loadCustomer = useCallback(async () => {
@@ -135,9 +151,13 @@ export default function EditCustomerPage() {
       legal_representative_title: c.legal_representative_title ?? "",
       organization_type: c.organization_type ?? "",
       cccd: c.cccd ?? "",
-      cccd_old: (c as any).cccd_old ?? "",
+      cccd_old: c.cccd_old ?? "",
+      cccd_issued_date: c.cccd_issued_date ?? "",
+      cccd_issued_place: c.cccd_issued_place ?? "",
       date_of_birth: c.date_of_birth ?? "",
       phone: c.phone ?? "",
+      bank_account: c.bank_account ?? "",
+      bank_name: c.bank_name ?? "",
     });
     setLoading(false);
     } catch (err) {
@@ -188,8 +208,12 @@ export default function EditCustomerPage() {
         organization_type: form.organization_type.trim() || null,
         cccd: form.cccd.trim() || null,
         cccd_old: form.cccd_old.trim() || null,
+        cccd_issued_date: form.cccd_issued_date.trim() || null,
+        cccd_issued_place: form.cccd_issued_place.trim() || null,
         date_of_birth: form.date_of_birth.trim() || null,
         phone: form.phone.trim() || null,
+        bank_account: form.bank_account.trim() || null,
+        bank_name: form.bank_name.trim() || null,
       }),
     });
     const data = (await res.json()) as { ok: boolean; error?: string };
@@ -198,7 +222,9 @@ export default function EditCustomerPage() {
       setError(data.error ?? "Failed to update.");
       return;
     }
-    router.push("/report/customers");
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2000);
+    void loadCustomer();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Network error");
       setSaving(false);
@@ -342,38 +368,66 @@ export default function EditCustomerPage() {
               )}
               {form.customer_type === "individual" && (
                 <>
-                  <label className="block">
-                    <span className="text-sm font-medium">CCCD/CMND</span>
-                    <SmartField fieldKey="customer.cccd" value={form.cccd} onChange={(val) => setForm((p) => ({ ...p, cccd: val }))} className={inputCls} />
-                  </label>
+                  <div className="grid grid-cols-2 gap-4">
+                    <label className="block">
+                      <span className="text-sm font-medium">CCCD/CMND</span>
+                      <SmartField fieldKey="customer.cccd" value={form.cccd} onChange={(val) => setForm((p) => ({ ...p, cccd: val }))} className={inputCls} />
+                    </label>
+                    <label className="block">
+                      <span className="text-sm font-medium">Năm sinh</span>
+                      <input
+                        value={form.date_of_birth}
+                        onChange={(e) => setForm((p) => ({ ...p, date_of_birth: e.target.value }))}
+                        placeholder="VD: 1990 hoặc 15/03/1990"
+                        className={inputCls}
+                      />
+                    </label>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <label className="block">
+                      <span className="text-sm font-medium">Ngày cấp CCCD</span>
+                      <input
+                        value={form.cccd_issued_date}
+                        onChange={(e) => setForm((p) => ({ ...p, cccd_issued_date: formatDateInput(e.target.value) }))}
+                        placeholder="dd/mm/yyyy"
+                        maxLength={10}
+                        className={inputCls}
+                      />
+                    </label>
+                    <label className="block">
+                      <span className="text-sm font-medium">Nơi cấp CCCD</span>
+                      <SmartField fieldKey="customer.cccd_issued_place" value={form.cccd_issued_place} onChange={(val) => setForm((p) => ({ ...p, cccd_issued_place: val }))} className={inputCls} />
+                    </label>
+                  </div>
                   <label className="block">
                     <span className="text-sm font-medium">CMND cũ</span>
                     <SmartField fieldKey="customer.cccd_old" value={form.cccd_old} onChange={(val) => setForm((p) => ({ ...p, cccd_old: val }))} className={inputCls} />
                   </label>
                   <label className="block">
-                    <span className="text-sm font-medium">Năm sinh</span>
-                    <SmartField fieldKey="customer.date_of_birth" value={form.date_of_birth} onChange={(val) => setForm((p) => ({ ...p, date_of_birth: val }))} className={inputCls} />
-                  </label>
-                  <label className="block">
                     <span className="text-sm font-medium">Số điện thoại</span>
                     <SmartField fieldKey="customer.phone" value={form.phone} onChange={(val) => setForm((p) => ({ ...p, phone: val }))} className={inputCls} />
                   </label>
+                  <div className="grid grid-cols-2 gap-4">
+                    <label className="block">
+                      <span className="text-sm font-medium">Số tài khoản</span>
+                      <SmartField fieldKey="customer.bank_account" value={form.bank_account} onChange={(val) => setForm((p) => ({ ...p, bank_account: val }))} className={inputCls} />
+                    </label>
+                    <label className="block">
+                      <span className="text-sm font-medium">Nơi mở tài khoản</span>
+                      <SmartField fieldKey="customer.bank_name" value={form.bank_name} onChange={(val) => setForm((p) => ({ ...p, bank_name: val }))} className={inputCls} />
+                    </label>
+                  </div>
                 </>
               )}
-              <div className="flex gap-3 pt-2">
+              <div className="flex items-center gap-3 pt-2">
                 <button
                   type="submit"
                   disabled={saving}
-                  className="rounded-lg bg-gradient-to-r from-violet-600 to-fuchsia-600 px-5 py-2 text-sm font-medium text-white shadow-sm shadow-violet-500/25 transition-all duration-200 hover:shadow-md hover:shadow-violet-500/30 hover:brightness-110 disabled:opacity-60"
+                  className="cursor-pointer rounded-lg bg-gradient-to-r from-violet-600 to-fuchsia-600 px-5 py-2 text-sm font-medium text-white shadow-sm shadow-violet-500/25 transition-all duration-200 hover:shadow-md hover:shadow-violet-500/30 hover:brightness-110 disabled:opacity-60"
                 >
-                  {saving ? "..." : "Lưu"}
+                  {saving ? "Đang lưu..." : "Lưu"}
                 </button>
-                <Link
-                  href="/report/customers"
-                  className="rounded-lg border border-zinc-200 dark:border-white/[0.09] px-4 py-2 text-sm dark:text-slate-300 shadow-sm transition-all duration-150 hover:border-violet-200 dark:hover:border-violet-500/20"
-                >
-                  Hủy
-                </Link>
+                {saved && <span className="text-sm text-emerald-600 dark:text-emerald-400">Đã lưu thành công</span>}
               </div>
             </form>
             </DropdownOptionsProvider>

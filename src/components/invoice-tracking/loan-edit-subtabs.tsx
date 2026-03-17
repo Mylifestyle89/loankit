@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { fmtNumber, parseNumber } from "@/lib/invoice-tracking-format-helpers";
 import { SmartField } from "@/components/smart-field";
 
@@ -82,8 +83,13 @@ export function LoanCapitalTab({ fields, setFields }: { fields: Fields; setField
   const totalNeed = Number(parseNumber(fields.total_capital_need ?? "0")) || 0;
   const cashEquity = Number(parseNumber(fields.cash_equity ?? "0")) || 0;
   const equityAmount = Number(parseNumber(fields.equity_amount ?? "0")) || 0;
-  const laborEquity = equityAmount - cashEquity;
+  const laborEquity = Math.max(0, equityAmount - cashEquity);
   const counterpartRatio = totalNeed > 0 ? ((equityAmount / totalNeed) * 100).toFixed(1) : "0";
+
+  // Sync calculated labor_equity into fields so it gets saved to DB
+  useEffect(() => {
+    setFields((prev) => ({ ...prev, labor_equity: String(laborEquity) }));
+  }, [laborEquity, setFields]);
 
   return (
     <div className="space-y-3">

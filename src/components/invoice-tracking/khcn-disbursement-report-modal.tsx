@@ -46,15 +46,11 @@ export function KhcnDisbursementReportModal({ loanId, disbursementId, onClose }:
     }
   }, [loanId, disbursementId, selectedKey]);
 
-  const handleDownload = useCallback(() => {
+  const handleDownload = useCallback(async () => {
     if (!preview) return;
+    const { saveFileWithPicker } = await import("@/lib/save-file-with-picker");
     const blob = new Blob([preview.buffer], { type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = preview.fileName;
-    a.click();
-    URL.revokeObjectURL(url);
+    await saveFileWithPicker(blob, preview.fileName);
   }, [preview]);
 
   // Show preview if available

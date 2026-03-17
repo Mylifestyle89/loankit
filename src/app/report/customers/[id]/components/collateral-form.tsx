@@ -74,6 +74,10 @@ function OwnerRow({ owner, index, onChange, onRemove }: {
   );
 }
 
+// Input class without w-full for use inside flex containers
+const flexInputCls =
+  "rounded-md border border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] text-zinc-900 dark:text-slate-100 px-3 py-1.5 text-sm shadow-sm transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40";
+
 /* ── Amendment row (Văn bản sửa đổi) ── */
 function AmendmentRow({ amendment, index, onChange, onRemove }: {
   amendment: AmendmentEntry; index: number;
@@ -87,13 +91,19 @@ function AmendmentRow({ amendment, index, onChange, onRemove }: {
         value={amendment.name}
         onChange={(e) => onChange(index, { name: e.target.value })}
         placeholder="Tên văn bản sửa đổi"
-        className={`${inputCls} flex-1`}
+        className={`${flexInputCls} flex-1 min-w-0`}
+      />
+      <input
+        value={amendment.number ?? ""}
+        onChange={(e) => onChange(index, { number: e.target.value })}
+        placeholder="Số văn bản"
+        className={`${flexInputCls} w-28 shrink-0`}
       />
       <input
         value={amendment.date}
         onChange={(e) => onChange(index, { date: e.target.value })}
         placeholder="Ngày (dd/mm/yyyy)"
-        className={`${inputCls} w-32`}
+        className={`${flexInputCls} w-36 shrink-0`}
       />
       <button type="button" onClick={() => onRemove(index)} className="p-1 rounded hover:bg-red-50 dark:hover:bg-red-500/10 shrink-0">
         <Trash2 className="h-3 w-3 text-red-400" />
@@ -212,7 +222,15 @@ export function CollateralForm({ customerId, initial, onSaved, onCancel }: {
 
   // Amendments repeater (JSON in properties._amendments)
   const [amendments, setAmendments] = useState<AmendmentEntry[]>(() => {
-    try { return JSON.parse(initial?.properties?._amendments ?? "[]"); } catch { return []; }
+    try {
+      const raw: AmendmentEntry[] = JSON.parse(initial?.properties?._amendments ?? "[]");
+      // Auto-fix legacy formats: add missing `number` field
+      return raw.map((a) => ({
+        name: a.name ?? "",
+        number: a.number ?? "",
+        date: a.date ?? "",
+      }));
+    } catch { return []; }
   });
 
   const fields = FORM_FIELDS[type] ?? [];

@@ -28,12 +28,16 @@ const DS_DISPLAY_GROUPS = [
 
 /* ── PropertyGrid: renders collateral detail in grouped layout ── */
 function PropertyGrid({ properties, collateralType }: { properties: Record<string, string>; collateralType: string }) {
-  const entries = Object.entries(properties).filter(([k, v]) => v && k !== "_owners");
+  const INTERNAL_KEYS = new Set(["_owners", "_amendments"]);
+  const entries = Object.entries(properties).filter(([k, v]) => v && !INTERNAL_KEYS.has(k));
   if (entries.length === 0) return null;
 
-  // Parse owners if present
+  // Parse owners & amendments if present
   let parsedOwners: OwnerEntry[] = [];
   try { parsedOwners = JSON.parse(properties._owners ?? "[]"); } catch { /* ignore */ }
+  type AmendmentDisplay = { name: string; number?: string; date: string };
+  let parsedAmendments: AmendmentDisplay[] = [];
+  try { parsedAmendments = JSON.parse(properties._amendments ?? "[]"); } catch { /* ignore */ }
 
   const isQsd = collateralType === "qsd_dat";
   const isDs = collateralType === "dong_san";
@@ -53,7 +57,7 @@ function PropertyGrid({ properties, collateralType }: { properties: Record<strin
     );
   }
 
-  const usedKeys = new Set<string>(["_owners"]);
+  const usedKeys = new Set<string>(["_owners", "_amendments"]);
   return (
     <div className="space-y-8">
       {/* Owners */}
@@ -73,6 +77,19 @@ function PropertyGrid({ properties, collateralType }: { properties: Record<strin
                 {o.phone && <div className="flex flex-col gap-0.5"><span className="text-[11px] text-zinc-500">Điện thoại</span><span className="text-[13px] font-medium">{o.phone}</span></div>}
                 {o.address && <div className="col-span-2 flex flex-col gap-0.5"><span className="text-[11px] text-zinc-500">Nơi thường trú</span><span className="text-[13px] font-medium">{o.address}</span></div>}
                 {o.current_address && <div className="col-span-2 flex flex-col gap-0.5"><span className="text-[11px] text-zinc-500">Địa chỉ hiện tại</span><span className="text-[13px] font-medium">{o.current_address}</span></div>}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      {/* Amendments */}
+      {parsedAmendments.length > 0 && (
+        <div className="border-b border-zinc-200/60 dark:border-white/[0.08] pb-6">
+          <h5 className="text-[12px] font-bold text-violet-700 dark:text-violet-400 uppercase tracking-wider mb-4">Văn bản sửa đổi, bổ sung</h5>
+          <div className="space-y-2">
+            {parsedAmendments.map((a, i) => (
+              <div key={i} className="text-[13px] text-zinc-800 dark:text-zinc-200">
+                {i + 1}. {a.name}{a.number ? ` số ${a.number}` : ""}{a.date ? ` ngày ${a.date}` : ""}
               </div>
             ))}
           </div>
