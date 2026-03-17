@@ -272,7 +272,9 @@ function extractLandFields(
     "Số thửa": p.lot_number ?? "",
     "Số tờ bản đồ": p.map_sheet ?? "",
     "Diện tích đất": p.land_area ?? "",
-    "DTĐ bằng chữ": p.land_area ? numberToVietnameseWords(Number(p.land_area)) : "",
+    "DTĐ bằng chữ": p.land_area
+      ? numberToVietnameseWords(parseFloat(String(p.land_area).replace(/,/g, ".")), "mét vuông")
+      : "",
     "Mục đích sử dụng": p.land_purpose ?? "",
     "Thời hạn sử dụng": p.land_use_term ?? p.usage_term ?? "",
     "Nguồn gốc": p.land_origin ?? p.origin ?? "",
@@ -886,71 +888,73 @@ export function buildLoanPlanExtendedData(
   data["PA.Nhu cầu vốn vay"] = financials.loanNeed ?? financials.loanAmount ?? "";
   data["PA.Vòng quay vốn"] = financials.turnoverCycles ?? "";
 
-  // Build combined PA_CHIPHI table: I. Costs → II. Revenue → III. Profit
+  // Build separate loop arrays + flat summary placeholders for cost/revenue table
   try {
     const costItems: Array<{ name: string; unit?: string; qty?: number; unitPrice?: number; unit_price?: number; amount?: number }> =
       JSON.parse(plan.cost_items_json || "[]");
     const revenueItems: Array<{ description: string; unit?: string; qty?: number; unitPrice?: number; unit_price?: number; amount?: number }> =
       JSON.parse(plan.revenue_items_json || "[]");
 
+    // Row helper: add aliases for different template placeholder names
+    const row = (r: Record<string, unknown>) => {
+      const label = r["Hạng mục"] ?? "";
+      return { ...r, "Mô tả": label, "KHOẢN MỤC": label, "Khoản mục": label, "Danh mục": label };
+    };
+
+    // PA_CHIPHI = loop chỉ các khoản chi phí trực tiếp (cost items)
+    // PA_CHIPHI: cost items loop
+    data["PA_CHIPHI"] = costItems.map((c, i) => row({
+      STT: i + 1, "Hạng mục": c.name,
+      ĐVT: c.unit ?? "",
+      "Đơn giá": c.unitPrice ?? c.unit_price ?? "",
+      "Số lượng": c.qty ?? "",
+      "Thành tiền": c.amount ?? "",
+    }));
+
+    // PA_DOANHTHU: revenue items loop
+    data["PA_DOANHTHU"] = revenueItems.map((r, i) => row({
+      STT: i + 1, "Hạng mục": r.description,
+      ĐVT: r.unit ?? "đ",
+      "Đơn giá": r.unitPrice ?? r.unit_price ?? "",
+      "Số lượng": r.qty ?? "",
+      "Thành tiền": r.amount ?? "",
+    }));
+
+    // Calculate totals for flat placeholders (fixed rows in template)
     const totalDirectCost = costItems.reduce((s, c) => s + (c.amount ?? 0), 0);
-    const interestCost = Number(financials.interestCost) || 0;
-    const totalCostAll = totalDirectCost + interestCost;
+    // Auto-calculate interest cost: rate × loanAmount × term(months)/12
+    let interestCost = Number(financials.interestCost) || 0;
+    if (!interestCost && rawRate && financials.loanAmount) {
+      const rate = (rawRate as number) < 1 ? (rawRate as number) : (rawRate as number) / 100;
+      const months = Number(financials.loanTerm) || 12;
+      interestCost = Math.round(rate * Number(financials.loanAmount) * months / 12);
+    }
+    const tax = Number(financials.tax) || 0;
+    const totalIndirectCost = interestCost + tax;
+    const totalCostAll = totalDirectCost + totalIndirectCost;
     const totalRevenue = revenueItems.reduce((s, r) => s + (r.amount ?? 0), 0);
     const profit = totalRevenue - totalCostAll;
 
-    // Format interest rate for display
+    // Format interest rate
     const rateStr = typeof rawRate === "number" && (rawRate as number) > 0
       ? `${parseFloat(((rawRate as number) < 1 ? (rawRate as number) * 100 : (rawRate as number)).toFixed(2))}%/năm`
       : "";
 
-    const rows: Array<Record<string, unknown>> = [];
-
-    // I. TỔNG CHI PHÍ (section header)
-    rows.push({ STT: "I", "Hạng mục": "TỔNG CHI PHÍ", ĐVT: "", "Đơn giá": "", "Số lượng": "", "Thành tiền": totalCostAll || "" });
-    let idx = 1;
-    rows.push({ STT: idx++, "Hạng mục": "Cộng chi phí trực tiếp", ĐVT: "", "Đơn giá": "", "Số lượng": "", "Thành tiền": totalDirectCost || "" });
-    for (const c of costItems) {
-      rows.push({
-        STT: "", "Hạng mục": `  - ${c.name}`,
-        ĐVT: c.unit ?? "", "Đơn giá": c.unitPrice ?? c.unit_price ?? "",
-        "Số lượng": c.qty ?? "", "Thành tiền": c.amount ?? "",
-      });
+    // Flat placeholders for fixed rows in template
+    data["PA.Tổng chi phí"] = totalCostAll || "";
+    data["PA.Tổng chi phí trực tiếp"] = totalDirectCost || "";
+    data["PA.Tổng chi phí gián tiếp"] = totalIndirectCost || "";
+    data["PA.Lãi vay NH"] = interestCost || "";
+    data["PA.Lãi vay"] = interestCost || "";
+    data["PA.LS vay"] = rateStr; // lãi suất format cho cột đơn giá
+    data["PA.Thuế"] = tax || "";
+    data["PA.Tổng doanh thu dự kiến"] = totalRevenue || "";
+    data["PA.Lợi nhuận dự kiến"] = profit;
+    // Tổng nhu cầu vốn = tổng chi phí (trực tiếp + gián tiếp)
+    if (totalCostAll > 0) {
+      data["PA.Tổng nhu cầu vốn"] = totalCostAll;
+      data["PA.Tổng nhu cầu vốn bằng chữ"] = numberToVietnameseWords(totalCostAll);
     }
-    if (interestCost > 0) {
-      rows.push({
-        STT: idx++, "Hạng mục": "Chi phí gián tiếp (Lãi vay NH)",
-        ĐVT: "đ", "Đơn giá": rateStr,
-        "Số lượng": financials.loanAmount ?? "", "Thành tiền": interestCost,
-      });
-    }
-
-    // II. THU NHẬP (section header)
-    rows.push({ STT: "II", "Hạng mục": "THU NHẬP", ĐVT: "", "Đơn giá": "", "Số lượng": "", "Thành tiền": totalRevenue || "" });
-    let revIdx = 1;
-    for (const r of revenueItems) {
-      rows.push({
-        STT: revIdx++, "Hạng mục": r.description,
-        ĐVT: r.unit ?? "đ", "Đơn giá": r.unitPrice ?? r.unit_price ?? "",
-        "Số lượng": r.qty ?? "", "Thành tiền": r.amount ?? "",
-      });
-    }
-
-    // III. LÃI(+), LỖ(-)
-    rows.push({ STT: "III", "Hạng mục": "LÃI(+), LỖ(-)", ĐVT: "", "Đơn giá": "", "Số lượng": "", "Thành tiền": profit });
-
-    data["PA_CHIPHI"] = rows;
-
-    data["PA_DOANHTHU"] = revenueItems.map((r, i) => ({
-      STT: i + 1, "Mô tả": r.description,
-      "Số lượng": r.qty ?? "", "Đơn giá": r.unitPrice ?? r.unit_price ?? "",
-      "Thành tiền": r.amount ?? "",
-    }));
-
-    // Update flat fields from calculated values
-    if (!data["PA.Tổng chi phí trực tiếp"]) data["PA.Tổng chi phí trực tiếp"] = totalDirectCost || "";
-    if (!data["PA.Tổng chi phí gián tiếp"]) data["PA.Tổng chi phí gián tiếp"] = interestCost || "";
-    if (!data["PA.Lợi nhuận dự kiến"] || data["PA.Lợi nhuận dự kiến"] === "") data["PA.Lợi nhuận dự kiến"] = profit;
   } catch {
     data["PA_CHIPHI"] = [];
     data["PA_DOANHTHU"] = [];
