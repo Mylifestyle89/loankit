@@ -1,212 +1,378 @@
-# Hướng dẫn sử dụng – Bộ công cụ cho vay KHDN
+# Hướng Dẫn Sử Dụng v2.0
 
-## Giới thiệu
-
-Ứng dụng **Bộ công cụ cho vay KHDN** giúp bạn tạo báo cáo thẩm định, quản lý hồ sơ vay vốn, và theo dõi hóa đơn giải ngân một cách tự động. Tài liệu này hướng dẫn chi tiết từng chức năng dành cho người dùng cuối.
+Ứng dụng quản lý hồ sơ cho vay, báo cáo thẩm định, và theo dõi giải ngân dành cho nhân viên ngân hàng.
 
 ---
 
-## Mục lục
+## I. Đăng Nhập
 
-1. [Bắt đầu sử dụng](#1-bắt-đầu-sử-dụng)
-2. [Quản lý mẫu báo cáo (Template)](#2-quản-lý-mẫu-báo-cáo)
-3. [Trình chỉnh field (Mapping)](#3-trình-chỉnh-field)
-4. [Build & Export báo cáo](#4-build--export-báo-cáo)
-5. [Quản lý khách hàng](#5-quản-lý-khách-hàng)
-6. [Khoản vay & Giải ngân](#6-khoản-vay--giải-ngân)
-7. [Theo dõi hóa đơn](#7-theo-dõi-hóa-đơn)
-8. [Thông báo](#8-thông-báo)
-9. [Quản lý hệ thống](#9-quản-lý-hệ-thống)
-10. [Câu hỏi thường gặp](#10-câu-hỏi-thường-gặp)
+1. Mở ứng dụng → trang đăng nhập hiển thị
+2. Nhập **Email** và **Mật khẩu**
+3. Nhấn **Đăng nhập** → hệ thống chuyển đến trang Mapping
 
----
+Quên mật khẩu → liên hệ admin để đặt lại.
 
-## 1. Bắt đầu sử dụng
+### Phân quyền
 
-### Truy cập ứng dụng
-Mở trình duyệt và truy cập đường dẫn ứng dụng. Bạn sẽ thấy màn hình chào mừng với nút **"Mở không gian báo cáo"** để vào khu vực làm việc.
-
-### Giao diện chính
-Bên trái màn hình là **thanh điều hướng** (sidebar) với các mục:
-- **Trình chỉnh field** – Quản lý dữ liệu mapping
-- **Quản lý mẫu** – Quản lý mẫu DOCX (3 tab con)
-- **Khách hàng** – Quản lý danh sách khách hàng
-- **Khoản vay** – Quản lý hồ sơ vay
-- **Hóa đơn** – Theo dõi hóa đơn giải ngân
-- **Quản lý hệ thống** – Cài đặt và vận hành
-
-### Đổi ngôn ngữ
-Nhấn biểu tượng **ngôn ngữ** ở cuối thanh điều hướng để chuyển đổi giữa Tiếng Việt và English.
-
-### Đổi giao diện sáng/tối
-Nhấn biểu tượng **mặt trời/mặt trăng** để chuyển đổi giữa giao diện sáng và tối.
+| Vai trò | Quyền |
+|---------|-------|
+| **Admin** | Toàn quyền + quản lý người dùng |
+| **Editor** | Tạo/sửa khách hàng, khoản vay, báo cáo |
+| **Viewer** | Chỉ xem, không chỉnh sửa |
 
 ---
 
-## 2. Quản lý mẫu báo cáo
+## II. Thanh điều hướng (Sidebar)
 
-Trang **Quản lý mẫu** gồm 3 tab chính:
+Sidebar bên trái chứa các mục chính:
 
-### Tab "Chỉnh sửa mẫu"
-- **Chọn mẫu**: Chọn mẫu DOCX từ dropdown để làm việc
-- **Tải file DOCX**: Nhấn "Mở file DOCX" để tải mẫu về máy
-- **Mở trình soạn thảo**: Nhấn "Mở Editor" để chỉnh sửa mẫu trực tiếp trên web
-  - Hỗ trợ **OnlyOffice** (đầy đủ tính năng Word) hoặc **Eigenpal** (nhẹ hơn)
-  - Chuyển đổi giữa 2 editor bằng nút toggle ở góc phải header
-- **Chọn file từ máy**: Mở file DOCX từ máy tính để chỉnh sửa
-- **Loại bỏ mẫu**: Xóa mẫu khỏi danh sách quản lý
-- **Chèn trường (Field Injection)**: Chọn trường dữ liệu → nhấn "Copy" → dán vào vị trí cần thiết trong mẫu
+- **Khách hàng** — Quản lý danh sách khách hàng
+- **Khoản vay** — Danh sách hợp đồng vay
+- **Hóa đơn** — Theo dõi hóa đơn giải ngân
+- **Mapping** — Ánh xạ trường dữ liệu cho báo cáo
+- **Template** — Quản lý mẫu DOCX
+- **Người dùng** — Tài khoản & quản trị (admin)
+- **Tác vụ hệ thống** — Backup/Restore dữ liệu
+- **Hướng dẫn** — Trang này
 
-### Tab "Duyệt folder mẫu"
-- Duyệt thư mục chứa các file mẫu DOCX trên server
-- Mở file để chỉnh sửa hoặc đăng ký làm mẫu mới
-- **Kiểm tra mẫu**: Upload file DOCX để kiểm tra placeholder, xem báo cáo kết quả
-- **Bảng tham chiếu trường**: Tra cứu tất cả trường dữ liệu có sẵn theo nhóm
+Sidebar trên Desktop: co lại khi không dùng, mở rộng khi hover.
+Sidebar trên Mobile: nhấn nút hamburger để mở.
 
-### Tab "Build & Export"
-- **Chạy Build Dữ Liệu**: Biên dịch dữ liệu mapping thành bản build mới nhất
-- **Tạo & Xem Báo Cáo**: Xuất file DOCX hoàn chỉnh và xem trực tiếp trong OnlyOffice
-- **Tải về DOCX**: Tải file báo cáo đã tạo về máy
-- **Trạng thái đồng bộ**: Hiển thị dữ liệu build có đang cập nhật hay đã cũ
-- **Lịch sử chạy**: Xem danh sách các lần build/export trước đó
-
-> **Lưu ý**: Nếu dữ liệu build đã cũ, hệ thống sẽ tự động chạy Build trước khi Export.
+Các nút ở cuối sidebar:
+- **Gợi ý AI** — Gợi ý mapping tự động
+- **Chế độ sáng/tối** — Đổi giao diện
+- **Ngôn ngữ** — Vi ↔ En
+- **Đăng xuất**
+- **Chuông thông báo** — Xem cảnh báo hóa đơn
 
 ---
 
-## 3. Trình chỉnh field
+## III. Khách Hàng
 
-Đây là trang **cốt lõi** của ứng dụng, nơi bạn quản lý dữ liệu sẽ được điền vào mẫu báo cáo.
+### Danh sách khách hàng
+**Vào:** Sidebar → **Khách hàng**
 
-### Các chức năng chính:
-- **Danh mục trường (Field Catalog)**: Quản lý danh sách các trường dữ liệu, phân nhóm theo chủ đề
-- **Nhập giá trị**: Điền giá trị thủ công cho từng trường hoặc dùng công thức tính tự động
-- **Chọn khách hàng**: Chọn khách hàng để tải dữ liệu tương ứng
-- **Chọn mẫu template**: Chọn mẫu báo cáo sẽ sử dụng
-- **Import/Export**: Nhập dữ liệu từ Excel hoặc xuất ra file
-- **Gợi ý AI**: Nhấn nút **AI** trên sidebar để nhận gợi ý mapping tự động
-- **Nhập từ OCR**: Quét ảnh/PDF để tự động trích xuất dữ liệu
-- **Validate**: Kiểm tra dữ liệu trước khi xuất báo cáo
-
-### Cách sử dụng:
-1. Chọn khách hàng và mẫu template
-2. Điền hoặc import dữ liệu vào các trường
-3. Nhấn **Validate** để kiểm tra
-4. Chuyển sang tab **Build & Export** trong Quản lý mẫu để xuất báo cáo
-
----
-
-## 4. Build & Export báo cáo
-
-### Quy trình tạo báo cáo:
-1. Đảm bảo dữ liệu mapping đã đầy đủ (trang Trình chỉnh field)
-2. Vào **Quản lý mẫu** → tab **Build & Export**
-3. Nhấn **"Chạy Build Dữ Liệu"** để biên dịch
-4. Nhấn **"Tạo & Xem Báo Cáo"** để xuất file DOCX
-5. File sẽ tự động mở trong OnlyOffice để xem/chỉnh sửa
-6. Nhấn **"Tải về DOCX"** để lưu về máy
-
-### Trạng thái đồng bộ:
-- 🟢 **Đồng bộ**: Dữ liệu build khớp với mapping hiện tại
-- 🟡 **Cần cập nhật**: Dữ liệu đã thay đổi kể từ lần build gần nhất → nên chạy Build lại
-
----
-
-## 5. Quản lý khách hàng
+- Tìm kiếm theo tên, mã khách, địa chỉ
+- Lọc theo loại: **Tất cả** | **DN** (doanh nghiệp) | **CN** (cá nhân)
+- Chuyển chế độ xem: **Bảng** hoặc **Thẻ**
+- Sắp xếp theo cột (tên, mã, loại, ngày cập nhật)
 
 ### Tạo khách hàng mới
-1. Vào **Khách hàng** → nhấn **Tạo mới**
-2. Điền thông tin: Mã KH, Tên, Địa chỉ, Ngành nghề, Vốn điều lệ, Người đại diện, Loại hình tổ chức
-3. Nhấn **Lưu**
+1. Nhấn **+ Thêm KH** (góc trên phải)
+2. Chọn loại: **Doanh nghiệp** hoặc **Cá nhân**
+3. Điền thông tin:
+   - *Chung:* Mã KH, Tên KH, Địa chỉ
+   - *DN:* Ngành nghề, vốn điều lệ, người đại diện, loại hình tổ chức
+   - *CN:* CCCD/CMND, CMND cũ, năm sinh, SĐT
+4. Nhấn **Thêm khách hàng**
 
-### Chỉnh sửa khách hàng
-Nhấn vào tên khách hàng trong danh sách để mở trang chỉnh sửa.
+### Nhập dữ liệu hàng loạt
+Tại trang danh sách:
+- **Nhập Dữ Liệu (JSON/XLSX/BK)** → Chọn file → Hệ thống tự import
+- **Xuất Dữ Liệu** → Tải xuống toàn bộ danh sách
 
-### Import/Export
-- **Import**: Nhập danh sách khách hàng từ file CSV
-- **Export**: Xuất dữ liệu khách hàng theo mẫu template đã chọn
-
----
-
-## 6. Khoản vay & Giải ngân
-
-### Tạo khoản vay
-1. Vào **Khoản vay** → nhấn **Tạo khoản vay mới**
-2. Chọn khách hàng, nhập: Số hợp đồng, Số tiền vay, Lãi suất, Ngày bắt đầu/kết thúc, Mục đích
-3. Nhấn **Lưu**
-
-### Quản lý giải ngân
-Từ trang chi tiết khoản vay:
-1. Nhấn **Thêm giải ngân**
-2. Nhập: Số tiền, Ngày giải ngân, Mô tả
-3. Mỗi đợt giải ngân có thể gắn nhiều hóa đơn
-
-### Trạng thái:
-- **Active** – Đang hoạt động
-- **Completed** – Hoàn tất
-- **Cancelled** – Đã hủy
+### Các thao tác khác
+- **Đổi loại** — Chuyển KH giữa DN ↔ CN
+- **Xóa** — Xóa khách hàng (có xác nhận)
 
 ---
 
-## 7. Theo dõi hóa đơn
+## IV. Chi Tiết Khách Hàng
 
-### Thêm hóa đơn
-Từ trang giải ngân, nhấn **Thêm hóa đơn**:
-- Số hóa đơn, Nhà cung cấp, Số tiền, Ngày hóa đơn, Hạn thanh toán
-- Mô tả (không bắt buộc)
+Nhấn vào tên KH từ danh sách → Trang chi tiết.
 
-### Trạng thái hóa đơn:
-- **Chờ thanh toán** (Pending) – Chưa đến hạn
-- **Đã thanh toán** (Paid) – Đã thanh toán xong
-- **Quá hạn** (Overdue) – Quá hạn thanh toán → hệ thống tự động gửi thông báo
+**Khách DN** hiển thị thẻ tóm tắt: tổng khoản vay, khoản vay đang hoạt động, tổng tiền vay.
+**Khách CN (KHCN)** hiển thị thẻ hồ sơ cá nhân compact.
 
-### Theo dõi tổng quan
-Trang **Hóa đơn** hiển thị:
-- Tổng số hóa đơn theo trạng thái
-- Tổng tiền chưa thanh toán
-- Danh sách hóa đơn sắp đến hạn
+### Các tab chính
 
----
+#### Tab "Nơi cho vay" (Branch)
+- Cấu hình chi nhánh và nhân viên quản lý
+- Áp dụng chung cho tất cả khách hàng
 
-## 8. Thông báo
+#### Tab "Người vay" / "Thông tin"
+Form chỉnh sửa thông tin KH với 3 sub-tab:
+- **Thông tin chung** — Các trường cơ bản
+- **Đồng vay** — Thêm/xóa người vay cùng (tên, quan hệ)
+- **Người liên quan** — Thêm người liên hệ khác
 
-Hệ thống tự động kiểm tra hạn thanh toán hóa đơn **mỗi giờ** và gửi thông báo khi:
-- Hóa đơn sắp đến hạn (trước 3 ngày)
-- Hóa đơn đã quá hạn
+Nút **OCR** (biểu tượng máy quét) → Quét giấy tờ tự động điền thông tin.
 
-### Xem thông báo:
-- Nhấn biểu tượng **chuông** trên sidebar
-- Số đỏ hiển thị số thông báo chưa đọc
-- Nhấn vào thông báo để xem chi tiết và đánh dấu đã đọc
+#### Tab "TSBĐ" (Tài sản bảo đảm)
+Quản lý tài sản thế chấp cho khoản vay. Mỗi loại tài sản có form riêng.
 
----
+Thao tác: **Thêm tài sản** → Chọn loại → Điền thông tin → **Lưu**
 
-## 9. Quản lý hệ thống
+#### Tab "Khoản vay & Tín dụng" (KHCN)
+Gộp 2 sub-tab:
+- **Khoản vay** — Danh sách khoản vay của KH này
+- **Thông tin tín dụng** — Lịch sử vay, nợ xấu, đánh giá
 
-Trang **Quản lý hệ thống** cung cấp:
-- Xem trạng thái hệ thống
-- Quản lý backup và restore dữ liệu
-- Cài đặt nâng cao
+#### Tab "In mẫu biểu"
+- **DN:** Quản lý mapping instances cho báo cáo
+- **KHCN:** Checklist tài liệu cần chuẩn bị
+
+**Lưu ý:** Sau khi chỉnh sửa bất kỳ thông tin nào, nhấn **Lưu** → Hiện thông báo "Lưu thành công".
 
 ---
 
-## 10. Câu hỏi thường gặp
+## V. Phương Án Vay (Loan Plans)
 
-### Tôi không thấy dữ liệu trong báo cáo xuất ra?
-→ Kiểm tra trang **Trình chỉnh field** xem dữ liệu đã được điền đầy đủ chưa. Nhấn **Validate** để kiểm tra.
+**Vào:** Chi tiết khách hàng → mục **Phương án vay vốn** (hoặc link từ sidebar)
 
-### Báo cáo hiển thị dữ liệu cũ?
-→ Vào tab **Build & Export** → nhấn **"Chạy Build Dữ Liệu"** để cập nhật trước khi Export.
+### Danh sách phương án
+Mỗi phương án hiển thị dạng card:
+- Tên PA, trạng thái (Nháp/Đã duyệt), phương thức cho vay
+- Số tiền vay, lợi nhuận dự kiến
 
-### Làm sao chèn trường dữ liệu vào mẫu DOCX?
-→ Vào tab **Chỉnh sửa mẫu** → mở Editor → dùng thanh **Field Injection** để copy placeholder rồi dán vào vị trí cần thiết.
+### Tạo phương án mới
+1. Nhấn **Tạo PA mới**
+2. Nhập tên phương án (VD: "PA trồng 6 sào hoa Cát tường")
+3. Chọn phương thức cho vay (Từng lần, Cột linh, v.v.)
+4. Chọn mẫu PA từ danh sách (nhóm theo ngành: Nông nghiệp, Công nghiệp...)
+5. Nhấn **Tạo phương án**
 
-### OnlyOffice không hoạt động?
-→ Hệ thống sẽ tự động chuyển sang editor Eigenpal. Nếu cần OnlyOffice, liên hệ quản trị viên kiểm tra cài đặt server.
+### Import từ Excel
+- Nhấn **Nhập XLSX** → Chọn file Excel
+- Hệ thống tự nhận diện cột → Hiện modal xem trước
+- Xác nhận → Dữ liệu tự động điền vào PA
 
-### Tôi muốn quay lại phiên bản dữ liệu cũ?
-→ Vào **Quản lý hệ thống** → chọn file backup → nhấn **Restore**.
+### Chỉnh sửa phương án
+Trang chi tiết PA hiển thị:
+
+**Thông tin chung** (dạng grid):
+- Tên PA, Lãi suất (%/năm), Vòng quay vốn, Số tiền vay
+
+**Bảng chi phí trực tiếp:**
+- Mỗi dòng: Mô tả, Số lượng, Đơn giá, Thành tiền
+- Nhấn **Thêm dòng** để thêm chi phí
+
+**Bảng doanh thu dự kiến:**
+- Tương tự bảng chi phí
+
+**Tổng hợp tài chính** (tính tự động):
+- Tổng CPTT, Lãi vay, Thuế, Tổng CGTC, Doanh thu DK, Lợi nhuận DK
+
+**Nhu cầu vốn vay** (dạng cây):
+- Nhu cầu vốn vay, Vốn đối ứng, Tỷ lệ vốn tự có, Tỷ lệ LN/Vốn đối ứng
+
+Nhấn **Lưu** sau khi chỉnh sửa.
 
 ---
 
-*Tài liệu cập nhật: Tháng 3/2026*
+## VI. Khoản Vay
+
+**Vào:** Sidebar → **Khoản vay**
+
+### Danh sách
+- Thống kê nhanh: Tổng số khoản vay, số khoản đang hoạt động, tổng tiền
+- Lọc theo khách hàng (dropdown)
+- Mỗi thẻ hiển thị: Số HĐ, tên KH, số tiền, thời hạn, số lần giải ngân, mục đích
+
+### Tạo khoản vay mới
+1. Nhấn **Thêm khoản vay** → Trang tạo mới
+2. Chọn khách hàng
+3. Nhập: Số hợp đồng, Số tiền vay (VND), Lãi suất, Ngày bắt đầu (dd/mm/yyyy), Ngày kết thúc, Số lần giải ngân, Mục đích vay
+4. Nhấn **Lưu** → Chuyển đến trang chi tiết
+
+### Chi tiết khoản vay
+Hiển thị grid 4 cột: Số tiền, Lãi suất, Ngày BĐ, Ngày KT
+
+Thống kê giải ngân: Tổng giải ngân, Số lượng, Đang hoạt động, Đã hoàn thành
+
+**Các nút chức năng:**
+- **Thông tin HĐTD** → Modal sửa thông tin hợp đồng
+- **Đơn vị thụ hưởng** → Modal quản lý đơn vị nhận tiền
+- **Hóa đơn** → Chuyển đến trang hóa đơn lọc theo KH này
+
+### Giải ngân
+Bảng giải ngân (phân trang 20 dòng/trang), có tìm kiếm và lọc trạng thái.
+
+**Thêm giải ngân:** Nhấn **Thêm giải ngân** → Modal nhập số tiền, ngày, mô tả → **Lưu**
+
+**Trên mỗi dòng giải ngân:**
+- Nút **Sửa** → Modal chỉnh sửa
+- Nút **Báo cáo** → Modal tạo báo cáo DOCX (chọn template UNC, BCDXGN...) → Xem trước → Tải về
+- Nút **Thêm HĐ** → Modal thêm hóa đơn cho giải ngân này
+
+---
+
+## VII. Hóa Đơn
+
+**Vào:** Sidebar → **Hóa đơn**
+
+### Thống kê đầu trang
+- Số HĐ cần bổ sung (cam)
+- Tổng HĐ đang chờ (vàng)
+- Tổng HĐ quá hạn (đỏ)
+- Tổng tiền (tím)
+
+### Customer Summary Cards
+Hiển thị thẻ tóm tắt theo từng khách hàng. Click để lọc.
+
+### Hai chế độ xem
+1. **Danh sách phẳng** — Bảng hóa đơn thông thường
+2. **Nhóm theo giải ngân** — Gom HĐ theo đợt giải ngân, hiển thị:
+   - Số HĐ, tên KH, ngày GN
+   - Thanh tiến độ (% đã bổ sung HĐ)
+   - Số tiền bổ sung / Tổng tiền GN
+   - Click để expand/collapse
+
+### Lọc
+- Trạng thái: Tất cả, Cần bổ sung, Đang chờ, Đã thanh toán, Quá hạn
+- Khách hàng: Dropdown lọc theo KH
+
+### Thao tác trên hóa đơn
+- **Đánh dấu đã thanh toán** → Cập nhật status = Paid
+- **Bổ sung** → Mở modal thêm HĐ cho giải ngân
+
+### Chi tiết giải ngân
+Từ trang khoản vay hoặc hóa đơn → Click vào giải ngân:
+- Banner Thừa/Thiếu: So sánh số tiền GN vs tổng HĐ
+- Bảng hóa đơn: Số HĐ, nhà cung cấp, số tiền, ngày, hạn, trạng thái, ghi chú
+- Nút **Thêm hóa đơn**, **Đánh dấu đã thanh toán**, **Xóa**
+
+---
+
+## VIII. Mapping (Ánh xạ trường dữ liệu)
+
+**Vào:** Sidebar → **Mapping**
+
+Đây là trang chính để quản lý dữ liệu sẽ điền vào báo cáo DOCX.
+
+### Thanh công cụ (Toolbar)
+- **Chọn khách hàng** → Modal chọn/tạo KH → Dữ liệu KH tự động tải vào
+- **Chọn template** → Modal chọn/tạo/sửa field template
+- **Upload tài liệu** → Upload DOCX/PNG/JPG/PDF để OCR trích xuất dữ liệu
+- **Phân tích tài chính** → Modal tính chỉ số tài chính
+- **Toggle sidebar** → Mở/đóng bảng công cụ bên phải
+
+### Vùng chính: Danh mục trường (Field Catalog)
+- Hiển thị dạng cây phân nhóm (parent groups → repeater groups → fields)
+- Mỗi trường hiển thị: tên, giá trị, confidence score, gợi ý OCR
+- Tìm kiếm, lọc "chỉ hiện chưa ánh xạ", toggle "technical keys"
+
+### Các thao tác trường
+- Thêm/sửa/xóa trường (tên, loại, công thức)
+- Tạo/sửa/đổi tên/gộp nhóm
+- Kéo thả sắp xếp thứ tự
+- Import nhóm trường từ template khác
+
+### OCR — Quét tài liệu
+1. Kéo thả hoặc chọn file (DOCX, ảnh, PDF) vào toolbar
+2. Hệ thống quét và trích xuất dữ liệu tự động
+3. Kết quả hiện trong **OCR Timeline** (log quá trình)
+4. Mỗi gợi ý OCR: **Chấp nhận** hoặc **Từ chối**
+
+### Gợi ý AI
+- Nhấn nút **Gợi ý AI** trên sidebar
+- Hệ thống gợi ý mapping tự động dựa trên tên trường
+- Xem trước → Chấp nhận/Từ chối từng gợi ý
+
+### Thanh trạng thái (Status Bar)
+- Trái: Undo + số thao tác
+- Giữa: Trạng thái OCR (pending, log)
+- Phải: Tiến độ mapping (VD: 42/56 trường đã ánh xạ)
+
+---
+
+## IX. Template (Quản lý mẫu DOCX)
+
+**Vào:** Sidebar → **Template**
+
+### Tab 1: Configured (Mẫu đã cấu hình)
+- Dropdown chọn mẫu DOCX đã đăng ký
+- **Download DOCX** — Tải mẫu về máy
+- **Mở Editor** — Chỉnh sửa trực tiếp:
+  - OnlyOffice (nếu có) — Đầy đủ tính năng Word
+  - Eigenpal — Editor nhẹ, luôn khả dụng
+- **Mở file DOCX từ máy** — Upload mẫu mới
+- **Xóa mẫu**
+- **Chèn trường (Field Injection):**
+  - Chọn field template → Xem danh sách trường theo nhóm
+  - Copy placeholder → Dán vào mẫu DOCX trong editor
+
+### Tab 2: Folder Browser (Duyệt thư mục mẫu)
+- Cây thư mục hiển thị tất cả file DOCX trên server
+- Chọn file → **Đăng ký làm mẫu** hoặc **Mở Editor**
+- **Validate mẫu** — Kiểm tra placeholder hợp lệ → Xem báo cáo kết quả
+
+### Tab 3: Build & Export
+- **Chạy Build** — Biên dịch dữ liệu từ mapping vào mẫu
+- **Tạo & Xem Báo cáo** — Xuất DOCX, mở trong OnlyOffice/Eigenpal
+- **Tải về DOCX** — Lưu file về máy
+
+---
+
+## X. Người Dùng
+
+**Vào:** Sidebar → **Người dùng**
+
+### Tab "Cài đặt tài khoản"
+- Đổi mật khẩu, cập nhật thông tin cá nhân
+
+### Tab "Quản trị" (chỉ Admin)
+- Danh sách tất cả tài khoản (tên, email, vai trò)
+- **Tạo tài khoản mới:** Email + Mật khẩu + Vai trò → **Tạo**
+- **Xóa tài khoản:** Chọn → Xóa → Xác nhận
+
+---
+
+## XI. Tác Vụ Hệ Thống
+
+**Vào:** Sidebar → **Tác vụ hệ thống**
+
+### Xuất dữ liệu (Quick Export)
+- Nhấn **Sao lưu nhanh** → Tải xuống file JSON chứa toàn bộ dữ liệu hệ thống
+
+### Nhập dữ liệu (Import)
+1. Nhấn **Nhập file** → Chọn file `.json`
+2. Hệ thống hiện modal xem trước: phiên bản, số KH, số template
+3. Nhấn **Xác nhận** → Import
+4. Hiện kết quả: Số KH mới, số KH cập nhật, số template nhập
+
+---
+
+## XII. Thông Báo
+
+### Chuông thông báo (Sidebar)
+- Biểu tượng chuông với badge đỏ = số thông báo chưa đọc
+- Nhấn chuông → Danh sách thông báo → Đánh dấu đã đọc
+
+### Loại thông báo
+| Loại | Khi nào |
+|------|--------|
+| Sắp đến hạn | 7 ngày trước hạn thanh toán hóa đơn |
+| Quá hạn | Hóa đơn quá hạn thanh toán |
+| Trùng lặp | Phát hiện hóa đơn trùng số/nhà cung cấp |
+
+Hệ thống kiểm tra tự động mỗi giờ, không gửi thông báo trùng trong 24h.
+
+---
+
+## XIII. Câu Hỏi Thường Gặp
+
+**Quên mật khẩu?**
+→ Liên hệ admin. Hiện chưa có tính năng tự reset.
+
+**Không thấy KH vừa tạo?**
+→ F5 tải lại trang. Hoặc kiểm tra bộ lọc loại KH (DN/CN).
+
+**Báo cáo DOCX hiện placeholder thay vì dữ liệu?**
+→ Vào **Mapping** kiểm tra trường đã có giá trị chưa. Sau đó vào **Template** → **Build & Export** → chạy **Build** lại.
+
+**OnlyOffice không mở được?**
+→ Hệ thống tự chuyển sang editor Eigenpal. Liên hệ admin nếu cần OnlyOffice.
+
+**Import XLSX không nhận file?**
+→ Đảm bảo file đúng format. Thử mở file bằng Excel kiểm tra trước.
+
+**Viewer không thể chỉnh sửa?**
+→ Đúng. Viewer chỉ có quyền xem. Liên hệ admin nâng quyền lên Editor.
+
+**Muốn khôi phục dữ liệu cũ?**
+→ Vào **Tác vụ hệ thống** → **Nhập file** → Chọn file backup JSON đã xuất trước đó.
+
+---
+
+**Phiên bản:** v2.0.0 | **Cập nhật:** Tháng 3/2026

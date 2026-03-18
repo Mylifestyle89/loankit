@@ -4,6 +4,146 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ## [Unreleased]
 
+## [v2.0.0] - 2026-03-19
+
+### Major Release - KHCN Implementation Complete
+
+#### New KHCN Customer Module
+- **Customer Detail Page Redesign**
+  - Tabbed interface for customer info, collateral, co-borrowers, credit info, loans
+  - KHCN-specific fields (individual customer data)
+  - Branch and staff management per customer
+  - Document checklist for compliance tracking
+
+#### Loan Plan Management
+- **XLSX Loan Plan Parser**
+  - Auto-detect column headers (Tên, Chi phí, Lãi suất, etc.)
+  - Parse multi-row cost tables from Excel
+  - Validate amounts and calculation formulas
+  - Import with data preview before save
+
+#### Collateral Management (7 Asset Categories)
+- **Asset Types:**
+  - `tai_san` - Land/Real estate with legal docs
+  - `ts_qsd` - Usufruct land rights
+  - `ts_glvd` - Legal document assets
+  - `ts_ptgt` - Educational purpose assets
+  - `bv` - Collateral/Guarantee items
+  - `bt3_1` - Standard protection asset variant 1
+  - `bt3_2` - Standard protection asset variant 2
+- **Form-based data entry** with type-specific fields
+- **Display component** showing all collateral by category
+- **Amendment support** for prior contract collateral
+
+#### Disbursement Module with Template Generation
+- **Template-based DOCX generation**
+  - UNC (Undertaking Note) template
+  - BCDXGN (Disbursement Report) template
+  - Multi-asset section cloning - repeater blocks auto-replicate for each collateral item
+  - Auto-populate customer, loan, collateral, cost data
+- **DOCX Preview capability**
+  - View generated DOCX before download
+  - Edit inline if needed via OnlyOffice
+  - Download or save to system
+
+#### OCR Document Scanner
+- **Document capture from images/PDFs**
+  - Auto-detect document type (CMND, financial statements, etc.)
+  - Extract text and structured data
+  - Field suggestion via OCR pipeline
+  - Review and confirm extracted data
+  - Batch processing support
+
+#### Active Loan Selector
+- **Loan selection widget** for quick access to active loans
+- **Pre-populate disbursement forms** with loan details
+- **Status filtering** (active, completed, cancelled)
+
+#### Layout Redesign
+- **Responsive grid layout** for desktop/tablet/mobile
+- **Collapsible sections** for better mobile UX
+- **Enhanced navigation** with breadcrumbs
+- **Dark mode support** across all new KHCN pages
+
+#### BK Multi-Asset Import
+- **BK file parser** for bulk customer import
+- **Map BK fields** to KHCN customer model
+- **Preserve asset relationships** during import
+- **Conflict resolution** for duplicate customers
+
+#### Prior Contract Fields & Collateral Amendments
+- **Prior contract tracking** - Link previous loan contracts
+- **Collateral amendment support** - Track changes to collateral over time
+- **Amendment metadata** (date, reason, status)
+
+### Changed (v2.0.0)
+- `src/app/report/customers/[id]/page.tsx` - Redesigned customer detail with tabs
+- `src/app/report/customers/[id]/loan-plans/` - New loan plan pages with XLSX parser
+- `prisma/schema.prisma` - Added KHCN-specific models and relationships
+- `src/app/report/loans/[id]/disbursements/` - New disbursement pages with template generation
+- `/src/app/report/customers/[id]/components/` - Multiple new KHCN-specific components
+
+### Migration Notes
+- Existing customers remain compatible with new KHCN fields
+- Old reports continue to work (backward compatible)
+- Some fields optional for non-KHCN customers
+
+---
+
+## [Phase 57] - 2026-03-14
+
+### Added - Multi-Asset DOCX Clone Section Rendering
+
+#### Multi-Asset Section Cloning
+- **Repeater block support** in DOCX templates
+- **Auto-generate sections** for each collateral item
+- **Field mapping** for repeater rows (asset type, value, legal docs, etc.)
+- **Proper section breaks** to avoid layout issues
+
+#### Template Configuration
+- **Define repeater zones** in DOCX via placeholder markers
+- **Map source data** to repeater fields
+- **Support nested repeaters** (collateral items with sub-documents)
+
+#### Rendering Engine
+- **Clone section logic** - Duplicate and populate section for each item
+- **Placeholder replacement** in cloned sections
+- **Cascade data** from parent (collateral) to child (documents)
+
+### Changed (Phase 57)
+- `src/services/disbursement-report.service.ts` - Multi-asset section cloning logic
+- `src/services/report-generation-engine.ts` - Enhanced placeholder replacement for repeaters
+
+---
+
+## [Phase 56] - 2026-03-14
+
+### Added - KHCN Collateral Data Builders & Template Registry
+
+#### Collateral Data Builders
+- **CollateralBuilder class** - Type-safe collateral data construction
+- **Asset-specific builders** for each of 7 categories
+- **Validation layer** for collateral data (required fields, format checks)
+- **Serialization** for storage and reporting
+
+#### Template Registry
+- **TemplateRegistry** - Central repository for DOCX template metadata
+- **Template discovery** - Auto-scan templates directory
+- **Template versioning** - Track template versions
+- **Template associations** - Link templates to loan types, collateral types, etc.
+
+#### Configuration System
+- **KHCN config schema** - Define available asset types, required fields
+- **Field mapping config** - Map template placeholders to data fields
+- **Validation rules** per asset type
+
+### Changed (Phase 56)
+- `src/services/collateral-builder.ts` - New data builder
+- `src/services/template-registry.ts` - New template registry
+- `src/config/khcn-config.ts` - New configuration schema
+
+---
+
 ## [Phase 53] - 2026-03-09
 
 ### Added - Authentication & RBAC System (Better Auth v1.5.4)
@@ -437,6 +577,9 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 | Version | Date | Notes |
 |---------|------|-------|
+| v2.0.0 | 2026-03-19 | KHCN Implementation Complete - Collateral, Loan Plans, Disbursement Module, OCR, Layout Redesign |
+| v1.9.1 | 2026-03-14 | Multi-Asset DOCX Clone Section Rendering |
+| v1.9.0 | 2026-03-14 | KHCN Collateral Data Builders & Template Registry |
 | v1.8.0 | 2026-03-09 | Authentication & RBAC System (Better Auth v1.5.4) |
 | v1.7.0 | 2026-03-07 | Toolbar Revamp with Modal-Based Selection |
 | v1.6.0 | 2026-03-06 | Invoice Deadline Email Notifications |
@@ -505,14 +648,22 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ## Future Roadmap Items
 
+- [x] KHCN customer detail page redesign (completed v2.0.0)
+- [x] XLSX loan plan parser with auto-detect (completed v2.0.0)
+- [x] Collateral management (7 asset categories) (completed v2.0.0)
+- [x] Disbursement module with template generation (completed v2.0.0)
+- [x] OCR document scanner (completed v2.0.0)
+- [x] DOCX preview before download (completed v2.0.0)
+- [x] Multi-asset DOCX section cloning (completed v1.9.1)
 - [x] Role-based access control (admin, viewer roles) (completed Phase 53)
-- [ ] Audit logging for financial transactions (Phase 54)
-- [ ] Enhanced admin UI (edit user, deactivate account, view sessions) (Phase 54)
 - [x] Email notifications for invoice deadlines (completed Phase 49)
+- [ ] Phase 58: Enhanced admin UI (edit user, deactivate account, view sessions)
+- [ ] Phase 59: Audit logging for financial transactions
+- [ ] Phase 60: Financial dashboards and analytics
 - [ ] Batch invoice import/export
 - [ ] Invoice payment tracking
-- [ ] Financial dashboards and analytics
 - [ ] Multi-organization support
 - [ ] PostgreSQL migration guide
 - [ ] Job queue for background tasks (deadline scheduler, PDF generation)
 - [ ] Mobile app
+- [ ] Advanced reporting with pivot tables

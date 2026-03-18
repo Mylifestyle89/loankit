@@ -16,7 +16,6 @@ import {
   Receipt,
   BookOpen,
   LogOut,
-  UserCog,
   Menu,
   X,
 } from "lucide-react";
@@ -76,7 +75,6 @@ export default function ReportLayout({ children }: { children: React.ReactNode }
     { href: "/report/invoices", label: t("nav.invoices"), icon: Receipt },
     { href: "/report/mapping", label: t("nav.mapping"), icon: PenLine },
     { href: "/report/template", label: t("nav.template"), icon: FileText },
-    { href: "/report/users", label: t("auth.users"), icon: UserCog },
     { href: "/report/system-operations", label: t("nav.systemOps"), icon: Settings },
     { href: "/report/guide", label: t("nav.guide"), icon: BookOpen },
   ];

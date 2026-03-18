@@ -2,10 +2,27 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Markdown from "react-markdown";
-import { Download, BookOpen, FileText } from "lucide-react";
+import rehypeSlug from "rehype-slug";
+import remarkGfm from "remark-gfm";
+import { Download, BookOpen, FileText, Users, UserCheck, Landmark, Wallet, Receipt, FileOutput, LayoutTemplate, Bell, UserCog, Wrench, HelpCircle } from "lucide-react";
 import { asBlob } from "html-docx-js-typescript";
 
 import { useLanguage } from "@/components/language-provider";
+
+/** Quick-link items for the overview grid — anchors match rehype-slug IDs from user-guide.md */
+const QUICK_LINKS = [
+  { icon: Users, label: "Khách hàng", desc: "Danh sách, tạo mới, import", anchor: "#iii-khách-hàng" },
+  { icon: UserCheck, label: "Chi tiết KH", desc: "Hồ sơ, TSBĐ, đồng vay, tín dụng", anchor: "#iv-chi-tiết-khách-hàng" },
+  { icon: Landmark, label: "Phương án vay", desc: "Loan plans, import XLSX", anchor: "#v-phương-án-vay-loan-plans" },
+  { icon: Wallet, label: "Khoản vay", desc: "Hợp đồng, giải ngân, báo cáo", anchor: "#vi-khoản-vay" },
+  { icon: Receipt, label: "Hóa đơn", desc: "Theo dõi hạn, nhóm theo GN", anchor: "#vii-hóa-đơn" },
+  { icon: FileOutput, label: "Mapping", desc: "Ánh xạ trường, OCR, AI", anchor: "#viii-mapping-ánh-xạ-trường-dữ-liệu" },
+  { icon: LayoutTemplate, label: "Template", desc: "Mẫu DOCX, Build & Export", anchor: "#ix-template-quản-lý-mẫu-docx" },
+  { icon: UserCog, label: "Người dùng", desc: "Tài khoản, phân quyền", anchor: "#x-người-dùng" },
+  { icon: Wrench, label: "Tác vụ HT", desc: "Backup, restore JSON", anchor: "#xi-tác-vụ-hệ-thống" },
+  { icon: Bell, label: "Thông báo", desc: "Cảnh báo hóa đơn tự động", anchor: "#xii-thông-báo" },
+  { icon: HelpCircle, label: "FAQ", desc: "Câu hỏi thường gặp", anchor: "#xiii-câu-hỏi-thường-gặp" },
+] as const;
 
 export default function GuidePage() {
   const { t } = useLanguage();
@@ -27,6 +44,13 @@ export default function GuidePage() {
   useEffect(() => { void loadGuide(); }, [loadGuide]);
 
   const proseRef = useRef<HTMLDivElement>(null);
+
+  /** Scroll to anchor within the prose container */
+  function scrollToAnchor(anchor: string) {
+    const id = anchor.replace("#", "");
+    const el = proseRef.current?.querySelector(`[id="${id}"]`);
+    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
 
   async function handleDownloadDocx() {
     if (!proseRef.current) return;
@@ -79,6 +103,18 @@ export default function GuidePage() {
         </div>
       </div>
 
+      {/* Quick-link grid */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+        {QUICK_LINKS.map(({ icon: Icon, label, desc, anchor }) => (
+          <button key={anchor} type="button" onClick={() => scrollToAnchor(anchor)}
+            className="group flex flex-col items-start gap-1.5 rounded-xl border border-zinc-200 dark:border-white/[0.07] bg-white dark:bg-[#1a1a1a] p-3.5 text-left shadow-sm transition-all hover:border-violet-300 dark:hover:border-violet-500/20 hover:shadow-md hover:-translate-y-0.5">
+            <Icon className="h-5 w-5 text-violet-500 dark:text-violet-400 group-hover:text-violet-600 dark:group-hover:text-violet-300 transition-colors" />
+            <span className="text-sm font-semibold text-zinc-800 dark:text-slate-200">{label}</span>
+            <span className="text-xs text-zinc-500 dark:text-slate-400 leading-snug">{desc}</span>
+          </button>
+        ))}
+      </div>
+
       {/* Markdown content */}
       <div className="rounded-2xl border border-zinc-200 dark:border-white/[0.07] bg-white dark:bg-[#161616] p-6 shadow-sm">
         <div ref={proseRef} className="prose prose-zinc dark:prose-invert max-w-none
@@ -88,8 +124,9 @@ export default function GuidePage() {
           prose-strong:text-zinc-800 prose-strong:dark:text-slate-200
           prose-blockquote:border-violet-300 prose-blockquote:dark:border-violet-500/30
           prose-code:text-violet-700 prose-code:dark:text-violet-300 prose-code:bg-violet-50 prose-code:dark:bg-violet-500/10 prose-code:px-1 prose-code:rounded
-          prose-li:marker:text-violet-500">
-          <Markdown>{content}</Markdown>
+          prose-li:marker:text-violet-500
+          prose-table:text-sm prose-th:bg-violet-50 prose-th:dark:bg-violet-500/10 prose-th:font-semibold prose-td:py-2">
+          <Markdown rehypePlugins={[rehypeSlug]} remarkPlugins={[remarkGfm]}>{content}</Markdown>
         </div>
       </div>
     </section>
