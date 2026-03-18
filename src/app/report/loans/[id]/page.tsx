@@ -11,7 +11,7 @@ import { DisbursementFormModal } from "@/components/invoice-tracking/disbursemen
 import { BeneficiaryModal } from "@/components/invoice-tracking/beneficiary-modal";
 import { DisbursementReportModal } from "@/components/invoice-tracking/disbursement-report-modal";
 import { KhcnDisbursementReportModal } from "@/components/invoice-tracking/khcn-disbursement-report-modal";
-import { AddInvoiceFromLoanModal } from "@/components/invoice-tracking/add-invoice-from-loan-modal";
+import { InvoiceFormModal } from "@/components/invoice-tracking/invoice-form-modal";
 import { PaginationControls } from "@/components/invoice-tracking/pagination-controls";
 import { DisbursementTable, type DisbursementRow } from "@/components/invoice-tracking/loan-detail-disbursement-table";
 import { ArrowLeft, Banknote, CheckCircle, Layers, Zap } from "lucide-react";
@@ -354,7 +354,7 @@ export default function LoanDetailPage() {
       )}
 
       {invoiceTarget && (
-        <AddInvoiceFromLoanModal
+        <InvoiceFormModal
           disbursementId={invoiceTarget.disbursementId}
           beneficiaryLineId={invoiceTarget.lineId}
           beneficiaryName={invoiceTarget.name}

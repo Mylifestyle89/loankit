@@ -1,9 +1,8 @@
 "use client";
 
-import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useSearchParams } from "next/navigation";
-import { useLanguage } from "@/components/language-provider";
-
+import { Suspense } from "react";
+import { useMappingPageLogic } from "./hooks/useMappingPageLogic";
+import { buildInternalFieldKey } from "./helpers";
 
 import { ValidationResultPanel } from "./components/ValidationResultPanel";
 import { MappingModals } from "./components/MappingModals";
@@ -20,390 +19,77 @@ import { OcrReviewModal } from "./components/Modals/OcrReviewModal";
 import { SnapshotRestoreModal } from "./components/Modals/SnapshotRestoreModal";
 import { SystemLogCard } from "./components/SystemLogCard";
 import { FinancialAnalysisModal } from "@/components/FinancialAnalysisModal";
-import { useFieldCatalogImport } from "./hooks/useFieldCatalogImport";
-import { useFieldTemplates } from "./hooks/useFieldTemplates";
-import { useGroupManagement } from "./hooks/useGroupManagement";
-import { useMappingApi } from "./hooks/useMappingApi";
-import { useAutoSaveSnapshot } from "./hooks/useAutoSaveSnapshot";
-import type {
-  OcrProcessResponse,
-  OcrSuggestionMap,
-  RepeaterSuggestionItem,
-  RepeaterSuggestionMap,
-} from "./types";
-import {
-  buildInternalFieldKey,
-  normalizeFieldCatalogForSchema,
-  slugifyBusinessText,
-  toInternalType,
-  normalizeInputByType,
-  typeLabelKey,
-  TypeLabelMap,
-} from "./helpers";
-import { computeEffectiveValues } from "@/core/use-cases/formula-processor";
-import { buildGroupedFieldTree } from "@/core/use-cases/mapping-engine";
-import { useModalStore } from "@/lib/report/use-modal-store";
-
-// ── Stores ──────────────────────────────────────────────────────────────────
-import { useMappingDataStore } from "./stores/use-mapping-data-store";
-import { useOcrStore } from "./stores/use-ocr-store";
-import { useUiStore } from "./stores/use-ui-store";
 import { useCustomerStore } from "./stores/use-customer-store";
 import { useFieldTemplateStore } from "./stores/use-field-template-store";
-import { useGroupUiStore } from "./stores/use-group-ui-store";
-import { useUndoStore } from "./stores/use-undo-store";
-import { useFieldUsageStore } from "./stores/use-field-usage-store";
-import { useMappingDispatches } from "./hooks/useMappingDispatches";
-import { useMappingComputed } from "./hooks/useMappingComputed";
-import { useFieldGroupActions } from "./hooks/useFieldGroupActions";
-import { useTemplateActions } from "./hooks/useTemplateActions";
-import { useAiOcrActions } from "./hooks/useAiOcrActions";
-import { useDragAndDrop } from "./hooks/useDragAndDrop";
-import { useMappingEffects } from "./hooks/useMappingEffects";
+import { useUiStore } from "./stores/use-ui-store";
+import { useOcrStore } from "./stores/use-ocr-store";
 
 function MappingPageContent() {
-  const { t } = useLanguage();
-  const searchParams = useSearchParams();
-
-  const [financialAnalysisOpen, setFinancialAnalysisOpen] = useState(false);
-  const [snapshotRestoreOpen, setSnapshotRestoreOpen] = useState(false);
-  const [customerPickerOpen, setCustomerPickerOpen] = useState(false);
-  const [templatePickerOpen, setTemplatePickerOpen] = useState(false);
-  const sidebarOpen = useUiStore((s) => s.sidebarOpen);
-  const toggleSidebar = useUiStore((s) => s.toggleSidebar);
-
-  // Hidden file input for toolbar Upload button
-  const toolbarUploadRef = useRef<HTMLInputElement>(null);
-  useAutoSaveSnapshot();
-
-  // ── Reactive store subscriptions ──────────────────────────────────────────
-  const mappingText = useMappingDataStore((s) => s.mappingText);
-  const aliasText = useMappingDataStore((s) => s.aliasText);
-  const validation = useMappingDataStore((s) => s.validation);
-  const activeVersionId = useMappingDataStore((s) => s.activeVersionId);
-  const versions = useMappingDataStore((s) => s.versions);
-  const fieldCatalog = useMappingDataStore((s) => s.fieldCatalog);
-  const values = useMappingDataStore((s) => s.values);
-  const formulas = useMappingDataStore((s) => s.formulas);
-
-  const ocrProcessing = useOcrStore((s) => s.ocrProcessing);
-  const ocrSuggestionsByField = useOcrStore((s) => s.ocrSuggestionsByField);
-  const repeaterSuggestionsByGroup = useOcrStore((s) => s.repeaterSuggestionsByGroup);
-  const ocrLogs = useOcrStore((s) => s.ocrLogs);
-  const lastOcrMeta = useOcrStore((s) => s.lastOcrMeta);
-
-  const { loading, saving, message, error } = useUiStore((s) => s.status);
-  const { searchTerm, showUnmappedOnly, showTechnicalKeys, selectedGroup } = useUiStore(
-    (s) => s.filters,
-  );
   const {
-    addingField: addingFieldModal,
-    importingCatalog,
-    functionList: functionListModalOpen,
-    importGroup: importGroupModalOpen,
-    ocrReview: ocrReviewModalOpen,
-    deleteMaster,
-  } = useUiStore((s) => s.modals);
-  const {
-    newField,
-    formulaFieldKey: formulaModalFieldKey,
-    importGroupTemplateId,
-    importGroupPath,
-    importGroupPrompt,
-  } = useUiStore((s) => s.context);
-
-  const customers = useCustomerStore((s) => s.customers);
-  const loadingCustomers = useCustomerStore((s) => s.loadingCustomers);
-  const selectedCustomerId = useCustomerStore((s) => s.selectedCustomerId);
-
-  const fieldTemplates = useFieldTemplateStore((s) => s.fieldTemplates);
-  const allFieldTemplates = useFieldTemplateStore((s) => s.allFieldTemplates);
-  const loadingFieldTemplates = useFieldTemplateStore((s) => s.loadingFieldTemplates);
-  const selectedFieldTemplateId = useFieldTemplateStore((s) => s.selectedFieldTemplateId);
-  const editingFieldTemplatePicker = useFieldTemplateStore((s) => s.editingFieldTemplatePicker);
-  const editPickerTemplateId = useFieldTemplateStore((s) => s.editPickerTemplateId);
-  const editingFieldTemplateId = useFieldTemplateStore((s) => s.editingFieldTemplateId);
-  const editingFieldTemplateName = useFieldTemplateStore((s) => s.editingFieldTemplateName);
-  const savingEditedTemplate = useFieldTemplateStore((s) => s.savingEditedTemplate);
-  const promotingToMaster = useFieldTemplateStore((s) => s.promotingToMaster);
-
-  const editingGroup = useGroupUiStore((s) => s.editingGroup);
-  const editingGroupValue = useGroupUiStore((s) => s.editingGroupValue);
-  const editingGroupError = useGroupUiStore((s) => s.editingGroupError);
-  const customGroups = useGroupUiStore((s) => s.customGroups);
-  const changingFieldGroup = useGroupUiStore((s) => s.changingFieldGroup);
-  const changingFieldGroupValue = useGroupUiStore((s) => s.changingFieldGroupValue);
-  const changingFieldGroupNewName = useGroupUiStore((s) => s.changingFieldGroupNewName);
-  const mergingGroups = useGroupUiStore((s) => s.mergingGroups);
-  const mergeSourceGroups = useGroupUiStore((s) => s.mergeSourceGroups);
-  const mergeTargetGroup = useGroupUiStore((s) => s.mergeTargetGroup);
-  const mergeOrderMode = useGroupUiStore((s) => s.mergeOrderMode);
-  const mergeGroupsError = useGroupUiStore((s) => s.mergeGroupsError);
-  const collapsedParentGroups = useGroupUiStore((s) => s.collapsedParentGroups);
-
-  const undoHistory = useUndoStore((s) => s.undoHistory);
-
-  // ── Refs ──────────────────────────────────────────────────────────────────
-  const ocrLogEndRef = useRef<HTMLDivElement | null>(null);
-
-  const openModal = useModalStore((s) => s.openModal);
-  const openedAiSuggestionFromQueryRef = useRef(false);
-
-  // ── Dispatch-compatible store setters ─────────────────────────────────────
-  const {
-    setEditPickerTemplateId,
-    setEditingGroupValue,
-    setChangingFieldGroupValue,
-    setChangingFieldGroupNewName,
-    setMergeTargetGroup,
-    setMergeGroupsError,
-    setMergeOrderMode,
-    setAddingFieldModal,
-    setNewField,
-    setSelectedGroup,
-    setEditingGroup,
-    setEditingGroupError,
-    setFunctionListModalOpen,
-    setFormulaModalFieldKey,
-    setFormulas,
-    setImportGroupTemplateId,
-    setImportGroupPath,
-    setEditingFieldTemplateName,
-    setShowTechnicalKeys,
-    setSearchTerm,
-    setShowUnmappedOnly,
-  } = useMappingDispatches();
-
-  const selectedMappingInstanceId = useMemo(() => {
-    if (!selectedCustomerId) return undefined;
-    const candidateId = selectedFieldTemplateId || editingFieldTemplateId;
-    if (!candidateId) return undefined;
-    // In customer mode, only IDs from fieldTemplates are mapping-instance IDs.
-    return fieldTemplates.some((template) => template.id === candidateId) ? candidateId : undefined;
-  }, [editingFieldTemplateId, fieldTemplates, selectedCustomerId, selectedFieldTemplateId]);
-
-  // ── Hooks ─────────────────────────────────────────────────────────────────
-  const {
-    loadData,
-    loadCustomers,
-    saveDraft,
-    getAutoProcessAssets,
-    uploadAutoProcessFile,
-    runSmartAutoBatch,
-    openAutoProcessOutputFolder,
-  } = useMappingApi({ t, selectedMappingInstanceId });
-
-  const {
-    loadFieldTemplates,
-    loadAllFieldTemplates,
-    applySelectedFieldTemplate,
-    openEditFieldTemplatePicker,
-    closeEditFieldTemplatePicker,
-    startEditingExistingTemplate,
-    stopEditingFieldTemplate,
-    assignSelectedFieldTemplate,
-    saveEditedFieldTemplate,
-    promoteToMasterTemplate,
-  } = useFieldTemplates({ t });
-
-  const {
-    openImportGroupPrompt,
-    resolveImportGroupPrompt,
-    handleApplyBkImport,
-    openDeleteGenericTemplateModal,
-    closeDeleteMasterModal,
-    confirmDeleteMasterTemplate,
-    openCreateMasterTemplateModal,
-    createTemplateFromImport,
-    openImportGroupModal,
-    closeImportGroupModal,
-    applyImportGroupToCurrentTemplate,
-  } = useTemplateActions({
     t,
-    loadAllFieldTemplates,
-    loadFieldTemplates,
-    stopEditingFieldTemplate,
-  });
-
-  // ── Computed values ───────────────────────────────────────────────────────
-  const {
-    aiPlaceholders,
-    aiPlaceholderLabels,
-    visibleFieldCatalog,
-    hasContext,
-    groupedFieldTree,
-    parentGroups,
-    effectiveValues,
-    sampleByField,
-    confidenceByField,
-    typeLabels,
-    pendingOcrCount,
-  } = useMappingComputed({
-    t,
-    mappingText,
-    aliasText,
-    fieldCatalog,
-    values,
-    formulas,
-    activeVersionId,
-    versions,
-    editingFieldTemplateId,
-    selectedCustomerId,
-    selectedFieldTemplateId,
-    customGroups,
-    searchTerm,
-    showUnmappedOnly,
-    ocrSuggestionsByField,
-  });
-
-  // ── Field & Group management actions ───────────────────────────────────────
-  const {
-    undoLastAction,
-    openChangeGroupModal,
-    onManualChange,
-    moveField,
-    onFieldLabelChange,
-    onFieldTypeChange,
-    addNewField,
-    prepareAddFieldForGroup,
-    deleteField,
-    deleteGroup,
-  } = useFieldGroupActions({ t });
-  const {
-    existingGroups,
-    mergePreview,
-    closeChangeGroupModal,
-    applyChangeGroup,
-    toggleRepeaterGroup,
-    addRepeaterItem,
-    removeRepeaterItem,
-    onRepeaterItemChange,
-    openEditGroupModal,
-    openCreateSubgroupModal,
-    closeEditGroupModal,
-    toggleParentCollapse,
-    collapseAllGroups,
-    expandAllGroups,
-    applyEditGroup,
-    openMergeGroupsModal,
-    closeMergeGroupsModal,
-    toggleMergeSourceGroup,
-    applyMergeGroups,
-  } = useGroupManagement({ t, groupedFieldTree, parentGroups });
-
-  // ── Callbacks ─────────────────────────────────────────────────────────────
-
-  const { sensors, handleDragEnd } = useDragAndDrop();
-
-  const {
-    runAiSuggestion,
-    handleOcrFileSelected,
-    handleApplyFinancialValues,
-  } = useAiOcrActions({
-    t,
-    aiPlaceholders,
-    aiPlaceholderLabels,
-    handleApplyBkImport,
-    runSmartAutoBatch,
-    getAutoProcessAssets,
-    uploadAutoProcessFile,
-    openAutoProcessOutputFolder,
-  });
-
-  const { handleImportFieldFile } = useFieldCatalogImport({
-    t,
-    onMissingGroupPrompt: openImportGroupPrompt,
-    onCreateTemplateFromImport: createTemplateFromImport,
-  });
-
-  // ── useEffects ────────────────────────────────────────────────────────────
-  useMappingEffects({
-    loadData,
-    loadCustomers,
-    loadAllFieldTemplates,
-    loadFieldTemplates,
-    runAiSuggestion,
-    searchParams,
-    selectedCustomerId,
-    editingFieldTemplateId,
+    financialAnalysisOpen, setFinancialAnalysisOpen,
+    snapshotRestoreOpen, setSnapshotRestoreOpen,
+    customerPickerOpen, setCustomerPickerOpen,
+    templatePickerOpen, setTemplatePickerOpen,
+    toolbarUploadRef,
     ocrLogEndRef,
-  });
+    sidebarOpen, toggleSidebar,
+    aliasText, validation, fieldCatalog, formulas,
+    ocrSuggestionsByField, repeaterSuggestionsByGroup,
+    ocrLogs, lastOcrMeta,
+    loading, saving, message, error,
+    searchTerm, showUnmappedOnly, showTechnicalKeys, selectedGroup,
+    addingFieldModal, functionListModalOpen,
+    importGroupModalOpen, ocrReviewModalOpen, deleteMaster,
+    newField, formulaModalFieldKey, importGroupTemplateId,
+    importGroupPath, importGroupPrompt,
+    selectedCustomerId,
+    allFieldTemplates, editingFieldTemplatePicker,
+    editPickerTemplateId, editingFieldTemplateId, editingFieldTemplateName,
+    savingEditedTemplate, promotingToMaster,
+    editingGroup, editingGroupValue, editingGroupError,
+    changingFieldGroup, changingFieldGroupValue, changingFieldGroupNewName,
+    mergingGroups, mergeSourceGroups, mergeTargetGroup,
+    mergeOrderMode, mergeGroupsError, collapsedParentGroups,
+    undoHistory,
+    setEditPickerTemplateId, setEditingGroupValue,
+    setChangingFieldGroupValue, setChangingFieldGroupNewName,
+    setMergeTargetGroup, setMergeGroupsError, setMergeOrderMode,
+    setAddingFieldModal, setNewField, setSelectedGroup,
+    setEditingGroup, setEditingGroupError, setFunctionListModalOpen,
+    setFormulaModalFieldKey, setFormulas, setImportGroupTemplateId,
+    setImportGroupPath, setEditingFieldTemplateName,
+    setShowTechnicalKeys, setSearchTerm, setShowUnmappedOnly,
+    saveDraft,
+    applySelectedFieldTemplate, openEditFieldTemplatePicker,
+    closeEditFieldTemplatePicker, startEditingExistingTemplate,
+    stopEditingFieldTemplate, assignSelectedFieldTemplate,
+    closeDeleteMasterModal, confirmDeleteMasterTemplate,
+    openCreateMasterTemplateModal, openImportGroupModal, closeImportGroupModal,
+    applyImportGroupToCurrentTemplate, resolveImportGroupPrompt,
+    openDeleteGenericTemplateModal,
+    hasContext, groupedFieldTree, parentGroups, effectiveValues,
+    sampleByField, confidenceByField, typeLabels, pendingOcrCount,
+    undoLastAction, openChangeGroupModal, onManualChange, moveField,
+    onFieldLabelChange, onFieldTypeChange, addNewField,
+    prepareAddFieldForGroup, deleteField, deleteGroup,
+    existingGroups, mergePreview, closeChangeGroupModal, applyChangeGroup,
+    toggleRepeaterGroup, addRepeaterItem, removeRepeaterItem,
+    onRepeaterItemChange, openEditGroupModal, openCreateSubgroupModal,
+    closeEditGroupModal, toggleParentCollapse, collapseAllGroups,
+    expandAllGroups, applyEditGroup, openMergeGroupsModal,
+    closeMergeGroupsModal, toggleMergeSourceGroup, applyMergeGroups,
+    sensors, handleDragEnd,
+    handleOcrFileSelected, handleApplyFinancialValues,
+    handleImportFieldFile,
+    handleOpenCustomerPicker, handleOpenTemplatePicker,
+    handleUploadDocument, handleOpenFinancialAnalysis,
+    handleOpenOcrReview, handleSaveEditedFieldTemplate,
+    handlePromoteToMasterTemplate, handleOpenFormulaModal,
+    handleAcceptOcrSuggestion, handleDeclineOcrSuggestion,
+    isEditingMaster, mappedFieldCount,
+  } = useMappingPageLogic();
 
-  // ── Fetch field usage map (reverse sync: which templates use which fields) ──
-  const fetchFieldUsage = useFieldUsageStore((s) => s.fetchUsage);
-  useEffect(() => { void fetchFieldUsage(); }, [fetchFieldUsage]);
-
-  // ── Focus field from URL param (quick navigation from Template page) ──────
-  useEffect(() => {
-    const focusKey = searchParams.get("focus");
-    if (!focusKey) return;
-
-    // Wait for DOM to render fields, then scroll + highlight
-    const timer = setTimeout(() => {
-      const row = document.querySelector<HTMLElement>(`[data-field-row="${CSS.escape(focusKey)}"]`);
-      if (!row) return;
-      row.scrollIntoView({ behavior: "smooth", block: "center" });
-      row.classList.add("ring-2", "ring-violet-500", "ring-offset-1", "bg-violet-50/50", "dark:bg-violet-500/10");
-      // Remove highlight after 3 seconds
-      setTimeout(() => {
-        row.classList.remove("ring-2", "ring-violet-500", "ring-offset-1", "bg-violet-50/50", "dark:bg-violet-500/10");
-      }, 3000);
-    }, 500);
-    return () => clearTimeout(timer);
-  }, [searchParams]);
-
-  // ── Ctrl+Z undo shortcut ──────────────────────────────────────────────────
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === "z" && !e.shiftKey) {
-        e.preventDefault();
-        undoLastAction();
-      }
-    };
-    window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
-  }, [undoLastAction]);
-
-  // ── Memoized callbacks to prevent child re-renders ──────────────────────
-  const handleOpenCustomerPicker = useCallback(() => setCustomerPickerOpen(true), []);
-  const handleOpenTemplatePicker = useCallback(() => setTemplatePickerOpen(true), []);
-  const handleUploadDocument = useCallback(() => toolbarUploadRef.current?.click(), []);
-  const handleOpenFinancialAnalysis = useCallback(() => {
-    if (!selectedCustomerId) {
-      useUiStore.getState().setStatus({ error: "Xin hãy chọn khách hàng trước khi sử dụng Phân tích tài chính." });
-      return;
-    }
-    setFinancialAnalysisOpen(true);
-  }, [selectedCustomerId]);
-  const handleOpenOcrReview = useCallback(() => useUiStore.getState().setModals({ ocrReview: true }), []);
-  const handleSaveEditedFieldTemplate = useCallback(() => void saveEditedFieldTemplate(), [saveEditedFieldTemplate]);
-  const handlePromoteToMasterTemplate = useCallback(() => void promoteToMasterTemplate(), [promoteToMasterTemplate]);
-  const handleOpenFormulaModal = useCallback(
-    (fieldKey: string) => useUiStore.getState().setContext({ formulaFieldKey: fieldKey }),
-    [],
-  );
-  const handleAcceptOcrSuggestion = useCallback(
-    (fk: string) => void useOcrStore.getState().acceptSuggestion(fk),
-    [],
-  );
-  const handleDeclineOcrSuggestion = useCallback(
-    (fk: string) => useOcrStore.getState().declineSuggestion(fk),
-    [],
-  );
-
-  const isEditingMaster = useMemo(
-    () => allFieldTemplates.some((i) => i.id === editingFieldTemplateId),
-    [allFieldTemplates, editingFieldTemplateId],
-  );
-
-  const mappedFieldCount = useMemo(() => {
-    if (!fieldCatalog.length) return 0;
-    return fieldCatalog.filter((f) => {
-      return f.field_key && effectiveValues[f.field_key] != null && effectiveValues[f.field_key] !== "";
-    }).length;
-  }, [fieldCatalog, effectiveValues]);
-
-  // ── Render ────────────────────────────────────────────────────────────────
   if (loading) {
     return (
       <div className="flex items-center justify-center py-16">
@@ -432,7 +118,7 @@ function MappingPageContent() {
           onOpenFinancialAnalysis={handleOpenFinancialAnalysis}
           onToggleSidebar={toggleSidebar}
           hasCustomer={!!selectedCustomerId}
-          hasTemplate={!!selectedFieldTemplateId || !!editingFieldTemplateId}
+          hasTemplate={!!selectedCustomerId || !!editingFieldTemplateId}
           sidebarOpen={sidebarOpen}
         />
 
@@ -612,9 +298,7 @@ function MappingPageContent() {
         typedName={deleteMaster.typedName}
         setTypedName={(v) => {
           const curr = useUiStore.getState().modals.deleteMaster;
-          useUiStore
-            .getState()
-            .setModals({ deleteMaster: { ...curr, typedName: v } });
+          useUiStore.getState().setModals({ deleteMaster: { ...curr, typedName: v } });
         }}
         confirmLabel="Xóa template mẫu"
         loading={deleteMaster.loading}

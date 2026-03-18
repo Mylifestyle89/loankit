@@ -124,12 +124,14 @@ export function DisbursementTable({ disbursements, loading, t, onEdit, onReport,
                   <td className="px-4 py-2">
                     <div className="flex items-center gap-1.5">
                       <BeneficiaryInvoiceBadge line={b} />
-                      <button type="button"
-                        onClick={() => onAddInvoice({ disbursementId: d.id, lineId: b.id, name: b.beneficiaryName, amount: b.amount })}
-                        title="Bổ sung hóa đơn"
-                        className="cursor-pointer rounded p-1 text-zinc-400 hover:text-violet-600 hover:bg-violet-50/50 dark:hover:text-violet-400 dark:hover:bg-violet-900/20 transition-colors">
-                        <Plus className="h-3.5 w-3.5" />
-                      </button>
+                      {b.invoiceStatus !== "has_invoice" && (
+                        <button type="button"
+                          onClick={() => onAddInvoice({ disbursementId: d.id, lineId: b.id, name: b.beneficiaryName, amount: b.amount })}
+                          title="Bổ sung hóa đơn"
+                          className="cursor-pointer rounded p-1 text-zinc-400 hover:text-violet-600 hover:bg-violet-50/50 dark:hover:text-violet-400 dark:hover:bg-violet-900/20 transition-colors">
+                          <Plus className="h-3.5 w-3.5" />
+                        </button>
+                      )}
                     </div>
                   </td>
                   {i === 0 && <DisbursementActions d={d} onEdit={onEdit} onReport={onReport} t={t} rowSpan={rowSpan} />}

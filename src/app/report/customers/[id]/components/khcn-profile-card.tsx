@@ -95,7 +95,7 @@ function InfoChip({ label, value }: { label: string; value: string }) {
 
 function StatBadge({ label, value, sub, className }: { label: string; value: string; sub?: string; className?: string }) {
   return (
-    <div className={`rounded-lg px-3 py-1.5 text-sm ${className ?? "bg-zinc-50 dark:bg-white/[0.04] text-zinc-700 dark:text-slate-300"}`}>
+    <div className={`rounded-lg border border-zinc-200/60 dark:border-white/[0.06] px-3 py-1.5 text-sm ${className ?? "bg-zinc-50 dark:bg-white/[0.04] text-zinc-700 dark:text-slate-300"}`}>
       <span className="text-xs text-zinc-400 dark:text-slate-500">{label}</span>
       <div className="font-semibold tabular-nums">{value}</div>
       {sub && <span className="text-[10px] text-zinc-400 dark:text-slate-500">{sub}</span>}

@@ -7,6 +7,12 @@ import { fmtNumber, parseNumber, formatDateInput, dmy2iso } from "@/lib/invoice-
 
 type Props = {
   disbursementId: string;
+  /** Optional: link invoice to a specific beneficiary line */
+  beneficiaryLineId?: string;
+  /** Optional: pre-fill supplier name from beneficiary */
+  beneficiaryName?: string;
+  /** Optional: pre-fill amount (remaining amount to supplement) */
+  defaultAmount?: number;
   onClose: () => void;
   onCreated: () => void;
 };
@@ -15,16 +21,17 @@ const inputCls =
   "mt-1 w-full rounded-md border border-zinc-300 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] px-3 py-2 text-sm transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40 focus-visible:border-violet-400";
 const labelCls = "text-xs font-medium text-zinc-600 dark:text-slate-400";
 
-export function InvoiceFormModal({ disbursementId, onClose, onCreated }: Props) {
+export function InvoiceFormModal({ disbursementId, beneficiaryLineId, beneficiaryName, defaultAmount, onClose, onCreated }: Props) {
   const { t } = useLanguage();
   const [invoiceNumber, setInvoiceNumber] = useState("");
-  const [supplierName, setSupplierName] = useState("");
-  const [amount, setAmount] = useState("");
+  const [supplierName, setSupplierName] = useState(beneficiaryName ?? "");
+  const [amount, setAmount] = useState(defaultAmount ? fmtNumber(String(defaultAmount)) : "");
   const [issueDate, setIssueDate] = useState("");
   const [dueDate, setDueDate] = useState("");
   const [customDeadline, setCustomDeadline] = useState("");
   const [notes, setNotes] = useState("");
   const [saving, setSaving] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState("");
   const [duplicateWarning, setDuplicateWarning] = useState("");
 
@@ -60,6 +67,7 @@ export function InvoiceFormModal({ disbursementId, onClose, onCreated }: Props) 
           dueDate: isoDue,
           customDeadline: isoDeadline,
           notes: notes || undefined,
+          disbursementBeneficiaryId: beneficiaryLineId || undefined,
         }),
       });
       const data = await res.json();
@@ -67,11 +75,13 @@ export function InvoiceFormModal({ disbursementId, onClose, onCreated }: Props) 
         setError(data.error ?? "Failed to create invoice.");
         return;
       }
+      setSubmitted(true);
+      onCreated();
       if (data.duplicateWarning) {
         setDuplicateWarning(data.duplicateWarning);
+      } else {
+        onClose();
       }
-      onCreated();
-      if (!data.duplicateWarning) onClose();
     } catch {
       setError("Network error.");
     } finally {
@@ -89,6 +99,11 @@ export function InvoiceFormModal({ disbursementId, onClose, onCreated }: Props) 
           </button>
         </div>
         <form onSubmit={handleSubmit} className="space-y-3 px-6 py-4">
+          {beneficiaryName && (
+            <div className="rounded-lg bg-zinc-50 dark:bg-white/5 px-3 py-2 text-sm text-zinc-600 dark:text-slate-400">
+              Đơn vị thụ hưởng: <span className="font-medium text-zinc-800 dark:text-slate-200">{beneficiaryName}</span>
+            </div>
+          )}
           {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
           {duplicateWarning && (
             <div className="rounded-lg border border-yellow-300 bg-yellow-50 px-4 py-2 text-sm text-yellow-800 dark:border-yellow-500/30 dark:bg-yellow-500/10 dark:text-yellow-400">
@@ -131,7 +146,7 @@ export function InvoiceFormModal({ disbursementId, onClose, onCreated }: Props) 
             <button type="button" onClick={onClose} className="cursor-pointer rounded-lg px-4 py-2 text-sm text-zinc-500 dark:text-slate-400 transition-colors duration-150 hover:bg-zinc-100 dark:hover:bg-white/[0.06] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40">
               {t("common.cancel")}
             </button>
-            <button type="submit" disabled={saving} className="cursor-pointer rounded-lg bg-gradient-to-r from-violet-600 to-fuchsia-600 px-4 py-2 text-sm font-medium text-white transition-all duration-150 hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40">
+            <button type="submit" disabled={saving || submitted} className="cursor-pointer rounded-lg bg-gradient-to-r from-violet-600 to-fuchsia-600 px-4 py-2 text-sm font-medium text-white transition-all duration-150 hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40">
               {saving ? t("loans.loading") : t("common.save")}
             </button>
           </div>

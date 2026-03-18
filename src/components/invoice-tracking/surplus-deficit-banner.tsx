@@ -1,6 +1,6 @@
 "use client";
 
-import { useLanguage } from "@/components/language-provider";
+import { Banknote, FileCheck, AlertTriangle } from "lucide-react";
 import { fmtDisplay as fmt } from "@/lib/invoice-tracking-format-helpers";
 
 type Props = {
@@ -10,26 +10,82 @@ type Props = {
   label: "surplus" | "deficit" | "balanced";
 };
 
-const STYLES: Record<string, string> = {
-  balanced: "border-green-300 bg-green-50 text-green-800 dark:border-green-500/30 dark:bg-green-500/10 dark:text-green-400",
-  surplus: "border-blue-300 bg-blue-50 text-blue-800 dark:border-blue-500/30 dark:bg-blue-500/10 dark:text-blue-400",
-  deficit: "border-red-300 bg-red-50 text-red-800 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-400",
-};
-
-export function SurplusDeficitBanner({ disbursementAmount, totalInvoice, diff, label }: Props) {
-  const { t } = useLanguage();
-  const labelText =
-    label === "balanced" ? t("disbursements.balanced")
-    : label === "surplus" ? t("disbursements.surplus")
-    : t("disbursements.deficit");
+export function SurplusDeficitBanner({ disbursementAmount, totalInvoice, diff }: Props) {
+  const remaining = Math.abs(diff);
+  const isFullyCovered = totalInvoice >= disbursementAmount;
 
   return (
-    <div className={`flex items-center justify-between rounded-lg border px-4 py-3 text-sm font-medium ${STYLES[label]}`}>
-      <span>{t("disbursements.amount")}: {fmt(disbursementAmount)} VND</span>
-      <span>|</span>
-      <span>{t("invoices.totalAmount")}: {fmt(totalInvoice)} VND</span>
-      <span>|</span>
-      <span>{labelText}: {fmt(Math.abs(diff))} VND</span>
+    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+      {/* Số tiền giải ngân */}
+      <div className="rounded-xl border border-violet-200 dark:border-violet-500/20 bg-violet-50/50 dark:bg-violet-500/5 p-4">
+        <div className="flex items-center gap-2.5">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-violet-100 dark:bg-violet-500/15">
+            <Banknote className="h-4.5 w-4.5 text-violet-600 dark:text-violet-400" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-xs text-zinc-500 dark:text-slate-400">Số tiền giải ngân</p>
+            <p className="text-sm font-bold tabular-nums text-violet-700 dark:text-violet-300 truncate">{fmt(disbursementAmount)} <span className="text-xs font-medium">VND</span></p>
+          </div>
+        </div>
+      </div>
+
+      {/* Giá trị hóa đơn đã bổ sung */}
+      <div className={`rounded-xl border p-4 ${
+        isFullyCovered
+          ? "border-emerald-200 dark:border-emerald-500/20 bg-emerald-50/50 dark:bg-emerald-500/5"
+          : "border-amber-200 dark:border-amber-500/20 bg-amber-50/50 dark:bg-amber-500/5"
+      }`}>
+        <div className="flex items-center gap-2.5">
+          <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${
+            isFullyCovered
+              ? "bg-emerald-100 dark:bg-emerald-500/15"
+              : "bg-amber-100 dark:bg-amber-500/15"
+          }`}>
+            <FileCheck className={`h-4.5 w-4.5 ${
+              isFullyCovered
+                ? "text-emerald-600 dark:text-emerald-400"
+                : "text-amber-600 dark:text-amber-400"
+            }`} />
+          </div>
+          <div className="min-w-0">
+            <p className="text-xs text-zinc-500 dark:text-slate-400">Giá trị HĐ đã bổ sung</p>
+            <p className={`text-sm font-bold tabular-nums truncate ${
+              isFullyCovered
+                ? "text-emerald-700 dark:text-emerald-300"
+                : "text-amber-700 dark:text-amber-300"
+            }`}>{fmt(totalInvoice)} <span className="text-xs font-medium">VND</span></p>
+          </div>
+        </div>
+      </div>
+
+      {/* Giá trị hóa đơn còn thiếu */}
+      <div className={`rounded-xl border p-4 ${
+        remaining === 0
+          ? "border-emerald-200 dark:border-emerald-500/20 bg-emerald-50/50 dark:bg-emerald-500/5"
+          : "border-red-200 dark:border-red-500/20 bg-red-50/50 dark:bg-red-500/5"
+      }`}>
+        <div className="flex items-center gap-2.5">
+          <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${
+            remaining === 0
+              ? "bg-emerald-100 dark:bg-emerald-500/15"
+              : "bg-red-100 dark:bg-red-500/15"
+          }`}>
+            <AlertTriangle className={`h-4.5 w-4.5 ${
+              remaining === 0
+                ? "text-emerald-600 dark:text-emerald-400"
+                : "text-red-600 dark:text-red-400"
+            }`} />
+          </div>
+          <div className="min-w-0">
+            <p className="text-xs text-zinc-500 dark:text-slate-400">Giá trị HĐ còn thiếu</p>
+            <p className={`text-sm font-bold tabular-nums truncate ${
+              remaining === 0
+                ? "text-emerald-700 dark:text-emerald-300"
+                : "text-red-700 dark:text-red-300"
+            }`}>{remaining === 0 ? "Đã đủ" : `${fmt(remaining)}`} <span className="text-xs font-medium">{remaining > 0 ? "VND" : ""}</span></p>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

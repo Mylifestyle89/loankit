@@ -5,6 +5,7 @@ import { Download, Loader2 } from "lucide-react";
 import { BaseModal } from "@/components/ui/BaseModal";
 import { DocxPreviewModal } from "@/components/docx-preview-modal";
 import { KHCN_DISBURSEMENT_TEMPLATES, type KhcnDisbursementTemplateKey } from "@/services/khcn-disbursement-template-config";
+import { saveFileWithPicker } from "@/lib/save-file-with-picker";
 
 type Props = {
   loanId: string;
@@ -48,7 +49,6 @@ export function KhcnDisbursementReportModal({ loanId, disbursementId, onClose }:
 
   const handleDownload = useCallback(async () => {
     if (!preview) return;
-    const { saveFileWithPicker } = await import("@/lib/save-file-with-picker");
     const blob = new Blob([preview.buffer], { type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" });
     await saveFileWithPicker(blob, preview.fileName);
   }, [preview]);

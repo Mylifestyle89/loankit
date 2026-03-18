@@ -88,7 +88,10 @@ export const invoiceService = {
 
     const realInvoices = await prisma.invoice.findMany({
       where: { ...where, ...customerWhere },
-      include: { disbursement: disbursementInclude },
+      include: {
+        disbursement: disbursementInclude,
+        disbursementBeneficiary: { select: { amount: true, invoiceAmount: true } },
+      },
       orderBy: { createdAt: "desc" },
     });
 
@@ -185,11 +188,12 @@ export const invoiceService = {
       }
     }
 
-    // Check duplicate by BOTH invoiceNumber + supplierName
+    // Check duplicate by invoiceNumber + supplierName within same disbursement
     const existing = await prisma.invoice.findFirst({
       where: {
         invoiceNumber: input.invoiceNumber,
         supplierName: input.supplierName,
+        disbursementId: input.disbursementId,
       },
     });
 

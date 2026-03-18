@@ -6,6 +6,7 @@ import { Download, FileText, Check, Sparkles } from "lucide-react";
 import { DocxPreviewModal } from "@/components/docx-preview-modal";
 import { METHOD_OPTIONS } from "@/lib/loan-plan/loan-plan-constants";
 import { KhcnPlaceholderPanel } from "./khcn-placeholder-panel";
+import { saveFileWithPicker } from "@/lib/save-file-with-picker";
 
 type DocTemplate = { path: string; name: string };
 type Category = { key: string; label: string; isAsset?: boolean; templates: DocTemplate[] };
@@ -121,7 +122,6 @@ export function KhcnDocChecklist({
 
   const handlePreviewDownload = useCallback(async () => {
     if (!preview) return;
-    const { saveFileWithPicker } = await import("@/lib/save-file-with-picker");
     const blob = new Blob([preview.buffer], {
       type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
     });

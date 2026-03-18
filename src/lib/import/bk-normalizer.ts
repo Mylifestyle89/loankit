@@ -59,8 +59,9 @@ export function parseVietnameseNumber(value: string): string {
 }
 
 /**
- * Parse Vietnamese date format (dd/mm/yyyy) → ISO (yyyy-mm-dd)
- * "07/08/2023" → "2023-08-07"
+ * Normalize Vietnamese date format to dd/mm/yyyy.
+ * Accepts dd/mm/yyyy, dd-mm-yyyy — normalizes separator to "/".
+ * "07-08-2023" → "07/08/2023", "7/8/2023" → "07/08/2023"
  */
 export function parseVietnameseDate(value: string): string {
   if (isEmptyValue(value)) return "";
@@ -74,7 +75,7 @@ export function parseVietnameseDate(value: string): string {
   const d = parseInt(day, 10).toString().padStart(2, "0");
   const m = parseInt(month, 10).toString().padStart(2, "0");
 
-  return `${year}-${m}-${d}`;
+  return `${d}/${m}/${year}`;
 }
 
 /**

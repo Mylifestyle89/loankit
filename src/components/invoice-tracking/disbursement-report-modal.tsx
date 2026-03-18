@@ -6,17 +6,20 @@ import { FileText, Download, Loader2 } from "lucide-react";
 import { BaseModal } from "@/components/ui/BaseModal";
 import { useLanguage } from "@/components/language-provider";
 
-type TemplateKey = "bcdx" | "giay_nhan_no" | "danh_muc_ho_so" | "in_unc";
+type TemplateKey = "bcdx" | "giay_nhan_no" | "danh_muc_ho_so" | "in_unc" | "cam_ket_bo_sung_chung_tu";
 
 const TEMPLATES: { key: TemplateKey; label: string; description: string }[] = [
   { key: "bcdx", label: "Báo cáo đề xuất giải ngân", description: "Mẫu 2268.09" },
   { key: "giay_nhan_no", label: "Giấy nhận nợ", description: "Mẫu 2268.10" },
   { key: "danh_muc_ho_so", label: "Danh mục hồ sơ vay vốn", description: "Mẫu 2899.01" },
   { key: "in_unc", label: "In UNC", description: "Mẫu in ủy nhiệm chi (per đơn vị thụ hưởng)" },
+  { key: "cam_ket_bo_sung_chung_tu", label: "Cam kết bổ sung chứng từ", description: "Cam kết bổ sung chứng từ giải ngân" },
 ];
 
 // Override fields per template (only fields NOT in DB)
-const OVERRIDE_FIELDS: Record<TemplateKey, { key: string; label: string; placeholder?: string }[]> = {
+type OverrideField = { key: string; label: string; placeholder?: string; type?: "currency" };
+
+const OVERRIDE_FIELDS: Record<TemplateKey, OverrideField[]> = {
   bcdx: [
     { key: "Mã CN", label: "Mã chi nhánh", placeholder: "VD: CN01" },
     { key: "Tên gọi in hoa", label: "Tên chi nhánh (in hoa)", placeholder: "VD: CHI NHÁNH TỈNH LÂM ĐỒNG" },
@@ -25,6 +28,8 @@ const OVERRIDE_FIELDS: Record<TemplateKey, { key: string; label: string; placeho
     { key: "GN.Số dư bảo lãnh", label: "Số dư bảo lãnh", placeholder: "0" },
     { key: "HĐTD.Lãi suất quá hạn", label: "Lãi suất nợ quá hạn" },
     { key: "HĐTD.Lãi suất chậm trả", label: "Lãi chậm trả" },
+    { key: "Tổng giá trị TSBĐ", label: "Tổng giá trị tài sản bảo đảm", placeholder: "VD: 3.588.940.000", type: "currency" },
+    { key: "Phạm vi bảo đảm", label: "Phạm vi bảo đảm", placeholder: "VD: 5.000.000.000", type: "currency" },
     { key: "Địa danh", label: "Địa danh", placeholder: "VD: Lâm Đồng" },
   ],
   giay_nhan_no: [
@@ -50,6 +55,13 @@ const OVERRIDE_FIELDS: Record<TemplateKey, { key: string; label: string; placeho
     { key: "Tên người dùng", label: "Tên người giao/nhận" },
   ],
   in_unc: [],
+  cam_ket_bo_sung_chung_tu: [
+    { key: "Loại giấy tờ tùy thân", label: "Loại giấy tờ tùy thân", placeholder: "CMND / CCCD" },
+    { key: "CMND", label: "Số CMND/CCCD" },
+    { key: "nơi cấp", label: "Nơi cấp" },
+    { key: "ngày cấp", label: "Ngày cấp", placeholder: "dd/mm/yyyy" },
+    { key: "Tên chi nhánh/PGD", label: "Tên chi nhánh/PGD" },
+  ],
 };
 
 type Props = {
@@ -89,8 +101,15 @@ export function DisbursementReportModal({ loanId, disbursementId, onClose }: Pro
 
   const overrideFields = OVERRIDE_FIELDS[selectedTemplate];
 
-  const handleOverrideChange = useCallback((key: string, value: string) => {
-    setOverrides((prev) => ({ ...prev, [key]: value }));
+  const handleOverrideChange = useCallback((key: string, value: string, isCurrency?: boolean) => {
+    if (isCurrency) {
+      // Strip non-digits, format with dot separators
+      const digits = value.replace(/\D/g, "");
+      const formatted = digits.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+      setOverrides((prev) => ({ ...prev, [key]: formatted }));
+    } else {
+      setOverrides((prev) => ({ ...prev, [key]: value }));
+    }
   }, []);
 
   const handleGenerate = async () => {
@@ -204,7 +223,7 @@ export function DisbursementReportModal({ loanId, disbursementId, onClose }: Pro
                   <input
                     type="text"
                     value={overrides[field.key] ?? ""}
-                    onChange={(e) => handleOverrideChange(field.key, e.target.value)}
+                    onChange={(e) => handleOverrideChange(field.key, e.target.value, field.type === "currency")}
                     placeholder={field.placeholder}
                     className="w-full rounded-md border border-zinc-200 dark:border-white/10 bg-white dark:bg-[#1a1a1a] px-3 py-1.5 text-sm text-zinc-800 dark:text-slate-200 placeholder:text-zinc-400 dark:placeholder:text-slate-500 focus:border-violet-400 focus:outline-none focus:ring-1 focus:ring-violet-500/40"
                   />

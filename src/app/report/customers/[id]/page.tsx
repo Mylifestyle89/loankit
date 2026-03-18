@@ -5,20 +5,16 @@ import { useParams, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
 import { useLanguage } from "@/components/language-provider";
-import { SmartField } from "@/components/smart-field";
-import { DropdownOptionsProvider } from "@/lib/hooks/dropdown-options-context";
 
 import { CustomerSummaryCards } from "./components/customer-summary-cards";
 import { CustomerLoansSection } from "./components/customer-loans-section";
 import { CustomerTemplatesSection } from "./components/customer-templates-section";
 import { KhcnDocChecklist } from "./components/khcn-doc-checklist";
 import { CustomerCollateralSection } from "./components/customer-collateral-section";
-import { CustomerCoBorrowerSection } from "./components/customer-co-borrower-section";
-import { CustomerRelatedPersonSection } from "./components/customer-related-person-section";
 import { CustomerBranchStaffSection } from "./components/customer-branch-staff-section";
 import { CustomerCreditInfoSection } from "./components/customer-credit-info-section";
 import { KhcnProfileCard } from "./components/khcn-profile-card";
-import { CustomerDisbursementSection } from "./components/customer-disbursement-section";
+import { CustomerInfoForm } from "./components/customer-info-form";
 
 type FullCustomer = {
   id: string;
@@ -39,6 +35,7 @@ type FullCustomer = {
   phone: string | null;
   bank_account: string | null;
   bank_name: string | null;
+  gender: string | null;
   active_branch_id: string | null;
   relationship_officer: string | null;
   appraiser: string | null;
@@ -63,16 +60,6 @@ type FullCustomer = {
   };
 };
 
-const inputCls =
-  "mt-1 w-full rounded-md border border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] text-zinc-900 dark:text-slate-100 px-3 py-2 shadow-sm transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40";
-
-/** Auto-insert "/" separators as user types a date in dd/mm/yyyy format */
-function formatDateInput(raw: string): string {
-  const digits = raw.replace(/\D/g, "").slice(0, 8);
-  if (digits.length <= 2) return digits;
-  if (digits.length <= 4) return `${digits.slice(0, 2)}/${digits.slice(2)}`;
-  return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
-}
 
 const allTabs = [
   { key: "branch", label: "Nơi cho vay" },
@@ -105,8 +92,9 @@ export default function EditCustomerPage() {
   const [error, setError] = useState("");
   const [activeTab, setActiveTab] = useState<TabKey>(rawTab);
   const [infoSubTab, setInfoSubTab] = useState<"general" | "co-borrower" | "related">("general");
-  const [loansCreditSubTab, setLoansCreditSubTab] = useState<"loans" | "credit" | "disbursement">(rawTab === "credit" ? "credit" : "loans");
+  const [loansCreditSubTab, setLoansCreditSubTab] = useState<"loans" | "credit">(rawTab === "credit" ? "credit" : "loans");
   const [customer, setCustomer] = useState<FullCustomer | null>(null);
+  const [scannerOpen, setScannerOpen] = useState(false);
   const [form, setForm] = useState({
     customer_code: "",
     customer_name: "",
@@ -125,6 +113,7 @@ export default function EditCustomerPage() {
     phone: "",
     bank_account: "",
     bank_name: "",
+    gender: "",
   });
 
   const loadCustomer = useCallback(async () => {
@@ -158,6 +147,7 @@ export default function EditCustomerPage() {
       phone: c.phone ?? "",
       bank_account: c.bank_account ?? "",
       bank_name: c.bank_name ?? "",
+      gender: c.gender ?? "",
     });
     setLoading(false);
     } catch (err) {
@@ -214,6 +204,7 @@ export default function EditCustomerPage() {
         phone: form.phone.trim() || null,
         bank_account: form.bank_account.trim() || null,
         bank_name: form.bank_name.trim() || null,
+        gender: form.gender || null,
       }),
     });
     const data = (await res.json()) as { ok: boolean; error?: string };
@@ -290,155 +281,18 @@ export default function EditCustomerPage() {
 
       {/* Tab: Info (with subtabs) */}
       {activeTab === "info" && (
-        <div className="space-y-4">
-          {/* Info subtabs */}
-          <div className="flex gap-1">
-            {([
-              { key: "general", label: "Thông tin chung" },
-              { key: "co-borrower", label: "Người đồng vay" },
-              { key: "related", label: "Người liên quan" },
-            ] as const).map((st) => (
-              <button
-                key={st.key}
-                type="button"
-                onClick={() => setInfoSubTab(st.key)}
-                className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
-                  infoSubTab === st.key
-                    ? "bg-violet-100 text-violet-700 dark:bg-violet-500/15 dark:text-violet-400"
-                    : "text-zinc-500 dark:text-slate-400 hover:bg-zinc-100 dark:hover:bg-white/[0.05]"
-                }`}
-              >
-                {st.label}
-              </button>
-            ))}
-          </div>
-
-          {/* Subtab: Thông tin chung */}
-          {infoSubTab === "general" && (
-            <DropdownOptionsProvider prefix="customer.">
-            <form
-              onSubmit={handleSubmit}
-              className="max-w-2xl space-y-4 rounded-2xl border border-zinc-200 dark:border-white/[0.07] bg-white dark:bg-[#161616] p-6 shadow-sm"
-            >
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-medium">Loại KH:</span>
-                <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ${
-                  form.customer_type === "individual"
-                    ? "bg-emerald-50 text-emerald-700 ring-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-400"
-                    : "bg-blue-50 text-blue-700 ring-blue-500/20 dark:bg-blue-500/10 dark:text-blue-400"
-                }`}>
-                  {form.customer_type === "individual" ? "Cá nhân" : "Doanh nghiệp"}
-                </span>
-              </div>
-              <label className="block">
-                <span className="text-sm font-medium">{t("customers.code")} *</span>
-                <SmartField fieldKey="customer.customer_code" value={form.customer_code} onChange={(val) => setForm((p) => ({ ...p, customer_code: val }))} className={inputCls} />
-              </label>
-              <label className="block">
-                <span className="text-sm font-medium">{t("customers.name")} *</span>
-                <SmartField fieldKey="customer.customer_name" value={form.customer_name} onChange={(val) => setForm((p) => ({ ...p, customer_name: val }))} className={inputCls} />
-              </label>
-              <label className="block">
-                <span className="text-sm font-medium">{t("customers.address")}</span>
-                <SmartField fieldKey="customer.address" value={form.address} onChange={(val) => setForm((p) => ({ ...p, address: val }))} className={inputCls} />
-              </label>
-              {form.customer_type === "corporate" && (
-                <>
-                  <label className="block">
-                    <span className="text-sm font-medium">Ngành nghề SXKD</span>
-                    <SmartField fieldKey="customer.main_business" value={form.main_business} onChange={(val) => setForm((p) => ({ ...p, main_business: val }))} className={inputCls} />
-                  </label>
-                  <label className="block">
-                    <span className="text-sm font-medium">Vốn điều lệ</span>
-                    <SmartField fieldKey="customer.charter_capital" value={String(form.charter_capital)} onChange={(val) => setForm((p) => ({ ...p, charter_capital: val }))} className={inputCls} />
-                  </label>
-                  <label className="block">
-                    <span className="text-sm font-medium">Người đại diện pháp luật</span>
-                    <SmartField fieldKey="customer.legal_representative_name" value={form.legal_representative_name} onChange={(val) => setForm((p) => ({ ...p, legal_representative_name: val }))} className={inputCls} />
-                  </label>
-                  <label className="block">
-                    <span className="text-sm font-medium">Chức vụ</span>
-                    <SmartField fieldKey="customer.legal_representative_title" value={form.legal_representative_title} onChange={(val) => setForm((p) => ({ ...p, legal_representative_title: val }))} className={inputCls} />
-                  </label>
-                  <label className="block">
-                    <span className="text-sm font-medium">Loại hình tổ chức</span>
-                    <SmartField fieldKey="customer.organization_type" value={form.organization_type} onChange={(val) => setForm((p) => ({ ...p, organization_type: val }))} className={inputCls} />
-                  </label>
-                </>
-              )}
-              {form.customer_type === "individual" && (
-                <>
-                  <div className="grid grid-cols-2 gap-4">
-                    <label className="block">
-                      <span className="text-sm font-medium">CCCD/CMND</span>
-                      <SmartField fieldKey="customer.cccd" value={form.cccd} onChange={(val) => setForm((p) => ({ ...p, cccd: val }))} className={inputCls} />
-                    </label>
-                    <label className="block">
-                      <span className="text-sm font-medium">Năm sinh</span>
-                      <input
-                        value={form.date_of_birth}
-                        onChange={(e) => setForm((p) => ({ ...p, date_of_birth: e.target.value }))}
-                        placeholder="VD: 1990 hoặc 15/03/1990"
-                        className={inputCls}
-                      />
-                    </label>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <label className="block">
-                      <span className="text-sm font-medium">Ngày cấp CCCD</span>
-                      <input
-                        value={form.cccd_issued_date}
-                        onChange={(e) => setForm((p) => ({ ...p, cccd_issued_date: formatDateInput(e.target.value) }))}
-                        placeholder="dd/mm/yyyy"
-                        maxLength={10}
-                        className={inputCls}
-                      />
-                    </label>
-                    <label className="block">
-                      <span className="text-sm font-medium">Nơi cấp CCCD</span>
-                      <SmartField fieldKey="customer.cccd_issued_place" value={form.cccd_issued_place} onChange={(val) => setForm((p) => ({ ...p, cccd_issued_place: val }))} className={inputCls} />
-                    </label>
-                  </div>
-                  <label className="block">
-                    <span className="text-sm font-medium">CMND cũ</span>
-                    <SmartField fieldKey="customer.cccd_old" value={form.cccd_old} onChange={(val) => setForm((p) => ({ ...p, cccd_old: val }))} className={inputCls} />
-                  </label>
-                  <label className="block">
-                    <span className="text-sm font-medium">Số điện thoại</span>
-                    <SmartField fieldKey="customer.phone" value={form.phone} onChange={(val) => setForm((p) => ({ ...p, phone: val }))} className={inputCls} />
-                  </label>
-                  <div className="grid grid-cols-2 gap-4">
-                    <label className="block">
-                      <span className="text-sm font-medium">Số tài khoản</span>
-                      <SmartField fieldKey="customer.bank_account" value={form.bank_account} onChange={(val) => setForm((p) => ({ ...p, bank_account: val }))} className={inputCls} />
-                    </label>
-                    <label className="block">
-                      <span className="text-sm font-medium">Nơi mở tài khoản</span>
-                      <SmartField fieldKey="customer.bank_name" value={form.bank_name} onChange={(val) => setForm((p) => ({ ...p, bank_name: val }))} className={inputCls} />
-                    </label>
-                  </div>
-                </>
-              )}
-              <div className="flex items-center gap-3 pt-2">
-                <button
-                  type="submit"
-                  disabled={saving}
-                  className="cursor-pointer rounded-lg bg-gradient-to-r from-violet-600 to-fuchsia-600 px-5 py-2 text-sm font-medium text-white shadow-sm shadow-violet-500/25 transition-all duration-200 hover:shadow-md hover:shadow-violet-500/30 hover:brightness-110 disabled:opacity-60"
-                >
-                  {saving ? "Đang lưu..." : "Lưu"}
-                </button>
-                {saved && <span className="text-sm text-emerald-600 dark:text-emerald-400">Đã lưu thành công</span>}
-              </div>
-            </form>
-            </DropdownOptionsProvider>
-          )}
-
-          {/* Subtab: Người đồng vay */}
-          {infoSubTab === "co-borrower" && <CustomerCoBorrowerSection customerId={id} />}
-
-          {/* Subtab: Người liên quan */}
-          {infoSubTab === "related" && <CustomerRelatedPersonSection customerId={id} />}
-        </div>
+        <CustomerInfoForm
+          customerId={id}
+          form={form}
+          setForm={setForm}
+          infoSubTab={infoSubTab}
+          setInfoSubTab={setInfoSubTab}
+          saving={saving}
+          saved={saved}
+          scannerOpen={scannerOpen}
+          setScannerOpen={setScannerOpen}
+          handleSubmit={handleSubmit}
+        />
       )}
 
       {/* Tab: Loans (DN only — KHCN uses merged tab) */}
@@ -453,7 +307,6 @@ export default function EditCustomerPage() {
             {([
               { key: "loans" as const, label: "Khoản vay" },
               { key: "credit" as const, label: "Thông tin tín dụng" },
-              { key: "disbursement" as const, label: "Giải ngân" },
             ]).map((st) => (
               <button
                 key={st.key}
@@ -471,12 +324,6 @@ export default function EditCustomerPage() {
           </div>
           {loansCreditSubTab === "loans" && <CustomerLoansSection loans={customer.loans} customerId={id} />}
           {loansCreditSubTab === "credit" && <CustomerCreditInfoSection customerId={id} />}
-          {loansCreditSubTab === "disbursement" && (
-            <CustomerDisbursementSection
-              customerId={id}
-              loanId={customer.loans?.[0]?.id ?? null}
-            />
-          )}
         </div>
       )}
 

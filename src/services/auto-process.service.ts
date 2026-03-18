@@ -2,7 +2,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import * as XLSX from "xlsx";
 
-import { NotFoundError, SystemError, ValidationError } from "@/core/errors/app-error";
+import { NotFoundError, ValidationError } from "@/core/errors/app-error";
 import {
   mapRowsWithSuggestion,
   normalizeDynamicRows,
@@ -12,9 +12,21 @@ import {
   type RootKeyCandidate,
 } from "@/core/use-cases/universal-auto-process-engine";
 import { groupDataByField } from "@/core/use-cases/grouping-engine";
-import { CorruptedTemplateError, DataPlaceholderMismatchError, docxEngine, TemplateNotFoundError } from "@/lib/docx-engine";
+import { docxEngine } from "@/lib/docx-engine";
 import { parseDocxPlaceholderInventory } from "@/lib/report/template-parser";
 import { aiMappingService } from "@/services/ai-mapping.service";
+import {
+  ensureExists,
+  getFileExt,
+  makeJobId,
+  mapDocxError,
+  normalizeRelAssetPath,
+  nowIso,
+  parseMarkdownRows,
+  resolveAssetPath,
+  resolveParentFromGroupedRecord,
+  sanitizePart,
+} from "@/services/auto-process-helpers";
 
 type JobPhase = "idle" | "analyzing" | "ready" | "running" | "completed" | "failed";
 
@@ -61,99 +73,6 @@ type RunInput = {
 };
 
 const jobs = new Map<string, AutoProcessJob>();
-
-function normalizeRelAssetPath(relPath: string): string {
-  const normalized = relPath.replaceAll("\\", "/").trim();
-  if (!normalized) throw new ValidationError("Đường dẫn file không hợp lệ.");
-  if (normalized.includes("..")) throw new ValidationError("Đường dẫn không an toàn.");
-  return normalized;
-}
-
-function resolveAssetPath(relPath: string): string {
-  return path.join(process.cwd(), normalizeRelAssetPath(relPath));
-}
-
-async function ensureExists(relPath: string): Promise<void> {
-  const abs = resolveAssetPath(relPath);
-  try {
-    await fs.access(abs);
-  } catch {
-    throw new NotFoundError(`Không tìm thấy file: ${relPath}`);
-  }
-}
-
-function getFileExt(relPath: string): string {
-  return path.extname(relPath).toLowerCase();
-}
-
-function nowIso(): string {
-  return new Date().toISOString();
-}
-
-function makeJobId(): string {
-  return `auto-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-}
-
-function sanitizePart(input: unknown, fallback: string): string {
-  const raw = String(input ?? "").trim();
-  if (!raw) return fallback;
-  return raw.replace(/[<>:"/\\|?*\u0000-\u001F]/g, "_").replace(/\s+/g, " ").trim() || fallback;
-}
-
-function mapDocxError(error: unknown): never {
-  if (error instanceof TemplateNotFoundError) {
-    throw new ValidationError(`Không tìm thấy file template: ${error.templatePath}`);
-  }
-  if (error instanceof CorruptedTemplateError) {
-    throw new ValidationError(`File DOCX không hợp lệ hoặc bị hỏng: ${error.templatePath}`);
-  }
-  if (error instanceof DataPlaceholderMismatchError) {
-    throw new ValidationError(`Dữ liệu không khớp placeholder của template: ${error.templatePath}`, error.details);
-  }
-  throw new SystemError("DOCX engine failed unexpectedly.", error);
-}
-
-function resolveParentFromGroupedRecord(grouped: Record<string, unknown>, repeatKey: string): Record<string, unknown> {
-  const parent = { ...grouped };
-  const itemsRaw = parent[repeatKey];
-  const items = Array.isArray(itemsRaw) ? (itemsRaw as Array<Record<string, unknown>>) : [];
-  if (items.length > 0) {
-    const first = items[0];
-    for (const [k, v] of Object.entries(first)) {
-      if (!(k in parent) || parent[k] === null || parent[k] === undefined || parent[k] === "") {
-        parent[k] = v;
-      }
-    }
-  }
-  parent[repeatKey] = items;
-  return parent;
-}
-
-function parseMarkdownRows(content: string): DynamicRow[] {
-  const lines = content
-    .split(/\r?\n/g)
-    .map((line) => line.trim())
-    .filter(Boolean);
-  if (lines.length < 2) return [];
-
-  const tableLines = lines.filter((line) => line.includes("|"));
-  if (tableLines.length < 2) return [];
-  const headers = tableLines[0]
-    .split("|")
-    .map((cell) => cell.trim())
-    .filter(Boolean);
-  const bodyLines = tableLines.slice(1).filter((line) => !/^\|?\s*[-:| ]+\|?\s*$/.test(line));
-  const rows: DynamicRow[] = [];
-  for (const line of bodyLines) {
-    const cells = line.split("|").map((cell) => cell.trim());
-    const mapped: DynamicRow = {};
-    headers.forEach((header, index) => {
-      mapped[header] = cells[index] ?? "";
-    });
-    rows.push(mapped);
-  }
-  return rows;
-}
 
 async function readTabularRows(dataPath: string): Promise<{ headers: string[]; rows: DynamicRow[] }> {
   const abs = resolveAssetPath(dataPath);

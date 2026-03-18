@@ -5,6 +5,7 @@ import { Plus, Trash2, Pencil } from "lucide-react";
 import { inputCls, btnCls } from "./shared-form-styles";
 import { SmartField } from "@/components/smart-field";
 import { DropdownOptionsProvider } from "@/lib/hooks/dropdown-options-context";
+import { DocumentScannerDialog } from "./document-scanner-dialog";
 
 type RelatedPersonItem = {
   id: string;
@@ -52,11 +53,12 @@ function RelatedPersonForm({
     setSaving(true);
     setError("");
     try {
-      const url = initial
+      const isEdit = !!(initial?.id);
+      const url = isEdit
         ? `/api/customers/${customerId}/related-persons/${initial.id}`
         : `/api/customers/${customerId}/related-persons`;
       const res = await fetch(url, {
-        method: initial ? "PATCH" : "POST",
+        method: isEdit ? "PATCH" : "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
       });
@@ -161,6 +163,8 @@ export function CustomerRelatedPersonSection({ customerId }: { customerId: strin
   const [items, setItems] = useState<RelatedPersonItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  const [scannerOpen, setScannerOpen] = useState(false);
+  const [scanPrefill, setScanPrefill] = useState<Partial<RelatedPersonItem> | undefined>();
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -185,22 +189,40 @@ export function CustomerRelatedPersonSection({ customerId }: { customerId: strin
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">Người liên quan ({items.length})</h3>
-        <button
-          type="button"
-          onClick={() => setShowForm(true)}
-          className={`${btnCls} inline-flex items-center gap-1.5 bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white shadow-sm shadow-violet-500/25 hover:brightness-110`}
-        >
-          <Plus className="h-3.5 w-3.5" /> Thêm
-        </button>
+        <div className="flex gap-2">
+          <button type="button" onClick={() => setScannerOpen(true)}
+            className={`${btnCls} inline-flex items-center gap-1.5 border border-violet-200 dark:border-violet-500/30 bg-violet-50 dark:bg-violet-500/10 text-violet-700 dark:text-violet-400 hover:bg-violet-100`}>
+            📷 Scan CCCD
+          </button>
+          <button type="button" onClick={() => { setScanPrefill(undefined); setShowForm(true); }}
+            className={`${btnCls} inline-flex items-center gap-1.5 bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white shadow-sm shadow-violet-500/25 hover:brightness-110`}>
+            <Plus className="h-3.5 w-3.5" /> Thêm
+          </button>
+        </div>
       </div>
 
       {showForm && (
         <RelatedPersonForm
           customerId={customerId}
-          onSaved={() => { setShowForm(false); void load(); }}
-          onCancel={() => setShowForm(false)}
+          initial={scanPrefill as RelatedPersonItem | undefined}
+          onSaved={() => { setShowForm(false); setScanPrefill(undefined); void load(); }}
+          onCancel={() => { setShowForm(false); setScanPrefill(undefined); }}
         />
       )}
+
+      <DocumentScannerDialog
+        open={scannerOpen}
+        onClose={() => setScannerOpen(false)}
+        allowedTypes={["cccd"]}
+        onConfirm={({ fields }) => {
+          setScanPrefill({
+            name: fields.full_name ?? "",
+            id_number: fields.cccd_number ?? "",
+            address: fields.place_of_residence ?? "",
+          } as Partial<RelatedPersonItem> as RelatedPersonItem);
+          setShowForm(true);
+        }}
+      />
 
       {items.length === 0 && !showForm ? (
         <div className="rounded-xl border border-dashed border-zinc-300 dark:border-white/[0.08] py-8 text-center">

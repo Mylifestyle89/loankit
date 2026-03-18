@@ -66,6 +66,8 @@ export const PROPERTY_LABELS: Record<string, string> = {
   initial_construction_value: "Giá trị XD ban đầu",
   other_construction: "Công trình XD khác", other_construction_value: "GT công trình XD khác",
   surface_rights_doc: "Giấy tờ quyền bề mặt",
+  house_appraisal_area: "DT định giá nhà", house_unit_price: "Đơn giá nhà",
+  house_appraisal_value: "Thành tiền nhà",
   land_value: "Giá trị đất", house_value: "Giá trị nhà",
   // Hợp đồng bảo đảm
   mortgage_name: "Tên HĐ thế chấp", mortgage_contract: "Số HĐ thế chấp",
@@ -102,6 +104,7 @@ export const FORM_FIELDS: Record<string, { key: string; label: string }[]> = {
     { key: "serial", label: "Số seri" },
     { key: "certificate_issue_date", label: "Ngày cấp GCN" },
     { key: "issuing_authority", label: "Cơ quan cấp" },
+    { key: "registry_number", label: "Số vào sổ" },
     { key: "land_address", label: "Địa chỉ đất" },
     { key: "land_area", label: "Diện tích đất" },
     { key: "land_area_words", label: "Diện tích bằng chữ" },
@@ -168,7 +171,7 @@ export const FORM_FIELDS: Record<string, { key: string; label: string }[]> = {
 /* ── Field grouping keys for form sections ── */
 export const QSD_CERT_KEYS = ["certificate_name", "serial", "certificate_issue_date", "issuing_authority"];
 export const QSD_LAND_KEYS = ["land_address", "land_area", "land_area_words", "lot_number", "map_sheet", "land_purpose", "shared_area", "private_area"];
-export const QSD_HOUSE_KEYS = ["house_type", "construction_area", "floor_area", "house_structure", "house_ownership", "house_level", "floor_number", "house_value", "year_built", "initial_construction_value", "other_construction", "other_construction_value", "surface_rights_doc"];
+export const QSD_HOUSE_KEYS = ["house_type", "construction_area", "floor_area", "house_structure", "house_ownership", "house_level", "floor_number", "house_value", "year_built", "initial_construction_value", "other_construction", "other_construction_value", "surface_rights_doc", "house_appraisal_area", "house_unit_price", "house_appraisal_value"];
 export const QSD_CONTRACT_KEYS = ["mortgage_name", "mortgage_contract", "mortgage_date", "guarantee_registry_place"];
 
 export const DS_VEHICLE_KEYS = ["brand", "engine_number", "chassis_number", "color", "license_plate", "seat_count", "manufacture_year"];
@@ -205,11 +208,12 @@ export const NUMBER_KEYS = new Set([
   "land_area_2", "land_unit_price_2", "land_value_2",
   "land_area_3", "land_unit_price_3", "land_value_3", "insurance_amount",
   "initial_construction_value", "other_construction_value",
+  "house_appraisal_area", "house_unit_price", "house_appraisal_value",
 ]);
 
 /** Number fields that allow decimal input (diện tích, tỷ lệ %) */
 export const DECIMAL_KEYS = new Set([
-  "construction_area", "floor_area", "land_area", "shared_area", "private_area",
+  "construction_area", "floor_area", "land_area", "shared_area", "private_area", "house_appraisal_area",
   "land_area_1", "land_area_2", "land_area_3",
   "max_credit_ratio_land", "max_credit_ratio_attached", "loan_to_value_ratio",
   "interest_rate",

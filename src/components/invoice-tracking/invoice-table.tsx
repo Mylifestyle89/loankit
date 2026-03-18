@@ -14,12 +14,17 @@ type Invoice = {
   customDeadline?: string | null;
   status: string;
   notes?: string | null;
+  disbursementId?: string;
+  disbursementBeneficiaryId?: string;
+  disbursementBeneficiary?: { amount: number; invoiceAmount: number } | null;
 };
 
 type Props = {
   invoices: Invoice[];
   onMarkPaid?: (id: string) => void;
   onDelete?: (id: string) => void;
+  /** Called when user clicks "Bổ sung" on a needs_supplement virtual entry */
+  onSupplement?: (inv: Invoice) => void;
 };
 
 function isDueSoon(dueDate: string): boolean {
@@ -40,7 +45,7 @@ function deadlineCountdown(dueDate: string, status: string): string | null {
   return null;
 }
 
-export function InvoiceTable({ invoices, onMarkPaid, onDelete }: Props) {
+export function InvoiceTable({ invoices, onMarkPaid, onDelete, onSupplement }: Props) {
   const { t } = useLanguage();
 
   if (invoices.length === 0) {
@@ -55,7 +60,7 @@ export function InvoiceTable({ invoices, onMarkPaid, onDelete }: Props) {
             <th className="px-4 py-2.5 font-semibold whitespace-nowrap">{t("invoices.number")}</th>
             <th className="px-4 py-2.5 font-semibold whitespace-nowrap">{t("invoices.supplier")}</th>
             <th className="px-4 py-2.5 font-semibold whitespace-nowrap text-right">{t("invoices.amount")}</th>
-            <th className="px-4 py-2.5 font-semibold whitespace-nowrap">{t("invoices.issueDate")}</th>
+            <th className="px-4 py-2.5 font-semibold whitespace-nowrap text-right">Cần bổ sung</th>
             <th className="px-4 py-2.5 font-semibold whitespace-nowrap">{t("invoices.dueDate")}</th>
             <th className="px-4 py-2.5 font-semibold whitespace-nowrap">{t("invoices.status")}</th>
             <th className="px-4 py-2.5 font-semibold whitespace-nowrap">{t("common.actions")}</th>
@@ -74,7 +79,22 @@ export function InvoiceTable({ invoices, onMarkPaid, onDelete }: Props) {
               <td className="px-4 py-2.5 font-medium whitespace-nowrap">{inv.invoiceNumber}</td>
               <td className="px-4 py-2.5">{inv.supplierName}</td>
               <td className="px-4 py-2.5 text-right tabular-nums">{fmt(inv.amount)}</td>
-              <td className="px-4 py-2.5 whitespace-nowrap">{fmtDate(inv.issueDate)}</td>
+              <td className="px-4 py-2.5 text-right tabular-nums whitespace-nowrap">
+                {(() => {
+                  // For virtual entries: amount = remaining to supplement
+                  if (inv.id.startsWith("virtual-")) {
+                    return <span className="text-red-600 dark:text-red-400 font-medium">{fmt(inv.amount)}</span>;
+                  }
+                  // For real invoices: calc remaining from beneficiary line
+                  const b = inv.disbursementBeneficiary;
+                  if (b) {
+                    const rem = b.amount - b.invoiceAmount;
+                    if (rem <= 0) return <span className="text-emerald-600 dark:text-emerald-400">Đã đủ</span>;
+                    return <span className="text-amber-600 dark:text-amber-400">{fmt(rem)}</span>;
+                  }
+                  return <span className="text-zinc-400">—</span>;
+                })()}
+              </td>
               <td className="px-4 py-2.5 whitespace-nowrap">
                 {fmtDate(inv.customDeadline ?? inv.dueDate)}
                 {(() => {
@@ -91,6 +111,15 @@ export function InvoiceTable({ invoices, onMarkPaid, onDelete }: Props) {
               <td className="px-4 py-2.5"><InvoiceStatusBadge status={inv.status} /></td>
               <td className="px-4 py-2.5">
                 <div className="flex gap-2">
+                  {inv.status === "needs_supplement" && onSupplement && (
+                    <button
+                      type="button"
+                      onClick={() => onSupplement(inv)}
+                      className="cursor-pointer rounded border border-violet-300 dark:border-violet-500/30 px-2 py-1 text-xs text-violet-700 dark:text-violet-400 transition-colors duration-150 hover:bg-violet-50 dark:hover:bg-violet-500/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/50"
+                    >
+                      Bổ sung
+                    </button>
+                  )}
                   {inv.status === "pending" && onMarkPaid && !inv.id.startsWith("virtual-") && (
                     <button
                       type="button"

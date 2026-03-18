@@ -11,6 +11,7 @@ import { ASSET_CATEGORY_KEYS } from "@/lib/loan-plan/khcn-asset-template-registr
 import { numberToVietnameseWords } from "@/lib/number-to-vietnamese-words";
 import { prisma } from "@/lib/prisma";
 import { fmtDate, fmtDateCompact, today } from "@/lib/report/report-date-utils";
+import { fmtN } from "@/lib/report/format-number-vn";
 
 import {
   buildBeneficiaryLoopData,
@@ -117,7 +118,7 @@ export async function buildKhcnReportData(
   if (loan) {
     data["HĐTD.Số HĐ tín dụng"] = loan.contractNumber;
     data["HĐTD.Ngày ký HĐTD"] = fmtDate(loan.startDate);
-    data["HĐTD.Số tiền vay"] = loan.loanAmount;
+    data["HĐTD.Số tiền vay"] = fmtN(loan.loanAmount);
     data["HĐTD.STvay bằng chữ"] = numberToVietnameseWords(loan.loanAmount);
     data["HĐTD.Mục đích vay"] = loan.purpose ?? "";
     data["HĐTD.Thời hạn vay"] = loan.endDate
@@ -127,15 +128,15 @@ export async function buildKhcnReportData(
     // Format lãi suất: 9.5 → "9,5%/năm"
     const rate = loan.interestRate;
     data["HĐTD.Lãi suất vay"] = typeof rate === "number" && rate > 0
-      ? `${parseFloat((rate < 1 ? rate * 100 : rate).toFixed(2)).toString().replace(".", ",")}%/năm`
+      ? `${(rate < 1 ? rate * 100 : rate).toFixed(2).replace(".", ",")}%/năm`
       : "";
     // Lãi suất quá hạn = 150% lãi suất trong hạn (theo quy định Agribank)
     data["HĐTD.Lãi suất quá hạn"] = typeof rate === "number" && rate > 0
-      ? `${parseFloat(((rate < 1 ? rate * 100 : rate) * 1.5).toFixed(2)).toString().replace(".", ",")}%/năm`
+      ? `${((rate < 1 ? rate * 100 : rate) * 1.5).toFixed(2).replace(".", ",")}%/năm`
       : "";
     // Lãi chậm trả = 130% lãi suất trong hạn
     data["HĐTD.Lãi suất chậm trả"] = typeof rate === "number" && rate > 0
-      ? `${parseFloat(((rate < 1 ? rate * 100 : rate) * 1.3).toFixed(2)).toString().replace(".", ",")}%/năm`
+      ? `${((rate < 1 ? rate * 100 : rate) * 1.3).toFixed(2).replace(".", ",")}%/năm`
       : "";
     // Map lending_method enum → tiếng Việt
     const lendingMethodMap: Record<string, string> = {
@@ -147,8 +148,8 @@ export async function buildKhcnReportData(
       the_chap: "Cho vay thế chấp",
     };
     data["HĐTD.Phương thức cho vay"] = lendingMethodMap[loan.loan_method ?? ""] ?? loan.loan_method ?? "";
-    data["HĐTD.Tổng giá trị TSBĐ"] = loan.collateralValue ?? "";
-    data["HĐTD.Tổng nghĩa vụ bảo đảm"] = loan.securedObligation ?? "";
+    data["HĐTD.Tổng giá trị TSBĐ"] = fmtN(loan.collateralValue);
+    data["HĐTD.Tổng nghĩa vụ bảo đảm"] = fmtN(loan.securedObligation);
 
     // Extended HĐTD fields (lending terms, equity, rating, etc.)
     buildLoanExtendedData(loan, data);
@@ -156,8 +157,8 @@ export async function buildKhcnReportData(
     // Latest disbursement snapshot
     const latestDisb = loan.disbursements[0];
     if (latestDisb) {
-      data["GN.Dư nợ hiện tại"] = latestDisb.currentOutstanding ?? 0;
-      data["GN.Số tiền nhận nợ"] = latestDisb.debtAmount ?? latestDisb.amount;
+      data["GN.Dư nợ hiện tại"] = fmtN(latestDisb.currentOutstanding);
+      data["GN.Số tiền nhận nợ"] = fmtN(latestDisb.debtAmount ?? latestDisb.amount);
       data["GN.STNN bằng chữ"] = numberToVietnameseWords(latestDisb.debtAmount ?? latestDisb.amount);
       data["GN.Mục đích"] = latestDisb.purpose ?? "";
       buildDisbursementExtendedData(latestDisb, data);
@@ -230,7 +231,7 @@ export async function buildKhcnReportData(
       }
       if (!data["PA.Lãi suất vay"] && loan.interestRate) {
         const rate = loan.interestRate;
-        data["PA.Lãi suất vay"] = `${parseFloat((rate < 1 ? rate * 100 : rate).toFixed(2))}%/năm`;
+        data["PA.Lãi suất vay"] = `${(rate < 1 ? rate * 100 : rate).toFixed(2).replace(".", ",")}%/năm`;
       }
     }
 
@@ -269,8 +270,10 @@ function flattenUncPlaceholders(
   data["UNC.Số tài khoản"] = b["Số tài khoản"] ?? "";
   data["UNC.Nơi mở tài khoản"] = b["Nơi mở tài khoản"] ?? "";
   const uncAmount = overrides?.["UNC.Số tiền"] || data["GN.Số tiền nhận nợ"] || b["Số tiền"] || "";
-  data["UNC.Số tiền"] = uncAmount;
-  data["UNC.ST bằng chữ"] = overrides?.["UNC.ST bằng chữ"] || (uncAmount ? numberToVietnameseWords(Number(uncAmount)) : "");
+  data["UNC.Số tiền"] = fmtN(uncAmount);
+  // Parse raw number for bằng chữ — strip VN thousands separators first
+  const rawUnc = Number(String(uncAmount).replace(/\./g, "").replace(/,/g, "."));
+  data["UNC.ST bằng chữ"] = overrides?.["UNC.ST bằng chữ"] || (Number.isFinite(rawUnc) && rawUnc > 0 ? numberToVietnameseWords(rawUnc) : "");
   data["UNC.Nội dung"] = b["Nội dung"] ?? overrides?.["UNC.Nội dung"] ?? "";
 }
 

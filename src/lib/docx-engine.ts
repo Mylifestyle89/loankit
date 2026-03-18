@@ -5,235 +5,26 @@ import { spawn } from "node:child_process";
 import Docxtemplater from "docxtemplater";
 import PizZip from "pizzip";
 
-type AliasSpec =
-  | string
-  | string[]
-  | {
-    literal?: unknown;
-    from?: string | string[];
-  };
+import {
+  TemplateNotFoundError,
+  DataPlaceholderMismatchError,
+  CorruptedTemplateError,
+} from "./docx-engine-types";
+import type { FlatTemplateData, DocxTemplateData } from "./docx-engine-types";
+import {
+  isSafeDocxPath,
+  resolveWorkspacePath,
+  normalizeRelPath,
+  mergeAdjacentRuns,
+  toEngineData,
+  ensureDir,
+  tsForFilename,
+  pruneOldBackups,
+} from "./docx-engine-helpers";
 
-export type FlatTemplateData = Record<string, unknown>;
-export type AliasMap = Record<string, AliasSpec>;
-export type DocxTemplateData<TFlat extends FlatTemplateData = FlatTemplateData> =
-  | {
-    flat: TFlat;
-    aliasMap?: AliasMap;
-  }
-  | Record<string, unknown>;
-
-export class TemplateNotFoundError extends Error {
-  constructor(public readonly templatePath: string) {
-    super(`Template not found: ${templatePath}`);
-    this.name = "TemplateNotFoundError";
-  }
-}
-
-export class DataPlaceholderMismatchError extends Error {
-  constructor(public readonly templatePath: string, public readonly details: unknown) {
-    super(`Template placeholders do not match data: ${templatePath}`);
-    this.name = "DataPlaceholderMismatchError";
-  }
-}
-
-export class CorruptedTemplateError extends Error {
-  constructor(public readonly templatePath: string, public readonly details?: unknown) {
-    super(`Template is corrupted or invalid DOCX: ${templatePath}`);
-    this.name = "CorruptedTemplateError";
-  }
-}
-
-function normalizeRelPath(relPath: string): string {
-  return relPath.replaceAll("\\", "/");
-}
-
-function resolveWorkspacePath(relPath: string): string {
-  // If relPath is already absolute, return it as-is (converted to native path separators)
-  if (path.isAbsolute(relPath)) {
-    return relPath;
-  }
-  // Otherwise, join with process.cwd()
-  return path.join(process.cwd(), normalizeRelPath(relPath));
-}
-
-function toTodayLiteral(value: unknown): unknown {
-  if (value === "$TODAY_DDMMYYYY") return new Date().toLocaleDateString("vi-VN");
-  if (value === "$TODAY_DD") return String(new Date().getDate()).padStart(2, "0");
-  if (value === "$TODAY_MM") return String(new Date().getMonth() + 1).padStart(2, "0");
-  if (value === "$TODAY_YYYY") return String(new Date().getFullYear());
-  return value;
-}
-
-function resolveAlias(flatData: Record<string, unknown>, aliasSpec: AliasSpec): unknown {
-  if (typeof aliasSpec === "string") return flatData[aliasSpec];
-  if (Array.isArray(aliasSpec)) {
-    for (const key of aliasSpec) {
-      if (typeof key === "string" && key in flatData) return flatData[key];
-    }
-    return undefined;
-  }
-  if (aliasSpec && typeof aliasSpec === "object") {
-    if ("literal" in aliasSpec) return toTodayLiteral(aliasSpec.literal);
-    if ("from" in aliasSpec) {
-      const from = aliasSpec.from;
-      if (typeof from === "string") return flatData[from];
-      if (Array.isArray(from)) {
-        for (const key of from) {
-          if (typeof key === "string" && key in flatData) return flatData[key];
-        }
-      }
-    }
-  }
-  return undefined;
-}
-
-function applyAliasMap(flatData: Record<string, unknown>, aliasMap: Record<string, AliasSpec>): Record<string, unknown> {
-  const merged = { ...flatData };
-  for (const [field, spec] of Object.entries(aliasMap)) {
-    if (field in merged) continue;
-    const value = resolveAlias(merged, spec);
-    if (value !== undefined) merged[field] = value;
-  }
-  return merged;
-}
-
-function formatScalar(value: unknown): unknown {
-  if (typeof value === "number" && Number.isFinite(value)) {
-    let s = value.toLocaleString("en-US", { maximumFractionDigits: 6 });
-    s = s.replace(/,/g, "_").replace(/\./g, ",").replace(/_/g, ".");
-    return s;
-  }
-  return value;
-}
-
-function deepFormat(value: unknown): unknown {
-  if (Array.isArray(value)) return value.map((item) => deepFormat(item));
-  if (value && typeof value === "object") {
-    const out: Record<string, unknown> = {};
-    for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
-      out[k] = deepFormat(v);
-    }
-    return out;
-  }
-  return formatScalar(value);
-}
-
-// Tạm bỏ hàm unflatten vì gây lỗi map key có chứa dấu "." của docxtemplater
-
-function toEngineData<TFlat extends FlatTemplateData>(data: DocxTemplateData<TFlat>): Record<string, unknown> {
-  if (data && typeof data === "object" && "flat" in data) {
-    const flat = (data.flat ?? {}) as Record<string, unknown>;
-    const aliasMap = (data.aliasMap ?? {}) as Record<string, AliasSpec>;
-    // Bỏ gọi hàm unflatten vì docxtemplater mặc định KHÔNG hỗ trợ phân giải nested object (nếu k dùng angularParser),
-    // do đó các tag dạng thẻ [custom.abc.xyz] sẽ map trực tiếp với key "custom.abc.xyz" ở dạng flat data root.
-    return deepFormat(applyAliasMap(flat, aliasMap)) as Record<string, unknown>;
-  }
-  if (data && typeof data === "object") {
-    return deepFormat(data) as Record<string, unknown>;
-  }
-  return {};
-}
-
-function tsForFilename(date = new Date()): string {
-  const yyyy = String(date.getFullYear());
-  const mm = String(date.getMonth() + 1).padStart(2, "0");
-  const dd = String(date.getDate()).padStart(2, "0");
-  const hh = String(date.getHours()).padStart(2, "0");
-  const mi = String(date.getMinutes()).padStart(2, "0");
-  const ss = String(date.getSeconds()).padStart(2, "0");
-  return `${yyyy}${mm}${dd}-${hh}${mi}${ss}`;
-}
-
-async function ensureDir(dirPath: string): Promise<void> {
-  await fs.mkdir(dirPath, { recursive: true });
-}
-
-async function pruneOldBackups(dirPath: string, keepLatest = 50): Promise<void> {
-  const entries = await fs.readdir(dirPath, { withFileTypes: true });
-  const files = entries
-    .filter((e) => e.isFile() && e.name.toLowerCase().endsWith(".docx"))
-    .map((e) => e.name)
-    .sort();
-  if (files.length <= keepLatest) return;
-  const toDelete = files.slice(0, files.length - keepLatest);
-  await Promise.all(toDelete.map((file) => fs.unlink(path.join(dirPath, file)).catch(() => undefined)));
-}
-
-/**
- * Merge adjacent <w:r> runs with identical <w:rPr> formatting in OOXML.
- * Word often splits placeholder text (especially Vietnamese Đ/đ) across
- * multiple runs, breaking docxtemplater tag detection. This pre-processing
- * step concatenates text of consecutive runs that share the same formatting.
- */
-function mergeAdjacentRuns(xml: string): string {
-  // Fix split placeholders: Word splits [placeholder] across multiple <w:r> runs.
-  // Process each paragraph independently — collect <w:t> texts, find unclosed [,
-  // merge text into the first <w:t> and empty subsequent ones until ] is found.
-
-  return xml.replace(/<w:p\b[^>]*>[\s\S]*?<\/w:p>/g, (paragraph) => {
-    // Quick check: does this paragraph have any [ at all?
-    const textContent = paragraph.replace(/<[^>]+>/g, "");
-    if (!textContent.includes("[")) return paragraph;
-
-    // Collect all <w:t> nodes with their positions within the paragraph
-    type TNode = { start: number; end: number; text: string; tag: string };
-    const tRegex = /(<w:t(?:\s[^>]*)?>)([\s\S]*?)(<\/w:t>)/g;
-    const nodes: TNode[] = [];
-    let m: RegExpExecArray | null;
-    while ((m = tRegex.exec(paragraph)) !== null) {
-      nodes.push({ start: m.index, end: m.index + m[0].length, text: m[2], tag: m[1] });
-    }
-
-    if (nodes.length < 2) return paragraph;
-
-    // Find split placeholders and merge
-    const textMods = nodes.map((n) => ({ ...n, newText: n.text }));
-    for (let i = 0; i < textMods.length; i++) {
-      const cur = textMods[i].newText;
-      // Count unclosed [ in this node
-      let depth = 0;
-      for (const ch of cur) {
-        if (ch === "[") depth++;
-        else if (ch === "]") depth--;
-      }
-      if (depth <= 0) continue;
-
-      // Merge subsequent nodes until all [ are closed
-      for (let j = i + 1; j < textMods.length && depth > 0; j++) {
-        textMods[i].newText += textMods[j].newText;
-        textMods[j].newText = "";
-        for (const ch of nodes[j].text) {
-          if (ch === "[") depth++;
-          else if (ch === "]") depth--;
-        }
-      }
-    }
-
-    // Check if any changes were made
-    const changed = textMods.some((n, idx) => n.newText !== nodes[idx].text);
-    if (!changed) return paragraph;
-
-    // Rebuild paragraph with modified text
-    let result = "";
-    let pos = 0;
-    for (let i = 0; i < nodes.length; i++) {
-      result += paragraph.substring(pos, nodes[i].start);
-      const needSpace = textMods[i].newText.includes(" ");
-      const tOpen = needSpace ? '<w:t xml:space="preserve">' : nodes[i].tag;
-      result += `${tOpen}${textMods[i].newText}</w:t>`;
-      pos = nodes[i].end;
-    }
-    result += paragraph.substring(pos);
-    return result;
-  });
-}
-
-function isSafeDocxPath(relPath: string): boolean {
-  const normalized = normalizeRelPath(relPath);
-  if (!normalized.startsWith("report_assets/")) return false;
-  if (normalized.includes("..")) return false;
-  return normalized.toLowerCase().endsWith(".docx");
-}
+// Re-export types and errors for backward compatibility
+export type { FlatTemplateData, AliasMap, AliasSpec, DocxTemplateData } from "./docx-engine-types";
+export { TemplateNotFoundError, DataPlaceholderMismatchError, CorruptedTemplateError } from "./docx-engine-types";
 
 export const docxEngine = {
   async generateDocx<TFlat extends FlatTemplateData>(
@@ -474,4 +265,3 @@ export const docxEngine = {
     return absDir;
   },
 };
-
