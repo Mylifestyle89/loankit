@@ -16,7 +16,7 @@ const SECURITY_HEADERS = [
       `img-src 'self' data: blob: ${ONLYOFFICE_URL}`,
       `frame-src 'self' ${ONLYOFFICE_URL}`,
       `connect-src 'self' ${ONLYOFFICE_URL}`,
-      "font-src 'self' data:",
+      "font-src 'self' data: https://r2cdn.perplexity.ai",
       "object-src 'none'",
       "base-uri 'self'",
       "form-action 'self'",
@@ -38,6 +38,14 @@ const nextConfig: NextConfig = {
   },
   outputFileTracingExcludes: {
     "/proxy": ["./node_modules/better-sqlite3/**", "./node_modules/@prisma/**", "./prisma/**"],
+  },
+  async redirects() {
+    return [
+      { source: "/report/mapping", destination: "/report/khdn/mapping", permanent: true },
+      { source: "/report/mapping/:path*", destination: "/report/khdn/mapping/:path*", permanent: true },
+      { source: "/report/template", destination: "/report/khdn/template", permanent: true },
+      { source: "/report/template/:path*", destination: "/report/khdn/template/:path*", permanent: true },
+    ];
   },
   async headers() {
     return [

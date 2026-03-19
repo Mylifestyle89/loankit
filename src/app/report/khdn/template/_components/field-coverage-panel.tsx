@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { ChevronDown, ChevronRight, CheckCircle2, AlertCircle, HelpCircle } from "lucide-react";
-import { useMappingDataStore } from "@/app/report/mapping/stores/use-mapping-data-store";
+import { useMappingDataStore } from "@/app/report/khdn/mapping/stores/use-mapping-data-store";
 import { computeEffectiveValues } from "@/core/use-cases/formula-processor";
 import { CoverageProgressBar } from "@/components/coverage-progress-bar";
 import { validateTemplateFields, type ValidatedField } from "@/lib/report/field-sync-utils";
@@ -47,7 +47,7 @@ function FieldSection({
             <li key={f.fieldKey} className="group">
               {f.status === "no-data" ? (
                 <Link
-                  href={`/report/mapping?focus=${encodeURIComponent(f.fieldKey)}`}
+                  href={`/report/khdn/mapping?focus=${encodeURIComponent(f.fieldKey)}`}
                   className="flex items-center gap-2 rounded-md px-2 py-1 text-xs text-amber-700 dark:text-amber-400 transition-colors hover:bg-amber-50 dark:hover:bg-amber-500/10"
                   title={`Nhấn để điền field: ${f.fieldKey}`}
                 >

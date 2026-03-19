@@ -52,13 +52,15 @@ export function MappingVisualToolbar({
         {/* Group 1: Context — Customer + Template */}
         <ToolbarActionButton
           icon={<Users className="h-5 w-5" />}
-          label="Chọn khách hàng"
+          label="Khách hàng"
+          tooltip="Chọn khách hàng để load dữ liệu field tương ứng"
           onClick={onOpenCustomerPicker}
           active={hasCustomer}
         />
         <ToolbarActionButton
           icon={<FileText className="h-5 w-5" />}
-          label="Chọn mẫu dữ liệu"
+          label="Mẫu dữ liệu"
+          tooltip="Chọn mẫu mapping (bộ field) để áp dụng cho khách hàng"
           onClick={onOpenTemplatePicker}
           active={hasTemplate}
         />
@@ -68,12 +70,14 @@ export function MappingVisualToolbar({
         {/* Group 2: Processing — Upload + Financial */}
         <ToolbarActionButton
           icon={<Upload className="h-5 w-5" />}
-          label="Upload tài liệu"
+          label="Upload OCR"
+          tooltip="Upload tài liệu (DOCX, PDF, ảnh) để AI trích xuất và tự điền dữ liệu vào các field"
           onClick={onUploadDocument}
         />
         <ToolbarActionButton
           icon={<BarChart3 className="h-5 w-5" />}
-          label="Phân tích tài chính"
+          label="Tài chính"
+          tooltip="Phân tích dữ liệu tài chính của khách hàng (cần chọn khách hàng trước)"
           onClick={onOpenFinancialAnalysis}
           disabled={!hasCustomer}
         />
@@ -83,7 +87,8 @@ export function MappingVisualToolbar({
         {/* Group 3: Settings — Sidebar */}
         <ToolbarActionButton
           icon={<Settings className="h-5 w-5" />}
-          label="Tùy chọn khác"
+          label="Thêm"
+          tooltip="Mở panel tiện ích: nối nhóm, backup, nối DOCX, import/export dữ liệu"
           onClick={onToggleSidebar}
           active={sidebarOpen}
         />

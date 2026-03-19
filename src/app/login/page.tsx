@@ -11,10 +11,10 @@ function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   // Validate callbackUrl to prevent open redirect attacks
-  const rawCallback = searchParams.get("callbackUrl") || "/report/mapping";
+  const rawCallback = searchParams.get("callbackUrl") || "/report/khdn/mapping";
   const callbackUrl = rawCallback.startsWith("/") && !rawCallback.startsWith("//")
     ? rawCallback
-    : "/report/mapping";
+    : "/report/khdn/mapping";
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");

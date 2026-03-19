@@ -4,7 +4,7 @@ import { useMemo } from "react";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
-export type Customer = { id: string; customer_name: string; customer_code: string };
+export type Customer = { id: string; customer_name: string; customer_code: string; customer_type?: string };
 
 type CustomerState = {
   customers: Customer[];

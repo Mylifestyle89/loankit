@@ -10,7 +10,7 @@ import path from "node:path";
 
 import { AiMappingTimeoutError, ValidationError } from "@/core/errors/app-error";
 import type { FieldCatalogItem } from "@/lib/report/config-schema";
-import type { RepeaterSuggestionItem } from "@/app/report/mapping/types";
+import type { RepeaterSuggestionItem } from "@/app/report/khdn/mapping/types";
 import { aiMappingService } from "@/services/ai-mapping.service";
 import { documentExtractionService } from "@/services/document-extraction.service";
 import { securityService } from "@/services/security.service";

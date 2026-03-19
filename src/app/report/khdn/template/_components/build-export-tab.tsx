@@ -5,7 +5,7 @@ import { Play, Eye, Download, RotateCcw } from "lucide-react";
 
 import { useLanguage } from "@/components/language-provider";
 import { OnlyOfficeEditorModal } from "@/components/onlyoffice-editor-modal";
-import { useMappingDataStore } from "@/app/report/mapping/stores/use-mapping-data-store";
+import { useMappingDataStore } from "@/app/report/khdn/mapping/stores/use-mapping-data-store";
 import { getSignedFileUrl } from "@/lib/report/signed-file-url";
 import { CoverageProgressBar } from "@/components/coverage-progress-bar";
 import { computeFieldCoverage } from "@/lib/report/field-sync-utils";

@@ -4,7 +4,7 @@
  */
 
 import type { FieldCatalogItem } from "@/lib/report/config-schema";
-import type { RepeaterSuggestionItem } from "@/app/report/mapping/types";
+import type { RepeaterSuggestionItem } from "@/app/report/khdn/mapping/types";
 import { aiMappingService } from "@/services/ai-mapping.service";
 import { parseXmlTablesFromDocx, parsePipeTableRows, type ParsedTable } from "./extraction-docx-xml-parser";
 import { toTypedValue } from "./extraction-text-helpers";

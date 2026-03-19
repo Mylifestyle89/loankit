@@ -5,9 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import {
-  Bot,
   PenLine,
-  FileText,
   Users,
   Globe,
   ChevronRight,
@@ -24,7 +22,7 @@ import { useLanguage } from "@/components/language-provider";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { NotificationBell } from "@/components/invoice-tracking/notification-bell";
 import { CustomerContextIndicator } from "@/components/customer-context-indicator";
-import { GlobalModalProvider } from "./mapping/components/GlobalModalProvider";
+import { GlobalModalProvider } from "./khdn/mapping/components/GlobalModalProvider";
 import { authClient } from "@/lib/auth-client";
 import { useCustomerData } from "@/hooks/use-customer-data";
 
@@ -42,8 +40,7 @@ export default function ReportLayout({ children }: { children: React.ReactNode }
   const { t, locale, setLocale } = useLanguage();
   const pathname = usePathname();
   const router = useRouter();
-  const isMappingPage = pathname.startsWith("/report/mapping");
-  const [hovered, setHovered] = useState(false);
+const [hovered, setHovered] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const { data: session } = authClient.useSession();
@@ -73,8 +70,7 @@ export default function ReportLayout({ children }: { children: React.ReactNode }
     { href: "/report/customers", label: t("nav.customers"), icon: Users },
     { href: "/report/loans", label: t("nav.loans"), icon: Banknote },
     { href: "/report/invoices", label: t("nav.invoices"), icon: Receipt },
-    { href: "/report/mapping", label: t("nav.mapping"), icon: PenLine },
-    { href: "/report/template", label: t("nav.template"), icon: FileText },
+    { href: "/report/khdn", label: t("nav.khdn"), icon: PenLine },
     { href: "/report/system-operations", label: t("nav.systemOps"), icon: Settings },
     { href: "/report/guide", label: t("nav.guide"), icon: BookOpen },
   ];
@@ -157,29 +153,6 @@ export default function ReportLayout({ children }: { children: React.ReactNode }
 
         {/* Divider */}
         <div className="mx-2.5 h-px bg-slate-100 dark:bg-white/[0.06]" />
-
-        {/* ── AI CTA ── */}
-        <div className="px-1.5 pt-2.5 pb-1">
-          <button
-            type="button"
-            onClick={() => {
-              if (isMappingPage) {
-                window.dispatchEvent(new CustomEvent("mapping:open-ai-suggestion"));
-                return;
-              }
-              router.push("/report/mapping?openAiSuggestion=1");
-            }}
-            title={t("mapping.aiSuggest.button")}
-            className={`group relative flex w-full items-center overflow-hidden rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-sm transition-all duration-200 hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/60 ${
-              expanded ? "gap-2.5 px-2.5 py-2 justify-start" : "justify-center py-2"
-            }`}
-          >
-            <Bot className="h-4 w-4 shrink-0" />
-            <span className={`${labelCls} text-xs font-medium`}>
-              {t("mapping.aiSuggest.button")}
-            </span>
-          </button>
-        </div>
 
         {/* ── Selected customer indicator ── */}
         <CustomerContextIndicator expanded={expanded} />

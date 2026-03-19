@@ -10,9 +10,11 @@ type CustomerPickerModalProps = {
   isOpen: boolean;
   onClose: () => void;
   onSelect: (customerId: string) => void;
+  /** Filter customers by type (e.g. "corporate" for KHDN, "individual" for KHCN) */
+  customerTypeFilter?: string;
 };
 
-export function CustomerPickerModal({ isOpen, onClose, onSelect }: CustomerPickerModalProps) {
+export function CustomerPickerModal({ isOpen, onClose, onSelect, customerTypeFilter }: CustomerPickerModalProps) {
   const { customers, selectedCustomerId } = useCustomerStore();
   const [query, setQuery] = useState("");
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -47,12 +49,18 @@ export function CustomerPickerModal({ isOpen, onClose, onSelect }: CustomerPicke
   }, [isOpen, onClose]);
 
   const filtered = useMemo(() => {
+    // Filter by customer type first (e.g. "corporate" for KHDN)
+    let list = customerTypeFilter
+      ? customers.filter((c) => c.customer_type === customerTypeFilter)
+      : customers;
     const q = query.trim().toLowerCase();
-    if (!q) return customers;
-    return customers.filter(
-      (c) => c.customer_name.toLowerCase().includes(q) || c.customer_code.toLowerCase().includes(q),
-    );
-  }, [customers, query]);
+    if (q) {
+      list = list.filter(
+        (c) => c.customer_name.toLowerCase().includes(q) || c.customer_code.toLowerCase().includes(q),
+      );
+    }
+    return list;
+  }, [customers, customerTypeFilter, query]);
 
   async function handleCreate() {
     const code = newCode.trim();

@@ -4,7 +4,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 
-import { removeVietnameseTones } from "@/app/report/mapping/helpers";
+import { removeVietnameseTones } from "@/app/report/khdn/mapping/helpers";
 import { docxEngine } from "@/lib/docx-engine";
 import { REPORT_BUILD_META_FILE } from "@/lib/report/constants";
 

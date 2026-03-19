@@ -1,7 +1,7 @@
 "use client";
 
 import { create } from "zustand";
-import type { AutoProcessJob } from "@/app/report/mapping/types";
+import type { AutoProcessJob } from "@/app/report/khdn/mapping/types";
 import type { FieldCatalogItem } from "@/lib/report/config-schema";
 import type { ApplyAiSuggestionPayload } from "@/core/use-cases/apply-ai-suggestion";
 

@@ -56,7 +56,7 @@ export default function Home() {
               </p>
               <div className="absolute bottom-12 left-1/2 -translate-x-1/2">
                 <Link
-                  href="/report/mapping"
+                  href="/report/khdn"
                   className="landing-button-pulse group relative inline-flex items-center gap-2 overflow-hidden rounded-2xl border border-white/20 bg-white/10 px-8 py-3.5 text-sm font-medium tracking-wide text-white backdrop-blur-xl transition-all duration-300 hover:bg-white/15 hover:shadow-[0_16px_52px_rgba(99,102,241,0.4),inset_0_1px_0_rgba(255,255,255,0.45)]"
                 >
                   <span className="absolute inset-0 rounded-2xl bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.22),transparent_42%)]" />
@@ -80,7 +80,7 @@ export default function Home() {
             </p>
             <div className="mt-10">
               <Link
-                href="/report/mapping"
+                href="/report/khdn"
                 className="landing-button-pulse group relative inline-flex items-center gap-2 overflow-hidden rounded-2xl border border-white/20 bg-white/10 px-7 py-3 text-sm font-medium tracking-wide text-white backdrop-blur-xl transition-all duration-300 hover:bg-white/15 hover:shadow-[0_16px_52px_rgba(99,102,241,0.4),inset_0_1px_0_rgba(255,255,255,0.45)]"
               >
                 <span className="absolute inset-0 rounded-2xl bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.22),transparent_42%)]" />

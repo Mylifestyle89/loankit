@@ -323,6 +323,7 @@ function MappingPageContent() {
       <CustomerPickerModal
         isOpen={customerPickerOpen}
         onClose={() => setCustomerPickerOpen(false)}
+        customerTypeFilter="corporate"
         onSelect={(id) => {
           useFieldTemplateStore.getState().setEditingFieldTemplateId("");
           useFieldTemplateStore.getState().setEditingFieldTemplateName("");
