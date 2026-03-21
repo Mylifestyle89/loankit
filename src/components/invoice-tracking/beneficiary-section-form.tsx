@@ -13,22 +13,26 @@ export type InvoiceLine = {
   invoiceNumber: string;
   issueDate: string;
   amount: string;
+  qty?: string;       // Bảng kê: số lượng
+  unitPrice?: string; // Bảng kê: đơn giá
 };
 
 export type BeneficiaryLine = {
   tempId: string;
   beneficiaryId: string | null;
   name: string;
+  address: string;
   accountNumber: string;
   bankName: string;
   amount: string;
-  invoiceStatus: "pending" | "has_invoice";
+  invoiceStatus: "pending" | "has_invoice" | "bang_ke";
   invoices: InvoiceLine[];
 };
 
 export type SavedBeneficiary = {
   id: string;
   name: string;
+  address: string | null;
   accountNumber: string | null;
   bankName: string | null;
 };
@@ -109,6 +113,12 @@ export function BeneficiarySection({
               <input type="text" value={line.bankName} onChange={(e) => onUpdate({ bankName: e.target.value })} className={inputCls} />
             </label>
           </div>
+          <div className="mt-3">
+            <label className="block">
+              <span className={labelCls}>Địa chỉ</span>
+              <input type="text" value={line.address} onChange={(e) => onUpdate({ address: e.target.value })} placeholder="Địa chỉ người thụ hưởng" className={inputCls} />
+            </label>
+          </div>
           <div className="grid grid-cols-2 gap-3 mt-3">
             <label className="block">
               <span className={labelCls}>Số tiền giải ngân *</span>
@@ -122,12 +132,13 @@ export function BeneficiarySection({
           <div className="grid grid-cols-2 gap-3 mt-3">
             <label className="block">
               <span className={labelCls}>Trạng thái hóa đơn</span>
-              <select value={line.invoiceStatus} onChange={(e) => onUpdate({ invoiceStatus: e.target.value as "pending" | "has_invoice" })} className={`${inputCls} cursor-pointer`}>
+              <select value={line.invoiceStatus} onChange={(e) => onUpdate({ invoiceStatus: e.target.value as "pending" | "has_invoice" | "bang_ke" })} className={`${inputCls} cursor-pointer`}>
                 <option value="pending">Nợ hóa đơn</option>
                 <option value="has_invoice">Có hóa đơn</option>
+                <option value="bang_ke">Bảng kê</option>
               </select>
             </label>
-            {line.invoiceStatus === "has_invoice" && (
+            {(line.invoiceStatus === "has_invoice" || line.invoiceStatus === "bang_ke") && (
               <label className="block">
                 <span className={labelCls}>Số tiền hóa đơn</span>
                 <input type="text" readOnly value={invoiceTotal > 0 ? fmtDisplay(invoiceTotal) : "0"} className={readonlyCls} />
@@ -164,6 +175,39 @@ export function BeneficiarySection({
               ))}
               <button type="button" onClick={onAddInvoice} className="cursor-pointer flex items-center gap-1 text-xs text-indigo-500 hover:text-indigo-600 transition-colors duration-150 mt-1">
                 <Plus className="h-3.5 w-3.5" /> Thêm hóa đơn
+              </button>
+            </div>
+          )}
+
+          {/* Bảng kê items sub-section */}
+          {line.invoiceStatus === "bang_ke" && (
+            <div className="mt-3 rounded border border-zinc-200 dark:border-white/[0.07] p-3">
+              <h5 className="text-xs font-semibold text-zinc-500 dark:text-slate-400 mb-2">Bảng kê mua hàng</h5>
+              {line.invoices.map((inv, iIdx) => (
+                <div key={inv.tempId} className="grid grid-cols-[2fr_1fr_1fr_1fr_auto] gap-2 mb-2 items-end">
+                  <label className="block">
+                    <span className="text-[10px] text-zinc-400">Mặt hàng</span>
+                    <input type="text" value={inv.supplierName} onChange={(e) => onUpdateInvoice(iIdx, { supplierName: e.target.value })} className={inputCls} />
+                  </label>
+                  <label className="block">
+                    <span className="text-[10px] text-zinc-400">Số lượng</span>
+                    <input type="text" inputMode="numeric" value={inv.qty ?? ""} onChange={(e) => onUpdateInvoice(iIdx, { qty: fmtNumber(e.target.value) })} placeholder="0" className={inputCls} />
+                  </label>
+                  <label className="block">
+                    <span className="text-[10px] text-zinc-400">Đơn giá</span>
+                    <input type="text" inputMode="numeric" value={inv.unitPrice ?? ""} onChange={(e) => onUpdateInvoice(iIdx, { unitPrice: fmtNumber(e.target.value) })} placeholder="0" className={inputCls} />
+                  </label>
+                  <label className="block">
+                    <span className="text-[10px] text-zinc-400">Thành tiền</span>
+                    <input type="text" inputMode="numeric" value={inv.amount} onChange={(e) => onUpdateInvoice(iIdx, { amount: fmtNumber(e.target.value) })} placeholder="0" className={inputCls} />
+                  </label>
+                  <button type="button" onClick={() => onRemoveInvoice(iIdx)} className="cursor-pointer rounded p-1.5 text-zinc-400 hover:text-red-500 transition-colors duration-150 mb-0.5">
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              ))}
+              <button type="button" onClick={onAddInvoice} className="cursor-pointer flex items-center gap-1 text-xs text-indigo-500 hover:text-indigo-600 transition-colors duration-150 mt-1">
+                <Plus className="h-3.5 w-3.5" /> Thêm mặt hàng
               </button>
             </div>
           )}

@@ -205,6 +205,7 @@ model Beneficiary {
   loanId        String
   loan          Loan     @relation(fields: [loanId], references: [id], onDelete: Cascade)
   name          String   // Don vi thu huong
+  address       String?  // Dia chi
   accountNumber String?  // So tai khoan
   bankName      String?  // Ngan hang thu huong
 
@@ -253,6 +254,7 @@ model DisbursementBeneficiary {
   beneficiaryId   String?
   beneficiary     Beneficiary? @relation(fields: [beneficiaryId], references: [id], onDelete: SetNull)
   beneficiaryName String       // snapshot: KH thu huong
+  address         String?      // snapshot: Dia chi
   accountNumber   String?      // snapshot: So TK
   bankName        String?      // snapshot: Ngan hang
   amount          Float        // So tien giai ngan cho don vi nay
@@ -282,6 +284,8 @@ model Invoice {
   customDeadline DateTime?
   status         String       @default("pending") // pending | paid | overdue
   notes          String?
+  qty            Float?       // Bảng kê: số lượng
+  unitPrice      Float?       // Bảng kê: đơn giá
 
   @@unique([invoiceNumber, supplierName])
   @@index([disbursementId])

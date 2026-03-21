@@ -24,6 +24,10 @@ export const KHCN_DISBURSEMENT_TEMPLATES = {
     label: "BB giao nhận hàng hóa",
     path: "report_assets/KHCN templates/Chứng từ giải ngân/Bien ban giao nhan hang hoa.docx",
   },
+  bang_ke_mua_hang: {
+    label: "Bảng kê mua hàng",
+    path: "report_assets/KHCN templates/Chứng từ giải ngân/Bang ke mua hang.docx",
+  },
 } as const;
 
 export type KhcnDisbursementTemplateKey = keyof typeof KHCN_DISBURSEMENT_TEMPLATES;

@@ -30,6 +30,7 @@ export async function createBeneficiaryLines(
         disbursementId,
         beneficiaryId: b.beneficiaryId || null,
         beneficiaryName: b.beneficiaryName,
+        address: b.address ?? null,
         accountNumber: b.accountNumber ?? null,
         bankName: b.bankName ?? null,
         amount: b.amount,
@@ -47,6 +48,8 @@ export async function createBeneficiaryLines(
           amount: inv.amount,
           issueDate: new Date(inv.issueDate),
           dueDate: disbursementDate ? addOneMonthClamped(disbursementDate) : new Date(inv.issueDate),
+          qty: inv.qty ?? null,
+          unitPrice: inv.unitPrice ?? null,
         })),
       });
 

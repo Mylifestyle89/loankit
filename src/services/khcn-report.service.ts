@@ -138,7 +138,7 @@ export async function buildKhcnReportData(
     data["HĐTD.Lãi suất chậm trả"] = typeof rate === "number" && rate > 0
       ? `${((rate < 1 ? rate * 100 : rate) * 1.3).toFixed(2).replace(".", ",")}%/năm`
       : "";
-    // Map lending_method enum → tiếng Việt
+    // Phương thức cho vay: ưu tiên text tự nhập trên HĐ (lending_method), sau đó map từ loan_method (sản phẩm)
     const lendingMethodMap: Record<string, string> = {
       tung_lan: "Cho vay từng lần",
       han_muc: "Cho vay theo hạn mức tín dụng",
@@ -147,9 +147,10 @@ export async function buildKhcnReportData(
       tra_gop: "Cho vay trả góp",
       the_chap: "Cho vay thế chấp",
     };
-    data["HĐTD.Phương thức cho vay"] = lendingMethodMap[loan.loan_method ?? ""] ?? loan.loan_method ?? "";
-    data["HĐTD.Tổng giá trị TSBĐ"] = fmtN(loan.collateralValue);
-    data["HĐTD.Tổng nghĩa vụ bảo đảm"] = fmtN(loan.securedObligation);
+    const lendingFreeText = (loan.lending_method ?? "").trim();
+    data["HĐTD.Phương thức cho vay"] = lendingFreeText
+      ? lendingFreeText
+      : lendingMethodMap[loan.loan_method ?? ""] ?? loan.loan_method ?? "";
 
     // Extended HĐTD fields (lending terms, equity, rating, etc.)
     buildLoanExtendedData(loan, data);
@@ -170,6 +171,7 @@ export async function buildKhcnReportData(
       data.UNC = buildBeneficiaryLoopData(
         latestBenefLines.map((bl) => ({
           name: bl.beneficiaryName,
+          address: bl.address,
           accountNumber: bl.accountNumber,
           bankName: bl.bankName,
         })),
@@ -193,14 +195,28 @@ export async function buildKhcnReportData(
     };
   });
 
-  // Total collateral summary
+  // Total collateral summary — một nguồn hiển thị: có chi tiết TSBĐ → tổng từ DB collateral; không → snapshot trên khoản vay
   const totalCollateralValue = c.collaterals.reduce((s, col) => s + (col.total_value ?? 0), 0);
   const totalObligation = c.collaterals.reduce((s, col) => s + (col.obligation ?? 0), 0);
-  data["Tổng giá trị TSBĐ"] = totalCollateralValue || "";
-  data["HĐTD.Tổng giá trị TSBĐ"] = totalCollateralValue || "";
-  data["Tổng giá trị TSBĐ bằng chữ"] = totalCollateralValue ? numberToVietnameseWords(totalCollateralValue) : "";
-  data["Tổng nghĩa vụ bảo đảm"] = totalObligation || "";
-  data["HĐTD.Tổng nghĩa vụ bảo đảm"] = totalObligation || "";
+  const useCollateralRows = c.collaterals.length > 0;
+  const displayCollateralTotal = useCollateralRows ? totalCollateralValue : Number(loan?.collateralValue ?? 0);
+  const displayObligationTotal = useCollateralRows ? totalObligation : Number(loan?.securedObligation ?? 0);
+
+  data["Tổng giá trị TSBĐ"] = displayCollateralTotal ? fmtN(displayCollateralTotal) : "";
+  data["HĐTD.Tổng giá trị TSBĐ"] = displayCollateralTotal ? fmtN(displayCollateralTotal) : "";
+  data["Tổng giá trị TSBĐ bằng chữ"] = displayCollateralTotal ? numberToVietnameseWords(displayCollateralTotal) : "";
+  data["Tổng nghĩa vụ bảo đảm"] = displayObligationTotal ? fmtN(displayObligationTotal) : "";
+  data["HĐTD.Tổng nghĩa vụ bảo đảm"] = displayObligationTotal ? fmtN(displayObligationTotal) : "";
+  data["HĐTD.Tổng nghĩa vụ bảo đảm tối đa"] = displayObligationTotal ? fmtN(displayObligationTotal) : "";
+  data["HĐTD.Tổng Nghĩa vụ bảo đảm tối đa"] = displayObligationTotal ? fmtN(displayObligationTotal) : "";
+  if (displayCollateralTotal) {
+    data["HĐTD.TGTTSBĐ bằng chữ"] = numberToVietnameseWords(displayCollateralTotal);
+  }
+  if (displayObligationTotal) {
+    const oblWords = numberToVietnameseWords(displayObligationTotal);
+    data["HĐTD.TNVBĐ bằng chữ"] = oblWords;
+    data["HĐTD.TNVBĐTĐ bằng chữ"] = oblWords;
+  }
 
   // Type-specific collateral flat fields
   buildLandCollateralData(c.collaterals, data);
@@ -247,6 +263,9 @@ export async function buildKhcnReportData(
     if (paProfit && !data["HĐTD.Lợi nhuận dự kiến"]) data["HĐTD.Lợi nhuận dự kiến"] = paProfit;
   }
 
+  // Hợp nhất placeholder HĐ cũ (PA / HĐTD / phương án) — chỉ điền khi ô còn trống
+  mergeKhcnPriorContractAliases(data);
+
   // Merge manual overrides (last, so they can override any computed value)
   if (overrides) {
     for (const [key, val] of Object.entries(overrides)) {
@@ -255,6 +274,84 @@ export async function buildKhcnReportData(
   }
 
   return data;
+}
+
+// ── Build BANG_KE items from disbursement beneficiary lines ──
+
+async function buildBangKeItems(loanId?: string, disbursementId?: string) {
+  if (!loanId) return [];
+  const where = disbursementId
+    ? { id: disbursementId, loanId }
+    : { loanId };
+  const disb = await prisma.disbursement.findFirst({
+    where,
+    orderBy: { disbursementDate: "desc" },
+    include: {
+      beneficiaryLines: {
+        include: { invoices: true },
+        orderBy: { createdAt: "asc" },
+      },
+    },
+  });
+  if (!disb) return [];
+
+  // Flatten: each row = 1 item, with seller info from beneficiary line
+  const items: Array<Record<string, unknown>> = [];
+  for (const bl of disb.beneficiaryLines) {
+    if (bl.invoiceStatus === "bang_ke" && bl.invoices.length > 0) {
+      for (const inv of bl.invoices) {
+        items.push({
+          STT: items.length + 1,
+          "Người bán": bl.beneficiaryName,
+          "Địa chỉ NB": bl.address ?? "",
+          "Mặt hàng": inv.supplierName,
+          "Số lượng": fmtN(inv.qty),
+          "Đơn giá": fmtN(inv.unitPrice),
+          "Thành tiền": fmtN(inv.amount),
+        });
+      }
+    } else {
+      // Non-bang_ke: beneficiary = single item row
+      items.push({
+        STT: items.length + 1,
+        "Người bán": bl.beneficiaryName,
+        "Địa chỉ NB": bl.address ?? "",
+        "Mặt hàng": bl.beneficiaryName,
+        "Số lượng": "",
+        "Đơn giá": "",
+        "Thành tiền": fmtN(bl.amount),
+      });
+    }
+  }
+  return items;
+}
+
+// ── HĐ cũ: cùng nội dung, nhiều tên placeholder trong mẫu biểu ──
+
+function mergeKhcnPriorContractAliases(data: Record<string, unknown>): void {
+  const pick = (keys: string[]) => {
+    for (const k of keys) {
+      const v = String(data[k] ?? "").trim();
+      if (v) return v;
+    }
+    return "";
+  };
+  const so = pick(["PA.Số HĐTD cũ", "PA.HĐ cũ Số", "HĐTD.Số HĐ cũ"]);
+  const ngay = pick(["PA.Ngày HĐTD cũ", "PA.HĐ cũ Ngày", "HĐTD.Ngày HĐ cũ"]);
+  const setIfEmpty = (key: string, val: string) => {
+    if (!val || String(data[key] ?? "").trim()) return;
+    data[key] = val;
+  };
+  if (so) {
+    setIfEmpty("PA.Số HĐTD cũ", so);
+    setIfEmpty("PA.HĐ cũ Số", so);
+    setIfEmpty("HĐTD.Số HĐ cũ", so);
+  }
+  if (ngay) {
+    setIfEmpty("PA.Ngày HĐTD cũ", ngay);
+    setIfEmpty("PA.HĐ cũ Ngày", ngay);
+    setIfEmpty("HĐTD.Ngày HĐ cũ", ngay);
+  }
 }
 
 // ── Flatten first beneficiary into UNC.* flat placeholders ──
@@ -267,14 +364,30 @@ function flattenUncPlaceholders(
   const b = data.UNC[0] as Record<string, unknown>;
   data["UNC.STT"] = b["STT"] ?? 1;
   data["UNC.Khách hàng thụ hưởng"] = b["Khách hàng thụ hưởng"] ?? "";
+  // Alias tên cũ trong một số mẫu / panel tham chiếu
+  data["UNC.Tên người nhận"] = data["UNC.Khách hàng thụ hưởng"];
+  data["UNC.Địa chỉ"] = b["Địa chỉ"] ?? "";
   data["UNC.Số tài khoản"] = b["Số tài khoản"] ?? "";
   data["UNC.Nơi mở tài khoản"] = b["Nơi mở tài khoản"] ?? "";
+  data["UNC.Ngân hàng"] = data["UNC.Nơi mở tài khoản"];
   const uncAmount = overrides?.["UNC.Số tiền"] || data["GN.Số tiền nhận nợ"] || b["Số tiền"] || "";
   data["UNC.Số tiền"] = fmtN(uncAmount);
   // Parse raw number for bằng chữ — strip VN thousands separators first
   const rawUnc = Number(String(uncAmount).replace(/\./g, "").replace(/,/g, "."));
   data["UNC.ST bằng chữ"] = overrides?.["UNC.ST bằng chữ"] || (Number.isFinite(rawUnc) && rawUnc > 0 ? numberToVietnameseWords(rawUnc) : "");
   data["UNC.Nội dung"] = b["Nội dung"] ?? overrides?.["UNC.Nội dung"] ?? "";
+
+  // Indexed UNC.Mặt hàng N / Số lượng N / Đơn giá N / Thành tiền N (backward compat)
+  const uncArr = data.UNC as Array<Record<string, unknown>>;
+  for (let i = 0; i < uncArr.length; i++) {
+    const idx = i + 1;
+    data[`UNC.Mặt hàng ${idx}`] = uncArr[i]["Khách hàng thụ hưởng"] ?? "";
+    data[`UNC.Số lượng ${idx}`] = "";
+    data[`UNC.Đơn giá ${idx}`] = "";
+    data[`UNC.Thành tiền ${idx}`] = uncArr[i]["Số tiền"] ?? "";
+    data[`UNC.Địa chỉ ${idx}`] = uncArr[i]["Địa chỉ"] ?? "";
+    data[`UNC.Ngân hàng ${idx}`] = uncArr[i]["Nơi mở tài khoản"] ?? "";
+  }
 }
 
 // ── Generate DOCX buffer ──
@@ -336,6 +449,12 @@ export async function generateKhcnDisbursementReport(
 
   // Flatten first beneficiary into UNC.* flat placeholders (used by BCDXGN, UNC, etc.)
   flattenUncPlaceholders(data, overrides);
+
+  // BANG_KE loop: collect invoices from bang_ke beneficiary lines for Bảng kê mua hàng
+  if (templateKey === "bang_ke_mua_hang") {
+    const bangKeItems = await buildBangKeItems(loanId, disbursementId);
+    data["BANG_KE"] = bangKeItems;
+  }
 
   const buffer = await docxEngine.generateDocxBuffer(template.path, data);
 

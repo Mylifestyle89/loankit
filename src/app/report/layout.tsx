@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import {
-  PenLine,
+  Building2,
   Users,
   Globe,
   ChevronRight,
@@ -67,10 +67,10 @@ const [hovered, setHovered] = useState(false);
   }, [mobileOpen]);
 
   const links = [
-    { href: "/report/customers", label: t("nav.customers"), icon: Users },
+    { href: "/report/khcn", label: "Hồ sơ KHCN", icon: Users },
+    { href: "/report/khdn", label: "Hồ sơ KHDN", icon: Building2 },
     { href: "/report/loans", label: t("nav.loans"), icon: Banknote },
     { href: "/report/invoices", label: t("nav.invoices"), icon: Receipt },
-    { href: "/report/khdn", label: t("nav.khdn"), icon: PenLine },
     { href: "/report/system-operations", label: t("nav.systemOps"), icon: Settings },
     { href: "/report/guide", label: t("nav.guide"), icon: BookOpen },
   ];

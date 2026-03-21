@@ -34,7 +34,8 @@ export const ALLOWED_OVERRIDE_KEYS: Record<TemplateKey, string[]> = {
   bcdx: [
     "Mã CN", "Tên gọi in hoa", "HĐTD.Hạn mức bảo lãnh",
     "GN.Số dư L/C", "GN.Số dư bảo lãnh",
-    "HĐTD.Lãi suất quá hạn", "HĐTD.Lãi suất chậm trả", "Địa danh",
+    "HĐTD.Lãi suất quá hạn", "HĐTD.Lãi suất chậm trả",
+    "Tổng giá trị TSBĐ", "Phạm vi bảo đảm", "Địa danh",
   ],
   giay_nhan_no: [
     "Mã CN", "Tên chi nhánh/PGD",

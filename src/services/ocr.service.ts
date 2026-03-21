@@ -2,6 +2,11 @@ import { createWorker } from "tesseract.js";
 import { PDFParse } from "pdf-parse";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { OcrProcessError, ValidationError } from "@/core/errors/app-error";
+import {
+  type DocumentType,
+  type DocumentExtractionResult,
+  getPromptTemplate,
+} from "./ocr-document-prompts";
 
 type OcrProvider = "tesseract" | "vision";
 
@@ -66,14 +71,19 @@ async function extractPdfText(buffer: Buffer): Promise<string | null> {
   }
 }
 
-async function extractWithVision(buffer: Buffer, mimeType: string): Promise<OcrExtractResult> {
+/** Shared Gemini model initialization for Vision OCR */
+function getGeminiModel() {
   const apiKey = process.env.GEMINI_API_KEY ?? process.env.GOOGLE_API_KEY;
   if (!apiKey) {
-    throw new ValidationError("GEMINI_API_KEY/GOOGLE_API_KEY is not configured for OCR fallback.");
+    throw new ValidationError("GEMINI_API_KEY/GOOGLE_API_KEY is not configured.");
   }
   const modelName = process.env.GEMINI_VISION_MODEL ?? process.env.GEMINI_MODEL ?? "gemini-2.5-flash";
   const genAI = new GoogleGenerativeAI(apiKey);
-  const model = genAI.getGenerativeModel({ model: modelName }, { apiVersion: "v1beta" });
+  return genAI.getGenerativeModel({ model: modelName }, { apiVersion: "v1beta" });
+}
+
+async function extractWithVision(buffer: Buffer, mimeType: string): Promise<OcrExtractResult> {
+  const model = getGeminiModel();
   try {
     const response = await model.generateContent([
       {
@@ -93,6 +103,62 @@ async function extractWithVision(buffer: Buffer, mimeType: string): Promise<OcrE
 }
 
 export const ocrService = {
+  /** Extract structured fields from one or more document images using Gemini Vision */
+  async extractDocumentFields(
+    inputs: ExtractInput | ExtractInput[],
+    documentType: DocumentType
+  ): Promise<DocumentExtractionResult> {
+    const files = Array.isArray(inputs) ? inputs : [inputs];
+    if (files.length === 0) throw new ValidationError("No files provided.");
+    for (const input of files) {
+      if (!input?.buffer || !Buffer.isBuffer(input.buffer) || input.buffer.length === 0) {
+        throw new ValidationError("OCR input buffer is empty.");
+      }
+      ensureSupportedMime(input.mimeType);
+    }
+
+    const model = getGeminiModel();
+    const template = getPromptTemplate(documentType);
+
+    // Build parts: all images first, then the prompt
+    const imageParts = files.map((f) => ({
+      inlineData: { mimeType: f.mimeType, data: f.buffer.toString("base64") },
+    }));
+    const multiNote = files.length > 1
+      ? "Đây là nhiều ảnh/trang của cùng 1 tài liệu. Hãy kết hợp thông tin từ tất cả các trang.\n\n"
+      : "";
+
+    try {
+      const response = await model.generateContent({
+        contents: [{
+          role: "user",
+          parts: [
+            ...imageParts,
+            { text: multiNote + template.prompt },
+          ],
+        }],
+        generationConfig: {
+          responseMimeType: "application/json",
+        },
+      });
+
+      const raw = response.response.text().trim();
+      const parsed = JSON.parse(raw);
+
+      // Extract confidence then build fields record (exclude confidence from fields)
+      const rawConf = typeof parsed.confidence === "number" ? parsed.confidence : 0.7;
+      const confidence = Math.max(0, Math.min(1, rawConf));
+      const fields: Record<string, string> = {};
+      for (const key of template.fields) {
+        fields[key] = typeof parsed[key] === "string" ? parsed[key] : String(parsed[key] ?? "");
+      }
+
+      return { documentType, fields, confidence };
+    } catch (error) {
+      throw new OcrProcessError("Document field extraction failed.", error);
+    }
+  },
+
   async extractTextFromBuffer(input: ExtractInput): Promise<OcrExtractResult> {
     if (!input?.buffer || !Buffer.isBuffer(input.buffer) || input.buffer.length === 0) {
       throw new ValidationError("OCR input buffer is empty.");

@@ -6,7 +6,6 @@ import { X, Save, Copy, FolderOpen } from "lucide-react";
 import type { DocxEditorRef as EigenpalDocxEditorRef } from "@eigenpal/docx-js-editor";
 
 import { useLanguage } from "@/components/language-provider";
-import { DocxEditorErrorBoundary } from "@/components/docx-editor-error-boundary";
 
 type FieldCatalogItem = {
   field_key: string;
@@ -22,7 +21,6 @@ type Props = {
   onSaveDocx: (buffer: ArrayBuffer) => Promise<void>;
   enableAutoBackup?: boolean;
   autoBackupIntervalMs?: number;
-  onFallbackToOnlyOffice?: () => void;
 };
 
 // Loaded only in browser (DOM required)
@@ -42,7 +40,6 @@ export function DocxTemplateEditorModal({
   onSaveDocx,
   enableAutoBackup = false,
   autoBackupIntervalMs = 60_000,
-  onFallbackToOnlyOffice,
 }: Props) {
   const { t } = useLanguage();
   const editorRef = useRef<EigenpalDocxEditorRef | null>(null);
@@ -371,9 +368,9 @@ export function DocxTemplateEditorModal({
 
         {/* ── Editor canvas ── */}
         <div className="docx-editor-wrap flex-1 overflow-auto bg-slate-100 dark:bg-[#0a0a0a]">
-          <DocxEditorErrorBoundary onClose={onClose} onFallbackToOnlyOffice={onFallbackToOnlyOffice}>
+          <>
             <EigenpalDocxEditor ref={editorRef} documentBuffer={documentBuffer} />
-          </DocxEditorErrorBoundary>
+          </>
         </div>
 
       </div>

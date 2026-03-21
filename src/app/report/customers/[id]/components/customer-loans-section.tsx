@@ -67,7 +67,7 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
-function LoanRow({ loan, loanPlansHref }: { loan: Loan; loanPlansHref?: string }) {
+function LoanRow({ loan }: { loan: Loan }) {
   const [expanded, setExpanded] = useState(false);
 
   return (
@@ -157,14 +157,6 @@ function LoanRow({ loan, loanPlansHref }: { loan: Loan; loanPlansHref?: string }
             >
               Xem chi tiết khoản vay →
             </Link>
-            {loanPlansHref && (
-              <Link
-                href={loanPlansHref}
-                className="inline-flex items-center text-xs text-fuchsia-600 dark:text-fuchsia-400 hover:underline"
-              >
-                Phương án vay vốn →
-              </Link>
-            )}
           </div>
         </div>
       )}
@@ -209,7 +201,6 @@ export function CustomerLoansSection({ loans, customerId }: { loans: Loan[]; cus
             <LoanRow
               key={loan.id}
               loan={loan}
-              loanPlansHref={customerId ? `/report/customers/${customerId}/loan-plans` : undefined}
             />
           ))}
         </div>

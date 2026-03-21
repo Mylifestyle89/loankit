@@ -188,6 +188,17 @@ export function fmtNumber(v: string): string {
   return new Intl.NumberFormat("vi-VN").format(n);
 }
 
+/** Format decimal: phân cách hàng ngàn phần nguyên, giữ phần thập phân */
+export function fmtDecimal(v: string): string {
+  const cleaned = v.replace(/\s/g, "").replace(/,/g, ".");
+  const dotIdx = cleaned.lastIndexOf(".");
+  const intPart = dotIdx >= 0 ? cleaned.slice(0, dotIdx) : cleaned;
+  const decPart = dotIdx >= 0 ? cleaned.slice(dotIdx).replace(".", ",") : "";
+  const n = Number(intPart.replace(/\./g, ""));
+  if (isNaN(n)) return v;
+  return new Intl.NumberFormat("vi-VN").format(n) + decPart;
+}
+
 export function fmtDate(v: string): string {
   if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(v)) return v;
   const iso = v.match(/^(\d{4})-(\d{2})-(\d{2})/);

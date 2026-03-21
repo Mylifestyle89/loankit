@@ -46,12 +46,18 @@ const inputCls =
   "mt-1 w-full rounded-md border border-zinc-300 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] px-3 py-2 text-sm transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40 focus-visible:border-violet-400";
 const labelCls = "text-xs font-medium text-zinc-600 dark:text-slate-400";
 
+function formatInterestRatePercentInput(raw: number | null | undefined): string {
+  if (raw == null || !Number.isFinite(raw)) return "";
+  const percent = raw > 0 && raw <= 1 ? raw * 100 : raw;
+  return percent.toFixed(6).replace(/\.?0+$/, "");
+}
+
 export function LoanEditModal({ loan, customerId, onClose, onUpdated }: Props) {
   const { t } = useLanguage();
 
   const [contractNumber, setContractNumber] = useState(loan.contractNumber);
   const [loanAmount, setLoanAmount] = useState(fmtNumber(String(loan.loanAmount)));
-  const [interestRate, setInterestRate] = useState(loan.interestRate != null ? String(loan.interestRate) : "");
+  const [interestRate, setInterestRate] = useState(formatInterestRatePercentInput(loan.interestRate));
   const [startDate, setStartDate] = useState(isoToDisplay(loan.startDate));
   const [endDate, setEndDate] = useState(isoToDisplay(loan.endDate));
   const [purpose, setPurpose] = useState(loan.purpose ?? "");
@@ -98,13 +104,17 @@ export function LoanEditModal({ loan, customerId, onClose, onUpdated }: Props) {
 
       // Tab 1: Thông tin cơ bản
       if (fin.loanAmount) setLoanAmount(fmtNumber(String(fin.loanAmount)));
-      if (fin.interestRate) setInterestRate(String(fin.interestRate));
+      if (typeof fin.interestRate === "number") {
+        setInterestRate(formatInterestRatePercentInput(fin.interestRate));
+      }
       if (fin.purpose) setPurpose(fin.purpose);
 
       // Tab 3: Nguồn vốn & VĐƯ
-      const turnover = fin.turnoverCycles || 1;
-      const need = Math.round((fin.totalDirectCost || 0) / turnover);
-      const equity = need - (fin.loanAmount || 0);
+      // KHCN rule: Tổng nhu cầu vốn = Tổng chi phí trực tiếp từ PA.
+      const directCost = Number(fin.totalDirectCost) || 0;
+      const syncedLoanAmount = Number(fin.loanAmount) || 0;
+      const need = directCost;
+      const equity = Number(fin.counterpartCapital ?? (need - syncedLoanAmount));
 
       // Tab 4: Hiệu quả
       const revenue = fin.revenue || 0;

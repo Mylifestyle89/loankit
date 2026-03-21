@@ -4,8 +4,6 @@ import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 
 import { DocxTemplateEditorModal } from "@/components/docx-template-editor-modal";
-import { OnlyOfficeEditorModal } from "@/components/onlyoffice-editor-modal";
-import { SegmentedControl } from "@/components/ui/segmented-control";
 import { useLanguage } from "@/components/language-provider";
 import { getSignedFileUrl } from "@/lib/report/signed-file-url";
 
@@ -50,12 +48,6 @@ function TemplatePageInner() {
   const [localDocxName, setLocalDocxName] = useState("");
   const localDocxInputRef = useRef<HTMLInputElement | null>(null);
 
-  // OnlyOffice
-  const [onlyofficeAvailable, setOnlyofficeAvailable] = useState<boolean | null>(null);
-  const [editorType, setEditorType] = useState<"onlyoffice" | "eigenpal">("onlyoffice");
-  const [showOnlyofficeEditor, setShowOnlyofficeEditor] = useState(false);
-  const [onlyofficeDocxPath, setOnlyofficeDocxPath] = useState("");
-
   // Field injection + validation
   const fi = useFieldInjection(templates.length > 0);
   const validation = useTemplateUploadValidation(fi.selectedFieldTemplateId);
@@ -74,11 +66,6 @@ function TemplatePageInner() {
   }, [t]);
 
   useEffect(() => { const timer = window.setTimeout(() => void loadTemplates(), 0); return () => window.clearTimeout(timer); }, [loadTemplates]);
-  useEffect(() => {
-    fetch("/api/onlyoffice/health").then((r) => r.json() as Promise<{ available: boolean }>)
-      .then((d) => { setOnlyofficeAvailable(d.available); if (!d.available) setEditorType("eigenpal"); })
-      .catch(() => { setOnlyofficeAvailable(false); setEditorType("eigenpal"); });
-  }, []);
 
   const selectedTemplate = templates.find((tp) => tp.id === activeTemplateId);
   const profileDocxPath = selectedTemplate?.docx_path ?? "";
@@ -92,7 +79,6 @@ function TemplatePageInner() {
   function openProfileEditor() {
     if (!profileDocxPath) return;
     setError(""); setMessage("");
-    if (editorType === "onlyoffice" && onlyofficeAvailable) { setOnlyofficeDocxPath(profileDocxPath); setShowOnlyofficeEditor(true); return; }
     openEigenpalEditor(profileDocxPath, "managed");
   }
 
@@ -115,7 +101,6 @@ function TemplatePageInner() {
 
   function handleOpenEditor(docxPath: string) {
     setError(""); setMessage("");
-    if (editorType === "onlyoffice" && onlyofficeAvailable) { setOnlyofficeDocxPath(docxPath); setShowOnlyofficeEditor(true); return; }
     openEigenpalEditor(docxPath, "folder");
   }
 
@@ -186,12 +171,6 @@ function TemplatePageInner() {
             {message && <p className="mt-2 text-sm text-emerald-600 dark:text-emerald-400">{message}</p>}
             {error && <p className="mt-2 text-sm text-red-600 dark:text-red-400">{error}</p>}
           </div>
-          {onlyofficeAvailable && (
-            <SegmentedControl value={editorType} onChange={(v) => setEditorType(v as "onlyoffice" | "eigenpal")} options={[
-              { value: "onlyoffice", label: "OnlyOffice" },
-              { value: "eigenpal", label: t("template.editor.eigenpal") },
-            ]} />
-          )}
         </div>
       </div>
 
@@ -244,25 +223,14 @@ function TemplatePageInner() {
       {/* Hidden file input for local docx (used by configured tab) */}
       <input ref={localDocxInputRef} type="file" accept=".docx" aria-label="Chọn file DOCX" className="hidden" onChange={openLocalDocx} />
 
-      {/* Shared Eigenpal Editor Modal */}
+      {/* Editor Modal */}
       {showEditor && editorBuffer && (
         <DocxTemplateEditorModal
           docxPath={editorSource === "local" ? localDocxName || "local-template.docx" : activeEditorPath || profileDocxPath}
           documentBuffer={editorBuffer} fieldCatalog={fi.fieldCatalog}
           onClose={() => { setShowEditor(false); setEditorBuffer(null); }}
           onSaveDocx={saveEditorDocx} enableAutoBackup={editorSource !== "local"} autoBackupIntervalMs={60_000}
-          onFallbackToOnlyOffice={onlyofficeAvailable && editorSource !== "local" ? () => {
-            const docxPath = activeEditorPath || profileDocxPath;
-            setShowEditor(false); setEditorBuffer(null); setOnlyofficeDocxPath(docxPath); setShowOnlyofficeEditor(true);
-          } : undefined}
         />
-      )}
-
-      {/* Shared OnlyOffice Editor Modal */}
-      {showOnlyofficeEditor && onlyofficeDocxPath && (
-        <OnlyOfficeEditorModal docxPath={onlyofficeDocxPath}
-          onClose={() => { setShowOnlyofficeEditor(false); setOnlyofficeDocxPath(""); }}
-          onSaved={() => void loadTemplates()} fieldCatalog={fi.fieldCatalog} />
       )}
     </section>
   );

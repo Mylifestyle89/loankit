@@ -6,15 +6,18 @@ import { validateBeneficiaryAmounts, createBeneficiaryLines } from "./disburseme
 export type BeneficiaryLineInput = {
   beneficiaryId?: string | null;
   beneficiaryName: string;
+  address?: string;
   accountNumber?: string;
   bankName?: string;
   amount: number;
-  invoiceStatus?: "pending" | "has_invoice";
+  invoiceStatus?: "pending" | "has_invoice" | "bang_ke";
   invoices?: {
     supplierName: string;
     invoiceNumber: string;
     issueDate: string;
     amount: number;
+    qty?: number;
+    unitPrice?: number;
   }[];
 };
 

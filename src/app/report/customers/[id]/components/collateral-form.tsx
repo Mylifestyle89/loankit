@@ -8,7 +8,7 @@ import {
   COLLATERAL_TYPES, FORM_FIELDS, EMPTY_OWNER, EMPTY_AMENDMENT,
   QSD_CERT_KEYS, QSD_LAND_KEYS, QSD_HOUSE_KEYS, QSD_CONTRACT_KEYS,
   DS_VEHICLE_KEYS, DS_REG_KEYS, DS_CONTRACT_KEYS, DS_INSURANCE_KEYS,
-  NUMBER_KEYS, DECIMAL_KEYS, DATE_KEYS, fmtNumber, fmtDate,
+  NUMBER_KEYS, DECIMAL_KEYS, DATE_KEYS, fmtNumber, fmtDecimal, fmtDate,
   type OwnerEntry, type AmendmentEntry, type CollateralItem,
 } from "./collateral-config";
 import { numberToVietnameseWords } from "@/lib/number-to-vietnamese-words";
@@ -127,11 +127,11 @@ export function CollateralForm({ customerId, initial, onSaved, onCancel }: {
     const isDate = DATE_KEYS.has(key);
     const rawVal = props[key] ?? "";
     if (isDecimal) {
-      // Decimal fields: show raw value, allow digits + dot + comma
+      // Decimal fields: format với phân cách hàng ngàn, giữ phần thập phân
       return (
         <label key={key} className="block">
           <span className="text-xs font-medium text-zinc-600 dark:text-zinc-400">{label}</span>
-          <input type="text" value={rawVal}
+          <input type="text" value={rawVal ? fmtDecimal(rawVal) : ""}
             onChange={(e) => {
               const v = e.target.value.replace(/[^\d.,]/g, "");
               setProps((p) => {

@@ -213,23 +213,52 @@ export function buildLandCollateralData(
   }
   data["DINH_GIA"] = valuationRows;
 
-  // Consolidated valuation table — one row per land collateral
-  data["TSBD_DINH_GIA"] = lands.map((col, i) => {
-    const f = allLandFields[i];
-    return {
-      STT: i + 1,
-      "Tên TSBĐ": col.name,
-      "Số seri": f["Số seri"],
-      "Địa chỉ đất": f["Địa chỉ đất"],
-      "Diện tích đất": f["Diện tích đất"],
-      "Giá trị đất": f["Giá trị đất"],
-      "Giá trị nhà": f["Giá trị nhà"],
-      "Tổng giá trị TS": fmtN(col.total_value),
-      "TGTTS bằng chữ": col.total_value ? numberToVietnameseWords(col.total_value) : "",
-      "Nghĩa vụ bảo đảm tối đa": fmtN(col.obligation),
-      "NVBĐ bằng chữ": col.obligation ? numberToVietnameseWords(col.obligation) : "",
-    };
+  // Consolidated valuation table — multi-row per GCN: up to 3 land types + house row
+  // Each GCN emits rows for land types + attached asset, grouped under same STT
+  const tsbdDinhGia: Array<Record<string, unknown>> = [];
+  lands.forEach((col, i) => {
+    const f = allLandFields[i] as Record<string, unknown>;
+    const stt = i + 1;
+    // Emit up to 3 land-type rows per GCN
+    for (let j = 1; j <= 3; j++) {
+      const landType = f[`Loại đất ${j}`];
+      if (!landType) break;
+      tsbdDinhGia.push({
+        STT: stt,
+        "Tên TSBĐ": col.name,
+        "Số seri": f["Số seri"],
+        "Diện tích đất": f[`DT đất ${j}`] ?? "",
+        "Đơn giá": f[`Đơn giá đất ${j}`] ?? "",
+        "Giá trị": f[`Thành tiền đất ${j}`] ?? "",
+        "Loại": landType,
+        "Tổng giá trị TS": "",
+      });
+    }
+    // Emit house/attached asset row if exists
+    const houseValue = f["Thành tiền nhà"] || f["Giá trị nhà"];
+    const houseArea = f["DT định giá nhà"] || f["Diện tích sàn"];
+    if (houseValue || houseArea) {
+      tsbdDinhGia.push({
+        STT: stt,
+        "Tên TSBĐ": col.name,
+        "Số seri": f["Số seri"],
+        "Diện tích đất": houseArea ?? "",
+        "Đơn giá": f["Đơn giá nhà"] ?? "",
+        "Giá trị": houseValue ?? "",
+        "Loại": "TS gắn liền với đất",
+        "Tổng giá trị TS": "",
+      });
+    }
+    // Mark last row of this GCN with total value
+    if (tsbdDinhGia.length > 0) {
+      const lastRow = tsbdDinhGia[tsbdDinhGia.length - 1];
+      lastRow["Tổng giá trị TS"] = fmtN(col.total_value);
+      lastRow["TGTTS bằng chữ"] = col.total_value ? numberToVietnameseWords(col.total_value) : "";
+      lastRow["Nghĩa vụ bảo đảm tối đa"] = fmtN(col.obligation);
+      lastRow["NVBĐ bằng chữ"] = col.obligation ? numberToVietnameseWords(col.obligation) : "";
+    }
   });
+  data["TSBD_DINH_GIA"] = tsbdDinhGia;
 
   // Indexed SĐ_1.*, SĐ_2.*... for multi-asset clone rendering
   allLandFields.forEach((fields, i) => {

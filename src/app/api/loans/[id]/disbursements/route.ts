@@ -11,15 +11,18 @@ const invoiceLineSchema = z.object({
   invoiceNumber: z.string().min(1),
   issueDate: z.string().min(1),
   amount: z.number().positive(),
+  qty: z.number().optional(),
+  unitPrice: z.number().optional(),
 });
 
 const beneficiaryLineSchema = z.object({
   beneficiaryId: z.string().nullish(),
   beneficiaryName: z.string().min(1),
+  address: z.string().optional(),
   accountNumber: z.string().optional(),
   bankName: z.string().optional(),
   amount: z.number().positive(),
-  invoiceStatus: z.enum(["pending", "has_invoice"]).optional(),
+  invoiceStatus: z.enum(["pending", "has_invoice", "bang_ke"]).optional(),
   invoices: z.array(invoiceLineSchema).optional(),
 });
 

@@ -31,6 +31,7 @@ const updateCustomerSchema = z.object({
   phone: z.string().optional().nullable(),
   bank_account: z.string().optional().nullable(),
   bank_name: z.string().optional().nullable(),
+  gender: z.string().optional().nullable(),
   data_json: z.record(z.string(), z.unknown()).optional(),
 });
 

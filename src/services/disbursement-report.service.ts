@@ -17,6 +17,7 @@ import {
 export { DISBURSEMENT_TEMPLATES, type TemplateKey } from "./disbursement-report-template-config";
 
 import { fmtDate, fmtDateCompact, monthsBetween, today } from "@/lib/report/report-date-utils";
+import { fmtN } from "@/lib/report/format-number-vn";
 
 // ---------------------------------------------------------------------------
 // Data fetcher — loads full disbursement with all relations needed for reports
@@ -106,8 +107,11 @@ export async function buildReportData(
     "HĐTD.Hạn mức được giải ngân theo tài sản": loan.disbursementLimitByAsset ?? "",
     "HĐTD.Thời hạn duy trì HMTD": loanTermMonths,
     "HĐTD.Mục đích vay": loan.purpose ?? "",
-    "HĐTD.Tổng giá trị TSBĐ": loan.collateralValue ?? "",
-    "HĐTD.Tổng nghĩa vụ bảo đảm": loan.securedObligation ?? "",
+    "HĐTD.Tổng giá trị TSBĐ": fmtN(loan.collateralValue),
+    "HĐTD.Tổng nghĩa vụ bảo đảm": fmtN(loan.securedObligation),
+    // Duplicate keys without prefix — some DOCX templates use unprefixed placeholders
+    "Tổng giá trị TSBĐ": fmtN(loan.collateralValue),
+    "Tổng nghĩa vụ bảo đảm": fmtN(loan.securedObligation),
 
     // --- Disbursement (GN) fields ---
     "GN.Hạn mức tín dụng": loan.loanAmount,
@@ -167,6 +171,13 @@ export async function buildReportData(
       }
     }
   }
+
+  // Auto-calc: Tổng mức cấp tín dụng = Dư nợ hiện tại + Số dư L/C + Số dư bảo lãnh
+  const parseNum = (v: unknown) => Number(String(v ?? "0").replace(/\./g, "")) || 0;
+  const tongMucCapTD = parseNum(data["GN.Dư nợ hiện tại"])
+    + parseNum(data["GN.Số dư L/C"])
+    + parseNum(data["GN.Số dư bảo lãnh"]);
+  data["GN.Tổng mức cấp tín dụng"] = tongMucCapTD;
 
   return data;
 }

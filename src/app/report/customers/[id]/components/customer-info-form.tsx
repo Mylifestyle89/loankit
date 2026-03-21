@@ -100,13 +100,30 @@ export function CustomerInfoForm({
         >
           <div className="flex items-center gap-2">
             <span className="text-sm font-medium">Loại KH:</span>
-            <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ${
-              form.customer_type === "individual"
-                ? "bg-emerald-50 text-emerald-700 ring-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-400"
-                : "bg-blue-50 text-blue-700 ring-blue-500/20 dark:bg-blue-500/10 dark:text-blue-400"
-            }`}>
-              {form.customer_type === "individual" ? "Cá nhân" : "Doanh nghiệp"}
-            </span>
+            <div className="inline-flex items-center rounded-full border border-zinc-200 dark:border-white/[0.09] p-0.5">
+              <button
+                type="button"
+                onClick={() => setForm((p) => ({ ...p, customer_type: "individual" }))}
+                className={`cursor-pointer rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+                  form.customer_type === "individual"
+                    ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300"
+                    : "text-zinc-500 dark:text-slate-400 hover:bg-zinc-100 dark:hover:bg-white/[0.06]"
+                }`}
+              >
+                Cá nhân
+              </button>
+              <button
+                type="button"
+                onClick={() => setForm((p) => ({ ...p, customer_type: "corporate" }))}
+                className={`cursor-pointer rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+                  form.customer_type === "corporate"
+                    ? "bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300"
+                    : "text-zinc-500 dark:text-slate-400 hover:bg-zinc-100 dark:hover:bg-white/[0.06]"
+                }`}
+              >
+                Doanh nghiệp
+              </button>
+            </div>
             {form.customer_type === "individual" && (
               <button type="button" onClick={() => setScannerOpen(true)}
                 className="ml-auto inline-flex items-center gap-1.5 rounded-lg border border-violet-200 dark:border-violet-500/30 bg-violet-50 dark:bg-violet-500/10 px-3 py-1.5 text-xs font-medium text-violet-700 dark:text-violet-400 hover:bg-violet-100 dark:hover:bg-violet-500/20 transition-colors">

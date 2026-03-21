@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
-import { ArrowRight, Calendar, Layers, Plus, Trash2 } from "lucide-react";
+import { ArrowRight, Calendar, Layers, Percent, Shield, Tag, Plus, Trash2 } from "lucide-react";
 
 import { useLanguage } from "@/components/language-provider";
 import { LoanStatusBadge } from "@/components/invoice-tracking/loan-status-badge";
@@ -13,12 +13,22 @@ type Loan = {
   id: string;
   contractNumber: string;
   loanAmount: number;
+  interestRate: number | null;
+  loan_method: string;
+  collateralValue: number | null;
   startDate: string;
   endDate: string;
   status: string;
   purpose: string | null;
   customer: { id: string; customer_name: string };
   _count: { disbursements: number };
+};
+
+const LOAN_METHOD_LABELS: Record<string, string> = {
+  tung_lan: "Từng lần",
+  han_muc: "Hạn mức",
+  trung_dai: "Trung dài hạn",
+  tieu_dung: "Tiêu dùng",
 };
 
 export default function LoansPage() {
@@ -157,12 +167,24 @@ export default function LoansPage() {
                   <Calendar className="h-3 w-3" />
                   {fmtDate(loan.startDate)} — {fmtDate(loan.endDate)}
                 </span>
+                {loan.interestRate != null && (
+                  <span className="inline-flex items-center gap-1">
+                    <Percent className="h-3 w-3" />
+                    LS: {loan.interestRate}%/năm
+                  </span>
+                )}
                 <span className="inline-flex items-center gap-1">
-                  <Layers className="h-3 w-3" />
-                  {loan._count.disbursements} {t("loans.disbursementCount")?.toLowerCase()}
+                  <Tag className="h-3 w-3" />
+                  {LOAN_METHOD_LABELS[loan.loan_method] ?? loan.loan_method}
                 </span>
+                {loan.collateralValue != null && loan.collateralValue > 0 && (
+                  <span className="inline-flex items-center gap-1">
+                    <Shield className="h-3 w-3" />
+                    TSBD: {fmt(loan.collateralValue)}
+                  </span>
+                )}
                 {loan.purpose && (
-                  <span className="truncate max-w-[200px]" title={loan.purpose}>{loan.purpose}</span>
+                  <span className="truncate max-w-[260px]" title={loan.purpose}>📋 {loan.purpose}</span>
                 )}
               </div>
 

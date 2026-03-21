@@ -166,6 +166,14 @@ export default function LoanDetailPage() {
                 className="rounded-lg bg-gradient-to-r from-violet-600 to-fuchsia-600 px-4 py-1.5 text-xs font-medium text-white shadow-sm shadow-violet-500/25 transition-all hover:shadow-md hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40">
                 Thông tin hợp đồng tín dụng
               </button>
+              {loan.customer?.id && (
+                <Link
+                  href={`/report/customers/${loan.customer.id}/loan-plans`}
+                  className="rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-white/80 dark:bg-white/[0.05] px-3 py-1.5 text-xs font-medium text-fuchsia-600 dark:text-fuchsia-400 transition-colors hover:bg-fuchsia-50 dark:hover:bg-fuchsia-500/10"
+                >
+                  Phương án vay vốn
+                </Link>
+              )}
               <button type="button" onClick={() => setShowBeneficiaryModal(true)}
                 className="rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-white/80 dark:bg-white/[0.05] px-3 py-1.5 text-xs font-medium text-zinc-600 dark:text-slate-300 transition-colors hover:bg-violet-50 dark:hover:bg-violet-500/10 hover:text-violet-700 dark:hover:text-violet-400">
                 {t("beneficiaries.title") ?? "Đơn vị thụ hưởng"}

@@ -1,10 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Play, Eye, Download, RotateCcw } from "lucide-react";
+import { Play, Eye, Download } from "lucide-react";
 
 import { useLanguage } from "@/components/language-provider";
-import { OnlyOfficeEditorModal } from "@/components/onlyoffice-editor-modal";
 import { useMappingDataStore } from "@/app/report/khdn/mapping/stores/use-mapping-data-store";
 import { getSignedFileUrl } from "@/lib/report/signed-file-url";
 import { CoverageProgressBar } from "@/components/coverage-progress-bar";
@@ -61,6 +60,8 @@ async function flushZustandDraft(): Promise<void> {
 
 export function BuildExportTab({ templates, activeTemplateId, onMessage, onError }: BuildExportTabProps) {
   const { t } = useLanguage();
+  // Local template selector — defaults to parent's activeTemplateId
+  const [selectedTemplateId, setSelectedTemplateId] = useState(activeTemplateId);
 
   // Field coverage indicator — shows how many fields have data before building
   const fieldCatalog = useMappingDataStore((s) => s.fieldCatalog);
@@ -80,8 +81,7 @@ export function BuildExportTab({ templates, activeTemplateId, onMessage, onError
   const [runningExport, setRunningExport] = useState(false);
   const [buildResult, setBuildResult] = useState<unknown>(null);
   const [freshness, setFreshness] = useState<FreshnessPayload | null>(null);
-  const [onlyOfficePreviewPath, setOnlyOfficePreviewPath] = useState("");
-  const [previewClosed, setPreviewClosed] = useState(false);
+  const [exportedDocxPath, setExportedDocxPath] = useState("");
 
   const loadRuns = useCallback(async () => {
     setLoading(true);
@@ -125,18 +125,17 @@ export function BuildExportTab({ templates, activeTemplateId, onMessage, onError
       try { await flushZustandDraft(); } catch { /* best-effort */ }
       const output = `report_assets/generated/report_preview_${Date.now()}.docx`;
       const report = `report_assets/generated/template_export_report_${Date.now()}.json`;
-      const selectedTemplate = templates.find((tp) => tp.id === activeTemplateId);
+      const selectedTemplate = templates.find((tp) => tp.id === selectedTemplateId);
       const exportBody: Record<string, string> = { output_path: output, report_path: report };
       if (selectedTemplate) exportBody.template_path = selectedTemplate.docx_path;
       const res = await fetch("/api/report/export", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(exportBody) });
       if (!res.ok) { const text = await res.text(); throw new Error(`Server error ${res.status}: ${text.slice(0, 200)}`); }
       const data = (await res.json()) as ExportResponse;
       if (!data.ok) throw new Error(data.details || data.error || t("runs.err.export"));
-      setOnlyOfficePreviewPath(data.output_path);
-      setPreviewClosed(false);
+      setExportedDocxPath(data.output_path);
       onMessage(data.auto_build_triggered
         ? `Đã tự động chạy Build trước khi export${data.stale_reasons?.length ? ` (${data.stale_reasons.join(", ")})` : ""}.`
-        : "Đã tạo báo cáo thành công. Mở OnlyOffice để xem chi tiết.");
+        : "Đã tạo báo cáo thành công.");
       await loadRuns(); await loadFreshness();
     } catch (err) {
       onError(err instanceof Error ? err.message : "Đã có lỗi xảy ra khi tạo báo cáo.");
@@ -144,20 +143,13 @@ export function BuildExportTab({ templates, activeTemplateId, onMessage, onError
   }
 
   async function handleDownloadDocx() {
-    if (!onlyOfficePreviewPath) return;
-    try { const url = await getSignedFileUrl(onlyOfficePreviewPath, true); window.open(url, "_blank"); }
+    if (!exportedDocxPath) return;
+    try { const url = await getSignedFileUrl(exportedDocxPath, true); window.open(url, "_blank"); }
     catch { onError("Failed to generate download URL."); }
   }
 
   return (
     <>
-      {/* OnlyOffice preview modal (self-contained) */}
-      {onlyOfficePreviewPath && !previewClosed && (
-        <OnlyOfficeEditorModal docxPath={onlyOfficePreviewPath}
-          onClose={() => setPreviewClosed(true)}
-          onSaved={() => { void loadRuns(); void loadFreshness(); }} />
-      )}
-
       {/* Field coverage indicator */}
       {coverage.total > 0 && (
         <div className={`rounded-xl border px-3 py-2 text-sm ${
@@ -191,6 +183,22 @@ export function BuildExportTab({ templates, activeTemplateId, onMessage, onError
         </div>
       )}
 
+      {/* Template selector */}
+      {templates.length > 0 && (
+        <div className="flex items-center gap-3">
+          <label className="text-sm font-medium text-zinc-700 dark:text-slate-300">Chọn mẫu báo cáo:</label>
+          <select
+            value={selectedTemplateId}
+            onChange={(e) => setSelectedTemplateId(e.target.value)}
+            className="rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] px-3 py-2 text-sm shadow-sm transition-all duration-150 focus:border-violet-300 dark:focus:border-violet-500/30 focus:ring-2 focus:ring-violet-500/20 outline-none"
+          >
+            {templates.map((tp) => (
+              <option key={tp.id} value={tp.id}>{tp.template_name}</option>
+            ))}
+          </select>
+        </div>
+      )}
+
       {/* Action toolbar */}
       <div className="flex flex-wrap gap-3">
         <button onClick={runBuildValidate} disabled={runningBuild}
@@ -201,18 +209,12 @@ export function BuildExportTab({ templates, activeTemplateId, onMessage, onError
         <button onClick={runExportPreview} disabled={runningExport || runningBuild}
           className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-violet-600 to-fuchsia-600 px-5 py-2 text-sm font-medium text-white shadow-sm shadow-violet-500/25 transition-all duration-200 hover:shadow-md hover:shadow-violet-500/30 hover:brightness-110 disabled:opacity-60">
           <Eye className="h-4 w-4" />
-          {runningExport ? "Đang tạo báo cáo..." : "Tạo & Xem Báo Cáo trong OnlyOffice"}
+          {runningExport ? "Đang tạo báo cáo..." : "Tạo & Tải Báo Cáo"}
         </button>
-        {onlyOfficePreviewPath && (
+        {exportedDocxPath && (
           <button onClick={handleDownloadDocx}
             className="inline-flex items-center gap-2 rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] px-4 py-2 text-sm font-medium shadow-sm transition-all duration-150 hover:border-violet-200 dark:hover:border-violet-500/20">
             <Download className="h-4 w-4" /> Tải về DOCX
-          </button>
-        )}
-        {onlyOfficePreviewPath && previewClosed && (
-          <button onClick={() => setPreviewClosed(false)}
-            className="inline-flex items-center gap-2 rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] px-4 py-2 text-sm font-medium shadow-sm transition-all duration-150 hover:border-violet-200 dark:hover:border-violet-500/20">
-            <RotateCcw className="h-4 w-4" /> Mở lại trong OnlyOffice
           </button>
         )}
       </div>

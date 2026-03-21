@@ -137,12 +137,13 @@ export function buildDisbursementExtendedData(
 
 export function buildBeneficiaryLoopData(
   beneficiaries: Array<{
-    name: string; accountNumber?: string | null; bankName?: string | null;
+    name: string; address?: string | null; accountNumber?: string | null; bankName?: string | null;
   }>,
 ) {
   return beneficiaries.map((b, i) => ({
     STT: i + 1,
     "Khách hàng thụ hưởng": b.name,
+    "Địa chỉ": b.address ?? "",
     "Số tài khoản": b.accountNumber ?? "",
     "Nơi mở tài khoản": b.bankName ?? "",
     // Extended fields from templates
@@ -152,6 +153,5 @@ export function buildBeneficiaryLoopData(
     "CMND": "",
     "Ngày cấp": "",
     "Nơi cấp": "",
-    "Địa chỉ": "",
   }));
 }

@@ -20,7 +20,7 @@ let _tempId = 0;
 function tempId() { return `tmp_${++_tempId}_${Date.now()}`; }
 
 function emptyBeneficiaryLine(): BeneficiaryLine {
-  return { tempId: tempId(), beneficiaryId: null, name: "", accountNumber: "", bankName: "", amount: "", invoiceStatus: "pending", invoices: [] };
+  return { tempId: tempId(), beneficiaryId: null, name: "", address: "", accountNumber: "", bankName: "", amount: "", invoiceStatus: "pending", invoices: [] };
 }
 function emptyInvoiceLine(): InvoiceLine {
   return { tempId: tempId(), supplierName: "", invoiceNumber: "", issueDate: "", amount: "" };
@@ -75,20 +75,23 @@ export function DisbursementFormModal({ loanId, loanAmount = 0, editDisbursement
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const lines: any[] = d.beneficiaryLines ?? [];
         if (lines.length > 0) {
-          setBeneficiaries(lines.map((bl: { beneficiaryId: string | null; beneficiaryName: string; accountNumber: string | null; bankName: string | null; amount: number; invoiceStatus: string; invoices?: { invoiceNumber: string; supplierName: string; issueDate: string; amount: number }[] }) => ({
+          setBeneficiaries(lines.map((bl: { beneficiaryId: string | null; beneficiaryName: string; address?: string | null; accountNumber: string | null; bankName: string | null; amount: number; invoiceStatus: string; invoices?: { invoiceNumber: string; supplierName: string; issueDate: string; amount: number }[] }) => ({
             tempId: tempId(),
             beneficiaryId: bl.beneficiaryId,
             name: bl.beneficiaryName,
+            address: bl.address ?? "",
             accountNumber: bl.accountNumber ?? "",
             bankName: bl.bankName ?? "",
             amount: fmtNumber(String(bl.amount)),
-            invoiceStatus: (bl.invoiceStatus === "has_invoice" ? "has_invoice" : "pending") as "pending" | "has_invoice",
-            invoices: (bl.invoices ?? []).map((inv: { invoiceNumber: string; supplierName: string; issueDate: string; amount: number }) => ({
+            invoiceStatus: (bl.invoiceStatus === "has_invoice" ? "has_invoice" : bl.invoiceStatus === "bang_ke" ? "bang_ke" : "pending") as "pending" | "has_invoice" | "bang_ke",
+            invoices: (bl.invoices ?? []).map((inv: { invoiceNumber: string; supplierName: string; issueDate: string; amount: number; qty?: number; unitPrice?: number }) => ({
               tempId: tempId(),
               invoiceNumber: inv.invoiceNumber,
               supplierName: inv.supplierName,
               issueDate: isoToDisplay(inv.issueDate),
               amount: fmtNumber(String(inv.amount)),
+              qty: inv.qty != null ? fmtNumber(String(inv.qty)) : "",
+              unitPrice: inv.unitPrice != null ? fmtNumber(String(inv.unitPrice)) : "",
             })),
           })));
         }
@@ -211,6 +214,7 @@ export function DisbursementFormModal({ loanId, loanAmount = 0, editDisbursement
       beneficiaries: validBeneficiaries.map((b) => ({
         beneficiaryId: b.beneficiaryId,
         beneficiaryName: b.name.trim(),
+        address: b.address || undefined,
         accountNumber: b.accountNumber || undefined,
         bankName: b.bankName || undefined,
         amount: num(b.amount),
@@ -221,6 +225,15 @@ export function DisbursementFormModal({ loanId, loanAmount = 0, editDisbursement
               invoiceNumber: i.invoiceNumber.trim(),
               issueDate: dmy2iso(i.issueDate) || isoDate,
               amount: num(i.amount),
+            }))
+          : b.invoiceStatus === "bang_ke"
+          ? b.invoices.filter((i) => i.supplierName.trim()).map((i, idx) => ({
+              supplierName: i.supplierName.trim(),
+              invoiceNumber: `BK-${idx + 1}`,
+              issueDate: isoDate,
+              amount: num(i.amount),
+              qty: num(i.qty ?? "0"),
+              unitPrice: num(i.unitPrice ?? "0"),
             }))
           : undefined,
       })),

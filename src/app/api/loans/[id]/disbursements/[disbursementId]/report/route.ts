@@ -9,7 +9,7 @@ export const runtime = "nodejs";
 type RouteParams = { params: Promise<{ id: string; disbursementId: string }> };
 
 const bodySchema = z.object({
-  templateKey: z.enum(["bcdx", "giay_nhan_no", "danh_muc_ho_so", "in_unc"]),
+  templateKey: z.enum(["bcdx", "giay_nhan_no", "danh_muc_ho_so", "in_unc", "cam_ket_bo_sung_chung_tu"]),
   overrides: z.record(z.string(), z.string()).optional(),
 });
 
