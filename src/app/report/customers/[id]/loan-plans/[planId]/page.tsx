@@ -9,14 +9,29 @@ import { CostItemsTable, type CostItem } from "./cost-items-table";
 import { NumericInput } from "./numeric-input";
 import { inputCls } from "@/components/invoice-tracking/form-styles";
 import { SmartField } from "@/components/smart-field";
+import { calcRepaymentSchedule } from "@/lib/loan-plan/loan-plan-calculator";
 type RevenueItem = { description: string; qty: number; unitPrice: number; amount: number };
 type Financials = {
   totalDirectCost: number; interestRate: number; turnoverCycles: number;
   interest: number; tax: number; totalIndirectCost: number; totalCost: number;
   revenue: number; profit: number; loanNeed: number; loanAmount: number; counterpartCapital: number;
+  // trung_dai extended
+  depreciation_years?: number; asset_unit_price?: number; land_area_sau?: number;
+  preferential_rate?: number; term_months?: number;
+  construction_contract_no?: string; construction_contract_date?: string;
 };
 
 function fmtVND(n: number) { return n.toLocaleString("vi-VN") + "đ"; }
+function formatPercentInputFromRate(rate: number): string {
+  if (!rate) return "";
+  return String(rate * 100).replace(".", ",");
+}
+function parsePercentInputToRate(raw: string): number {
+  const normalized = raw.replace(/\s/g, "").replace(",", ".");
+  const value = Number(normalized);
+  if (!Number.isFinite(value) || value < 0) return 0;
+  return value / 100;
+}
 
 export default function LoanPlanEditorPage() {
   const { id: customerId, planId } = useParams() as { id: string; planId: string };
@@ -28,11 +43,21 @@ export default function LoanPlanEditorPage() {
   const [costItems, setCostItems] = useState<CostItem[]>([]);
   const [revenueItems, setRevenueItems] = useState<RevenueItem[]>([]);
   const [loanAmount, setLoanAmount] = useState(0);
-  const [interestRate, setInterestRate] = useState(0);
+  const [interestRateInput, setInterestRateInput] = useState("");
   const [turnoverCycles, setTurnoverCycles] = useState(1);
   const [tax, setTax] = useState(0);
   const [analyzing, setAnalyzing] = useState(false);
+  // trung_dai extended fields
+  const [depreciationYears, setDepreciationYears] = useState(0);
+  const [assetUnitPrice, setAssetUnitPrice] = useState(0);
+  const [landAreaSau, setLandAreaSau] = useState(0);
+  const [preferentialRateInput, setPreferentialRateInput] = useState("");
+  const [termMonths, setTermMonths] = useState(0);
+  const [constructionContractNo, setConstructionContractNo] = useState("");
+  const [constructionContractDate, setConstructionContractDate] = useState("");
   const xlsxInputRef = useRef<HTMLInputElement>(null);
+  const interestRate = parsePercentInputToRate(interestRateInput);
+  const preferentialRate = parsePercentInputToRate(preferentialRateInput);
 
   async function handleAiAnalyze(file: File) {
     setAnalyzing(true);
@@ -46,6 +71,7 @@ export default function LoanPlanEditorPage() {
       if (data.name) setName(data.name);
       if (data.loanAmount) setLoanAmount(data.loanAmount);
       if (data.turnoverCycles) setTurnoverCycles(data.turnoverCycles);
+      if (typeof data.interestRate === "number") setInterestRateInput(formatPercentInputFromRate(data.interestRate));
       if (data.costItems?.length) setCostItems(data.costItems);
       if (data.revenueItems?.length) setRevenueItems(data.revenueItems);
     } catch (err) {
@@ -58,6 +84,7 @@ export default function LoanPlanEditorPage() {
 
   const loadPlan = useCallback(async () => {
     setLoading(true);
+    try {
     const res = await fetch(`/api/loan-plans/${planId}`, { cache: "no-store" });
     const data = await res.json();
     if (!data.ok) { setError(data.error ?? "Not found"); setLoading(false); return; }
@@ -68,9 +95,18 @@ export default function LoanPlanEditorPage() {
     setRevenueItems(JSON.parse(p.revenue_items_json || "[]"));
     const fin: Financials = JSON.parse(p.financials_json || "{}");
     setLoanAmount(fin.loanAmount ?? 0);
-    setInterestRate(fin.interestRate ?? 0);
+    setInterestRateInput(formatPercentInputFromRate(fin.interestRate ?? 0));
     setTurnoverCycles(fin.turnoverCycles ?? 1);
     setTax(fin.tax ?? 0);
+    // trung_dai extended
+    setDepreciationYears(fin.depreciation_years ?? 0);
+    setAssetUnitPrice(fin.asset_unit_price ?? 0);
+    setLandAreaSau(fin.land_area_sau ?? 0);
+    setPreferentialRateInput(formatPercentInputFromRate(fin.preferential_rate ?? 0));
+    setTermMonths(fin.term_months ?? 0);
+    setConstructionContractNo(fin.construction_contract_no ?? "");
+    setConstructionContractDate(fin.construction_contract_date ?? "");
+    } catch (err) { setError(err instanceof Error ? err.message : "Lỗi tải dữ liệu"); }
     setLoading(false);
   }, [planId]);
 
@@ -94,6 +130,7 @@ export default function LoanPlanEditorPage() {
   async function handleSave() {
     setSaving(true);
     setError("");
+    try {
     const res = await fetch(`/api/loan-plans/${planId}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
@@ -101,11 +138,19 @@ export default function LoanPlanEditorPage() {
         name, loan_method: loanMethod,
         cost_items: costItems, revenue_items: revenueItems,
         loanAmount, interestRate, turnoverCycles, tax,
+        // trung_dai extended
+        ...(loanMethod === "trung_dai" ? {
+          depreciation_years: depreciationYears, asset_unit_price: assetUnitPrice,
+          land_area_sau: landAreaSau, preferential_rate: preferentialRate,
+          term_months: termMonths, construction_contract_no: constructionContractNo,
+          construction_contract_date: constructionContractDate,
+        } : {}),
       }),
     });
     const data = await res.json();
-    setSaving(false);
     if (!data.ok) setError(data.error ?? "Lỗi lưu");
+    } catch (err) { setError(err instanceof Error ? err.message : "Lỗi lưu"); }
+    setSaving(false);
   }
 
   function updateRevenue(idx: number, field: keyof RevenueItem, raw: string) {
@@ -167,7 +212,24 @@ export default function LoanPlanEditorPage() {
         </label>
         <label className="block">
           <span className="text-xs font-medium text-zinc-500">Lãi suất (%/năm)</span>
-          <input type="number" step="0.01" value={interestRate ? (interestRate * 100) : ""} onChange={(e) => setInterestRate((Number(e.target.value) || 0) / 100)} className={inputCls} placeholder="VD: 9" />
+          <input
+            type="text"
+            inputMode="decimal"
+            value={interestRateInput}
+            onChange={(e) => {
+              const raw = e.target.value.trim();
+              if (raw === "") {
+                setInterestRateInput("");
+                return;
+              }
+              // Allow progressive typing: 9, 9,5 9.5
+              if (/^\d+([,.]\d*)?$/.test(raw)) {
+                setInterestRateInput(raw);
+              }
+            }}
+            className={inputCls}
+            placeholder="VD: 9,5"
+          />
         </label>
         <label className="block">
           <span className="text-xs font-medium text-zinc-500">Vòng quay vốn</span>
@@ -178,6 +240,61 @@ export default function LoanPlanEditorPage() {
           <NumericInput value={loanAmount} onChange={setLoanAmount} className={inputCls} placeholder="0" />
         </label>
       </div>
+
+      {/* Trung dài hạn: khấu hao, HĐ thi công, lãi ưu đãi */}
+      {loanMethod === "trung_dai" && (
+        <div className="rounded-2xl border border-amber-200 dark:border-amber-500/20 bg-amber-50/50 dark:bg-amber-950/10 p-5 shadow-sm space-y-4">
+          <h3 className="text-sm font-semibold">Thông tin trung dài hạn (nhà kính)</h3>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <label className="block">
+              <span className="text-xs font-medium text-zinc-500">Thời hạn vay (tháng)</span>
+              <input type="number" value={termMonths || ""} onChange={(e) => setTermMonths(Number(e.target.value) || 0)} className={inputCls} placeholder="VD: 96" />
+            </label>
+            <label className="block">
+              <span className="text-xs font-medium text-zinc-500">Số năm khấu hao</span>
+              <input type="number" value={depreciationYears || ""} onChange={(e) => setDepreciationYears(Number(e.target.value) || 0)} className={inputCls} placeholder="VD: 8" />
+            </label>
+            <label className="block">
+              <span className="text-xs font-medium text-zinc-500">Đơn giá tài sản/sào</span>
+              <NumericInput value={assetUnitPrice} onChange={setAssetUnitPrice} className={inputCls} placeholder="VD: 270,000,000" />
+            </label>
+            <label className="block">
+              <span className="text-xs font-medium text-zinc-500">Số sào đất</span>
+              <input type="number" step="0.1" value={landAreaSau || ""} onChange={(e) => setLandAreaSau(Number(e.target.value) || 0)} className={inputCls} placeholder="VD: 10" />
+            </label>
+            <label className="block">
+              <span className="text-xs font-medium text-zinc-500">Lãi suất ưu đãi năm đầu (%/năm)</span>
+              <input type="text" inputMode="decimal" value={preferentialRateInput}
+                onChange={(e) => { const r = e.target.value.trim(); if (r === "" || /^\d+([,.]\d*)?$/.test(r)) setPreferentialRateInput(r); }}
+                className={inputCls} placeholder="VD: 7,5" />
+            </label>
+            <label className="block">
+              <span className="text-xs font-medium text-zinc-500">Số HĐ thi công</span>
+              <input type="text" value={constructionContractNo} onChange={(e) => setConstructionContractNo(e.target.value)} className={inputCls} />
+            </label>
+            <label className="block">
+              <span className="text-xs font-medium text-zinc-500">Ngày HĐ thi công</span>
+              <input type="text" value={constructionContractDate} onChange={(e) => setConstructionContractDate(e.target.value)} className={inputCls} placeholder="DD/MM/YYYY" />
+            </label>
+          </div>
+
+          {/* Depreciation info */}
+          {depreciationYears > 0 && assetUnitPrice > 0 && landAreaSau > 0 && (
+            <div className="text-sm text-amber-800 dark:text-amber-300">
+              Khấu hao/năm: <strong>{Math.round(assetUnitPrice * landAreaSau / depreciationYears).toLocaleString("vi-VN")}đ</strong>
+            </div>
+          )}
+
+          {/* Repayment schedule preview */}
+          {termMonths > 12 && loanAmount > 0 && financials && (
+            <RepaymentScheduleTable
+              loanAmount={loanAmount} termMonths={termMonths}
+              standardRate={interestRate} preferentialRate={preferentialRate || interestRate}
+              annualIncome={financials.profit + (depreciationYears > 0 ? Math.round(assetUnitPrice * landAreaSau / depreciationYears) : 0)}
+            />
+          )}
+        </div>
+      )}
 
       {/* Cost items */}
       <div className="rounded-2xl border border-zinc-200 dark:border-white/[0.07] bg-white dark:bg-[#161616] p-5 shadow-sm">
@@ -264,6 +381,51 @@ function Stat({ label, value, color }: { label: string; value: string; color?: s
     <div>
       <p className="text-xs text-zinc-500">{label}</p>
       <p className={`font-semibold tabular-nums ${colorCls}`}>{value}</p>
+    </div>
+  );
+}
+
+/** Bảng trả nợ theo năm — preview cho vay trung dài hạn */
+function RepaymentScheduleTable({ loanAmount, termMonths, standardRate, preferentialRate, annualIncome }: {
+  loanAmount: number; termMonths: number; standardRate: number; preferentialRate: number; annualIncome: number;
+}) {
+  const rows = calcRepaymentSchedule({
+    loanAmount, termMonths, standardRate,
+    preferentialRate: preferentialRate !== standardRate ? preferentialRate : undefined,
+    annualIncome,
+  });
+  if (rows.length === 0) return null;
+
+  const fmt = (n: number) => n.toLocaleString("vi-VN");
+  return (
+    <div>
+      <h4 className="text-xs font-semibold text-amber-700 dark:text-amber-400 mb-2">Bảng trả nợ theo năm (preview)</h4>
+      <div className="overflow-x-auto">
+        <table className="w-full text-xs border-collapse">
+          <thead>
+            <tr className="bg-amber-100/50 dark:bg-amber-900/20">
+              <th className="px-2 py-1 text-left">Năm</th>
+              <th className="px-2 py-1 text-right">Thu nhập trả nợ</th>
+              <th className="px-2 py-1 text-right">Dư nợ</th>
+              <th className="px-2 py-1 text-right">Gốc trả</th>
+              <th className="px-2 py-1 text-right">Lãi trả</th>
+              <th className="px-2 py-1 text-right">TN còn lại</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((r) => (
+              <tr key={r.year} className="border-t border-amber-200/50 dark:border-amber-800/20">
+                <td className="px-2 py-1">Năm {r.year}</td>
+                <td className="px-2 py-1 text-right tabular-nums">{fmt(r.income)}</td>
+                <td className="px-2 py-1 text-right tabular-nums">{fmt(r.balance)}</td>
+                <td className="px-2 py-1 text-right tabular-nums">{fmt(r.principal)}</td>
+                <td className="px-2 py-1 text-right tabular-nums">{fmt(r.interest)}</td>
+                <td className={`px-2 py-1 text-right tabular-nums ${r.remaining < 0 ? "text-red-600" : ""}`}>{fmt(r.remaining)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

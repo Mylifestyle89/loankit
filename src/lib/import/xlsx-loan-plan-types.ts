@@ -19,6 +19,13 @@ export type XlsxParseMeta = {
   profit?: number;
   yield?: number;
   unitPrice?: number;
+  depreciationYears?: number;
+  assetUnitPrice?: number;
+  landAreaSau?: number;
+  constructionContractNo?: string;
+  constructionContractDate?: string;
+  preferentialRate?: number;
+  farmAddress?: string;
   creditAgribank?: Record<string, string>;
   creditOther?: Record<string, string>;
   oldContract?: Record<string, string>;

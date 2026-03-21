@@ -3,6 +3,7 @@
 import type {
   CostItem,
   LoanPlanFinancials,
+  RepaymentRow,
   NongNghiepRevenue,
   KinhDoanhRevenue,
   ChanNuoiRevenue,
@@ -91,6 +92,37 @@ export type CalcFinancialsInput = {
   turnoverCycles: number; // Vòng quay vốn
   tax: number; // Thuế (user-editable)
 };
+
+/** Khấu hao nhà kính = đơn giá × số sào / số năm khấu hao */
+export function calcDepreciation(assetUnitPrice: number, landArea: number, years: number): number {
+  if (years <= 0) return 0;
+  return Math.round(assetUnitPrice * landArea / years);
+}
+
+/** Bảng trả nợ theo năm cho vay trung dài hạn */
+export function calcRepaymentSchedule(params: {
+  loanAmount: number;
+  termMonths: number;
+  standardRate: number;
+  preferentialRate?: number; // lãi suất ưu đãi năm đầu
+  annualIncome: number;     // lợi nhuận + khấu hao
+}): RepaymentRow[] {
+  const years = Math.ceil(params.termMonths / 12);
+  if (years <= 0 || params.loanAmount <= 0) return [];
+  const principalPerYear = Math.round(params.loanAmount / years);
+  const rows: RepaymentRow[] = [];
+  let balance = params.loanAmount;
+
+  for (let y = 1; y <= years; y++) {
+    const rate = (y === 1 && params.preferentialRate) ? params.preferentialRate : params.standardRate;
+    const interest = Math.round(balance * rate);
+    const principal = y === years ? balance : principalPerYear;
+    const remaining = params.annualIncome - principal - interest;
+    rows.push({ year: y, income: params.annualIncome, balance, principal, interest, remaining });
+    balance -= principal;
+  }
+  return rows;
+}
 
 export function calcFinancials(input: CalcFinancialsInput): LoanPlanFinancials {
   const totalDirectCost = calcTotalDirectCost(input.costItems);

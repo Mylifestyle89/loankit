@@ -82,5 +82,26 @@ export type LoanPlanCategory =
   | "xay_dung"
   | "han_muc";
 
+// Extended fields for trung_dai (medium-long term) loan plans
+export type LoanPlanFinancialsExtended = LoanPlanFinancials & {
+  depreciation_years?: number;         // Số năm khấu hao (e.g., 8)
+  asset_unit_price?: number;           // Đơn giá tài sản/sào (e.g., 270,000,000)
+  land_area_sau?: number;              // Số sào đất
+  construction_contract_no?: string;   // Số HĐ thi công
+  construction_contract_date?: string; // Ngày HĐ thi công
+  preferential_rate?: number;          // Lãi suất ưu đãi năm đầu (e.g., 0.075)
+  term_months?: number;                // Thời hạn vay (tháng)
+  farmAddress?: string;                // Địa chỉ đất NN
+};
+
+export type RepaymentRow = {
+  year: number;           // Năm thứ
+  income: number;         // Thu nhập trả nợ = profit + depreciation
+  balance: number;        // Dư nợ đầu kỳ
+  principal: number;      // Gốc trả
+  interest: number;       // Lãi trả
+  remaining: number;      // TN còn lại = income - principal - interest
+};
+
 export type LoanMethod = "tung_lan" | "han_muc" | "trung_dai" | "tieu_dung";
 export type LoanPlanStatus = "draft" | "approved";

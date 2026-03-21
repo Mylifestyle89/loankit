@@ -3,6 +3,7 @@
  */
 import { numberToVietnameseWords } from "@/lib/number-to-vietnamese-words";
 import { fmtN } from "@/lib/report/format-number-vn";
+import { calcDepreciation, calcRepaymentSchedule } from "@/lib/loan-plan/loan-plan-calculator";
 
 type Data = Record<string, unknown>;
 
@@ -41,13 +42,22 @@ export function buildLoanPlanExtendedData(
   data["PA.Tổng nhu cầu vốn bằng chữ"] = financials.totalCost
     ? numberToVietnameseWords(financials.totalCost as number)
     : "";
-  data["PA.Số tiền đặt cọc"] = fmtN(financials.deposit);
+  // PA.Số tiền đặt cọc & PA.Số tiền hợp đồng cung ứng: recalculated after cost items (see below)
   data["PA.Số HĐTD cũ"] = financials.oldContractNumber ?? "";
   data["PA.Ngày HĐTD cũ"] = financials.oldContractDate ?? "";
-  data["PA.Số tiền hợp đồng cung ứng"] = fmtN(financials.supplyContractAmount);
-  data["PA.Số tiền hợp đồng cung ứng bằng chữ"] = financials.supplyContractAmount
-    ? numberToVietnameseWords(financials.supplyContractAmount as number)
-    : "";
+
+  // ── Khấu hao nhà kính (trung dài hạn) ──
+  const depYears = Number(financials.depreciation_years) || 0;
+  const assetPrice = Number(financials.asset_unit_price) || 0;
+  const landSau = Number(financials.land_area_sau) || 0;
+  const depreciation = calcDepreciation(assetPrice, landSau, depYears);
+
+  data["PA.Khấu hao nhà kính"] = fmtN(depreciation);
+  data["PA.Số năm khấu hao"] = depYears || "";
+  data["PA.Đơn giá nhà kính/sào"] = fmtN(assetPrice);
+  if (landSau) data["PA.Số sào đất"] = fmtN(landSau);
+  data["PA.Số HĐ thi công"] = financials.construction_contract_no ?? "";
+  data["PA.Ngày HĐ thi công"] = financials.construction_contract_date ?? "";
 
   // Consolidated flat PA.* financials (single source of truth)
   data["PA.Tên phương án"] = plan.name;
@@ -101,6 +111,14 @@ export function buildLoanPlanExtendedData(
       "Thành tiền": fmtN(c.amount),
     }));
 
+    // Flat PA.<name>_DG/_SL/_TT placeholders for fixed-row templates (HĐ cung ứng, BB giao nhận)
+    for (const c of costItems) {
+      if (!c.name) continue;
+      data[`PA.${c.name}_DG`] = fmtN(c.unitPrice ?? c.unit_price);
+      data[`PA.${c.name}_SL`] = fmtN(c.qty);
+      data[`PA.${c.name}_TT`] = fmtN(c.amount);
+    }
+
     // PA_DOANHTHU: revenue items loop
     data["PA_DOANHTHU"] = revenueItems.map((r, i) => row({
       STT: i + 1, "Hạng mục": r.description,
@@ -134,12 +152,26 @@ export function buildLoanPlanExtendedData(
     data["PA.Tổng chi phí"] = fmtN(totalCostAll);
     data["PA.Tổng chi phí trực tiếp"] = fmtN(totalDirectCost);
     data["PA.Tổng chi phí gián tiếp"] = fmtN(totalIndirectCost);
+    // PA.Lãi vay NH và PA.Lãi vay: cùng giá trị lãi dự kiến (template cũ dùng một trong hai)
     data["PA.Lãi vay NH"] = fmtN(interestCost);
     data["PA.Lãi vay"] = fmtN(interestCost);
     data["PA.LS vay"] = rateStr; // lãi suất format cho cột đơn giá
     data["PA.Thuế"] = fmtN(tax);
     data["PA.Tổng doanh thu dự kiến"] = fmtN(totalRevenue);
     data["PA.Lợi nhuận dự kiến"] = fmtN(profit);
+    // HĐ cung ứng: tổng = chỉ 9 khoản vật tư (không gồm xử lý đất, tưới, công lao động)
+    const SUPPLY_ITEMS = ["Cây giống", "Phân hữu cơ", "Đạm", "Lân", "KaLi", "Phân vi sinh", "NPK", "Vôi", "Thuốc BVTV"];
+    const supplyTotal = costItems
+      .filter(c => SUPPLY_ITEMS.includes(c.name))
+      .reduce((s, c) => s + (c.amount ?? 0), 0);
+    data["PA.Số tiền hợp đồng cung ứng"] = fmtN(supplyTotal);
+    data["PA.Số tiền hợp đồng cung ứng bằng chữ"] = supplyTotal
+      ? numberToVietnameseWords(supplyTotal) : "";
+    const loanAmt = Number(financials.loanAmount) || 0;
+    const depositAmt = Math.max(supplyTotal - loanAmt, 0);
+    data["PA.Số tiền đặt cọc"] = fmtN(depositAmt);
+    data["PA.Số tiền đặt cọc bằng chữ"] = depositAmt
+      ? numberToVietnameseWords(depositAmt) : "";
     // Tổng nhu cầu vốn = tổng chi phí (trực tiếp + gián tiếp)
     if (totalCostAll > 0) {
       data["PA.Tổng nhu cầu vốn"] = fmtN(totalCostAll);
@@ -149,8 +181,28 @@ export function buildLoanPlanExtendedData(
       // Tỷ lệ vốn tự có = vốn đối ứng / tổng chi phí TRỰC TIẾP (không gồm gián tiếp)
       data["PA.Tỷ lệ vốn tự có"] = calcRatioStr(totalDirectCost);
     }
+    // ── Bảng trả nợ theo năm (PA_TRANO) — vay trung dài hạn ──
+    const termMonths = Number(financials.term_months || financials.loanTerm) || 0;
+    const stdRate = Number(financials.interestRate) || 0;
+    const prefRate = Number(financials.preferential_rate) || stdRate;
+    const annualIncome = profit + depreciation;
+
+    const repaymentRows = calcRepaymentSchedule({
+      loanAmount: loanAmt, termMonths, standardRate: stdRate,
+      preferentialRate: prefRate !== stdRate ? prefRate : undefined,
+      annualIncome,
+    });
+    data["PA_TRANO"] = repaymentRows.map((r) => ({
+      "Năm": `Năm ${r.year}`,
+      "Thu nhập trả nợ": fmtN(r.income),
+      "Dư nợ": fmtN(r.balance),
+      "Gốc trả": fmtN(r.principal),
+      "Lãi trả": fmtN(r.interest),
+      "TN còn lại": fmtN(r.remaining),
+    }));
   } catch {
     data["PA_CHIPHI"] = [];
     data["PA_DOANHTHU"] = [];
+    data["PA_TRANO"] = [];
   }
 }

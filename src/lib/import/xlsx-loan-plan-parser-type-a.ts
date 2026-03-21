@@ -32,6 +32,13 @@ const META_KEY_MAP: Record<string, keyof XlsxParseMeta> = {
   "Tổng nhu cầu vốn": "totalCapitalNeed",
   "Số vòng quay": "turnoverCycles",
   "Số sào đất": "landArea",
+  "Số năm khấu hao": "depreciationYears",
+  "Đơn giá nhà kính": "assetUnitPrice",
+  "Số sào đất NN": "landAreaSau",
+  "Số HĐ thi công": "constructionContractNo",
+  "Ngày HĐ thi công": "constructionContractDate",
+  "Lãi suất ưu đãi": "preferentialRate",
+  "Địa chỉ đất NN": "farmAddress",
 };
 
 /** Parse number, handling VND formatting (thousand-sep dots) while preserving real decimals */
@@ -116,9 +123,9 @@ export function parseTypeA(wb: WorkBook): XlsxParseResult {
   for (const [key, val] of Object.entries(metaFields)) {
     const metaKey = META_KEY_MAP[key];
     if (!metaKey) continue;
-    if (metaKey === "interestRate") {
+    if (metaKey === "interestRate" || metaKey === "preferentialRate") {
       (meta as Record<string, unknown>)[metaKey] = parseRate(val);
-    } else if (metaKey === "name" || metaKey === "counterpartRatio") {
+    } else if (["name", "counterpartRatio", "constructionContractNo", "constructionContractDate", "farmAddress"].includes(metaKey as string)) {
       (meta as Record<string, unknown>)[metaKey] = String(val);
     } else {
       (meta as Record<string, unknown>)[metaKey] = parseNum(val);
