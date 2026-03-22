@@ -14,6 +14,7 @@ const KNOWN_UNITS: Record<string, string> = {
   "Phân vi sinh": "kg", "Vôi": "kg", "Thuốc BVTV": "lít",
   "Chi phí tưới": "giờ", "Công lao động": "công",
   "Con giống": "con", "Thức ăn": "kg", "Bò thịt": "con",
+  "Nhà kính": "bộ",
 };
 
 // Meta field key mapping (Vietnamese header -> meta property)
@@ -126,7 +127,13 @@ export function parseTypeA(wb: WorkBook): XlsxParseResult {
     if (metaKey === "interestRate" || metaKey === "preferentialRate") {
       (meta as Record<string, unknown>)[metaKey] = parseRate(val);
     } else if (["name", "counterpartRatio", "constructionContractNo", "constructionContractDate", "farmAddress"].includes(metaKey as string)) {
-      (meta as Record<string, unknown>)[metaKey] = String(val);
+      // Convert Excel serial date to DD/MM/YYYY for date fields
+      if (metaKey === "constructionContractDate" && typeof val === "number" && val > 30000) {
+        const d = new Date((val - 25569) * 86400000);
+        (meta as Record<string, unknown>)[metaKey] = `${String(d.getDate()).padStart(2,"0")}/${String(d.getMonth()+1).padStart(2,"0")}/${d.getFullYear()}`;
+      } else {
+        (meta as Record<string, unknown>)[metaKey] = String(val);
+      }
     } else {
       (meta as Record<string, unknown>)[metaKey] = parseNum(val);
     }

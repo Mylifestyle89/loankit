@@ -122,10 +122,13 @@ export default function LoanPlanEditorPage() {
     const totalCost = totalDirectCost + totalIndirectCost;
     const profit = revenue - totalCost;
     const tc = turnoverCycles || 1;
-    const loanNeed = totalDirectCost / tc;
+    // Trung dài hạn: nhu cầu vốn = giá trị tài sản (nhà kính), không phải CPTT/vòng quay
+    const loanNeed = (loanMethod === "trung_dai" && assetUnitPrice > 0 && landAreaSau > 0)
+      ? assetUnitPrice * landAreaSau
+      : totalDirectCost / tc;
     const counterpartCapital = loanNeed - loanAmount;
     return { totalDirectCost, interestRate, turnoverCycles, interest, tax, totalIndirectCost, totalCost, revenue, profit, loanNeed, loanAmount, counterpartCapital };
-  }, [costItems, revenueItems, loanAmount, interestRate, turnoverCycles, tax, loading]);
+  }, [costItems, revenueItems, loanAmount, interestRate, turnoverCycles, tax, loading, loanMethod, assetUnitPrice, landAreaSau]);
 
   async function handleSave() {
     setSaving(true);
@@ -241,19 +244,11 @@ export default function LoanPlanEditorPage() {
         </label>
       </div>
 
-      {/* Trung dài hạn: khấu hao, HĐ thi công, lãi ưu đãi */}
+      {/* ── Trung dài hạn: Khấu hao & Tài sản đầu tư ── */}
       {loanMethod === "trung_dai" && (
         <div className="rounded-2xl border border-amber-200 dark:border-amber-500/20 bg-amber-50/50 dark:bg-amber-950/10 p-5 shadow-sm space-y-4">
-          <h3 className="text-sm font-semibold">Thông tin trung dài hạn (nhà kính)</h3>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <label className="block">
-              <span className="text-xs font-medium text-zinc-500">Thời hạn vay (tháng)</span>
-              <input type="number" value={termMonths || ""} onChange={(e) => setTermMonths(Number(e.target.value) || 0)} className={inputCls} placeholder="VD: 96" />
-            </label>
-            <label className="block">
-              <span className="text-xs font-medium text-zinc-500">Số năm khấu hao</span>
-              <input type="number" value={depreciationYears || ""} onChange={(e) => setDepreciationYears(Number(e.target.value) || 0)} className={inputCls} placeholder="VD: 8" />
-            </label>
+          <h3 className="text-sm font-semibold">Khấu hao & Tài sản đầu tư</h3>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <label className="block">
               <span className="text-xs font-medium text-zinc-500">Đơn giá tài sản/sào</span>
               <NumericInput value={assetUnitPrice} onChange={setAssetUnitPrice} className={inputCls} placeholder="VD: 270,000,000" />
@@ -261,6 +256,26 @@ export default function LoanPlanEditorPage() {
             <label className="block">
               <span className="text-xs font-medium text-zinc-500">Số sào đất</span>
               <input type="number" step="0.1" value={landAreaSau || ""} onChange={(e) => setLandAreaSau(Number(e.target.value) || 0)} className={inputCls} placeholder="VD: 10" />
+            </label>
+            <label className="block">
+              <span className="text-xs font-medium text-zinc-500">Số năm khấu hao</span>
+              <input type="number" value={depreciationYears || ""} onChange={(e) => setDepreciationYears(Number(e.target.value) || 0)} className={inputCls} placeholder="VD: 8" />
+            </label>
+          </div>
+          {/* Tóm tắt tài sản */}
+          {assetUnitPrice > 0 && landAreaSau > 0 && (
+            <div className="grid grid-cols-2 gap-3 text-sm bg-amber-100/50 dark:bg-amber-900/10 rounded-lg p-3">
+              <div><span className="text-zinc-500 text-xs">Tổng giá trị tài sản</span><p className="font-semibold tabular-nums">{fmtVND(assetUnitPrice * landAreaSau)}</p></div>
+              {depreciationYears > 0 && (
+                <div><span className="text-zinc-500 text-xs">Khấu hao/năm</span><p className="font-semibold tabular-nums">{fmtVND(Math.round(assetUnitPrice * landAreaSau / depreciationYears))}</p></div>
+              )}
+            </div>
+          )}
+          {/* Thông tin vay trung dài hạn */}
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 pt-2 border-t border-amber-200/50 dark:border-amber-800/20">
+            <label className="block">
+              <span className="text-xs font-medium text-zinc-500">Thời hạn vay (tháng)</span>
+              <input type="number" value={termMonths || ""} onChange={(e) => setTermMonths(Number(e.target.value) || 0)} className={inputCls} placeholder="VD: 96" />
             </label>
             <label className="block">
               <span className="text-xs font-medium text-zinc-500">Lãi suất ưu đãi năm đầu (%/năm)</span>
@@ -277,22 +292,6 @@ export default function LoanPlanEditorPage() {
               <input type="text" value={constructionContractDate} onChange={(e) => setConstructionContractDate(e.target.value)} className={inputCls} placeholder="DD/MM/YYYY" />
             </label>
           </div>
-
-          {/* Depreciation info */}
-          {depreciationYears > 0 && assetUnitPrice > 0 && landAreaSau > 0 && (
-            <div className="text-sm text-amber-800 dark:text-amber-300">
-              Khấu hao/năm: <strong>{Math.round(assetUnitPrice * landAreaSau / depreciationYears).toLocaleString("vi-VN")}đ</strong>
-            </div>
-          )}
-
-          {/* Repayment schedule preview */}
-          {termMonths > 12 && loanAmount > 0 && financials && (
-            <RepaymentScheduleTable
-              loanAmount={loanAmount} termMonths={termMonths}
-              standardRate={interestRate} preferentialRate={preferentialRate || interestRate}
-              annualIncome={financials.profit + (depreciationYears > 0 ? Math.round(assetUnitPrice * landAreaSau / depreciationYears) : 0)}
-            />
-          )}
         </div>
       )}
 
@@ -331,6 +330,9 @@ export default function LoanPlanEditorPage() {
               <NumericInput value={tax} onChange={setTax}
                 className="font-semibold tabular-nums bg-transparent border-b border-dashed border-zinc-300 dark:border-white/20 outline-none w-full text-sm" placeholder="Nhập thuế" />
             </div>
+            {loanMethod === "trung_dai" && depreciationYears > 0 && assetUnitPrice > 0 && landAreaSau > 0 && (
+              <Stat label="Khấu hao/năm" value={fmtVND(Math.round(assetUnitPrice * landAreaSau / depreciationYears))} />
+            )}
             <Stat label="Tổng chi phí gián tiếp (Lãi vay + Thuế)" value={fmtVND(financials.totalIndirectCost)} />
             <Stat label="Tổng chi phí" value={fmtVND(financials.totalCost)} />
             <Stat label="Doanh thu DK" value={fmtVND(financials.revenue)} />
@@ -344,9 +346,15 @@ export default function LoanPlanEditorPage() {
         <div className="rounded-2xl border border-zinc-200 dark:border-white/[0.07] bg-white dark:bg-[#161616] p-5 shadow-sm">
           <h3 className="text-sm font-semibold mb-3">Nhu cầu vốn vay</h3>
           <div className="text-sm space-y-1.5">
-            <TreeRow level={0} label="Nhu cầu vốn vay" sub="= Tổng CPTT / Vòng quay vốn" value={fmtVND(financials.loanNeed)} bold />
-            <TreeRow level={1} label="Tổng chi phí trực tiếp" value={fmtVND(financials.totalDirectCost)} />
-            <TreeRow level={1} label="Vòng quay vốn" value={String(financials.turnoverCycles)} />
+            <TreeRow level={0} label="Nhu cầu vốn vay"
+              sub={loanMethod === "trung_dai" ? "= Tổng giá trị tài sản" : "= Tổng CPTT / Vòng quay vốn"}
+              value={fmtVND(financials.loanNeed)} bold />
+            {loanMethod === "trung_dai" ? (
+              <TreeRow level={1} label="Tổng giá trị tài sản" value={fmtVND(assetUnitPrice * landAreaSau)} />
+            ) : (<>
+              <TreeRow level={1} label="Tổng chi phí trực tiếp" value={fmtVND(financials.totalDirectCost)} />
+              <TreeRow level={1} label="Vòng quay vốn" value={String(financials.turnoverCycles)} />
+            </>)}
             <div className="border-t border-dashed border-zinc-200 dark:border-white/10 my-2" />
             <TreeRow level={1} label="Số tiền vay" value={fmtVND(financials.loanAmount)} />
             <TreeRow level={1} label="Vốn đối ứng" sub="= Nhu cầu vốn vay − Số tiền vay" value={fmtVND(financials.counterpartCapital)} color={financials.counterpartCapital < 0 ? "red" : undefined} />
@@ -354,6 +362,16 @@ export default function LoanPlanEditorPage() {
             <TreeRow level={0} label="Tỷ lệ vốn tự có" sub="= Vốn đối ứng / Nhu cầu vốn vay" value={financials.loanNeed ? ((financials.counterpartCapital / financials.loanNeed) * 100).toFixed(1) + "%" : "—"} bold />
             <TreeRow level={0} label="Tỷ lệ LN/Vốn đối ứng" sub="= (LN / Vòng quay vốn) / Vốn đối ứng" value={financials.counterpartCapital ? (((financials.profit / (financials.turnoverCycles || 1)) / financials.counterpartCapital) * 100).toFixed(1) + "%" : "—"} bold />
           </div>
+        </div>
+      )}
+      {/* ── Bảng trả nợ theo năm (trung dài hạn) ── */}
+      {loanMethod === "trung_dai" && termMonths > 12 && loanAmount > 0 && financials && (
+        <div className="rounded-2xl border border-amber-200 dark:border-amber-500/20 bg-white dark:bg-[#161616] p-5 shadow-sm">
+          <RepaymentScheduleTable
+            loanAmount={loanAmount} termMonths={termMonths}
+            standardRate={interestRate} preferentialRate={preferentialRate || interestRate}
+            annualIncome={financials.profit + (depreciationYears > 0 ? Math.round(assetUnitPrice * landAreaSau / depreciationYears) : 0)}
+          />
         </div>
       )}
     </section>
@@ -385,7 +403,7 @@ function Stat({ label, value, color }: { label: string; value: string; color?: s
   );
 }
 
-/** Bảng trả nợ theo năm — preview cho vay trung dài hạn */
+/** Bảng trả nợ theo năm — full table cho vay trung dài hạn */
 function RepaymentScheduleTable({ loanAmount, termMonths, standardRate, preferentialRate, annualIncome }: {
   loanAmount: number; termMonths: number; standardRate: number; preferentialRate: number; annualIncome: number;
 }) {
@@ -397,33 +415,46 @@ function RepaymentScheduleTable({ loanAmount, termMonths, standardRate, preferen
   if (rows.length === 0) return null;
 
   const fmt = (n: number) => n.toLocaleString("vi-VN");
+  const totalPrincipal = rows.reduce((s, r) => s + r.principal, 0);
+  const totalInterest = rows.reduce((s, r) => s + r.interest, 0);
+
   return (
     <div>
-      <h4 className="text-xs font-semibold text-amber-700 dark:text-amber-400 mb-2">Bảng trả nợ theo năm (preview)</h4>
+      <h3 className="text-sm font-semibold mb-3">Bảng trả nợ theo năm</h3>
       <div className="overflow-x-auto">
-        <table className="w-full text-xs border-collapse">
+        <table className="w-full text-sm border-collapse">
           <thead>
-            <tr className="bg-amber-100/50 dark:bg-amber-900/20">
-              <th className="px-2 py-1 text-left">Năm</th>
-              <th className="px-2 py-1 text-right">Thu nhập trả nợ</th>
-              <th className="px-2 py-1 text-right">Dư nợ</th>
-              <th className="px-2 py-1 text-right">Gốc trả</th>
-              <th className="px-2 py-1 text-right">Lãi trả</th>
-              <th className="px-2 py-1 text-right">TN còn lại</th>
+            <tr className="bg-amber-50 dark:bg-amber-900/20 text-xs text-zinc-600 dark:text-zinc-400">
+              <th className="px-3 py-2 text-left font-medium">Năm</th>
+              <th className="px-3 py-2 text-right font-medium">Thu nhập trả nợ</th>
+              <th className="px-3 py-2 text-right font-medium">Dư nợ đầu kỳ</th>
+              <th className="px-3 py-2 text-right font-medium">Gốc trả</th>
+              <th className="px-3 py-2 text-right font-medium">Lãi trả</th>
+              <th className="px-3 py-2 text-right font-medium">TN còn lại</th>
             </tr>
           </thead>
           <tbody>
             {rows.map((r) => (
-              <tr key={r.year} className="border-t border-amber-200/50 dark:border-amber-800/20">
-                <td className="px-2 py-1">Năm {r.year}</td>
-                <td className="px-2 py-1 text-right tabular-nums">{fmt(r.income)}</td>
-                <td className="px-2 py-1 text-right tabular-nums">{fmt(r.balance)}</td>
-                <td className="px-2 py-1 text-right tabular-nums">{fmt(r.principal)}</td>
-                <td className="px-2 py-1 text-right tabular-nums">{fmt(r.interest)}</td>
-                <td className={`px-2 py-1 text-right tabular-nums ${r.remaining < 0 ? "text-red-600" : ""}`}>{fmt(r.remaining)}</td>
+              <tr key={r.year} className="border-t border-zinc-100 dark:border-white/[0.05] hover:bg-zinc-50/50 dark:hover:bg-white/[0.02]">
+                <td className="px-3 py-2 font-medium">Năm {r.year}</td>
+                <td className="px-3 py-2 text-right tabular-nums">{fmt(r.income)}</td>
+                <td className="px-3 py-2 text-right tabular-nums">{fmt(r.balance)}</td>
+                <td className="px-3 py-2 text-right tabular-nums">{fmt(r.principal)}</td>
+                <td className="px-3 py-2 text-right tabular-nums">{fmt(r.interest)}</td>
+                <td className={`px-3 py-2 text-right tabular-nums font-medium ${r.remaining < 0 ? "text-red-600" : "text-emerald-600"}`}>{fmt(r.remaining)}</td>
               </tr>
             ))}
           </tbody>
+          <tfoot>
+            <tr className="border-t-2 border-amber-300 dark:border-amber-700 bg-amber-50/50 dark:bg-amber-900/10 font-semibold text-sm">
+              <td className="px-3 py-2">Cộng</td>
+              <td className="px-3 py-2"></td>
+              <td className="px-3 py-2"></td>
+              <td className="px-3 py-2 text-right tabular-nums">{fmt(totalPrincipal)}</td>
+              <td className="px-3 py-2 text-right tabular-nums">{fmt(totalInterest)}</td>
+              <td className="px-3 py-2"></td>
+            </tr>
+          </tfoot>
         </table>
       </div>
     </div>

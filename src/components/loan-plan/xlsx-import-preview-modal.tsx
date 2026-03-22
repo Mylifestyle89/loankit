@@ -37,6 +37,10 @@ export function XlsxImportPreviewModal({ open, onClose, parseResult, isSaving, o
   }
 
   function handleConfirm() {
+    const meta = parseResult.meta;
+    // Infer loan_method: if has depreciationYears or loanMonths > 12, it's trung_dai
+    const isLongTerm = (meta.depreciationYears && meta.depreciationYears > 0)
+      || (meta.loanMonths && meta.loanMonths > 12);
     onConfirm({
       name: planName,
       cost_items: costItems,
@@ -44,6 +48,18 @@ export function XlsxImportPreviewModal({ open, onClose, parseResult, isSaving, o
       loanAmount,
       interestRate,
       turnoverCycles,
+      // Pass loan_method + extended fields from parser meta
+      loan_method: meta.loan_method ?? (isLongTerm ? "trung_dai" : undefined),
+      ...(isLongTerm ? {
+        depreciation_years: meta.depreciationYears,
+        asset_unit_price: meta.assetUnitPrice,
+        land_area_sau: meta.landAreaSau,
+        preferential_rate: meta.preferentialRate,
+        term_months: meta.loanMonths,
+        construction_contract_no: meta.constructionContractNo,
+        construction_contract_date: meta.constructionContractDate,
+        farmAddress: meta.farmAddress,
+      } : {}),
     });
   }
 

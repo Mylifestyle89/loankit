@@ -304,6 +304,19 @@ vercel
 DATABASE_URL="libsql://... (from Turso)"
 ```
 
+**Migration commands (split by target DB):**
+```bash
+# Status checks
+npm run db:status:local
+npm run db:status:turso
+
+# Local SQLite only (dev.db)
+npm run db:migrate:local
+
+# Turso only (uses TURSO_DATABASE_URL + TURSO_AUTH_TOKEN from .env.local)
+npm run db:migrate:turso
+```
+
 ### Self-Hosted (VPS/Docker)
 
 **Requirements:**

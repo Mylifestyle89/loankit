@@ -62,17 +62,18 @@ function isStandardTemplate(wb: WorkBook): boolean {
  * - C: Unrecognized structure
  */
 export function detectXlsxType(wb: WorkBook): XlsxDetectedType {
-  // Check Type S first (standard template) — highest priority
-  if (isStandardTemplate(wb)) return "S";
-
   const headers = getFirstRowHeaders(wb);
-  if (headers.length === 0) return "C";
 
-  // Check Type A: any header with _DG/_SL/_TT suffix
+  // Check Type A first: Sheet1 has _DG/_SL/_TT suffix headers (takes priority over S)
   const hasSuffixHeaders = headers.some((h) =>
     TYPE_A_SUFFIXES.some((s) => h.endsWith(s)),
   );
   if (hasSuffixHeaders || hasPlaceholderSheet(wb)) return "A";
+
+  // Check Type S (standard template with named sheets)
+  if (isStandardTemplate(wb)) return "S";
+
+  if (headers.length === 0) return "C";
 
   // Check Type B: scan first 10 rows for table header row
   const sheetName = wb.SheetNames[0];

@@ -21,6 +21,7 @@ Welcome to the comprehensive documentation for the Financial Reporting and Invoi
 | [**Invoice Tracking Guide**](./invoice-tracking-guide.md) | Feature walkthrough, API reference, usage guide | Developers, QA, Product |
 | [**Project Changelog**](./project-changelog.md) | Version history, release notes, breaking changes | Project Managers, Team Leads |
 | [**Development Roadmap**](./development-roadmap.md) | Planned phases, timelines, technical debt | Product Managers, Team Leads |
+| [**KHCN template placeholders**](./khcn-template-placeholders.md) | Merge alias DOCX, chỉnh mẫu, registry | Developers, nghiệp vụ |
 
 ## Feature Documentation
 

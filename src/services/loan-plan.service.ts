@@ -76,7 +76,17 @@ export async function createPlanFromTemplate(input: CreatePlanInput) {
   const interestRate = input.interestRate ?? 0;
   const turnoverCycles = input.turnoverCycles ?? 1;
   const tax = input.tax ?? 0;
-  const financials = recalcFinancials(costItems, revenueItems, loanAmount, interestRate, turnoverCycles, tax);
+  const financials: Record<string, unknown> = recalcFinancials(costItems, revenueItems, loanAmount, interestRate, turnoverCycles, tax);
+
+  // Merge trung_dai extended fields into financials
+  const extKeys = ["depreciation_years", "asset_unit_price", "land_area_sau",
+    "preferential_rate", "term_months", "construction_contract_no",
+    "construction_contract_date", "farmAddress"] as const;
+  for (const key of extKeys) {
+    if ((input as Record<string, unknown>)[key] !== undefined) {
+      financials[key] = (input as Record<string, unknown>)[key];
+    }
+  }
 
   return prisma.loanPlan.create({
     data: {
@@ -102,7 +112,21 @@ export async function updatePlan(id: string, data: UpdatePlanInput) {
   const interestRate = data.interestRate ?? existingFinancials.interestRate ?? 0;
   const turnoverCycles = data.turnoverCycles ?? existingFinancials.turnoverCycles ?? 1;
   const tax = data.tax ?? existingFinancials.tax ?? 0;
-  const financials = recalcFinancials(costItems, revenueItems, loanAmount, interestRate, turnoverCycles, tax);
+  const financials: Record<string, unknown> = recalcFinancials(costItems, revenueItems, loanAmount, interestRate, turnoverCycles, tax);
+
+  // Merge trung_dai extended fields into financials_json
+  const extendedKeys = [
+    "depreciation_years", "asset_unit_price", "land_area_sau",
+    "preferential_rate", "term_months", "construction_contract_no",
+    "construction_contract_date", "farmAddress",
+  ] as const;
+  for (const key of extendedKeys) {
+    if (key in data) {
+      financials[key] = (data as Record<string, unknown>)[key];
+    } else if (key in existingFinancials) {
+      financials[key] = (existingFinancials as Record<string, unknown>)[key];
+    }
+  }
 
   return prisma.loanPlan.update({
     where: { id },

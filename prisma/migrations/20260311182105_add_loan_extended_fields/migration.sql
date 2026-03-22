@@ -1,0 +1,22 @@
+-- AlterTable
+ALTER TABLE "loans" ADD COLUMN "cash_equity" REAL;
+ALTER TABLE "loans" ADD COLUMN "customer_rating" TEXT;
+ALTER TABLE "loans" ADD COLUMN "debt_group" TEXT;
+ALTER TABLE "loans" ADD COLUMN "equity_amount" REAL;
+ALTER TABLE "loans" ADD COLUMN "expected_cost" REAL;
+ALTER TABLE "loans" ADD COLUMN "expected_profit" REAL;
+ALTER TABLE "loans" ADD COLUMN "expected_revenue" REAL;
+ALTER TABLE "loans" ADD COLUMN "from_project" TEXT;
+ALTER TABLE "loans" ADD COLUMN "interest_method" TEXT;
+ALTER TABLE "loans" ADD COLUMN "interest_schedule" TEXT;
+ALTER TABLE "loans" ADD COLUMN "labor_equity" REAL;
+ALTER TABLE "loans" ADD COLUMN "lending_method" TEXT;
+ALTER TABLE "loans" ADD COLUMN "other_asset_equity" REAL;
+ALTER TABLE "loans" ADD COLUMN "other_income" TEXT;
+ALTER TABLE "loans" ADD COLUMN "other_income_detail" TEXT;
+ALTER TABLE "loans" ADD COLUMN "other_loan" REAL;
+ALTER TABLE "loans" ADD COLUMN "policy_program" TEXT;
+ALTER TABLE "loans" ADD COLUMN "principal_schedule" TEXT;
+ALTER TABLE "loans" ADD COLUMN "scoring_period" TEXT;
+ALTER TABLE "loans" ADD COLUMN "tcmblm_reason" TEXT;
+ALTER TABLE "loans" ADD COLUMN "total_capital_need" REAL;

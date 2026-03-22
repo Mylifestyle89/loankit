@@ -31,6 +31,14 @@ export const createPlanSchema = z.object({
   interestRate: z.number().optional(),
   turnoverCycles: z.number().optional(),
   tax: z.number().optional(),
+  // trung_dai extended fields
+  depreciation_years: z.number().optional(),
+  asset_unit_price: z.number().optional(),
+  land_area_sau: z.number().optional(),
+  preferential_rate: z.number().optional(),
+  term_months: z.number().optional(),
+  construction_contract_no: z.string().optional(),
+  construction_contract_date: z.string().optional(),
 });
 
 export const updatePlanSchema = createPlanSchema.omit({ customerId: true });
