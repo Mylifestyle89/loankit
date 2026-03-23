@@ -174,8 +174,8 @@ export const docxEngine = {
     const docXml = docZip.file("word/document.xml");
     if (docXml) {
       let xmlStr = docXml.asText();
-      // Remove self-closing <w:p/> (invalid OOXML)
-      xmlStr = xmlStr.replace(/<w:p\/>/g, "");
+      // Convert self-closing <w:p/> to valid empty paragraph (keeps table cells valid)
+      xmlStr = xmlStr.replace(/<w:p\/>/g, "<w:p></w:p>");
       // Remove table rows that have NO table cells at all (orphaned rows from loop tag removal).
       // Rows with cells (even empty ones) are kept — they may be intentional blank rows.
       xmlStr = xmlStr.replace(/<w:tr\b[^>]*>[\s\S]*?<\/w:tr>/g, (row) => {

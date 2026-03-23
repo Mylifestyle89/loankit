@@ -1,8 +1,8 @@
 "use client";
 
+import { Component, type ErrorInfo, type ReactNode } from "react";
 import dynamic from "next/dynamic";
-import { Download, X } from "lucide-react";
-
+import { AlertTriangle, Download, X } from "lucide-react";
 
 // Loaded only in browser (DOM required)
 const EigenpalDocxEditor = dynamic(
@@ -12,6 +12,44 @@ const EigenpalDocxEditor = dynamic(
   },
   { ssr: false },
 );
+
+/** Error boundary to catch DOCX rendering crashes (e.g. invalid table rows) */
+class DocxErrorBoundary extends Component<
+  { children: ReactNode; onDownload: () => void },
+  { error: string | null }
+> {
+  state: { error: string | null } = { error: null };
+
+  static getDerivedStateFromError(err: Error) {
+    return { error: err.message };
+  }
+
+  componentDidCatch(err: Error, info: ErrorInfo) {
+    console.warn("[DocxPreview] render error:", err.message, info.componentStack);
+  }
+
+  render() {
+    if (this.state.error) {
+      return (
+        <div className="flex flex-col items-center justify-center gap-4 p-10 text-center">
+          <AlertTriangle className="h-10 w-10 text-amber-500" />
+          <p className="text-sm text-zinc-600 dark:text-slate-400">
+            Không thể xem trước văn bản này. Vui lòng tải về để kiểm tra.
+          </p>
+          <button
+            type="button"
+            onClick={this.props.onDownload}
+            className="flex items-center gap-1.5 rounded-md bg-gradient-to-r from-violet-600 to-fuchsia-600 px-4 py-1.5 text-sm font-medium text-white hover:brightness-110 transition-colors shadow-sm"
+          >
+            <Download className="h-4 w-4" />
+            Xuất file DOCX
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 type Props = {
   documentBuffer: ArrayBuffer;
@@ -50,9 +88,9 @@ export function DocxPreviewModal({ documentBuffer, fileName, onClose, onDownload
         </div>
 
         <div className="flex-1 overflow-auto bg-gray-100 dark:bg-[#0a0a0a]">
-          <>
+          <DocxErrorBoundary onDownload={onDownload}>
             <EigenpalDocxEditor documentBuffer={documentBuffer.slice(0)} />
-          </>
+          </DocxErrorBoundary>
         </div>
       </div>
     </div>
