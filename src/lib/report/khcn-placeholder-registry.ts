@@ -27,6 +27,7 @@ export const KHCN_PLACEHOLDER_GROUPS: PlaceholderGroup[] = [
       "Số điện thoại", "Điện thoại", "Nơi thường trú",
       "Tình trạng hôn nhân", "Họ tên vợ/chồng", "CCCD vợ/chồng",
       "Số tài khoản", "Nơi mở tài khoản",
+      "Tên sản phẩm TTTD", "Mã sản phẩm TTTD",
       "Loại giấy tờ tùy thân",
     ],
   },
@@ -248,6 +249,25 @@ export const KHCN_PLACEHOLDER_GROUPS: PlaceholderGroup[] = [
       "PA_TRANO.Năm", "PA_TRANO.Thu nhập trả nợ",
       "PA_TRANO.Dư nợ", "PA_TRANO.Gốc trả",
       "PA_TRANO.Lãi trả", "PA_TRANO.TN còn lại",
+    ],
+  },
+  {
+    label: "Đánh giá tín dụng",
+    prefix: "HĐTD",
+    items: [
+      "HĐTD.Tính hợp pháp", "HĐTD.Thị trường NVL",
+      "HĐTD.Thị trường tiêu thụ SP", "HĐTD.Năng lực về nhân công",
+      "HĐTD.Năng lực về máy móc", "HĐTD.Các yếu tố khác",
+    ],
+  },
+  {
+    label: "Phí trả nợ trước hạn",
+    prefix: "HDTD",
+    items: [
+      "HDTD.Phí vay trả trong ngày", "HDTD.Min vay trả trong ngày", "HDTD.Max vay trả trong ngày",
+      "HDTD.Phí trả trước năm 1", "HDTD.Min trả trước năm 1", "HDTD.Max trả trước năm 1",
+      "HDTD.Phí trả trước năm 2", "HDTD.Min trả trước năm 2", "HDTD.Max trả trước năm 2",
+      "HDTD.Phí trả trước năm 3+", "HDTD.Min trả trước năm 3+", "HDTD.Max trả trước năm 3+",
     ],
   },
 ];

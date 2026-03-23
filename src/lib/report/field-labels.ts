@@ -30,6 +30,8 @@ const FIELD_LABEL_VI_BY_KEY: Record<string, string> = {
   "A.credit.debt_group_latest": "Nhóm nợ gần nhất",
   "A.credit.rating_agribank": "Xếp hạng tại Agribank",
   "A.credit.rating_cic": "Xếp hạng CIC",
+  "A.credit.product_name": "Tên sản phẩm TTTD",
+  "A.credit.product_code": "Mã sản phẩm TTTD",
   "A.proposal.loan_purpose": "Mục đích vay",
   "A.proposal.loan_tenor_or_limit_term": "Thời hạn vay/hạn mức",
   "A.proposal.loan_amount_agribank": "Số tiền vay tại Agribank",

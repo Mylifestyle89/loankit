@@ -110,6 +110,8 @@ model Customer {
   spouse_cccd        String?   // CCCD vợ/chồng
   bank_account       String?   // Số tài khoản ngân hàng
   bank_name          String?   // Nơi mở tài khoản
+  cic_product_name   String?   // Tên sản phẩm TTTD (tra cứu CIC)
+  cic_product_code   String?   // Mã sản phẩm TTTD
 
   email    String?   // Email nhan thong bao hoa don
 

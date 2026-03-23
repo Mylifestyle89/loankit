@@ -91,17 +91,23 @@ export type LoanPlanFinancialsExtended = LoanPlanFinancials & {
   construction_contract_date?: string; // Ngày HĐ thi công
   preferential_rate?: number;          // Lãi suất ưu đãi năm đầu (e.g., 0.075)
   term_months?: number;                // Thời hạn vay (tháng)
+  repayment_frequency?: number;        // Kỳ hạn trả gốc (tháng): 1, 3, 6, 12
   farmAddress?: string;                // Địa chỉ đất NN
 };
 
 export type RepaymentRow = {
-  year: number;           // Năm thứ
-  income: number;         // Thu nhập trả nợ = profit + depreciation
+  period: number;         // Kỳ thứ (1, 2, 3...)
+  year: number;           // Năm thứ (backward compat)
+  periodLabel: string;    // "Năm 1", "Kỳ 3", "Tháng 6"...
+  income: number;         // Thu nhập trả nợ (pro-rata theo kỳ)
   balance: number;        // Dư nợ đầu kỳ
   principal: number;      // Gốc trả
   interest: number;       // Lãi trả
   remaining: number;      // TN còn lại = income - principal - interest
 };
+
+/** Kỳ hạn trả gốc (tháng) */
+export type RepaymentFrequency = 1 | 3 | 6 | 12;
 
 export type LoanMethod = "tung_lan" | "han_muc" | "trung_dai" | "tieu_dung";
 export type LoanPlanStatus = "draft" | "approved";

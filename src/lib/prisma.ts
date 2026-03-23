@@ -63,7 +63,9 @@ function getPrismaConfig(): { key: string; factory: () => PrismaClient } {
     configuredDbUrl?.startsWith("libsql://") ||
     configuredDbUrl?.startsWith("http://") ||
     configuredDbUrl?.startsWith("https://");
-  const shouldUseLibsql = useTursoExplicitly || dbUrlLooksLikeLibsql || Boolean(tursoUrl);
+  // Do not auto-switch to Turso just because env vars exist in local dev.
+  // Use LibSQL only when explicitly enabled or when DATABASE_URL itself is LibSQL/HTTP.
+  const shouldUseLibsql = useTursoExplicitly || dbUrlLooksLikeLibsql;
   const resolvedLibsqlUrl = tursoUrl ?? (dbUrlLooksLikeLibsql ? configuredDbUrl : undefined);
 
   // Cloud (Turso/LibSQL): accept either TURSO_DATABASE_URL or DATABASE_URL=libsql://...
@@ -86,8 +88,8 @@ function getPrismaConfig(): { key: string; factory: () => PrismaClient } {
     key: `sqlite:${dbUrl}`,
     factory: () => {
       // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const { PrismaBetterSqlite3 } = require("@prisma/adapter-better-sqlite3");
-      return new PrismaClient({ adapter: new PrismaBetterSqlite3({ url: dbUrl }) });
+      const { PrismaLibSql } = require("@prisma/adapter-libsql");
+      return new PrismaClient({ adapter: new PrismaLibSql({ url: dbUrl }) });
     },
   };
 }

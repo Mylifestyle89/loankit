@@ -39,6 +39,13 @@ export const createPlanSchema = z.object({
   term_months: z.number().optional(),
   construction_contract_no: z.string().optional(),
   construction_contract_date: z.string().optional(),
+  // Đánh giá tín dụng
+  legal_assessment: z.string().optional(),
+  market_input: z.string().optional(),
+  market_output: z.string().optional(),
+  labor_capability: z.string().optional(),
+  machinery_capability: z.string().optional(),
+  other_factors: z.string().optional(),
 });
 
 export const updatePlanSchema = createPlanSchema.omit({ customerId: true });

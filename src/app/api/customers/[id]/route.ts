@@ -3,7 +3,7 @@ import { z } from "zod";
 
 import { toHttpError, ValidationError } from "@/core/errors/app-error";
 import { customerService } from "@/services/customer.service";
-import { requireAdmin, handleAuthError } from "@/lib/auth-guard";
+import { requireAdmin, requireEditorOrAdmin, handleAuthError } from "@/lib/auth-guard";
 
 export const runtime = "nodejs";
 
@@ -32,6 +32,8 @@ const updateCustomerSchema = z.object({
   bank_account: z.string().optional().nullable(),
   bank_name: z.string().optional().nullable(),
   gender: z.string().optional().nullable(),
+  cic_product_name: z.string().optional().nullable(),
+  cic_product_code: z.string().optional().nullable(),
   data_json: z.record(z.string(), z.unknown()).optional(),
 });
 
@@ -74,7 +76,7 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    await requireAdmin();
+    await requireEditorOrAdmin();
     const { id } = await params;
     const body = await req.json();
     const parsed = updateCustomerSchema.parse(body);

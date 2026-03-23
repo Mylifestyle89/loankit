@@ -99,26 +99,49 @@ export function calcDepreciation(assetUnitPrice: number, landArea: number, years
   return Math.round(assetUnitPrice * landArea / years);
 }
 
-/** Bảng trả nợ theo năm cho vay trung dài hạn */
+/**
+ * Bảng trả nợ cho vay trung dài hạn
+ * Hỗ trợ kỳ hạn trả gốc: 1/3/6/12 tháng (default 12 = theo năm)
+ */
 export function calcRepaymentSchedule(params: {
   loanAmount: number;
   termMonths: number;
   standardRate: number;
-  preferentialRate?: number; // lãi suất ưu đãi năm đầu
-  annualIncome: number;     // lợi nhuận + khấu hao
+  preferentialRate?: number;   // lãi suất ưu đãi năm đầu
+  annualIncome: number;        // lợi nhuận + khấu hao (theo năm)
+  repaymentFrequency?: number; // kỳ hạn trả gốc (tháng): 1, 3, 6, 12. Default 12
 }): RepaymentRow[] {
-  const years = Math.ceil(params.termMonths / 12);
-  if (years <= 0 || params.loanAmount <= 0) return [];
-  const principalPerYear = Math.round(params.loanAmount / years);
+  const freq = params.repaymentFrequency || 12;
+  const totalPeriods = Math.ceil(params.termMonths / freq);
+  if (totalPeriods <= 0 || params.loanAmount <= 0) return [];
+
+  const principalPerPeriod = Math.round(params.loanAmount / totalPeriods);
+  // Thu nhập pro-rata theo kỳ (annualIncome × freq/12)
+  const incomePerPeriod = Math.round(params.annualIncome * freq / 12);
+  // Lãi suất theo kỳ = annual rate × freq/12
   const rows: RepaymentRow[] = [];
   let balance = params.loanAmount;
 
-  for (let y = 1; y <= years; y++) {
-    const rate = (y === 1 && params.preferentialRate) ? params.preferentialRate : params.standardRate;
-    const interest = Math.round(balance * rate);
-    const principal = y === years ? balance : principalPerYear;
-    const remaining = params.annualIncome - principal - interest;
-    rows.push({ year: y, income: params.annualIncome, balance, principal, interest, remaining });
+  // Label format
+  const labelFn = (p: number): string => {
+    if (freq === 12) return `Năm ${p}`;
+    if (freq === 1) return `Tháng ${p}`;
+    return `Kỳ ${p}`;
+  };
+
+  for (let p = 1; p <= totalPeriods; p++) {
+    // Năm hiện tại (1-based) = tháng đã qua / 12
+    const currentYear = Math.ceil((p * freq) / 12);
+    const annualRate = (currentYear === 1 && params.preferentialRate)
+      ? params.preferentialRate : params.standardRate;
+    // Lãi kỳ = dư nợ × lãi suất năm × (freq / 12)
+    const interest = Math.round(balance * annualRate * freq / 12);
+    const principal = p === totalPeriods ? balance : principalPerPeriod;
+    const remaining = incomePerPeriod - principal - interest;
+    rows.push({
+      period: p, year: currentYear, periodLabel: labelFn(p),
+      income: incomePerPeriod, balance, principal, interest, remaining,
+    });
     balance -= principal;
   }
   return rows;

@@ -81,7 +81,9 @@ export async function createPlanFromTemplate(input: CreatePlanInput) {
   // Merge trung_dai extended fields into financials
   const extKeys = ["depreciation_years", "asset_unit_price", "land_area_sau",
     "preferential_rate", "term_months", "construction_contract_no",
-    "construction_contract_date", "farmAddress"] as const;
+    "construction_contract_date", "farmAddress",
+    "legal_assessment", "market_input", "market_output",
+    "labor_capability", "machinery_capability", "other_factors"] as const;
   for (const key of extKeys) {
     if ((input as Record<string, unknown>)[key] !== undefined) {
       financials[key] = (input as Record<string, unknown>)[key];
@@ -119,6 +121,8 @@ export async function updatePlan(id: string, data: UpdatePlanInput) {
     "depreciation_years", "asset_unit_price", "land_area_sau",
     "preferential_rate", "term_months", "construction_contract_no",
     "construction_contract_date", "farmAddress",
+    "legal_assessment", "market_input", "market_output",
+    "labor_capability", "machinery_capability", "other_factors",
   ] as const;
   for (const key of extendedKeys) {
     if (key in data) {

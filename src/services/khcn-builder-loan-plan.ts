@@ -39,8 +39,8 @@ export function buildLoanPlanExtendedData(
   data["PA.Số tiền vay bằng chữ"] = financials.loanAmount
     ? numberToVietnameseWords(financials.loanAmount as number)
     : "";
-  data["PA.Tổng nhu cầu vốn bằng chữ"] = financials.totalCost
-    ? numberToVietnameseWords(financials.totalCost as number)
+  data["PA.Tổng nhu cầu vốn bằng chữ"] = financials.totalDirectCost
+    ? numberToVietnameseWords(financials.totalDirectCost as number)
     : "";
   // PA.Số tiền đặt cọc & PA.Số tiền hợp đồng cung ứng: recalculated after cost items (see below)
   data["PA.Số HĐTD cũ"] = financials.oldContractNumber ?? "";
@@ -57,11 +57,34 @@ export function buildLoanPlanExtendedData(
   data["PA.Đơn giá nhà kính/sào"] = fmtN(assetPrice);
   if (landSau) data["PA.Số sào đất"] = fmtN(landSau);
   data["PA.Số HĐ thi công"] = financials.construction_contract_no ?? "";
-  data["PA.Ngày HĐ thi công"] = financials.construction_contract_date ?? "";
+  // Convert Excel serial date if needed (e.g. 46073 → "15/02/2026")
+  const rawDate = financials.construction_contract_date ?? "";
+  const numDate = Number(rawDate);
+  if (numDate > 30000 && numDate < 100000) {
+    const d = new Date((numDate - 25569) * 86400000);
+    data["PA.Ngày HĐ thi công"] = `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`;
+  } else {
+    data["PA.Ngày HĐ thi công"] = rawDate;
+  }
+  // Đánh giá tín dụng
+  data["HĐTD.Tính hợp pháp"] = financials.legal_assessment ?? "";
+  data["HĐTD.Thị trường NVL"] = financials.market_input ?? "";
+  data["HĐTD.Thị trường tiêu thụ SP"] = financials.market_output ?? "";
+  data["HĐTD.Năng lực về nhân công"] = financials.labor_capability ?? "";
+  data["HĐTD.Năng lực về máy móc"] = financials.machinery_capability ?? "";
+  data["HĐTD.Các yếu tố khác"] = financials.other_factors ?? "";
+
+  // ── HĐTD vốn đối ứng breakdown (fallback khi chưa có loan data) ──
+  // Vốn bằng tiền = vốn đối ứng (default toàn bộ bằng tiền)
+  const counterpartAmt = Math.max((assetPrice * landSau) - (Number(financials.loanAmount) || 0), 0);
+  if (!data["HĐTD.Tr.đó: Vốn bằng tiền"]) data["HĐTD.Tr.đó: Vốn bằng tiền"] = fmtN(counterpartAmt);
+  if (!data["HĐTD.Vốn bằng sức lao động"]) data["HĐTD.Vốn bằng sức lao động"] = "";
+  if (!data["HĐTD.Vốn bằng tài sản khác"]) data["HĐTD.Vốn bằng tài sản khác"] = "";
+  if (!data["HĐTD.Vốn vay TCTD khác"]) data["HĐTD.Vốn vay TCTD khác"] = "";
 
   // Consolidated flat PA.* financials (single source of truth)
   data["PA.Tên phương án"] = plan.name;
-  data["PA.Tổng nhu cầu vốn"] = fmtN(financials.totalCost);
+  data["PA.Tổng nhu cầu vốn"] = fmtN(financials.totalDirectCost);
   data["PA.Số tiền vay"] = fmtN(financials.loanAmount);
   data["PA.Vốn đối ứng"] = fmtN(financials.counterpartCapital);
   // Auto-calculate counterpart ratio: vốn đối ứng / tổng nhu cầu vốn
@@ -138,7 +161,8 @@ export function buildLoanPlanExtendedData(
       interestCost = Math.round(rate * Number(financials.loanAmount) * months / 12);
     }
     const tax = Number(financials.tax) || 0;
-    const totalIndirectCost = interestCost + tax;
+    // Trung dài hạn: chi phí gián tiếp = khấu hao, ngắn hạn = lãi vay + thuế
+    const totalIndirectCost = (depreciation > 0) ? depreciation : (interestCost + tax);
     const totalCostAll = totalDirectCost + totalIndirectCost;
     const totalRevenue = revenueItems.reduce((s, r) => s + (r.amount ?? 0), 0);
     const profit = totalRevenue - totalCostAll;
@@ -172,13 +196,19 @@ export function buildLoanPlanExtendedData(
     data["PA.Số tiền đặt cọc"] = fmtN(depositAmt);
     data["PA.Số tiền đặt cọc bằng chữ"] = depositAmt
       ? numberToVietnameseWords(depositAmt) : "";
-    // Tổng nhu cầu vốn = tổng chi phí (trực tiếp + gián tiếp)
-    if (totalCostAll > 0) {
-      data["PA.Tổng nhu cầu vốn"] = fmtN(totalCostAll);
-      data["PA.Tổng nhu cầu vốn bằng chữ"] = numberToVietnameseWords(totalCostAll);
-      // Recalculate ratio with actual totals
-      data["PA.Tỷ lệ vốn đối ứng"] = calcRatioStr(totalCostAll);
-      // Tỷ lệ vốn tự có = vốn đối ứng / tổng chi phí TRỰC TIẾP (không gồm gián tiếp)
+    // Tổng nhu cầu vốn: trung_dai nhà kính = giá trị tài sản, ngắn hạn = tổng chi phí trực tiếp
+    const assetValue = (Number(financials.asset_unit_price) || 0) * (Number(financials.land_area_sau) || 0);
+    const capitalNeed = (assetValue > 0) ? assetValue : totalDirectCost;
+    if (capitalNeed > 0) {
+      data["PA.Tổng nhu cầu vốn"] = fmtN(capitalNeed);
+      data["PA.Tổng nhu cầu vốn bằng chữ"] = numberToVietnameseWords(capitalNeed);
+      // Vốn đối ứng = Nhu cầu vốn - Số tiền vay
+      const counterpart = capitalNeed - loanAmt;
+      data["PA.Vốn đối ứng"] = fmtN(counterpart);
+      data["PA.Vốn đối ứng bằng chữ"] = counterpart > 0 ? numberToVietnameseWords(counterpart) : "";
+      // Tỷ lệ
+      data["PA.Tỷ lệ vốn đối ứng"] = capitalNeed > 0
+        ? `${((counterpart / capitalNeed) * 100).toFixed(2).replace(".", ",")}%` : "";
       data["PA.Tỷ lệ vốn tự có"] = calcRatioStr(totalDirectCost);
     }
     // ── Bảng trả nợ theo năm (PA_TRANO) — vay trung dài hạn ──
@@ -187,19 +217,57 @@ export function buildLoanPlanExtendedData(
     const prefRate = Number(financials.preferential_rate) || stdRate;
     const annualIncome = profit + depreciation;
 
+    const repaymentFreq = Number(financials.repayment_frequency) || 12;
     const repaymentRows = calcRepaymentSchedule({
       loanAmount: loanAmt, termMonths, standardRate: stdRate,
       preferentialRate: prefRate !== stdRate ? prefRate : undefined,
-      annualIncome,
+      annualIncome, repaymentFrequency: repaymentFreq,
     });
     data["PA_TRANO"] = repaymentRows.map((r) => ({
-      "Năm": `Năm ${r.year}`,
+      "Năm": r.periodLabel ?? `Năm ${r.year}`,
       "Thu nhập trả nợ": fmtN(r.income),
       "Dư nợ": fmtN(r.balance),
       "Gốc trả": fmtN(r.principal),
       "Lãi trả": fmtN(r.interest),
       "TN còn lại": fmtN(r.remaining),
     }));
+
+    // ── Flat aliases cho PA_TRANO fields dùng ngoài bảng loop ──
+    const firstRow = repaymentRows[0];
+    if (firstRow) {
+      data["PA_TRANO.Thu nhập trả nợ"] = fmtN(firstRow.income);
+      data["PA_TRANO.Gốc trả"] = fmtN(firstRow.principal);
+      data["PA_TRANO.Dư nợ"] = fmtN(firstRow.balance);
+      data["PA_TRANO.Lãi trả"] = fmtN(firstRow.interest);
+      data["PA_TRANO.TN còn lại"] = fmtN(firstRow.remaining);
+    }
+
+    // ── Phí trả nợ trước hạn (HDTD placeholders) ──
+    const clamp = (v: number, min: number, max: number) => Math.max(min, Math.min(max, v));
+    const MIN_FEE = 1_000_000;
+    // Vay trả trong ngày: 0.5%, max 16tr
+    const sameDayFee = clamp(loanAmt * 0.005, MIN_FEE, 16_000_000);
+    data["HDTD.Phí vay trả trong ngày"] = "0,5%";
+    data["HDTD.Min vay trả trong ngày"] = fmtN(MIN_FEE);
+    data["HDTD.Max vay trả trong ngày"] = fmtN(sameDayFee);
+    // Năm 1: 4%, max = dư nợ đầu năm 1 × 4%
+    const bal1 = repaymentRows[0]?.balance ?? loanAmt;
+    const max1 = clamp(bal1 * 0.04, MIN_FEE, bal1 * 0.04);
+    data["HDTD.Phí trả trước năm 1"] = "4%";
+    data["HDTD.Min trả trước năm 1"] = fmtN(MIN_FEE);
+    data["HDTD.Max trả trước năm 1"] = fmtN(max1);
+    // Năm 2: 3%, max = dư nợ đầu năm 2 × 3%
+    const bal2 = repaymentRows[1]?.balance ?? 0;
+    const max2 = bal2 > 0 ? clamp(bal2 * 0.03, MIN_FEE, bal2 * 0.03) : 0;
+    data["HDTD.Phí trả trước năm 2"] = "3%";
+    data["HDTD.Min trả trước năm 2"] = fmtN(MIN_FEE);
+    data["HDTD.Max trả trước năm 2"] = fmtN(max2);
+    // Năm 3+: 2%, max = dư nợ đầu năm 3 × 2%
+    const bal3 = repaymentRows[2]?.balance ?? 0;
+    const max3 = bal3 > 0 ? clamp(bal3 * 0.02, MIN_FEE, bal3 * 0.02) : 0;
+    data["HDTD.Phí trả trước năm 3+"] = "2%";
+    data["HDTD.Min trả trước năm 3+"] = fmtN(MIN_FEE);
+    data["HDTD.Max trả trước năm 3+"] = fmtN(max3);
   } catch {
     data["PA_CHIPHI"] = [];
     data["PA_DOANHTHU"] = [];

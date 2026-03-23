@@ -36,6 +36,8 @@ type FullCustomer = {
   bank_account: string | null;
   bank_name: string | null;
   gender: string | null;
+  cic_product_name: string | null;
+  cic_product_code: string | null;
   active_branch_id: string | null;
   relationship_officer: string | null;
   appraiser: string | null;
@@ -121,6 +123,8 @@ export function CustomerDetailView({ customerType, basePath }: CustomerDetailVie
     bank_account: "",
     bank_name: "",
     gender: "",
+    cic_product_name: "",
+    cic_product_code: "",
   });
 
   const loadCustomer = useCallback(async () => {
@@ -155,6 +159,8 @@ export function CustomerDetailView({ customerType, basePath }: CustomerDetailVie
         bank_account: c.bank_account ?? "",
         bank_name: c.bank_name ?? "",
         gender: c.gender ?? "",
+        cic_product_name: c.cic_product_name ?? "",
+        cic_product_code: c.cic_product_code ?? "",
       });
       setLoading(false);
     } catch (err) {
@@ -207,6 +213,8 @@ export function CustomerDetailView({ customerType, basePath }: CustomerDetailVie
           bank_account: form.bank_account.trim() || null,
           bank_name: form.bank_name.trim() || null,
           gender: form.gender || null,
+          cic_product_name: form.cic_product_name.trim() || null,
+          cic_product_code: form.cic_product_code.trim() || null,
         }),
       });
       const data = (await res.json()) as { ok: boolean; error?: string };

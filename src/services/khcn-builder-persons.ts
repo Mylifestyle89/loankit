@@ -58,12 +58,20 @@ export function buildCoBorrowerData(
 // ── RelatedPerson (NLQ = Người liên quan) ──
 
 export function buildRelatedPersonData(
-  relatedPersons: Array<{
+  rawPersons: Array<{
     name: string; id_number?: string | null; address?: string | null;
     relation_type?: string | null; agribank_debt?: string | null;
   }>,
   data: Data,
 ) {
+  // Dedup by name + id_number to prevent duplicate rows in loop
+  const seen = new Set<string>();
+  const relatedPersons = rawPersons.filter((rp) => {
+    const key = `${rp.name}|${rp.id_number ?? ""}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
   // Flat NLQ.* fields from first entry + NLQ.TV.STT alias
   const first = relatedPersons[0];
   if (first) {

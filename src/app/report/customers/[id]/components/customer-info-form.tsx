@@ -37,6 +37,8 @@ type FormState = {
   bank_account: string;
   bank_name: string;
   gender: string;
+  cic_product_name: string;
+  cic_product_code: string;
 };
 
 type Props = {
@@ -224,6 +226,16 @@ export function CustomerInfoForm({
                 <label className="block">
                   <span className="text-sm font-medium">Nơi mở tài khoản</span>
                   <SmartField fieldKey="customer.bank_name" value={form.bank_name} onChange={(val) => setForm((p) => ({ ...p, bank_name: val }))} className={inputCls} />
+                </label>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <label className="block">
+                  <span className="text-sm font-medium">Tên sản phẩm TTTD</span>
+                  <SmartField fieldKey="customer.cic_product_name" value={form.cic_product_name} onChange={(val) => setForm((p) => ({ ...p, cic_product_name: val }))} className={inputCls} />
+                </label>
+                <label className="block">
+                  <span className="text-sm font-medium">Mã sản phẩm TTTD</span>
+                  <SmartField fieldKey="customer.cic_product_code" value={form.cic_product_code} onChange={(val) => setForm((p) => ({ ...p, cic_product_code: val }))} className={inputCls} />
                 </label>
               </div>
             </>

@@ -23,6 +23,8 @@ export type CreateCustomerInput = {
   spouse_cccd?: string | null;
   bank_account?: string | null;
   bank_name?: string | null;
+  cic_product_name?: string | null;
+  cic_product_code?: string | null;
   email?: string | null;
   active_branch_id?: string | null;
   relationship_officer?: string | null;

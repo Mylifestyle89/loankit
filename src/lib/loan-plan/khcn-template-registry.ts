@@ -29,18 +29,22 @@ export const KHCN_TEMPLATES: KhcnDocTemplate[] = [
   { path: `${BASE}/Giấy tờ pháp lý/1255 Cam ket khong co tai khoan.docx`, name: "Cam kết không có tài khoản", category: "phap_ly", methods: [] },
   { path: `${BASE}/Giấy tờ pháp lý/711.01 SMS nhac no vay.docx`, name: "SMS nhắc nợ vay", category: "phap_ly", methods: [] },
   { path: `${BASE}/Giấy tờ pháp lý/Cam ket tai san cua ben thu 3.docx`, name: "Cam kết tài sản bên thứ 3", category: "phap_ly", methods: [] },
+  { path: `${BASE}/Danh mục hồ sơ/4288.02 Phieu de nghi tra cuu tai Don vi theo lo.docx`, name: "Phiếu đề nghị tra cứu TTTD (4288.02)", category: "phap_ly", methods: [] },
 
   // Hợp đồng tín dụng — method-specific
-  { path: `${BASE}/Hợp đồng tín dụng/2268.06E HDTD vay tung lan co TSBD.docx`, name: "HĐTD vay từng lần có TSBĐ (2268.06E)", category: "hop_dong", methods: ["tung_lan", "trung_dai", "tieu_dung"] },
+  { path: `${BASE}/Hợp đồng tín dụng/2268.06E HDTD vay tung lan co TSBD.docx`, name: "HĐTD vay từng lần có TSBĐ (2268.06E)", category: "hop_dong", methods: ["tung_lan", "tieu_dung"] },
+  { path: `${BASE}/Hợp đồng tín dụng/2268.06E HDTD vay tung lan co TSBD trung dai han.docx`, name: "HĐTD trung dài hạn có TSBĐ (2268.06E)", category: "hop_dong", methods: ["trung_dai"] },
   { path: `${BASE}/Hợp đồng tín dụng/2268.06A HDTD vay theo Han muc co TSBD.docx`, name: "HĐTD vay theo hạn mức có TSBĐ (2268.06A)", category: "hop_dong", methods: ["han_muc"] },
   { path: `${BASE}/Hợp đồng tín dụng/2268.07 BCDXGN kiem GNN han muc SXKD.docx`, name: "BCĐXGN kiểm GNN hạn mức SXKD (2268.07)", category: "hop_dong", methods: ["han_muc"] },
   { path: `${BASE}/Hợp đồng tín dụng/2268.06 Phu luc nhan tien vay.docx`, name: "Phụ lục nhận tiền vay (2268.06)", category: "hop_dong", methods: [] },
 
   // Phương án sử dụng vốn — SXKD methods only (not tiêu dùng)
-  { path: `${BASE}/Phương án sử dụng vốn/2268.01E PASDV vay von ngan han.docx`, name: "PA sử dụng vốn ngắn hạn (2268.01E)", category: "phuong_an", methods: ["tung_lan", "han_muc", "trung_dai"] },
+  { path: `${BASE}/Phương án sử dụng vốn/2268.01E PASDV vay von ngan han.docx`, name: "PA sử dụng vốn ngắn hạn (2268.01E)", category: "phuong_an", methods: ["tung_lan", "han_muc"] },
+  { path: `${BASE}/Phương án sử dụng vốn/2268.01G PASDV vay trung, dai han co TSBD.docx`, name: "PA sử dụng vốn trung dài hạn (2268.01G)", category: "phuong_an", methods: ["trung_dai"] },
 
   // Báo cáo đề xuất
   { path: `${BASE}/Báo cáo đề xuất/2268.02B BCDXCV ngan han co TSBD cat tuong.docx`, name: "BCĐX ngắn hạn - Cát tường", category: "bao_cao", methods: ["tung_lan", "han_muc"] },
+  { path: `${BASE}/Báo cáo đề xuất/2268.02C BCDXCV trung, dai han nha kinh.docx`, name: "BCĐX trung dài hạn - Nhà kính", category: "bao_cao", methods: ["trung_dai"] },
 
   // Biên bản kiểm tra — SXKD methods
   { path: `${BASE}/Biên bản kiểm tra/2268.11A BB kiem tra SDVV tung lan.docx`, name: "BB kiểm tra SDVV từng lần (2268.11A)", category: "kiem_tra", methods: ["tung_lan", "han_muc", "trung_dai"] },
@@ -52,8 +56,9 @@ export const KHCN_TEMPLATES: KhcnDocTemplate[] = [
   // Chứng từ giải ngân — all methods
   { path: `${BASE}/Chứng từ giải ngân/599 Uy nhiem chi A4.docx`, name: "Ủy nhiệm chi A4 (599)", category: "giai_ngan", methods: [] },
   { path: `${BASE}/Chứng từ giải ngân/in UNC.docx`, name: "In UNC", category: "giai_ngan", methods: [] },
-  { path: `${BASE}/Chứng từ giải ngân/Hop dong cung ung vat tu.docx`, name: "HĐ cung ứng vật tư", category: "giai_ngan", methods: ["tung_lan", "han_muc", "trung_dai"] },
-  { path: `${BASE}/Chứng từ giải ngân/Bien ban giao nhan hang hoa.docx`, name: "BB giao nhận hàng hóa", category: "giai_ngan", methods: ["tung_lan", "han_muc", "trung_dai"] },
+  { path: `${BASE}/Chứng từ giải ngân/Hop dong cung ung vat tu.docx`, name: "HĐ cung ứng vật tư", category: "giai_ngan", methods: ["tung_lan", "han_muc"] },
+  { path: `${BASE}/Chứng từ giải ngân/Bien ban giao nhan hang hoa.docx`, name: "BB giao nhận hàng hóa", category: "giai_ngan", methods: ["tung_lan", "han_muc"] },
+  { path: `${BASE}/Chứng từ giải ngân/HĐ thi công nhà kính - BB nghiệm thu.docx`, name: "HĐ thi công nhà kính & BB nghiệm thu", category: "giai_ngan", methods: ["trung_dai"] },
 ];
 
 /** Category display labels */

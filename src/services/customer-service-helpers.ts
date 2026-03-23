@@ -61,6 +61,8 @@ export function toCreateDbData(input: CreateCustomerInput) {
     spouse_cccd: input.spouse_cccd ?? null,
     bank_account: input.bank_account ?? null,
     bank_name: input.bank_name ?? null,
+    cic_product_name: input.cic_product_name ?? null,
+    cic_product_code: input.cic_product_code ?? null,
     email: input.email ?? null,
     ...(input.data_json !== undefined ? { data_json: JSON.stringify(input.data_json) } : {}),
   };
@@ -89,6 +91,8 @@ export function toUpdateDbData(input: UpdateCustomerInput) {
   if (input.spouse_cccd !== undefined) data.spouse_cccd = input.spouse_cccd;
   if (input.bank_account !== undefined) data.bank_account = input.bank_account;
   if (input.bank_name !== undefined) data.bank_name = input.bank_name;
+  if (input.cic_product_name !== undefined) data.cic_product_name = input.cic_product_name;
+  if (input.cic_product_code !== undefined) data.cic_product_code = input.cic_product_code;
   if (input.email !== undefined) data.email = input.email;
   if (input.active_branch_id !== undefined) data.active_branch_id = input.active_branch_id;
   if (input.relationship_officer !== undefined) data.relationship_officer = input.relationship_officer;
