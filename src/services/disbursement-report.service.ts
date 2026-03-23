@@ -163,11 +163,20 @@ export async function buildReportData(
   };
 
   // Merge manual overrides — only whitelisted keys per template (security)
+  // Map override keys to their prefixed template placeholder aliases
+  const OVERRIDE_ALIASES: Record<string, string[]> = {
+    "Tổng giá trị TSBĐ": ["HĐTD.Tổng giá trị TSBĐ"],
+    "Phạm vi bảo đảm": ["HĐTD.Tổng nghĩa vụ bảo đảm", "Tổng nghĩa vụ bảo đảm"],
+  };
   if (overrides && templateKey) {
     const allowed = new Set(ALLOWED_OVERRIDE_KEYS[templateKey] ?? []);
     for (const [key, val] of Object.entries(overrides)) {
       if (val !== undefined && val !== "" && allowed.has(key)) {
         data[key] = val;
+        // Also set prefixed aliases so template placeholders match
+        for (const alias of OVERRIDE_ALIASES[key] ?? []) {
+          data[alias] = val;
+        }
       }
     }
   }
