@@ -176,10 +176,11 @@ export const docxEngine = {
       let xmlStr = docXml.asText();
       // Remove self-closing <w:p/> (invalid OOXML)
       xmlStr = xmlStr.replace(/<w:p\/>/g, "");
-      // Remove table rows whose only text content is empty (loop tag rows after rendering)
+      // Remove table rows that have NO table cells at all (orphaned rows from loop tag removal).
+      // Rows with cells (even empty ones) are kept — they may be intentional blank rows.
       xmlStr = xmlStr.replace(/<w:tr\b[^>]*>[\s\S]*?<\/w:tr>/g, (row) => {
-        const text = row.replace(/<[^>]+>/g, "").trim();
-        return text === "" ? "" : row;
+        const hasCells = /<w:tc[\s>]/.test(row);
+        return hasCells ? row : "";
       });
       docZip.file("word/document.xml", xmlStr);
     }
