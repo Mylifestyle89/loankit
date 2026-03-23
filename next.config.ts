@@ -35,6 +35,12 @@ const nextConfig: NextConfig = {
     "/api/loans/\\[id\\]/disbursements/\\[disbursementId\\]/report": [
       "./report_assets/Disbursement templates/**",
     ],
+    "/api/report/templates/khcn/disbursement": [
+      "./report_assets/KHCN templates/**",
+    ],
+    "/api/report/templates/khcn/generate": [
+      "./report_assets/KHCN templates/**",
+    ],
   },
   outputFileTracingExcludes: {
     "/proxy": ["./node_modules/better-sqlite3/**", "./node_modules/@prisma/**", "./prisma/**"],
