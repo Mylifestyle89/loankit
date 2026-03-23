@@ -10,12 +10,6 @@ import { saveFileWithPicker } from "@/lib/save-file-with-picker";
 
 type DocTemplate = { path: string; name: string };
 type Category = { key: string; label: string; isAsset?: boolean; templates: DocTemplate[] };
-type SavePickerWindow = Window & {
-  showSaveFilePicker?: (options?: {
-    suggestedName?: string;
-    types?: Array<{ description: string; accept: Record<string, string[]> }>;
-  }) => Promise<{ createWritable: () => Promise<{ write: (chunk: Uint8Array) => Promise<void>; close: () => Promise<void>; abort?: () => Promise<void> }> }>;
-};
 
 const TABS = [
   { key: "docs", label: "Hồ sơ vay" },
@@ -105,53 +99,16 @@ export function KhcnDocChecklist({
   const [generating, setGenerating] = useState<string | null>(null);
   const [preview, setPreview] = useState<{ buffer: ArrayBuffer; filename: string } | null>(null);
 
-  const tryOpenDocxSavePicker = useCallback(async (suggestedName: string) => {
-    const win = window as SavePickerWindow;
-    if (!win.showSaveFilePicker) return null;
-    const handle = await win.showSaveFilePicker({
-      suggestedName,
-      types: [
-        {
-          description: "Word Document",
-          accept: {
-            "application/vnd.openxmlformats-officedocument.wordprocessingml.document": [".docx"],
-          },
-        },
-      ],
-    });
-    return handle.createWritable();
-  }, []);
-
   const handleGenerate = useCallback(async (path: string, name: string) => {
     if (!customerId) return;
     setGenerating(path);
-    let writer:
-      | { write: (chunk: Uint8Array) => Promise<void>; close: () => Promise<void>; abort?: () => Promise<void> }
-      | null = null;
     try {
-      // Open save dialog first for faster perceived response.
-      try {
-        writer = await tryOpenDocxSavePicker(`${name}.docx`);
-      } catch (pickerErr) {
-        // User canceled save dialog -> stop early.
-        if (
-          pickerErr &&
-          typeof pickerErr === "object" &&
-          "name" in pickerErr &&
-          (pickerErr as { name?: string }).name === "AbortError"
-        ) {
-          setGenerating(null);
-          return;
-        }
-      }
-
       const res = await fetch("/api/report/templates/khcn/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ customerId, templatePath: path, templateLabel: name, loanId }),
       });
       if (!res.ok) {
-        if (writer?.abort) await writer.abort();
         setGenerating(null);
         return;
       }
@@ -160,24 +117,12 @@ export function KhcnDocChecklist({
         ? decodeURIComponent(cd.split("filename*=UTF-8''")[1] ?? name + ".docx")
         : name + ".docx";
 
-      // Fast path: stream directly to selected file (save picker shown immediately).
-      if (writer && res.body) {
-        const reader = res.body.getReader();
-        // eslint-disable-next-line no-constant-condition
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          if (value) await writer.write(value);
-        }
-        await writer.close();
-      } else {
-        // Fallback path (no File System Access API): keep current preview flow.
-        const buffer = await res.arrayBuffer();
-        setPreview({ buffer, filename });
-      }
+      // Always show preview first, let user verify before downloading
+      const buffer = await res.arrayBuffer();
+      setPreview({ buffer, filename });
     } catch { /* ignore */ }
     setGenerating(null);
-  }, [customerId, loanId, tryOpenDocxSavePicker]);
+  }, [customerId, loanId]);
 
   const handlePreviewDownload = useCallback(async () => {
     if (!preview) return;

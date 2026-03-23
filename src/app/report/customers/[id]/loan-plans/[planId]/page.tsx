@@ -9,29 +9,11 @@ import { CostItemsTable, type CostItem } from "./cost-items-table";
 import { NumericInput } from "./numeric-input";
 import { inputCls } from "@/components/invoice-tracking/form-styles";
 import { SmartField } from "@/components/smart-field";
-import { calcRepaymentSchedule } from "@/lib/loan-plan/loan-plan-calculator";
-type RevenueItem = { description: string; qty: number; unitPrice: number; amount: number };
-type Financials = {
-  totalDirectCost: number; interestRate: number; turnoverCycles: number;
-  interest: number; tax: number; totalIndirectCost: number; totalCost: number;
-  revenue: number; profit: number; loanNeed: number; loanAmount: number; counterpartCapital: number;
-  // trung_dai extended
-  depreciation_years?: number; asset_unit_price?: number; land_area_sau?: number;
-  preferential_rate?: number; term_months?: number;
-  construction_contract_no?: string; construction_contract_date?: string;
-};
-
-function fmtVND(n: number) { return n.toLocaleString("vi-VN") + "đ"; }
-function formatPercentInputFromRate(rate: number): string {
-  if (!rate) return "";
-  return String(rate * 100).replace(".", ",");
-}
-function parsePercentInputToRate(raw: string): number {
-  const normalized = raw.replace(/\s/g, "").replace(",", ".");
-  const value = Number(normalized);
-  if (!Number.isFinite(value) || value < 0) return 0;
-  return value / 100;
-}
+import { type Financials, type RevenueItem } from "./loan-plan-editor-types";
+import { fmtVND, formatPercentInputFromRate, parsePercentInputToRate } from "./loan-plan-editor-utils";
+import { TreeRow, Stat } from "./loan-plan-financial-display";
+import { RepaymentScheduleTable } from "./loan-plan-repayment-schedule-table";
+import { CreditAssessmentSection } from "./loan-plan-credit-assessment-section";
 
 export default function LoanPlanEditorPage() {
   const { id: customerId, planId } = useParams() as { id: string; planId: string };
@@ -55,6 +37,13 @@ export default function LoanPlanEditorPage() {
   const [termMonths, setTermMonths] = useState(0);
   const [constructionContractNo, setConstructionContractNo] = useState("");
   const [constructionContractDate, setConstructionContractDate] = useState("");
+  // Đánh giá tín dụng
+  const [legalAssessment, setLegalAssessment] = useState("");
+  const [marketInput, setMarketInput] = useState("");
+  const [marketOutput, setMarketOutput] = useState("");
+  const [laborCapability, setLaborCapability] = useState("");
+  const [machineryCapability, setMachineryCapability] = useState("");
+  const [otherFactors, setOtherFactors] = useState("");
   const xlsxInputRef = useRef<HTMLInputElement>(null);
   const interestRate = parsePercentInputToRate(interestRateInput);
   const preferentialRate = parsePercentInputToRate(preferentialRateInput);
@@ -85,27 +74,34 @@ export default function LoanPlanEditorPage() {
   const loadPlan = useCallback(async () => {
     setLoading(true);
     try {
-    const res = await fetch(`/api/loan-plans/${planId}`, { cache: "no-store" });
-    const data = await res.json();
-    if (!data.ok) { setError(data.error ?? "Not found"); setLoading(false); return; }
-    const p = data.plan;
-    setName(p.name ?? "");
-    setLoanMethod(p.loan_method ?? "tung_lan");
-    setCostItems(JSON.parse(p.cost_items_json || "[]"));
-    setRevenueItems(JSON.parse(p.revenue_items_json || "[]"));
-    const fin: Financials = JSON.parse(p.financials_json || "{}");
-    setLoanAmount(fin.loanAmount ?? 0);
-    setInterestRateInput(formatPercentInputFromRate(fin.interestRate ?? 0));
-    setTurnoverCycles(fin.turnoverCycles ?? 1);
-    setTax(fin.tax ?? 0);
-    // trung_dai extended
-    setDepreciationYears(fin.depreciation_years ?? 0);
-    setAssetUnitPrice(fin.asset_unit_price ?? 0);
-    setLandAreaSau(fin.land_area_sau ?? 0);
-    setPreferentialRateInput(formatPercentInputFromRate(fin.preferential_rate ?? 0));
-    setTermMonths(fin.term_months ?? 0);
-    setConstructionContractNo(fin.construction_contract_no ?? "");
-    setConstructionContractDate(fin.construction_contract_date ?? "");
+      const res = await fetch(`/api/loan-plans/${planId}`, { cache: "no-store" });
+      const data = await res.json();
+      if (!data.ok) { setError(data.error ?? "Not found"); setLoading(false); return; }
+      const p = data.plan;
+      setName(p.name ?? "");
+      setLoanMethod(p.loan_method ?? "tung_lan");
+      setCostItems(JSON.parse(p.cost_items_json || "[]"));
+      setRevenueItems(JSON.parse(p.revenue_items_json || "[]"));
+      const fin: Financials = JSON.parse(p.financials_json || "{}");
+      setLoanAmount(fin.loanAmount ?? 0);
+      setInterestRateInput(formatPercentInputFromRate(fin.interestRate ?? 0));
+      setTurnoverCycles(fin.turnoverCycles ?? 1);
+      setTax(fin.tax ?? 0);
+      // trung_dai extended
+      setDepreciationYears(fin.depreciation_years ?? 0);
+      setAssetUnitPrice(fin.asset_unit_price ?? 0);
+      setLandAreaSau(fin.land_area_sau ?? 0);
+      setPreferentialRateInput(formatPercentInputFromRate(fin.preferential_rate ?? 0));
+      setTermMonths(fin.term_months ?? 0);
+      setConstructionContractNo(fin.construction_contract_no ?? "");
+      setConstructionContractDate(fin.construction_contract_date ?? "");
+      // Đánh giá tín dụng
+      setLegalAssessment(fin.legal_assessment ?? "");
+      setMarketInput(fin.market_input ?? "");
+      setMarketOutput(fin.market_output ?? "");
+      setLaborCapability(fin.labor_capability ?? "");
+      setMachineryCapability(fin.machinery_capability ?? "");
+      setOtherFactors(fin.other_factors ?? "");
     } catch (err) { setError(err instanceof Error ? err.message : "Lỗi tải dữ liệu"); }
     setLoading(false);
   }, [planId]);
@@ -118,7 +114,10 @@ export default function LoanPlanEditorPage() {
     const totalDirectCost = costItems.reduce((s, c) => s + c.amount, 0);
     const revenue = revenueItems.reduce((s, r) => s + r.amount, 0);
     const interest = loanAmount * interestRate;
-    const totalIndirectCost = interest + tax;
+    // Trung dài hạn: chi phí gián tiếp = khấu hao (không phải lãi vay)
+    const depPerYear = (loanMethod === "trung_dai" && assetUnitPrice > 0 && landAreaSau > 0 && depreciationYears > 0)
+      ? Math.round(assetUnitPrice * landAreaSau / depreciationYears) : 0;
+    const totalIndirectCost = (loanMethod === "trung_dai") ? depPerYear : (interest + tax);
     const totalCost = totalDirectCost + totalIndirectCost;
     const profit = revenue - totalCost;
     const tc = turnoverCycles || 1;
@@ -128,30 +127,33 @@ export default function LoanPlanEditorPage() {
       : totalDirectCost / tc;
     const counterpartCapital = loanNeed - loanAmount;
     return { totalDirectCost, interestRate, turnoverCycles, interest, tax, totalIndirectCost, totalCost, revenue, profit, loanNeed, loanAmount, counterpartCapital };
-  }, [costItems, revenueItems, loanAmount, interestRate, turnoverCycles, tax, loading, loanMethod, assetUnitPrice, landAreaSau]);
+  }, [costItems, revenueItems, loanAmount, interestRate, turnoverCycles, tax, loading, loanMethod, assetUnitPrice, landAreaSau, depreciationYears]);
 
   async function handleSave() {
     setSaving(true);
     setError("");
     try {
-    const res = await fetch(`/api/loan-plans/${planId}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        name, loan_method: loanMethod,
-        cost_items: costItems, revenue_items: revenueItems,
-        loanAmount, interestRate, turnoverCycles, tax,
-        // trung_dai extended
-        ...(loanMethod === "trung_dai" ? {
-          depreciation_years: depreciationYears, asset_unit_price: assetUnitPrice,
-          land_area_sau: landAreaSau, preferential_rate: preferentialRate,
-          term_months: termMonths, construction_contract_no: constructionContractNo,
-          construction_contract_date: constructionContractDate,
-        } : {}),
-      }),
-    });
-    const data = await res.json();
-    if (!data.ok) setError(data.error ?? "Lỗi lưu");
+      const res = await fetch(`/api/loan-plans/${planId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name, loan_method: loanMethod,
+          cost_items: costItems, revenue_items: revenueItems,
+          loanAmount, interestRate, turnoverCycles, tax,
+          // trung_dai extended
+          ...(loanMethod === "trung_dai" ? {
+            depreciation_years: depreciationYears, asset_unit_price: assetUnitPrice,
+            land_area_sau: landAreaSau, preferential_rate: preferentialRate,
+            term_months: termMonths, construction_contract_no: constructionContractNo,
+            construction_contract_date: constructionContractDate,
+          } : {}),
+          // Đánh giá tín dụng
+          legal_assessment: legalAssessment, market_input: marketInput, market_output: marketOutput,
+          labor_capability: laborCapability, machinery_capability: machineryCapability, other_factors: otherFactors,
+        }),
+      });
+      const data = await res.json();
+      if (!data.ok) setError(data.error ?? "Lỗi lưu");
     } catch (err) { setError(err instanceof Error ? err.message : "Lỗi lưu"); }
     setSaving(false);
   }
@@ -170,7 +172,11 @@ export default function LoanPlanEditorPage() {
     setRevenueItems(next);
   }
 
-  if (loading) return <div className="flex justify-center py-16"><div className="h-6 w-6 animate-spin rounded-full border-2 border-violet-200 border-t-violet-600" /></div>;
+  if (loading) return (
+    <div className="flex justify-center py-16">
+      <div className="h-6 w-6 animate-spin rounded-full border-2 border-violet-200 border-t-violet-600" />
+    </div>
+  );
 
   return (
     <section className="space-y-5">
@@ -221,14 +227,9 @@ export default function LoanPlanEditorPage() {
             value={interestRateInput}
             onChange={(e) => {
               const raw = e.target.value.trim();
-              if (raw === "") {
-                setInterestRateInput("");
-                return;
-              }
+              if (raw === "") { setInterestRateInput(""); return; }
               // Allow progressive typing: 9, 9,5 9.5
-              if (/^\d+([,.]\d*)?$/.test(raw)) {
-                setInterestRateInput(raw);
-              }
+              if (/^\d+([,.]\d*)?$/.test(raw)) setInterestRateInput(raw);
             }}
             className={inputCls}
             placeholder="VD: 9,5"
@@ -265,9 +266,15 @@ export default function LoanPlanEditorPage() {
           {/* Tóm tắt tài sản */}
           {assetUnitPrice > 0 && landAreaSau > 0 && (
             <div className="grid grid-cols-2 gap-3 text-sm bg-amber-100/50 dark:bg-amber-900/10 rounded-lg p-3">
-              <div><span className="text-zinc-500 text-xs">Tổng giá trị tài sản</span><p className="font-semibold tabular-nums">{fmtVND(assetUnitPrice * landAreaSau)}</p></div>
+              <div>
+                <span className="text-zinc-500 text-xs">Tổng giá trị tài sản</span>
+                <p className="font-semibold tabular-nums">{fmtVND(assetUnitPrice * landAreaSau)}</p>
+              </div>
               {depreciationYears > 0 && (
-                <div><span className="text-zinc-500 text-xs">Khấu hao/năm</span><p className="font-semibold tabular-nums">{fmtVND(Math.round(assetUnitPrice * landAreaSau / depreciationYears))}</p></div>
+                <div>
+                  <span className="text-zinc-500 text-xs">Khấu hao/năm</span>
+                  <p className="font-semibold tabular-nums">{fmtVND(Math.round(assetUnitPrice * landAreaSau / depreciationYears))}</p>
+                </div>
               )}
             </div>
           )}
@@ -333,7 +340,7 @@ export default function LoanPlanEditorPage() {
             {loanMethod === "trung_dai" && depreciationYears > 0 && assetUnitPrice > 0 && landAreaSau > 0 && (
               <Stat label="Khấu hao/năm" value={fmtVND(Math.round(assetUnitPrice * landAreaSau / depreciationYears))} />
             )}
-            <Stat label="Tổng chi phí gián tiếp (Lãi vay + Thuế)" value={fmtVND(financials.totalIndirectCost)} />
+            <Stat label={loanMethod === "trung_dai" ? "Chi phí gián tiếp (Khấu hao)" : "Tổng chi phí gián tiếp (Lãi vay + Thuế)"} value={fmtVND(financials.totalIndirectCost)} />
             <Stat label="Tổng chi phí" value={fmtVND(financials.totalCost)} />
             <Stat label="Doanh thu DK" value={fmtVND(financials.revenue)} />
             <Stat label="Lợi nhuận DK" value={fmtVND(financials.profit)} color={financials.profit >= 0 ? "emerald" : "red"} />
@@ -364,6 +371,7 @@ export default function LoanPlanEditorPage() {
           </div>
         </div>
       )}
+
       {/* ── Bảng trả nợ theo năm (trung dài hạn) ── */}
       {loanMethod === "trung_dai" && termMonths > 12 && loanAmount > 0 && financials && (
         <div className="rounded-2xl border border-amber-200 dark:border-amber-500/20 bg-white dark:bg-[#161616] p-5 shadow-sm">
@@ -374,89 +382,18 @@ export default function LoanPlanEditorPage() {
           />
         </div>
       )}
+
+      {/* ── Đánh giá tín dụng ── */}
+      <CreditAssessmentSection
+        planId={planId} planName={name} costItems={costItems} revenueItems={revenueItems}
+        financials={{ loanAmount, interestRate, term_months: termMonths, asset_unit_price: assetUnitPrice, land_area_sau: landAreaSau, construction_contract_no: constructionContractNo }}
+        legalAssessment={legalAssessment} setLegalAssessment={setLegalAssessment}
+        marketInput={marketInput} setMarketInput={setMarketInput}
+        marketOutput={marketOutput} setMarketOutput={setMarketOutput}
+        laborCapability={laborCapability} setLaborCapability={setLaborCapability}
+        machineryCapability={machineryCapability} setMachineryCapability={setMachineryCapability}
+        otherFactors={otherFactors} setOtherFactors={setOtherFactors}
+      />
     </section>
-  );
-}
-
-function TreeRow({ level, label, sub, value, bold, color }: { level: number; label: string; sub?: string; value: string; bold?: boolean; color?: string }) {
-  const indent = level * 24;
-  const colorCls = color === "red" ? "text-red-600" : "";
-  return (
-    <div className="flex items-baseline justify-between" style={{ paddingLeft: indent }}>
-      <div className="flex items-baseline gap-1.5">
-        {level > 0 && <span className="text-zinc-300 dark:text-zinc-600">└</span>}
-        <span className={bold ? "font-semibold" : ""}>{label}</span>
-        {sub && <span className="text-[10px] text-zinc-400">{sub}</span>}
-      </div>
-      <span className={`tabular-nums font-medium ${colorCls} ${bold ? "font-semibold" : ""}`}>{value}</span>
-    </div>
-  );
-}
-
-function Stat({ label, value, color }: { label: string; value: string; color?: string }) {
-  const colorCls = color === "red" ? "text-red-600" : color === "emerald" ? "text-emerald-600" : "";
-  return (
-    <div>
-      <p className="text-xs text-zinc-500">{label}</p>
-      <p className={`font-semibold tabular-nums ${colorCls}`}>{value}</p>
-    </div>
-  );
-}
-
-/** Bảng trả nợ theo năm — full table cho vay trung dài hạn */
-function RepaymentScheduleTable({ loanAmount, termMonths, standardRate, preferentialRate, annualIncome }: {
-  loanAmount: number; termMonths: number; standardRate: number; preferentialRate: number; annualIncome: number;
-}) {
-  const rows = calcRepaymentSchedule({
-    loanAmount, termMonths, standardRate,
-    preferentialRate: preferentialRate !== standardRate ? preferentialRate : undefined,
-    annualIncome,
-  });
-  if (rows.length === 0) return null;
-
-  const fmt = (n: number) => n.toLocaleString("vi-VN");
-  const totalPrincipal = rows.reduce((s, r) => s + r.principal, 0);
-  const totalInterest = rows.reduce((s, r) => s + r.interest, 0);
-
-  return (
-    <div>
-      <h3 className="text-sm font-semibold mb-3">Bảng trả nợ theo năm</h3>
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm border-collapse">
-          <thead>
-            <tr className="bg-amber-50 dark:bg-amber-900/20 text-xs text-zinc-600 dark:text-zinc-400">
-              <th className="px-3 py-2 text-left font-medium">Năm</th>
-              <th className="px-3 py-2 text-right font-medium">Thu nhập trả nợ</th>
-              <th className="px-3 py-2 text-right font-medium">Dư nợ đầu kỳ</th>
-              <th className="px-3 py-2 text-right font-medium">Gốc trả</th>
-              <th className="px-3 py-2 text-right font-medium">Lãi trả</th>
-              <th className="px-3 py-2 text-right font-medium">TN còn lại</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((r) => (
-              <tr key={r.year} className="border-t border-zinc-100 dark:border-white/[0.05] hover:bg-zinc-50/50 dark:hover:bg-white/[0.02]">
-                <td className="px-3 py-2 font-medium">Năm {r.year}</td>
-                <td className="px-3 py-2 text-right tabular-nums">{fmt(r.income)}</td>
-                <td className="px-3 py-2 text-right tabular-nums">{fmt(r.balance)}</td>
-                <td className="px-3 py-2 text-right tabular-nums">{fmt(r.principal)}</td>
-                <td className="px-3 py-2 text-right tabular-nums">{fmt(r.interest)}</td>
-                <td className={`px-3 py-2 text-right tabular-nums font-medium ${r.remaining < 0 ? "text-red-600" : "text-emerald-600"}`}>{fmt(r.remaining)}</td>
-              </tr>
-            ))}
-          </tbody>
-          <tfoot>
-            <tr className="border-t-2 border-amber-300 dark:border-amber-700 bg-amber-50/50 dark:bg-amber-900/10 font-semibold text-sm">
-              <td className="px-3 py-2">Cộng</td>
-              <td className="px-3 py-2"></td>
-              <td className="px-3 py-2"></td>
-              <td className="px-3 py-2 text-right tabular-nums">{fmt(totalPrincipal)}</td>
-              <td className="px-3 py-2 text-right tabular-nums">{fmt(totalInterest)}</td>
-              <td className="px-3 py-2"></td>
-            </tr>
-          </tfoot>
-        </table>
-      </div>
-    </div>
   );
 }
