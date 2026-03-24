@@ -192,6 +192,7 @@ export function buildLandCollateralData(
       valuationRows.push({
         STT: valuationRows.length + 1,
         "Loại": type,
+        "Số seri": ff["Số seri"] ?? "",
         "Diện tích": ff[`DT đất ${i}`] ?? "",
         "Đơn giá": ff[`Đơn giá đất ${i}`] ?? "",
         "Giá trị": ff[`Thành tiền đất ${i}`] ?? "",
@@ -205,6 +206,7 @@ export function buildLandCollateralData(
       valuationRows.push({
         STT: valuationRows.length + 1,
         "Loại": "TS gắn liền với đất",
+        "Số seri": ff["Số seri"] ?? "",
         "Diện tích": houseArea ?? "",
         "Đơn giá": housePrice ?? "",
         "Giá trị": houseValue ?? "",

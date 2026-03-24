@@ -28,6 +28,7 @@ export type Financials = {
   term_months?: number;
   construction_contract_no?: string;
   construction_contract_date?: string;
+  farmAddress?: string;
   // Đánh giá tín dụng (AI-assisted)
   legal_assessment?: string;
   market_input?: string;

@@ -37,6 +37,8 @@ export default function LoanPlanEditorPage() {
   const [termMonths, setTermMonths] = useState(0);
   const [constructionContractNo, setConstructionContractNo] = useState("");
   const [constructionContractDate, setConstructionContractDate] = useState("");
+  // Common SXKD fields
+  const [farmAddress, setFarmAddress] = useState("");
   // Đánh giá tín dụng
   const [legalAssessment, setLegalAssessment] = useState("");
   const [marketInput, setMarketInput] = useState("");
@@ -95,6 +97,7 @@ export default function LoanPlanEditorPage() {
       setTermMonths(fin.term_months ?? 0);
       setConstructionContractNo(fin.construction_contract_no ?? "");
       setConstructionContractDate(fin.construction_contract_date ?? "");
+      setFarmAddress(fin.farmAddress ?? "");
       // Đánh giá tín dụng
       setLegalAssessment(fin.legal_assessment ?? "");
       setMarketInput(fin.market_input ?? "");
@@ -140,10 +143,11 @@ export default function LoanPlanEditorPage() {
           name, loan_method: loanMethod,
           cost_items: costItems, revenue_items: revenueItems,
           loanAmount, interestRate, turnoverCycles, tax,
+          land_area_sau: landAreaSau, farmAddress,
           // trung_dai extended
           ...(loanMethod === "trung_dai" ? {
             depreciation_years: depreciationYears, asset_unit_price: assetUnitPrice,
-            land_area_sau: landAreaSau, preferential_rate: preferentialRate,
+            preferential_rate: preferentialRate,
             term_months: termMonths, construction_contract_no: constructionContractNo,
             construction_contract_date: constructionContractDate,
           } : {}),
@@ -243,6 +247,14 @@ export default function LoanPlanEditorPage() {
           <span className="text-xs font-medium text-zinc-500">Số tiền vay</span>
           <NumericInput value={loanAmount} onChange={setLoanAmount} className={inputCls} placeholder="0" />
         </label>
+        <label className="block">
+          <span className="text-xs font-medium text-zinc-500">Số sào đất</span>
+          <input type="number" step="0.1" value={landAreaSau || ""} onChange={(e) => setLandAreaSau(Number(e.target.value) || 0)} className={inputCls} placeholder="VD: 10" />
+        </label>
+        <label className="block">
+          <span className="text-xs font-medium text-zinc-500">Địa chỉ đất NN</span>
+          <input type="text" value={farmAddress} onChange={(e) => setFarmAddress(e.target.value)} className={inputCls} placeholder="VD: xã ABC, huyện XYZ" />
+        </label>
       </div>
 
       {/* ── Trung dài hạn: Khấu hao & Tài sản đầu tư ── */}
@@ -253,10 +265,6 @@ export default function LoanPlanEditorPage() {
             <label className="block">
               <span className="text-xs font-medium text-zinc-500">Đơn giá tài sản/sào</span>
               <NumericInput value={assetUnitPrice} onChange={setAssetUnitPrice} className={inputCls} placeholder="VD: 270,000,000" />
-            </label>
-            <label className="block">
-              <span className="text-xs font-medium text-zinc-500">Số sào đất</span>
-              <input type="number" step="0.1" value={landAreaSau || ""} onChange={(e) => setLandAreaSau(Number(e.target.value) || 0)} className={inputCls} placeholder="VD: 10" />
             </label>
             <label className="block">
               <span className="text-xs font-medium text-zinc-500">Số năm khấu hao</span>
