@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
+import { ArrowLeft } from "lucide-react";
 
 import { inputCls } from "@/components/invoice-tracking/form-styles";
 import { METHOD_OPTIONS, CATEGORY_LABELS } from "@/lib/loan-plan/loan-plan-constants";
@@ -54,13 +55,13 @@ export default function NewLoanPlanPage() {
   return (
     <section className="space-y-5">
       <div className="flex items-center gap-3">
-        <Link href={`/report/customers/${customerId}/loan-plans`} className="text-sm text-violet-600 dark:text-violet-400 hover:underline">← Danh sách PA</Link>
+        <Link href={`/report/customers/${customerId}/loan-plans`} className="inline-flex items-center gap-1 text-sm text-violet-600 dark:text-violet-400 hover:underline"><ArrowLeft className="h-3.5 w-3.5" />Danh sách PA</Link>
         <h2 className="text-lg font-bold bg-gradient-to-r from-violet-700 to-fuchsia-600 dark:from-violet-400 dark:to-fuchsia-400 bg-clip-text text-transparent">
           Tạo phương án mới
         </h2>
       </div>
 
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && <p role="alert" className="text-sm text-red-600">{error}</p>}
 
       <div className="max-w-2xl space-y-5">
         {/* Name + method */}

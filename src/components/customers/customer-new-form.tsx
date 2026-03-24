@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { ArrowLeft } from "lucide-react";
 
 import { useLanguage } from "@/components/language-provider";
 import { SmartField } from "@/components/smart-field";
@@ -88,11 +89,12 @@ export function CustomerNewForm({ customerType, basePath }: CustomerNewFormProps
           href={basePath}
           className="inline-flex items-center gap-1 rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] px-3 py-1.5 text-sm shadow-sm transition-all duration-150 hover:border-violet-200 dark:hover:border-violet-500/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40"
         >
-          ← {typeLabel}
+          <ArrowLeft className="h-4 w-4" />
+          {typeLabel}
         </Link>
         <h2 className="text-lg font-bold tracking-tight bg-gradient-to-r from-violet-700 to-fuchsia-600 dark:from-violet-400 dark:to-fuchsia-400 bg-clip-text text-transparent">{t("customers.add")}</h2>
       </div>
-      {error ? <p className="text-sm text-red-600 dark:text-red-400">{error}</p> : null}
+      {error ? <p role="alert" className="text-sm text-red-600 dark:text-red-400">{error}</p> : null}
       <DropdownOptionsProvider prefix="customer.">
         <form
           onSubmit={handleSubmit}

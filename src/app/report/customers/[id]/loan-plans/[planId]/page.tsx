@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Save, Sparkles } from "lucide-react";
+import { ArrowLeft, Save, Sparkles } from "lucide-react";
 
 import { CostItemsTable, type CostItem } from "./cost-items-table";
 import { NumericInput } from "./numeric-input";
@@ -183,7 +183,7 @@ export default function LoanPlanEditorPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Link href={`/report/customers/${customerId}/loan-plans`} className="text-sm text-violet-600 dark:text-violet-400 hover:underline">← Danh sách PA</Link>
+          <Link href={`/report/customers/${customerId}/loan-plans`} className="inline-flex items-center gap-1 text-sm text-violet-600 dark:text-violet-400 hover:underline"><ArrowLeft className="h-3.5 w-3.5" />Danh sách PA</Link>
           <h2 className="text-lg font-bold bg-gradient-to-r from-violet-700 to-fuchsia-600 dark:from-violet-400 dark:to-fuchsia-400 bg-clip-text text-transparent">
             {name || "Phương án"}
           </h2>
@@ -211,7 +211,7 @@ export default function LoanPlanEditorPage() {
         </div>
       </div>
 
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && <p role="alert" className="text-sm text-red-600">{error}</p>}
 
       {/* Plan info */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 rounded-2xl border border-zinc-200 dark:border-white/[0.07] bg-white dark:bg-[#161616] p-5 shadow-sm">

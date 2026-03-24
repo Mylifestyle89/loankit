@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useParams, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
+import { ArrowLeft } from "lucide-react";
 
 import { useLanguage } from "@/components/language-provider";
 
@@ -245,14 +246,15 @@ export function CustomerDetailView({ customerType, basePath }: CustomerDetailVie
           href={basePath}
           className="inline-flex items-center gap-1 rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] px-3 py-1.5 text-sm shadow-sm transition-all duration-150 hover:border-violet-200 dark:hover:border-violet-500/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40"
         >
-          ← {isIndividual ? "Danh sách KHCN" : t("customers.title")}
+          <ArrowLeft className="h-4 w-4" />
+          {isIndividual ? "Danh sách KHCN" : t("customers.title")}
         </Link>
         <h2 className="text-lg font-bold tracking-tight bg-gradient-to-r from-violet-700 to-fuchsia-600 dark:from-violet-400 dark:to-fuchsia-400 bg-clip-text text-transparent">
           {customer?.customer_name ?? t("customers.edit")}
         </h2>
       </div>
 
-      {error ? <p className="text-sm text-red-600 dark:text-red-400">{error}</p> : null}
+      {error ? <p role="alert" className="text-sm text-red-600 dark:text-red-400">{error}</p> : null}
 
       {/* Summary / Profile card */}
       {customer?.summary && (

@@ -124,7 +124,7 @@ export function CustomerListView({ customerType, basePath, showSelect = false }:
                 Vui lòng bấm &quot;Chọn&quot; để chọn khách hàng trước khi sử dụng Mapping / Template.
               </p>
             )}
-            {error && <p className="mt-2 text-sm text-red-600 dark:text-red-400">{error}</p>}
+            {error && <p role="alert" className="mt-2 text-sm text-red-600 dark:text-red-400">{error}</p>}
             {success && <p className="mt-2 text-sm text-emerald-600 dark:text-emerald-400">{success}</p>}
           </div>
           <Link

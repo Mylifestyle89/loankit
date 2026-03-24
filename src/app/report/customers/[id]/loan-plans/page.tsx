@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { Plus, FileText, Trash2, Sparkles } from "lucide-react";
+import { ArrowLeft, Plus, FileText, Trash2, Sparkles } from "lucide-react";
 import { useXlsxLoanPlanImport } from "@/lib/hooks/use-xlsx-loan-plan-import";
 import { XlsxImportButton, XlsxImportPreviewModal } from "@/components/loan-plan/xlsx-import-preview-modal";
 
@@ -100,7 +100,7 @@ export default function LoanPlansListPage() {
     <section className="space-y-5">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Link href={`/report/customers/${customerId}`} className="text-sm text-violet-600 dark:text-violet-400 hover:underline">← Khách hàng</Link>
+          <Link href={`/report/customers/${customerId}`} className="inline-flex items-center gap-1 text-sm text-violet-600 dark:text-violet-400 hover:underline"><ArrowLeft className="h-3.5 w-3.5" />Khách hàng</Link>
           <h2 className="text-lg font-bold bg-gradient-to-r from-violet-700 to-fuchsia-600 dark:from-violet-400 dark:to-fuchsia-400 bg-clip-text text-transparent">
             Phương án vay vốn
           </h2>
