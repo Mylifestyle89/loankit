@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Download, FolderUp, ChevronDown } from "lucide-react";
+import { Download, ChevronDown } from "lucide-react";
 
 /**
  * Dropdown button for downloading/uploading sample XLSX loan plan templates.
@@ -11,9 +11,7 @@ export function XlsxSampleDropdown() {
   const [open, setOpen] = useState(false);
   const [files, setFiles] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
-  const [uploading, setUploading] = useState(false);
   const dropRef = useRef<HTMLDivElement>(null);
-  const uploadRef = useRef<HTMLInputElement>(null);
 
   // Close on outside click
   useEffect(() => {
@@ -46,17 +44,6 @@ export function XlsxSampleDropdown() {
     window.open(`/api/report/templates/khcn/xlsx-samples?file=${encodeURIComponent(fileName)}`, "_blank");
   }
 
-  async function handleUpload(file: File) {
-    setUploading(true);
-    try {
-      const form = new FormData();
-      form.append("file", file);
-      await fetch("/api/report/templates/khcn/xlsx-samples", { method: "POST", body: form });
-      void loadFiles();
-    } catch { /* ignore */ }
-    setUploading(false);
-  }
-
   return (
     <div ref={dropRef} className="relative">
       <button
@@ -71,21 +58,6 @@ export function XlsxSampleDropdown() {
 
       {open && (
         <div className="absolute right-0 top-full z-30 mt-1 w-72 rounded-lg border border-zinc-200 dark:border-white/10 bg-white dark:bg-[#1a1a1a] shadow-lg overflow-hidden">
-          {/* Upload button */}
-          <div className="border-b border-zinc-100 dark:border-white/[0.06] p-2">
-            <input ref={uploadRef} type="file" accept=".xlsx,.xls" className="hidden"
-              onChange={(e) => { const f = e.target.files?.[0]; if (f) void handleUpload(f); e.target.value = ""; }} />
-            <button
-              type="button"
-              disabled={uploading}
-              onClick={() => uploadRef.current?.click()}
-              className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-sm text-violet-600 dark:text-violet-400 hover:bg-violet-50 dark:hover:bg-violet-500/10 transition-colors"
-            >
-              <FolderUp className="h-4 w-4" />
-              {uploading ? "Đang tải lên..." : "Tải lên mẫu mới"}
-            </button>
-          </div>
-
           {/* File list */}
           <div className="max-h-64 overflow-y-auto p-1">
             {loading ? (

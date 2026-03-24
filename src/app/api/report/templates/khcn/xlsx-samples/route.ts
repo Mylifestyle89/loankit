@@ -1,7 +1,8 @@
 /**
  * GET  /api/report/templates/khcn/xlsx-samples         — list sample XLSX files
  * GET  /api/report/templates/khcn/xlsx-samples?file=... — download specific file
- * POST /api/report/templates/khcn/xlsx-samples         — upload new sample XLSX
+ *
+ * Upload is admin-only (commit new .xlsx to git). Users can only download.
  */
 import fs from "node:fs/promises";
 import path from "node:path";
@@ -50,22 +51,3 @@ export async function GET(req: NextRequest) {
   }
 }
 
-export async function POST(req: NextRequest) {
-  try {
-    const formData = await req.formData();
-    const file = formData.get("file") as File | null;
-    if (!file || !file.name.toLowerCase().endsWith(".xlsx")) {
-      return NextResponse.json({ ok: false, error: "XLSX file required" }, { status: 400 });
-    }
-
-    const safeName = file.name.replace(/[<>:"/\\|?*]+/g, "_");
-    const absDir = getSamplesAbsDir();
-    await fs.mkdir(absDir, { recursive: true });
-    const buffer = Buffer.from(await file.arrayBuffer());
-    await fs.writeFile(path.join(absDir, safeName), buffer);
-
-    return NextResponse.json({ ok: true, filename: safeName });
-  } catch (e) {
-    return NextResponse.json({ ok: false, error: (e as Error).message }, { status: 500 });
-  }
-}
