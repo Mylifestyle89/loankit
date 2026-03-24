@@ -6,6 +6,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowLeft, Plus, FileText, Trash2, Sparkles } from "lucide-react";
 import { useXlsxLoanPlanImport } from "@/lib/hooks/use-xlsx-loan-plan-import";
 import { XlsxImportButton, XlsxImportPreviewModal } from "@/components/loan-plan/xlsx-import-preview-modal";
+import { XlsxSampleDropdown } from "@/components/loan-plan/xlsx-sample-dropdown";
 
 type LoanPlan = {
   id: string;
@@ -106,6 +107,7 @@ export default function LoanPlansListPage() {
           </h2>
         </div>
         <div className="flex items-center gap-2">
+          <XlsxSampleDropdown />
           <XlsxImportButton onFileSelect={xlsxImport.uploadFile} isUploading={xlsxImport.isUploading} />
           {/* AI Analyze button */}
           <input type="file" accept=".xlsx,.xls" className="hidden" ref={aiInputRef}
