@@ -29,7 +29,14 @@ const EigenpalDocxEditor = dynamic(
     const mod = await import("@eigenpal/docx-js-editor");
     return mod.DocxEditor;
   },
-  { ssr: false },
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex items-center justify-center py-20">
+        <div className="h-6 w-6 animate-spin rounded-full border-2 border-violet-200 border-t-violet-600" />
+      </div>
+    ),
+  },
 );
 
 export function DocxTemplateEditorModal({
@@ -368,9 +375,14 @@ export function DocxTemplateEditorModal({
 
         {/* ── Editor canvas ── */}
         <div className="docx-editor-wrap flex-1 overflow-auto bg-slate-100 dark:bg-[#0a0a0a]">
-          <>
-            <EigenpalDocxEditor ref={editorRef} documentBuffer={documentBuffer} />
-          </>
+          <EigenpalDocxEditor
+            ref={editorRef}
+            documentBuffer={documentBuffer}
+            onError={(err) => {
+              console.warn("[DocxEditor] viewer error:", err.message);
+              setError("Không thể hiển thị văn bản này. Vui lòng tải về để kiểm tra.");
+            }}
+          />
         </div>
 
       </div>

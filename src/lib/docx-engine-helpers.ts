@@ -190,6 +190,38 @@ export function mergeAdjacentRuns(xml: string): string {
   });
 }
 
+/**
+ * Post-render cleanup on document.xml inside a PizZip docx archive.
+ * - Converts self-closing `<w:p/>` to valid empty paragraphs
+ * - Removes orphaned table rows (no cells at all) left by loop tag removal
+ * - Ensures every `<w:tc>` has at least one `<w:p>` (OOXML requirement)
+ *
+ * NOTE: We intentionally keep rows with empty cells — removing them is unsafe
+ * because the non-greedy regex can mismatch across nested-table boundaries,
+ * corrupting the XML and causing ProseMirror RangeError in the DOCX viewer.
+ */
+export function cleanupRenderedDocXml(zip: import("pizzip")): void {
+  const docXml = zip.file("word/document.xml");
+  if (!docXml) return;
+  let xmlStr = docXml.asText();
+  // Convert self-closing <w:p/> to valid empty paragraph (keeps table cells valid)
+  xmlStr = xmlStr.replace(/<w:p\/>/g, "<w:p></w:p>");
+  // Remove table rows that have NO cells at all (orphaned rows from loop tag removal).
+  // Rows with cells (even empty ones) are kept — they may be intentional blank rows
+  // or part of nested tables where regex matching is unreliable.
+  xmlStr = xmlStr.replace(/<w:tr\b[^>]*>[\s\S]*?<\/w:tr>/g, (row) => {
+    // Skip rows containing nested tables — regex matched across nesting boundary
+    if (/<w:tbl[\s>]/.test(row)) return row;
+    const hasCells = /<w:tc[\s>]/.test(row);
+    return hasCells ? row : "";
+  });
+  // Ensure every table cell has at least one paragraph (OOXML spec requirement).
+  // Docxtemplater's paragraphLoop can strip all <w:p> from a cell, leaving it
+  // invalid for viewers like ProseMirror.
+  xmlStr = xmlStr.replace(/<\/w:tcPr>([\s]*)<\/w:tc>/g, "</w:tcPr>$1<w:p></w:p></w:tc>");
+  zip.file("word/document.xml", xmlStr);
+}
+
 export function isSafeDocxPath(relPath: string): boolean {
   const normalized = normalizeRelPath(relPath);
   if (!normalized.startsWith("report_assets/")) return false;

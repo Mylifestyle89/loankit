@@ -20,6 +20,7 @@ import {
   ensureDir,
   tsForFilename,
   pruneOldBackups,
+  cleanupRenderedDocXml,
 } from "./docx-engine-helpers";
 
 // Re-export types and errors for backward compatibility
@@ -92,7 +93,10 @@ export const docxEngine = {
       throw new DataPlaceholderMismatchError(templatePath, details);
     }
 
-    const buffer = (doc.getZip() as PizZip).generate({
+    const docZip = doc.getZip() as PizZip;
+    cleanupRenderedDocXml(docZip);
+
+    const buffer = docZip.generate({
       type: "nodebuffer",
       compression: "DEFLATE",
     });
@@ -169,21 +173,8 @@ export const docxEngine = {
       throw new DataPlaceholderMismatchError(templatePath, details);
     }
 
-    // Post-render cleanup: remove empty table rows left by loop tag removal
     const docZip = doc.getZip() as PizZip;
-    const docXml = docZip.file("word/document.xml");
-    if (docXml) {
-      let xmlStr = docXml.asText();
-      // Convert self-closing <w:p/> to valid empty paragraph (keeps table cells valid)
-      xmlStr = xmlStr.replace(/<w:p\/>/g, "<w:p></w:p>");
-      // Remove table rows that have NO table cells at all (orphaned rows from loop tag removal).
-      // Rows with cells (even empty ones) are kept — they may be intentional blank rows.
-      xmlStr = xmlStr.replace(/<w:tr\b[^>]*>[\s\S]*?<\/w:tr>/g, (row) => {
-        const hasCells = /<w:tc[\s>]/.test(row);
-        return hasCells ? row : "";
-      });
-      docZip.file("word/document.xml", xmlStr);
-    }
+    cleanupRenderedDocXml(docZip);
 
     return docZip.generate({
       type: "nodebuffer",
