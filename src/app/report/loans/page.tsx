@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
-import { ArrowRight, Calendar, Layers, Percent, Shield, Tag, Plus, Trash2 } from "lucide-react";
+import { ArrowRight, Calendar, Layers, LayoutGrid, List, Percent, Shield, Tag, Plus, Trash2 } from "lucide-react";
 
 import { useLanguage } from "@/components/language-provider";
 import { LoanStatusBadge } from "@/components/invoice-tracking/loan-status-badge";
@@ -39,6 +39,7 @@ export default function LoansPage() {
   const [customerId, setCustomerId] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [viewMode, setViewMode] = useState<"table" | "card">("table");
 
   // Sync store -> local filter
   useEffect(() => {
@@ -113,7 +114,7 @@ export default function LoansPage() {
       </div>
 
       {/* Filter bar */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center justify-between gap-3">
         <select
           value={customerId}
           onChange={(e) => setCustomerId(e.target.value)}
@@ -124,6 +125,10 @@ export default function LoansPage() {
             <option key={c.id} value={c.id}>{c.customer_name}</option>
           ))}
         </select>
+        <div className="flex items-center gap-1 rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] p-0.5">
+          <button type="button" onClick={() => setViewMode("table")} className={`cursor-pointer rounded-md p-1.5 transition-colors ${viewMode === "table" ? "bg-violet-100 text-violet-700 dark:bg-violet-500/15 dark:text-violet-400" : "text-zinc-400 hover:text-zinc-600 dark:hover:text-slate-300"}`} title="Dạng bảng"><List className="h-4 w-4" /></button>
+          <button type="button" onClick={() => setViewMode("card")} className={`cursor-pointer rounded-md p-1.5 transition-colors ${viewMode === "card" ? "bg-violet-100 text-violet-700 dark:bg-violet-500/15 dark:text-violet-400" : "text-zinc-400 hover:text-zinc-600 dark:hover:text-slate-300"}`} title="Dạng thẻ"><LayoutGrid className="h-4 w-4" /></button>
+        </div>
       </div>
 
       {/* Loan cards */}
@@ -135,71 +140,69 @@ export default function LoansPage() {
         <div className="rounded-2xl border border-dashed border-zinc-300 dark:border-white/[0.08] py-12 text-center">
           <p className="text-sm text-zinc-400 dark:text-slate-500">{t("loans.noData")}</p>
         </div>
+      ) : viewMode === "table" ? (
+        <div className="overflow-x-auto rounded-xl border border-zinc-200 dark:border-white/[0.07] bg-white dark:bg-[#161616] shadow-sm">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-zinc-100 dark:border-white/[0.05] text-xs text-zinc-500 dark:text-slate-400">
+                <th className="px-4 py-3 text-left font-medium">Số HĐ</th>
+                <th className="px-4 py-3 text-left font-medium">Khách hàng</th>
+                <th className="px-4 py-3 text-right font-medium">Số tiền vay</th>
+                <th className="px-4 py-3 text-center font-medium">Lãi suất</th>
+                <th className="px-4 py-3 text-center font-medium">Phương thức</th>
+                <th className="px-4 py-3 text-center font-medium">Thời hạn</th>
+                <th className="px-4 py-3 text-center font-medium">Trạng thái</th>
+                <th className="px-4 py-3 text-right font-medium" />
+              </tr>
+            </thead>
+            <tbody>
+              {loans.map((loan) => (
+                <tr key={loan.id} className="border-b border-zinc-50 dark:border-white/[0.03] hover:bg-violet-50/30 dark:hover:bg-violet-500/5 transition-colors">
+                  <td className="px-4 py-3 font-medium"><Link href={`/report/loans/${loan.id}`} className="text-violet-600 dark:text-violet-400 hover:underline">{loan.contractNumber}</Link></td>
+                  <td className="px-4 py-3 text-zinc-600 dark:text-slate-300">{loan.customer.customer_name}</td>
+                  <td className="px-4 py-3 text-right font-semibold tabular-nums">{fmt(loan.loanAmount)}</td>
+                  <td className="px-4 py-3 text-center tabular-nums">{loan.interestRate != null ? `${loan.interestRate}%` : "—"}</td>
+                  <td className="px-4 py-3 text-center">{LOAN_METHOD_LABELS[loan.loan_method] ?? loan.loan_method}</td>
+                  <td className="px-4 py-3 text-center text-xs text-zinc-500 dark:text-slate-400">{fmtDate(loan.startDate)} — {fmtDate(loan.endDate)}</td>
+                  <td className="px-4 py-3 text-center"><LoanStatusBadge status={loan.status} /></td>
+                  <td className="px-4 py-3 text-right">
+                    <div className="flex items-center justify-end gap-1">
+                      <button type="button" onClick={() => handleDelete(loan.id)} className="rounded-md p-1.5 text-zinc-400 hover:text-red-600 hover:bg-red-50 dark:hover:text-red-400 dark:hover:bg-red-500/10 transition-colors"><Trash2 className="h-3.5 w-3.5" /></button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       ) : (
         <div className="grid gap-3">
           {loans.map((loan) => (
             <div key={loan.id}
               className="group relative rounded-xl border border-zinc-200 dark:border-white/[0.07] bg-white dark:bg-[#161616] p-4 shadow-sm transition-all duration-200 hover:shadow-md hover:border-violet-200 dark:hover:border-violet-500/20">
               <div className="flex items-start justify-between gap-4">
-                {/* Left: main info */}
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2.5">
-                    <h3 className="truncate font-semibold text-zinc-900 dark:text-white">
-                      {loan.contractNumber}
-                    </h3>
+                    <h3 className="truncate font-semibold text-zinc-900 dark:text-white">{loan.contractNumber}</h3>
                     <LoanStatusBadge status={loan.status} />
                   </div>
                   <p className="mt-0.5 text-sm text-zinc-500 dark:text-slate-400">{loan.customer.customer_name}</p>
                 </div>
-
-                {/* Right: amount */}
                 <div className="text-right shrink-0">
-                  <p className="text-lg font-bold tabular-nums bg-gradient-to-r from-violet-700 to-fuchsia-600 dark:from-violet-400 dark:to-fuchsia-400 bg-clip-text text-transparent">
-                    {fmt(loan.loanAmount)}
-                  </p>
+                  <p className="text-lg font-bold tabular-nums bg-gradient-to-r from-violet-700 to-fuchsia-600 dark:from-violet-400 dark:to-fuchsia-400 bg-clip-text text-transparent">{fmt(loan.loanAmount)}</p>
                   <p className="text-xs text-zinc-400 dark:text-slate-500">VND</p>
                 </div>
               </div>
-
-              {/* Meta row */}
               <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1 text-xs text-zinc-500 dark:text-slate-400">
-                <span className="inline-flex items-center gap-1">
-                  <Calendar className="h-3 w-3" />
-                  {fmtDate(loan.startDate)} — {fmtDate(loan.endDate)}
-                </span>
-                {loan.interestRate != null && (
-                  <span className="inline-flex items-center gap-1">
-                    <Percent className="h-3 w-3" />
-                    LS: {loan.interestRate}%/năm
-                  </span>
-                )}
-                <span className="inline-flex items-center gap-1">
-                  <Tag className="h-3 w-3" />
-                  {LOAN_METHOD_LABELS[loan.loan_method] ?? loan.loan_method}
-                </span>
-                {loan.collateralValue != null && loan.collateralValue > 0 && (
-                  <span className="inline-flex items-center gap-1">
-                    <Shield className="h-3 w-3" />
-                    TSBD: {fmt(loan.collateralValue)}
-                  </span>
-                )}
-                {loan.purpose && (
-                  <span className="truncate max-w-[260px]" title={loan.purpose}>📋 {loan.purpose}</span>
-                )}
+                <span className="inline-flex items-center gap-1"><Calendar className="h-3 w-3" />{fmtDate(loan.startDate)} — {fmtDate(loan.endDate)}</span>
+                {loan.interestRate != null && <span className="inline-flex items-center gap-1"><Percent className="h-3 w-3" />LS: {loan.interestRate}%/năm</span>}
+                <span className="inline-flex items-center gap-1"><Tag className="h-3 w-3" />{LOAN_METHOD_LABELS[loan.loan_method] ?? loan.loan_method}</span>
+                {loan.collateralValue != null && loan.collateralValue > 0 && <span className="inline-flex items-center gap-1"><Shield className="h-3 w-3" />TSBD: {fmt(loan.collateralValue)}</span>}
+                {loan.purpose && <span className="truncate max-w-[260px]" title={loan.purpose}>{loan.purpose}</span>}
               </div>
-
-              {/* Actions */}
               <div className="mt-3 flex items-center gap-2 border-t border-zinc-100 dark:border-white/[0.05] pt-3">
-                <Link href={`/report/loans/${loan.id}`}
-                  className="inline-flex items-center gap-1 rounded-lg bg-violet-50 dark:bg-violet-500/10 px-3 py-1.5 text-xs font-medium text-violet-700 dark:text-violet-400 transition-colors duration-150 hover:bg-violet-100 dark:hover:bg-violet-500/20">
-                  {t("common.view")}
-                  <ArrowRight className="h-3 w-3" />
-                </Link>
-                <button type="button" onClick={() => handleDelete(loan.id)}
-                  className="inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs text-zinc-500 dark:text-slate-400 transition-colors duration-150 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-500/10 dark:hover:text-red-400">
-                  <Trash2 className="h-3 w-3" />
-                  {t("common.delete")}
-                </button>
+                <Link href={`/report/loans/${loan.id}`} className="inline-flex items-center gap-1 rounded-lg bg-violet-50 dark:bg-violet-500/10 px-3 py-1.5 text-xs font-medium text-violet-700 dark:text-violet-400 transition-colors duration-150 hover:bg-violet-100 dark:hover:bg-violet-500/20">{t("common.view")}<ArrowRight className="h-3 w-3" /></Link>
+                <button type="button" onClick={() => handleDelete(loan.id)} className="inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs text-zinc-500 dark:text-slate-400 transition-colors duration-150 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-500/10 dark:hover:text-red-400"><Trash2 className="h-3 w-3" />{t("common.delete")}</button>
               </div>
             </div>
           ))}

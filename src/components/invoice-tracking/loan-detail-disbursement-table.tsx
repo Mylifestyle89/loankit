@@ -101,7 +101,12 @@ export function DisbursementTable({ disbursements, loading, t, onEdit, onReport,
                 <td className="px-4 py-2">{fmtDate(d.disbursementDate)}</td>
                 <td className="px-4 py-2 font-medium tabular-nums">{fmt(d.amount)}</td>
                 <td className="px-4 py-2 text-zinc-400 dark:text-slate-500">—</td>
-                <td className="px-4 py-2 text-right tabular-nums text-zinc-400 dark:text-slate-500">0 / {fmt(d.amount)}</td>
+                <td className="px-4 py-2 text-right">
+                  <div className="tabular-nums text-zinc-400 dark:text-slate-500">0 / {fmt(d.amount)}</div>
+                  <div className="mt-1 h-1.5 w-full rounded-full bg-zinc-100 dark:bg-white/[0.08]">
+                    <div className="h-full w-0 rounded-full bg-zinc-300 dark:bg-white/[0.15]" />
+                  </div>
+                </td>
                 <td className="px-4 py-2"><span className={`${badgeBase} ${badgeCls.red}`}>Cần bổ sung</span></td>
                 <DisbursementActions d={d} onEdit={onEdit} onReport={onReport} t={t} />
               </tr>
@@ -115,11 +120,25 @@ export function DisbursementTable({ disbursements, loading, t, onEdit, onReport,
                     </>
                   )}
                   <td className="px-4 py-2 text-zinc-700 dark:text-slate-300">{b.beneficiaryName}</td>
-                  <td className="px-4 py-2 text-right tabular-nums">
-                    <span className={b.invoiceAmount >= b.amount ? "text-green-600 dark:text-green-400" : "text-zinc-500 dark:text-slate-400"}>
-                      {fmt(b.invoiceAmount)}
-                    </span>
-                    <span className="text-zinc-400 dark:text-slate-500"> / {fmt(b.amount)}</span>
+                  <td className="px-4 py-2 text-right">
+                    <div className="tabular-nums">
+                      <span className={b.invoiceAmount >= b.amount ? "text-green-600 dark:text-green-400" : "text-zinc-500 dark:text-slate-400"}>
+                        {fmt(b.invoiceAmount)}
+                      </span>
+                      <span className="text-zinc-400 dark:text-slate-500"> / {fmt(b.amount)}</span>
+                    </div>
+                    <div className="mt-1 h-1.5 w-full rounded-full bg-zinc-100 dark:bg-white/[0.08]">
+                      <div
+                        className={`h-full rounded-full transition-all duration-300 ${
+                          b.invoiceAmount >= b.amount
+                            ? "bg-green-500 dark:bg-green-400"
+                            : b.invoiceAmount > 0
+                              ? "bg-amber-500 dark:bg-amber-400"
+                              : "bg-zinc-300 dark:bg-white/[0.15]"
+                        }`}
+                        style={{ width: `${Math.min(100, b.amount > 0 ? (b.invoiceAmount / b.amount) * 100 : 0)}%` }}
+                      />
+                    </div>
                   </td>
                   <td className="px-4 py-2">
                     <div className="flex items-center gap-1.5">

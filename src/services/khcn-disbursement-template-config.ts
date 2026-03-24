@@ -16,13 +16,9 @@ export const KHCN_DISBURSEMENT_TEMPLATES = {
     label: "Ủy nhiệm chi A4 (599)",
     path: "report_assets/KHCN templates/Chứng từ giải ngân/599 Uy nhiem chi A4.docx",
   },
-  hd_cung_ung: {
-    label: "HĐ cung ứng vật tư",
-    path: "report_assets/KHCN templates/Chứng từ giải ngân/Hop dong cung ung vat tu.docx",
-  },
-  bb_giao_nhan: {
-    label: "BB giao nhận hàng hóa",
-    path: "report_assets/KHCN templates/Chứng từ giải ngân/Bien ban giao nhan hang hoa.docx",
+  danh_muc_gn: {
+    label: "Danh mục hồ sơ vay vốn giải ngân",
+    path: "report_assets/KHCN templates/Danh mục hồ sơ/2899.01.CV Danh muc ho so vay von giải ngân.docx",
   },
   bang_ke_mua_hang: {
     label: "Bảng kê mua hàng",

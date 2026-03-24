@@ -111,6 +111,7 @@ export const FORM_FIELDS: Record<string, { key: string; label: string }[]> = {
     { key: "lot_number", label: "Số thửa" },
     { key: "map_sheet", label: "Số tờ bản đồ" },
     { key: "land_purpose", label: "Mục đích sử dụng" },
+    { key: "ownership_form", label: "Hình thức sở hữu (Đất)" },
     { key: "shared_area", label: "Sử dụng chung" },
     { key: "private_area", label: "Sử dụng riêng" },
     { key: "house_type", label: "Loại nhà ở" },
@@ -126,6 +127,7 @@ export const FORM_FIELDS: Record<string, { key: string; label: string }[]> = {
     { key: "other_construction", label: "Công trình XD khác" },
     { key: "other_construction_value", label: "GT công trình XD khác" },
     { key: "surface_rights_doc", label: "Giấy tờ quyền bề mặt" },
+    { key: "asset_usage_status", label: "Tình trạng sử dụng TS" },
     { key: "mortgage_name", label: "Tên HĐ thế chấp" },
     { key: "mortgage_contract", label: "Số HĐ thế chấp" },
     { key: "mortgage_date", label: "Ngày ký HĐTC" },
@@ -170,8 +172,8 @@ export const FORM_FIELDS: Record<string, { key: string; label: string }[]> = {
 
 /* ── Field grouping keys for form sections ── */
 export const QSD_CERT_KEYS = ["certificate_name", "serial", "certificate_issue_date", "issuing_authority"];
-export const QSD_LAND_KEYS = ["land_address", "land_area", "land_area_words", "lot_number", "map_sheet", "land_purpose", "shared_area", "private_area"];
-export const QSD_HOUSE_KEYS = ["house_type", "construction_area", "floor_area", "house_structure", "house_ownership", "house_level", "floor_number", "house_value", "year_built", "initial_construction_value", "other_construction", "other_construction_value", "surface_rights_doc", "house_appraisal_area", "house_unit_price", "house_appraisal_value"];
+export const QSD_LAND_KEYS = ["land_address", "land_area", "land_area_words", "lot_number", "map_sheet", "land_purpose", "ownership_form", "shared_area", "private_area"];
+export const QSD_HOUSE_KEYS = ["house_type", "construction_area", "floor_area", "house_structure", "house_ownership", "house_level", "floor_number", "house_value", "year_built", "initial_construction_value", "other_construction", "other_construction_value", "surface_rights_doc", "asset_usage_status", "house_appraisal_area", "house_unit_price", "house_appraisal_value"];
 export const QSD_CONTRACT_KEYS = ["mortgage_name", "mortgage_contract", "mortgage_date", "guarantee_registry_place"];
 
 export const DS_VEHICLE_KEYS = ["brand", "engine_number", "chassis_number", "color", "license_plate", "seat_count", "manufacture_year"];
