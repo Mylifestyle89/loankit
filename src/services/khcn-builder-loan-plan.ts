@@ -124,9 +124,9 @@ export function buildLoanPlanExtendedData(
       return { ...r, "Mô tả": label, "KHOẢN MỤC": label, "Khoản mục": label, "Danh mục": label };
     };
 
-    // PA_CHIPHI = loop chỉ các khoản chi phí trực tiếp (cost items)
-    // PA_CHIPHI: cost items loop
-    data["PA_CHIPHI"] = costItems.map((c, i) => row({
+    // PA_CHIPHI: cost items loop — skip rows without name or amount
+    const validCostItems = costItems.filter((c) => c.name?.trim() && (c.amount || c.qty));
+    data["PA_CHIPHI"] = validCostItems.map((c, i) => row({
       STT: i + 1, "Hạng mục": c.name,
       ĐVT: c.unit ?? "",
       "Đơn giá": fmtN(c.unitPrice ?? c.unit_price),
@@ -142,8 +142,9 @@ export function buildLoanPlanExtendedData(
       data[`PA.${c.name}_TT`] = fmtN(c.amount);
     }
 
-    // PA_DOANHTHU: revenue items loop
-    data["PA_DOANHTHU"] = revenueItems.map((r, i) => row({
+    // PA_DOANHTHU: revenue items loop — skip rows without description or amount
+    const validRevenueItems = revenueItems.filter((r) => r.description?.trim() && (r.amount || r.qty));
+    data["PA_DOANHTHU"] = validRevenueItems.map((r, i) => row({
       STT: i + 1, "Hạng mục": r.description,
       ĐVT: r.unit ?? "đ",
       "Đơn giá": fmtN(r.unitPrice ?? r.unit_price),
@@ -196,9 +197,14 @@ export function buildLoanPlanExtendedData(
     data["PA.Số tiền đặt cọc"] = fmtN(depositAmt);
     data["PA.Số tiền đặt cọc bằng chữ"] = depositAmt
       ? numberToVietnameseWords(depositAmt) : "";
-    // Tổng nhu cầu vốn: trung_dai nhà kính = giá trị tài sản, ngắn hạn = tổng chi phí trực tiếp
+    // Tổng nhu cầu vốn:
+    //   trung_dai nhà kính = giá trị tài sản (đơn giá × diện tích)
+    //   ngắn hạn/hạn mức   = tổng CPTT / vòng quay vốn
     const assetValue = (Number(financials.asset_unit_price) || 0) * (Number(financials.land_area_sau) || 0);
-    const capitalNeed = (assetValue > 0) ? assetValue : totalDirectCost;
+    const turnoverCycles = Number(financials.turnoverCycles) || 1;
+    const capitalNeed = (assetValue > 0)
+      ? assetValue
+      : (turnoverCycles > 1 ? Math.round(totalDirectCost / turnoverCycles) : totalDirectCost);
     if (capitalNeed > 0) {
       data["PA.Tổng nhu cầu vốn"] = fmtN(capitalNeed);
       data["PA.Tổng nhu cầu vốn bằng chữ"] = numberToVietnameseWords(capitalNeed);
@@ -210,6 +216,14 @@ export function buildLoanPlanExtendedData(
       data["PA.Tỷ lệ vốn đối ứng"] = capitalNeed > 0
         ? `${((counterpart / capitalNeed) * 100).toFixed(2).replace(".", ",")}%` : "";
       data["PA.Tỷ lệ vốn tự có"] = calcRatioStr(totalDirectCost);
+      // Fallback HĐTD.* versions (loan builder sets these from DB, but plan data takes over if present)
+      if (!data["HĐTD.Tổng nhu cầu vốn"]) data["HĐTD.Tổng nhu cầu vốn"] = fmtN(capitalNeed);
+      if (!data["HĐTD.TNCV bằng chữ"]) data["HĐTD.TNCV bằng chữ"] = numberToVietnameseWords(capitalNeed);
+      if (!data["HĐTD.Vốn đối ứng"]) data["HĐTD.Vốn đối ứng"] = fmtN(counterpart);
+      if (!data["HĐTD.Tỷ lệ vốn đối ứng"]) {
+        data["HĐTD.Tỷ lệ vốn đối ứng"] = capitalNeed > 0
+          ? `${((counterpart / capitalNeed) * 100).toFixed(2).replace(".", ",")}%` : "";
+      }
     }
     // ── Bảng trả nợ theo năm (PA_TRANO) — vay trung dài hạn ──
     const termMonths = Number(financials.term_months || financials.loanTerm) || 0;

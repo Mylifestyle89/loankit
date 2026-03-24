@@ -193,12 +193,12 @@ export function mergeAdjacentRuns(xml: string): string {
 /**
  * Post-render cleanup on document.xml inside a PizZip docx archive.
  * - Converts self-closing `<w:p/>` to valid empty paragraphs
- * - Removes orphaned table rows (no cells at all) left by loop tag removal
+ * - Removes orphaned table rows left by loop tag removal:
+ *   a) rows with NO cells at all
+ *   b) rows with cells but ZERO visible text (loop marker residue)
+ *      — keeps vMerge rows (intentional header/layout spacers)
+ *      — skips rows containing nested tables (regex boundary safety)
  * - Ensures every `<w:tc>` has at least one `<w:p>` (OOXML requirement)
- *
- * NOTE: We intentionally keep rows with empty cells — removing them is unsafe
- * because the non-greedy regex can mismatch across nested-table boundaries,
- * corrupting the XML and causing ProseMirror RangeError in the DOCX viewer.
  */
 export function cleanupRenderedDocXml(zip: import("pizzip")): void {
   const docXml = zip.file("word/document.xml");
@@ -206,14 +206,19 @@ export function cleanupRenderedDocXml(zip: import("pizzip")): void {
   let xmlStr = docXml.asText();
   // Convert self-closing <w:p/> to valid empty paragraph (keeps table cells valid)
   xmlStr = xmlStr.replace(/<w:p\/>/g, "<w:p></w:p>");
-  // Remove table rows that have NO cells at all (orphaned rows from loop tag removal).
-  // Rows with cells (even empty ones) are kept — they may be intentional blank rows
-  // or part of nested tables where regex matching is unreliable.
+  // Remove empty table rows left behind after loop marker removal.
+  // Docxtemplater with paragraphLoop removes the marker TEXT ([#loop]/[/loop])
+  // but leaves the table rows intact (empty cells).
   xmlStr = xmlStr.replace(/<w:tr\b[^>]*>[\s\S]*?<\/w:tr>/g, (row) => {
-    // Skip rows containing nested tables — regex matched across nesting boundary
+    // Guard: skip rows containing nested tables — regex may mismatch across boundaries
     if (/<w:tbl[\s>]/.test(row)) return row;
     const hasCells = /<w:tc[\s>]/.test(row);
-    return hasCells ? row : "";
+    if (!hasCells) return "";
+    // Keep merged-cell rows (intentional header/layout spacers)
+    if (/<w:vMerge/.test(row)) return row;
+    // Remove rows where all cells are empty text (loop marker residue)
+    const visibleText = row.replace(/<[^>]+>/g, "").trim();
+    return visibleText === "" ? "" : row;
   });
   // Ensure every table cell has at least one paragraph (OOXML spec requirement).
   // Docxtemplater's paragraphLoop can strip all <w:p> from a cell, leaving it
