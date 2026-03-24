@@ -34,7 +34,6 @@ export const ASSET_TEMPLATES: KhcnDocTemplate[] = [
   // ══ BĐS: Thế chấp QSD đất — Bên thứ 3 ══
   { path: `${QSD_BT3}/2929.02.MB HDTC QSD dat va TS GLVD cua BT3.docx`, name: "HĐTC QSD đất + TS GLVĐ (BT3)", category: "ts_qsd_bt3", methods: [] },
   { path: `${QSD_BT3}/2929.04.MB.HDBD HDTC QSD dat cua ben thu ba.docx`, name: "HĐTC QSD đất (BT3)", category: "ts_qsd_bt3", methods: [] },
-  { path: `${QSD_BT3}/2929.06.MB HDTC QSD dat cua BT3 2 chu the.docx`, name: "HĐTC QSD đất 2 chủ thể (BT3)", category: "ts_qsd_bt3", methods: [] },
   { path: `${QSD_BT3}/2929.28.MB.BCTD Bao cao tham dinh QSD dat va TS BT3.docx`, name: "BC thẩm định QSD đất + TS (BT3)", category: "ts_qsd_bt3", methods: [] },
   { path: `${QSD_BT3}/2929.30.MB.BBDG BB xac dinh GTTS QSD dat va TS BT3.docx`, name: "BB xác định GTTS QSD đất + TS (BT3)", category: "ts_qsd_bt3", methods: [] },
   { path: `${QSD_BT3}/2929.31.MB.BBDG Cam ket quyen so huu, su dung TS BT3.docx`, name: "Cam kết quyền sở hữu, SD TS (BT3)", category: "ts_qsd_bt3", methods: [] },
@@ -45,7 +44,6 @@ export const ASSET_TEMPLATES: KhcnDocTemplate[] = [
   { path: `${QSD_BT3}/99.2022.03a Xoa the chap QSD dat, TSGLVD BT3.docx`, name: "Xóa TC QSD đất, TS GLVĐ (BT3)", category: "ts_qsd_bt3", methods: [] },
   { path: `${QSD_BT3}/Cam ket tai san cua ben thu 3.docx`, name: "Cam kết tài sản bên thứ 3", category: "ts_qsd_bt3", methods: [] },
   { path: `${QSD_BT3}/HD sua doi bo sung HDTC BT3 dat.docx`, name: "HĐ sửa đổi bổ sung HĐTC (BT3) đất", category: "ts_qsd_bt3", methods: [] },
-  { path: `${QSD_BT3}/Thong bao tiep tuc the chap tai san.docx`, name: "Thông báo tiếp tục thế chấp TS", category: "ts_qsd_bt3", methods: [] },
 
   // ══ BĐS: Thế chấp TS gắn liền với đất — Bên vay ══
   { path: `${GLVD_BV}/01.2020.TT-BTP.Chung thuc HDTC 2 ben (dat).docx`, name: "Chứng thực HĐTC 2 bên (đất)", category: "ts_glvd_bv", methods: [] },
