@@ -39,11 +39,13 @@ export const KHCN_TEMPLATES: KhcnDocTemplate[] = [
   { path: `${BASE}/Hợp đồng tín dụng/2268.06 Phu luc nhan tien vay.docx`, name: "Phụ lục nhận tiền vay (2268.06)", category: "hop_dong", methods: [] },
 
   // Phương án sử dụng vốn — SXKD methods only (not tiêu dùng)
-  { path: `${BASE}/Phương án sử dụng vốn/2268.01E PASDV vay von ngan han.docx`, name: "PA sử dụng vốn ngắn hạn (2268.01E)", category: "phuong_an", methods: ["tung_lan", "han_muc"] },
+  { path: `${BASE}/Phương án sử dụng vốn/2268.01E PASDV vay von ngan han.docx`, name: "PA sử dụng vốn ngắn hạn (2268.01E)", category: "phuong_an", methods: ["tung_lan"] },
+  { path: `${BASE}/Phương án sử dụng vốn/2268.01E PASDV vay von ngan han hạn mức.docx`, name: "PA sử dụng vốn ngắn hạn hạn mức (2268.01E)", category: "phuong_an", methods: ["han_muc"] },
   { path: `${BASE}/Phương án sử dụng vốn/2268.01G PASDV vay trung, dai han co TSBD.docx`, name: "PA sử dụng vốn trung dài hạn (2268.01G)", category: "phuong_an", methods: ["trung_dai"] },
 
   // Báo cáo đề xuất
-  { path: `${BASE}/Báo cáo đề xuất/2268.02B BCDXCV ngan han co TSBD cat tuong.docx`, name: "BCĐX ngắn hạn - Cát tường", category: "bao_cao", methods: ["tung_lan", "han_muc"] },
+  { path: `${BASE}/Báo cáo đề xuất/2268.02B BCDXCV ngan han co TSBD cat tuong.docx`, name: "BCĐX ngắn hạn - Cát tường", category: "bao_cao", methods: ["tung_lan"] },
+  { path: `${BASE}/Báo cáo đề xuất/2268.02B BCDXCV ngan han HMTD.docx`, name: "BCĐX ngắn hạn - HMTD", category: "bao_cao", methods: ["han_muc"] },
   { path: `${BASE}/Báo cáo đề xuất/2268.02C BCDXCV trung, dai han nha kinh.docx`, name: "BCĐX trung dài hạn - Nhà kính", category: "bao_cao", methods: ["trung_dai"] },
 
   // Biên bản kiểm tra — SXKD methods
