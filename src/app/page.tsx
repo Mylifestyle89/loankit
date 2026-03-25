@@ -44,7 +44,7 @@ export default function Home() {
             <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-[32px]">
               <div className="absolute inset-0 w-1/3 bg-gradient-to-r from-transparent via-white/[0.06] to-transparent [animation:landing-shimmer_6s_ease-in-out_infinite]" />
             </div>
-            <div className="relative z-10 flex aspect-[16/9] w-full flex-col items-center justify-center px-8 text-center">
+            <div className="relative z-10 flex w-full flex-col items-center justify-center px-8 py-16 sm:py-20 lg:py-28 text-center">
               <p className="mb-4 text-xs font-semibold uppercase tracking-[0.3em] text-indigo-400/80">Loan Documents Creator</p>
               <h1 className="bg-gradient-to-b from-white via-slate-100 to-slate-400 bg-clip-text text-5xl font-bold tracking-tight text-transparent sm:text-6xl lg:text-7xl xl:text-8xl">
                 Simple. Powerful.
@@ -54,7 +54,7 @@ export default function Home() {
               <p className="mt-6 max-w-md text-base font-medium text-slate-300/70">
                 Nền tảng tạo hồ sơ vay thế hệ mới
               </p>
-              <div className="absolute bottom-12 left-1/2 -translate-x-1/2">
+              <div className="mt-10">
                 <Link
                   href="/report/khdn"
                   className="landing-button-pulse group relative inline-flex items-center gap-2 overflow-hidden rounded-2xl border border-white/20 bg-white/10 px-8 py-3.5 text-sm font-medium tracking-wide text-white backdrop-blur-xl transition-all duration-300 hover:bg-white/15 hover:shadow-[0_16px_52px_rgba(99,102,241,0.4),inset_0_1px_0_rgba(255,255,255,0.45)]"

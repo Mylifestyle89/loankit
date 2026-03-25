@@ -197,6 +197,7 @@ export function mergeAdjacentRuns(xml: string): string {
  *   a) rows with NO cells at all
  *   b) rows with cells but ZERO visible text (loop marker residue)
  *      — keeps vMerge rows (intentional header/layout spacers)
+ *      — keeps rows with explicit trHeight (intentional blank form areas)
  *      — skips rows containing nested tables (regex boundary safety)
  * - Ensures every `<w:tc>` has at least one `<w:p>` (OOXML requirement)
  */
@@ -216,6 +217,8 @@ export function cleanupRenderedDocXml(zip: import("pizzip")): void {
     if (!hasCells) return "";
     // Keep merged-cell rows (intentional header/layout spacers)
     if (/<w:vMerge/.test(row)) return row;
+    // Keep rows with explicit height — intentional blank form areas (e.g. "For bank use only")
+    if (/<w:trHeight/.test(row)) return row;
     // Remove rows where all cells are empty text (loop marker residue)
     const visibleText = row.replace(/<[^>]+>/g, "").trim();
     return visibleText === "" ? "" : row;

@@ -31,7 +31,7 @@ export default function KhdnLayout({ children }: { children: React.ReactNode }) 
         </div>
 
         {/* Tab switcher */}
-        <div className="relative mt-4 flex gap-1 rounded-lg bg-white/60 dark:bg-white/[0.04] p-1 border border-indigo-100/60 dark:border-white/[0.06] w-fit">
+        <div className="relative mt-4 flex flex-nowrap gap-1 overflow-x-auto rounded-lg bg-white/60 dark:bg-white/[0.04] p-1 border border-indigo-100/60 dark:border-white/[0.06] max-w-full">
           {tabs.map((tab) => {
             const Icon = tab.icon;
             const isActive = pathname.startsWith(tab.href);
@@ -39,7 +39,7 @@ export default function KhdnLayout({ children }: { children: React.ReactNode }) 
               <Link
                 key={tab.key}
                 href={tab.href}
-                className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-all duration-150 ${
+                className={`flex items-center gap-1.5 whitespace-nowrap rounded-md px-3 py-1.5 text-xs font-medium transition-all duration-150 ${
                   isActive
                     ? "bg-white dark:bg-white/[0.08] text-indigo-700 dark:text-indigo-400 shadow-sm"
                     : "text-zinc-500 dark:text-slate-400 hover:text-zinc-700 dark:hover:text-slate-300"

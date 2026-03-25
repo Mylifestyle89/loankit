@@ -107,21 +107,26 @@ export function useMappingApi({ t, selectedMappingInstanceId }: UseMappingApiPar
   const loadData = useCallback(async () => {
     const md = useMappingDataStore.getState();
     updateStatus({ loading: true, error: "" });
-    const query = selectedMappingInstanceId
-      ? `?mapping_instance_id=${encodeURIComponent(selectedMappingInstanceId)}`
-      : "";
-    const res = await fetch(`/api/report/mapping${query}`, { cache: "no-store" });
-    const data = (await res.json()) as MappingApiResponse;
-    if (!data.ok) {
-      updateStatus({ error: data.error ?? t("mapping.err.loadData"), loading: false });
-      return;
+    try {
+      const query = selectedMappingInstanceId
+        ? `?mapping_instance_id=${encodeURIComponent(selectedMappingInstanceId)}`
+        : "";
+      const res = await fetch(`/api/report/mapping${query}`, { cache: "no-store" });
+      const data = (await res.json()) as MappingApiResponse;
+      if (!data.ok) {
+        updateStatus({ error: data.error ?? t("mapping.err.loadData") });
+        return;
+      }
+      md.setActiveVersionId(data.active_version_id ?? "");
+      md.setVersions(data.versions ?? []);
+      md.setMappingText(JSON.stringify(data.mapping ?? {}, null, 2));
+      md.setAliasText(JSON.stringify(data.alias_map ?? {}, null, 2));
+      await loadFieldValues();
+    } catch (e) {
+      updateStatus({ error: e instanceof Error ? e.message : t("mapping.err.loadData") });
+    } finally {
+      updateStatus({ loading: false });
     }
-    md.setActiveVersionId(data.active_version_id ?? "");
-    md.setVersions(data.versions ?? []);
-    md.setMappingText(JSON.stringify(data.mapping ?? {}, null, 2));
-    md.setAliasText(JSON.stringify(data.alias_map ?? {}, null, 2));
-    await loadFieldValues();
-    updateStatus({ loading: false });
   }, [selectedMappingInstanceId, t, loadFieldValues]);
 
   const loadCustomers = useCallback(async () => {
