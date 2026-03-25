@@ -57,18 +57,51 @@ export type UpdateLoanInput = {
 };
 
 export const loanService = {
-  async list(opts?: { customerId?: string; page?: number; limit?: number }) {
+  async list(opts?: {
+    customerId?: string;
+    search?: string;
+    status?: string;
+    customerType?: string;
+    sortBy?: string;
+    sortOrder?: "asc" | "desc";
+    page?: number;
+    limit?: number;
+  }) {
     const take = Math.min(opts?.limit ?? 50, 200);
     const skip = ((opts?.page ?? 1) - 1) * take;
-    const where = opts?.customerId ? { customerId: opts.customerId } : undefined;
+
+    // Build where clause
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const where: any = {};
+    if (opts?.customerId) where.customerId = opts.customerId;
+    if (opts?.status) where.status = opts.status;
+    if (opts?.customerType) where.customer = { ...where.customer, customer_type: opts.customerType };
+    if (opts?.search) {
+      const term = opts.search.trim();
+      where.OR = [
+        { contractNumber: { contains: term, mode: "insensitive" } },
+        { customer: { customer_name: { contains: term, mode: "insensitive" } } },
+      ];
+    }
+
+    // Build orderBy
+    const SORT_MAP: Record<string, object> = {
+      contractNumber: { contractNumber: opts?.sortOrder ?? "asc" },
+      customerName: { customer: { customer_name: opts?.sortOrder ?? "asc" } },
+      loanAmount: { loanAmount: opts?.sortOrder ?? "desc" },
+      startDate: { startDate: opts?.sortOrder ?? "desc" },
+      status: { status: opts?.sortOrder ?? "asc" },
+    };
+    const orderBy = (opts?.sortBy && SORT_MAP[opts.sortBy]) || { createdAt: "desc" };
+
     const [data, total] = await Promise.all([
       prisma.loan.findMany({
         where,
         include: {
-          customer: { select: { id: true, customer_name: true } },
+          customer: { select: { id: true, customer_name: true, customer_type: true } },
           _count: { select: { disbursements: true } },
         },
-        orderBy: { createdAt: "desc" },
+        orderBy,
         take,
         skip,
       }),

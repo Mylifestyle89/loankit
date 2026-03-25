@@ -20,10 +20,17 @@ const createSchema = z.object({
 
 export async function GET(req: NextRequest) {
   try {
-    const customerId = req.nextUrl.searchParams.get("customerId") ?? undefined;
-    const page = Number(req.nextUrl.searchParams.get("page")) || 1;
-    const limit = Number(req.nextUrl.searchParams.get("limit")) || 50;
-    const result = await loanService.list({ customerId, page, limit });
+    const sp = req.nextUrl.searchParams;
+    const customerId = sp.get("customerId") ?? undefined;
+    const search = sp.get("search") ?? undefined;
+    const status = sp.get("status") ?? undefined;
+    const customerType = sp.get("customerType") ?? undefined;
+    const sortBy = sp.get("sortBy") ?? undefined;
+    const rawOrder = sp.get("sortOrder");
+    const sortOrder = rawOrder === "asc" || rawOrder === "desc" ? rawOrder : undefined;
+    const page = Number(sp.get("page")) || 1;
+    const limit = Number(sp.get("limit")) || 50;
+    const result = await loanService.list({ customerId, search, status, customerType, sortBy, sortOrder, page, limit });
     return NextResponse.json({ ok: true, loans: result.data, total: result.total, page: result.page, limit: result.limit });
   } catch (error) {
     const httpError = toHttpError(error, "Failed to list loans.");
