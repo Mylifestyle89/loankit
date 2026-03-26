@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
 import { toHttpError, ValidationError } from "@/core/errors/app-error";
+import { maskCustomerResponse } from "@/lib/field-encryption";
 import { customerService } from "@/services/customer.service";
 import { requireAdmin, handleAuthError } from "@/lib/auth-guard";
 
@@ -30,7 +31,9 @@ export async function GET(req: NextRequest) {
     const page = Number(req.nextUrl.searchParams.get("page")) || 1;
     const limit = Number(req.nextUrl.searchParams.get("limit")) || 50;
     const result = await customerService.listCustomers({ customer_type: type, page, limit });
-    return NextResponse.json({ ok: true, customers: result.data, total: result.total, page: result.page, limit: result.limit });
+    // Mask PII in list responses (no reveal in list view)
+    const maskedCustomers = result.data.map((c) => maskCustomerResponse(c));
+    return NextResponse.json({ ok: true, customers: maskedCustomers, total: result.total, page: result.page, limit: result.limit });
   } catch (error) {
     const httpError = toHttpError(error, "Failed to list customers.");
     return NextResponse.json(
@@ -63,7 +66,7 @@ export async function POST(req: NextRequest) {
       phone: parsed.phone ?? null,
       data_json: parsed.data_json ?? {},
     });
-    return NextResponse.json({ ok: true, customer });
+    return NextResponse.json({ ok: true, customer: maskCustomerResponse(customer) });
   } catch (error) {
     if (error instanceof z.ZodError) {
       const validationError = new ValidationError("Invalid request body.", error.flatten().fieldErrors);

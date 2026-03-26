@@ -1,5 +1,7 @@
 /** Helper functions for customer data transformation */
 
+import { encryptCustomerPii } from "@/lib/field-encryption";
+
 import type { CreateCustomerInput, UpdateCustomerInput } from "./customer-service-types";
 
 export function toNumber(v: unknown): number | null {
@@ -39,7 +41,7 @@ export function parseCustomerDataJson(raw: string | null): Record<string, unknow
 }
 
 export function toCreateDbData(input: CreateCustomerInput) {
-  return {
+  const raw = {
     customer_code: input.customer_code,
     customer_name: input.customer_name,
     customer_type: input.customer_type ?? "corporate",
@@ -66,6 +68,8 @@ export function toCreateDbData(input: CreateCustomerInput) {
     email: input.email ?? null,
     ...(input.data_json !== undefined ? { data_json: JSON.stringify(input.data_json) } : {}),
   };
+  // Encrypt PII fields (customer_code, phone, cccd, spouse_cccd) before DB write
+  return encryptCustomerPii(raw);
 }
 
 export function toUpdateDbData(input: UpdateCustomerInput) {
@@ -100,5 +104,6 @@ export function toUpdateDbData(input: UpdateCustomerInput) {
   if (input.approver_name !== undefined) data.approver_name = input.approver_name;
   if (input.approver_title !== undefined) data.approver_title = input.approver_title;
   if (input.data_json !== undefined) data.data_json = JSON.stringify(input.data_json);
-  return data;
+  // Encrypt PII fields before DB write
+  return encryptCustomerPii(data);
 }

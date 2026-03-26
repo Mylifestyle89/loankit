@@ -8,6 +8,7 @@ import type { Customer, Prisma } from "@prisma/client";
 import { z } from "zod";
 
 import { SystemError, ValidationError } from "@/core/errors/app-error";
+import { decryptCustomerPii } from "@/lib/field-encryption";
 import {
   CorruptedTemplateError,
   DataPlaceholderMismatchError,
@@ -233,7 +234,7 @@ export async function* customerBatches(
 
     if (rows.length === 0) break;
 
-    yield rows;
+    yield rows.map(decryptCustomerPii);
     cursorId = rows[rows.length - 1].id;
   }
 }

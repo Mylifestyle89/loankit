@@ -26,6 +26,8 @@ import {
   toUpdateDbData,
 } from "./customer-service-helpers";
 
+import { decryptCustomerPii, encryptCustomerPii, encryptField, isEncrypted } from "@/lib/field-encryption";
+
 import type { CreateCustomerInput, UpdateCustomerInput } from "./customer-service-types";
 // Re-export types for backward compatibility
 export type { CreateCustomerInput, UpdateCustomerInput };
@@ -67,13 +69,13 @@ export const customerService = {
       prisma.customer.findMany({ where, orderBy: { updatedAt: "desc" }, take, skip }),
       prisma.customer.count({ where }),
     ]);
-    return { data, total, page: filter?.page ?? 1, limit: take };
+    return { data: data.map(decryptCustomerPii), total, page: filter?.page ?? 1, limit: take };
   },
 
   async getCustomerById(id: string): Promise<Customer> {
     const customer = await prisma.customer.findUnique({ where: { id } });
     if (!customer) throw new NotFoundError("Customer not found.");
-    return customer;
+    return decryptCustomerPii(customer);
   },
 
   async createCustomer(input: CreateCustomerInput): Promise<Customer> {
@@ -194,10 +196,13 @@ export const customerService = {
         data_json: JSON.stringify(data_json),
       };
 
+      // Encrypt PII fields (customer_code, phone, cccd, spouse_cccd) before DB write
+      const encryptedData = encryptCustomerPii(sharedData);
+
       let customer: Customer;
       let created: boolean;
       if (existing) {
-        customer = await tx.customer.update({ where: { id: existing.id }, data: sharedData });
+        customer = await tx.customer.update({ where: { id: existing.id }, data: encryptedData });
         created = false;
         // Clear old related records before re-creating from BK
         await tx.coBorrower.deleteMany({ where: { customerId: customer.id } });
@@ -205,7 +210,7 @@ export const customerService = {
         await tx.creditAtAgribank.deleteMany({ where: { customerId: customer.id } });
         await tx.creditAtOther.deleteMany({ where: { customerId: customer.id } });
       } else {
-        customer = await tx.customer.create({ data: { customer_name: payload.customer_name, ...sharedData } });
+        customer = await tx.customer.create({ data: { customer_name: payload.customer_name, ...encryptedData } });
         created = true;
       }
 
@@ -214,7 +219,14 @@ export const customerService = {
       const resolve = <T>(code: string, allFn: (i: Record<string, unknown>[]) => T[], singleFn: (v: Record<string, unknown>) => T | null): T[] =>
         assetGroups?.[code]?.length ? allFn(assetGroups[code]) : [singleFn(values)].filter((x): x is T => x !== null);
 
-      const cbData = resolve("TV", extractAllCoBorrowers, extractCoBorrower).map(cb => ({ customerId: customer.id, ...cb }));
+      const cbData = resolve("TV", extractAllCoBorrowers, extractCoBorrower).map(cb => {
+        const row = { customerId: customer.id, ...cb };
+        // Encrypt CoBorrower phone PII
+        if (row.phone && typeof row.phone === "string" && !isEncrypted(row.phone)) {
+          row.phone = encryptField(row.phone);
+        }
+        return row;
+      });
       if (cbData.length) await tx.coBorrower.createMany({ data: cbData });
 
       const colData = resolve("SĐ", extractAllCollaterals, extractCollateral).map(c => ({ customerId: customer.id, ...c }));
@@ -274,6 +286,8 @@ export const customerService = {
       },
     });
     if (!customer) throw new NotFoundError("Customer not found.");
+    // Decrypt PII fields after DB read
+    Object.assign(customer, decryptCustomerPii(customer));
 
     // Compute summary stats
     const loans = customer.loans;
@@ -337,6 +351,8 @@ export const customerService = {
           orderBy: { updatedAt: "desc" },
         });
     if (!customer) throw new NotFoundError("Không tìm thấy khách hàng.");
+    // Decrypt PII fields for draft export
+    Object.assign(customer, decryptCustomerPii(customer));
 
     const values: Record<string, unknown> = {};
     // Map all top-level columns that have a field mapping

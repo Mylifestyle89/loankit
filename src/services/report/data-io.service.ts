@@ -5,6 +5,7 @@
 import type { Prisma } from "@prisma/client";
 
 import { ValidationError } from "@/core/errors/app-error";
+import { decryptCustomerPii } from "@/lib/field-encryption";
 import { prisma } from "@/lib/prisma";
 import { loadState, saveState } from "@/lib/report/fs-store";
 
@@ -300,10 +301,12 @@ export const dataIoService = {
     const templateIds = Array.isArray(params?.templateIds) ? params.templateIds : [];
     const where: Prisma.CustomerWhereInput | undefined = customerIds.length > 0 ? { id: { in: customerIds } } : undefined;
 
-    const customers = await prisma.customer.findMany({
+    const rawCustomers = await prisma.customer.findMany({
       where,
       include: fullCustomerInclude,
     });
+    // Decrypt PII fields for export
+    const customers = rawCustomers.map(decryptCustomerPii);
 
     const state = await loadState();
     const field_templates =
@@ -389,7 +392,8 @@ async function* fullCustomerBatches(
     });
 
     if (rows.length === 0) break;
-    yield rows;
+    // Decrypt PII fields for export batches
+    yield rows.map(decryptCustomerPii);
     cursorId = rows[rows.length - 1].id as string;
   }
 }

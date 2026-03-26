@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
 import { toHttpError, ValidationError } from "@/core/errors/app-error";
+import { maskCustomerResponse } from "@/lib/field-encryption";
 import { customerService } from "@/services/customer.service";
 import { requireAdmin, requireEditorOrAdmin, handleAuthError } from "@/lib/auth-guard";
 
@@ -44,10 +45,18 @@ export async function GET(
   try {
     const { id } = await params;
     const full = req.nextUrl.searchParams.get("full") === "true";
+    // ?reveal=all or ?reveal=customer_code,phone,cccd to show raw PII (requires auth)
+    const revealParam = req.nextUrl.searchParams.get("reveal");
+    let revealFields: Set<string> | undefined;
+    if (revealParam) {
+      await requireEditorOrAdmin(); // PII reveal requires authenticated editor+
+      revealFields = new Set(revealParam.split(","));
+    }
 
     if (full) {
       const profile = await customerService.getFullProfile(id);
-      return NextResponse.json({ ok: true, customer: profile });
+      const masked = maskCustomerResponse(profile, revealFields);
+      return NextResponse.json({ ok: true, customer: masked });
     }
 
     const customer = await customerService.getCustomerById(id);
@@ -58,7 +67,9 @@ export async function GET(
           ? (JSON.parse(customer.data_json) as Record<string, unknown>)
           : {},
     };
-    return NextResponse.json({ ok: true, customer: payload });
+    // Mask PII fields by default, reveal only if explicitly requested
+    const masked = maskCustomerResponse(payload, revealFields);
+    return NextResponse.json({ ok: true, customer: masked });
   } catch (error) {
     const httpError = toHttpError(error, "Failed to get customer.");
     return NextResponse.json(
@@ -81,7 +92,7 @@ export async function PATCH(
     const body = await req.json();
     const parsed = updateCustomerSchema.parse(body);
     const customer = await customerService.updateCustomer(id, parsed);
-    return NextResponse.json({ ok: true, customer });
+    return NextResponse.json({ ok: true, customer: maskCustomerResponse(customer) });
   } catch (error) {
     if (error instanceof z.ZodError) {
       const validationError = new ValidationError("Invalid request body.", error.flatten().fieldErrors);

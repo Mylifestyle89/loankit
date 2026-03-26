@@ -1,6 +1,7 @@
 import { ValidationError } from "@/core/errors/app-error";
 
-function maskMiddle(value: string, keepStart = 2, keepEnd = 2): string {
+/** Mask middle portion of a string, keeping start/end characters visible */
+export function maskMiddle(value: string, keepStart = 2, keepEnd = 2): string {
   if (!value) return value;
   if (value.length <= keepStart + keepEnd) return "*".repeat(value.length);
   const start = value.slice(0, keepStart);
