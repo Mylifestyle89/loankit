@@ -6,10 +6,9 @@
  *
  * ⚠️ BACKUP YOUR DATABASE BEFORE RUNNING IN LIVE MODE!
  */
-import { PrismaClient } from "@prisma/client";
+import "dotenv/config";
+import { prisma } from "../src/lib/prisma";
 import { encryptField, isEncrypted } from "../src/lib/field-encryption";
-
-const prisma = new PrismaClient();
 const DRY_RUN = process.argv.includes("--dry-run");
 
 const PII_FIELDS = ["customer_code", "phone", "cccd", "spouse_cccd"] as const;

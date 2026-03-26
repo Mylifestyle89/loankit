@@ -1,11 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { Eye, EyeOff, Loader2 } from "lucide-react";
-
 type KhcnProfileCardProps = {
   customer: {
-    id: string;
     customer_name: string;
     customer_code: string;
     cccd: string | null;
@@ -55,9 +51,9 @@ export function KhcnProfileCard({ customer, summary }: KhcnProfileCardProps) {
         <h3 className="text-base font-bold text-zinc-900 dark:text-slate-100">
           {customer.customer_name}
         </h3>
-        <PiiChip label="CIF" maskedValue={customer.customer_code} customerId={customer.id} fieldKey="customer_code" />
-        {customer.cccd && <PiiChip label="CCCD" maskedValue={customer.cccd} customerId={customer.id} fieldKey="cccd" />}
-        {customer.phone && <PiiChip label="SĐT" maskedValue={customer.phone} customerId={customer.id} fieldKey="phone" />}
+        <InfoChip label="CIF" value={customer.customer_code} />
+        {customer.cccd && <InfoChip label="CCCD" value={customer.cccd} />}
+        {customer.phone && <InfoChip label="SĐT" value={customer.phone} />}
       </div>
 
       {/* Row 2: Address */}
@@ -89,44 +85,10 @@ export function KhcnProfileCard({ customer, summary }: KhcnProfileCardProps) {
   );
 }
 
-/** PII chip with eye toggle to reveal/hide masked values */
-function PiiChip({ label, maskedValue, customerId, fieldKey }: {
-  label: string;
-  maskedValue: string;
-  customerId: string;
-  fieldKey: string;
-}) {
-  const [revealed, setRevealed] = useState(false);
-  const [rawValue, setRawValue] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-
-  const toggle = async () => {
-    if (revealed) { setRevealed(false); return; }
-    if (rawValue) { setRevealed(true); return; }
-    setLoading(true);
-    try {
-      const res = await fetch(`/api/customers/${customerId}?reveal=${fieldKey}`);
-      const data = await res.json();
-      if (data.ok) {
-        setRawValue(data.customer[fieldKey]);
-        setRevealed(true);
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
+function InfoChip({ label, value }: { label: string; value: string }) {
   return (
-    <span className="inline-flex items-center gap-1 text-sm text-zinc-600 dark:text-slate-300">
-      <span className="text-zinc-400 dark:text-slate-500">{label}:</span>
-      <span className="font-mono">{revealed && rawValue ? rawValue : maskedValue}</span>
-      <button
-        onClick={toggle}
-        className="p-0.5 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-400 hover:text-zinc-600 dark:hover:text-slate-300 transition-colors"
-        title={revealed ? "Ẩn" : "Hiện"}
-      >
-        {loading ? <Loader2 size={13} className="animate-spin" /> : revealed ? <EyeOff size={13} /> : <Eye size={13} />}
-      </button>
+    <span className="text-sm text-zinc-600 dark:text-slate-300">
+      <span className="text-zinc-400 dark:text-slate-500">{label}:</span> {value}
     </span>
   );
 }

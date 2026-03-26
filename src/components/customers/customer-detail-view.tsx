@@ -132,7 +132,8 @@ export function CustomerDetailView({ customerType, basePath }: CustomerDetailVie
     setLoading(true);
     setError("");
     try {
-      const res = await fetch(`/api/customers/${id}?full=true`, { cache: "no-store" });
+      // reveal=all: form needs raw PII values for editing
+      const res = await fetch(`/api/customers/${id}?full=true&reveal=all`, { cache: "no-store" });
       const data = (await res.json()) as { ok: boolean; error?: string; customer?: FullCustomer };
       if (!data.ok || !data.customer) {
         setError(data.error ?? "Not found.");
