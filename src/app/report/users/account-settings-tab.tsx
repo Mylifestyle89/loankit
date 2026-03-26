@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { User, Mail, Lock, Loader2 } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
+import { TwoFactorSetupCard } from "./two-factor-setup-card";
 
 /** Account settings: change name, email, password */
 export function AccountSettingsTab() {
@@ -39,6 +40,7 @@ export function AccountSettingsTab() {
         <ChangeNameForm currentName={user.name} />
         <ChangeEmailForm currentEmail={user.email} />
         <ChangePasswordForm />
+        <TwoFactorSetupCard enabled={!!user.twoFactorEnabled} />
       </div>
     </div>
   );

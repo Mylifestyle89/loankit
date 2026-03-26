@@ -1,20 +1,17 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ChevronRight } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
+import { safeCallbackUrl } from "@/lib/auth-utils";
 import { useLanguage } from "@/components/language-provider";
 
 function LoginForm() {
   const { t } = useLanguage();
   const router = useRouter();
   const searchParams = useSearchParams();
-  // Validate callbackUrl to prevent open redirect attacks
-  const rawCallback = searchParams.get("callbackUrl") || "/report/khdn/mapping";
-  const callbackUrl = rawCallback.startsWith("/") && !rawCallback.startsWith("//")
-    ? rawCallback
-    : "/report/khdn/mapping";
+  const callbackUrl = safeCallbackUrl(searchParams.get("callbackUrl"));
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -26,15 +23,17 @@ function LoginForm() {
     setError("");
     setLoading(true);
 
-    const result = await authClient.signIn.email({
-      email,
-      password,
-    });
-
+    const result = await authClient.signIn.email({ email, password });
     setLoading(false);
 
     if (result.error) {
       setError(result.error.message || t("login.errorGeneric"));
+      return;
+    }
+
+    // 2FA: user has TOTP enabled, needs verification step
+    if (result.data && "twoFactorRedirect" in result.data && result.data.twoFactorRedirect) {
+      router.push(`/login/verify-2fa?callbackUrl=${encodeURIComponent(callbackUrl)}`);
       return;
     }
 
@@ -43,7 +42,6 @@ function LoginForm() {
 
   return (
     <div className="relative z-10 w-full max-w-sm rounded-2xl border border-white/10 bg-white/[0.04] p-8 shadow-2xl backdrop-blur-sm">
-      {/* Brand icon */}
       <div className="mx-auto mb-6 flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600 shadow-md">
         <ChevronRight className="h-5 w-5 text-white" />
       </div>
@@ -104,17 +102,5 @@ function LoginForm() {
 }
 
 export default function LoginPage() {
-  return (
-    <main className="relative flex min-h-screen items-center justify-center bg-[#050505] px-4">
-      {/* Background gradients — same as landing page */}
-      <div className="pointer-events-none absolute inset-0">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(99,102,241,0.35),rgba(5,5,5,0.98)_45%)]" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_78%_72%,rgba(16,185,129,0.2),transparent_34%)]" />
-      </div>
-
-      <Suspense fallback={null}>
-        <LoginForm />
-      </Suspense>
-    </main>
-  );
+  return <LoginForm />;
 }

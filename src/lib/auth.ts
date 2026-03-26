@@ -1,6 +1,6 @@
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
-import { admin } from "better-auth/plugins";
+import { admin, twoFactor } from "better-auth/plugins";
 import { prisma } from "./prisma";
 
 function sanitizeEnv(value?: string): string | undefined {
@@ -50,5 +50,9 @@ export const auth = betterAuth({
       defaultRole: "viewer",
       adminRoles: ["admin"],
     }),
+    // 2FA TOTP: only active on Vercel (ENABLE_2FA=true), disabled on offline workstations
+    ...(process.env.ENABLE_2FA === "true"
+      ? [twoFactor({ issuer: "LoanKit" })]
+      : []),
   ],
 });
