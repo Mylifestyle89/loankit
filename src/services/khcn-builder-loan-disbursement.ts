@@ -7,6 +7,10 @@ import { fmtDate } from "@/lib/report/report-date-utils";
 
 type Data = Record<string, unknown>;
 
+/** Agribank policy constants — hardcoded, rarely changes */
+export const OVERDUE_INTEREST_LABEL = "150% lãi suất trong hạn";
+export const LATE_PAYMENT_INTEREST_LABEL = "10%/năm";
+
 // ── Extended Loan (HĐTD) fields ──
 
 export function buildLoanExtendedData(

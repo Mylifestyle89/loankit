@@ -5,6 +5,7 @@
 import JSZip from "jszip";
 
 import { NotFoundError } from "@/core/errors/app-error";
+import { OVERDUE_INTEREST_LABEL, LATE_PAYMENT_INTEREST_LABEL } from "./khcn-builder-loan-disbursement";
 import { docxEngine } from "@/lib/docx-engine";
 import { numberToVietnameseWords } from "@/lib/number-to-vietnamese-words";
 import { prisma } from "@/lib/prisma";
@@ -136,8 +137,8 @@ export async function buildReportData(
     // --- Aliases: template dùng prefix HĐTD. cho một số field giải ngân ---
     "HĐTD.Hạn trả cuối": fmtDate(d.repaymentEndDate),
     "HĐTD.Lãi suất vay": loan.interestRate ?? "",
-    "HĐTD.Lãi suất chậm trả": "",
-    "HĐTD.Lãi suất quá hạn": "",
+    "HĐTD.Lãi suất chậm trả": LATE_PAYMENT_INTEREST_LABEL,
+    "HĐTD.Lãi suất quá hạn": OVERDUE_INTEREST_LABEL,
     "HĐTD.Định kỳ trả lãi": d.interestSchedule ?? "",
     "GN.Số tiền gốc nhận nợ": d.debtAmount ?? d.amount,
 
