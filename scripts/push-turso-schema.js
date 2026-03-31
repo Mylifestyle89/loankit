@@ -2,14 +2,22 @@ const { createClient } = require("@libsql/client");
 const fs = require("fs");
 const path = require("path");
 
-// Read token from .env.local
-const envContent = fs.readFileSync(path.join(__dirname, "..", ".env.local"), "utf8");
-const url = envContent.match(/TURSO_DATABASE_URL=(.+)/)?.[1]?.trim();
-const authToken = envContent.match(/TURSO_AUTH_TOKEN=(.+)/)?.[1]?.trim();
+// Resolve Turso credentials: env vars first (Vercel), fallback to .env.local (local dev)
+let url = process.env.TURSO_DATABASE_URL;
+let authToken = process.env.TURSO_AUTH_TOKEN;
 
 if (!url || !authToken) {
-  console.error("Missing TURSO_DATABASE_URL or TURSO_AUTH_TOKEN in .env.local");
-  process.exit(1);
+  const envPath = path.join(__dirname, "..", ".env.local");
+  if (fs.existsSync(envPath)) {
+    const envContent = fs.readFileSync(envPath, "utf8");
+    url = url || envContent.match(/TURSO_DATABASE_URL=(.+)/)?.[1]?.trim();
+    authToken = authToken || envContent.match(/TURSO_AUTH_TOKEN=(.+)/)?.[1]?.trim();
+  }
+}
+
+if (!url || !authToken) {
+  console.log("No Turso credentials found — skipping remote DB sync (local dev with SQLite).");
+  process.exit(0);
 }
 
 const client = createClient({ url, authToken });
@@ -32,7 +40,7 @@ async function run() {
       try {
         await client.execute(stmt);
       } catch (e) {
-        if (e.message?.includes("already exists")) {
+        if (e.message?.includes("already exists") || e.message?.includes("duplicate column")) {
           console.log("  (skipped - already exists)");
         } else {
           console.error("  ERROR:", e.message);
