@@ -13,7 +13,6 @@ import {
   Banknote,
   Receipt,
   BookOpen,
-  FileText,
   LogOut,
   Menu,
   X,
@@ -69,7 +68,6 @@ const [hovered, setHovered] = useState(false);
 
   const links = [
     { href: "/report/khcn", label: "Hồ sơ KHCN", icon: Users },
-    { href: "/report/khcn/templates", label: "Mẫu KHCN", icon: FileText },
     { href: "/report/khdn", label: "Hồ sơ KHDN", icon: Building2 },
     { href: "/report/loans", label: t("nav.loans"), icon: Banknote },
     { href: "/report/invoices", label: t("nav.invoices"), icon: Receipt },

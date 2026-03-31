@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Download, LayoutGrid, List, Plus, Search, Upload, Users, X } from "lucide-react";
+import { Download, FileText, LayoutGrid, List, Plus, Search, Upload, Users, X } from "lucide-react";
 
 import { useLanguage } from "@/components/language-provider";
 import { useCustomerStore } from "@/stores/use-customer-store";
@@ -143,12 +143,22 @@ export function CustomerListView({ customerType, basePath, showSelect = false }:
             {error && <p role="alert" className="mt-2 text-sm text-red-600 dark:text-red-400">{error}</p>}
             {success && <p className="mt-2 text-sm text-emerald-600 dark:text-emerald-400">{success}</p>}
           </div>
+          <div className="flex items-center gap-2">
+            {customerType === "individual" && (
+              <Link
+                href="/report/khcn/templates"
+                className="cursor-pointer inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] px-3 py-2 text-sm font-medium text-zinc-600 dark:text-slate-300 transition-all duration-200 hover:border-violet-200 dark:hover:border-violet-500/20 hover:text-violet-700 dark:hover:text-violet-400"
+              >
+                <FileText className="h-4 w-4" /> Mẫu KHCN
+              </Link>
+            )}
           <Link
             href={`${basePath}/new`}
             className="cursor-pointer inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-violet-600 to-fuchsia-600 px-4 py-2 text-sm font-medium text-white shadow-sm shadow-violet-500/25 transition-all duration-200 hover:shadow-md hover:shadow-violet-500/30 hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/50"
           >
             <Plus className="h-4 w-4" /> {t("customers.add")}
           </Link>
+          </div>
         </div>
         <div className="relative mt-4 flex gap-6 text-sm">
           <div className="flex items-center gap-2">
