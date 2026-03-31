@@ -3,6 +3,7 @@
  */
 import { numberToVietnameseWords } from "@/lib/number-to-vietnamese-words";
 import { fmtN } from "@/lib/report/format-number-vn";
+import { fmtDate } from "@/lib/report/report-date-utils";
 
 type Data = Record<string, unknown>;
 
@@ -118,6 +119,10 @@ export function buildDisbursementExtendedData(
     currentOutstanding?: number | null; totalOutstanding?: number | null;
     debtAmount?: number | null; amount: number;
     supportingDoc?: string | null;
+    loanTerm?: number | null;
+    repaymentEndDate?: Date | string | null;
+    principalSchedule?: string | null;
+    interestSchedule?: string | null;
   } | null,
   data: Data,
 ) {
@@ -130,7 +135,15 @@ export function buildDisbursementExtendedData(
     ? numberToVietnameseWords(disb.totalOutstanding)
     : "";
   data["GN.Tài liệu chứng minh"] = disb.supportingDoc ?? "";
-  data["GN.Tiền mặt"] = ""; // Not tracked separately
+  data["GN.Tiền mặt"] = "";
+  data["GN.Thời hạn cho vay"] = disb.loanTerm ?? "";
+  data["GN.Hạn trả cuối cùng"] = fmtDate(disb.repaymentEndDate);
+  data["GN.Định kỳ trả gốc"] = disb.principalSchedule ?? "";
+  data["GN.Định kỳ trả lãi"] = disb.interestSchedule ?? "";
+  data["GN.Số tiền gốc nhận nợ"] = fmtN(disb.debtAmount ?? disb.amount);
+  // Alias: một số mẫu dùng prefix HĐTD cho field giải ngân
+  data["HĐTD.Hạn trả cuối"] = fmtDate(disb.repaymentEndDate);
+  data["HĐTD.Định kỳ trả lãi"] = disb.interestSchedule ?? "";
 }
 
 // ── Extended UNC (Beneficiary) fields in loop ──

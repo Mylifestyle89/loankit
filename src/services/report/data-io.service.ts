@@ -405,12 +405,10 @@ async function upsertInvoice(
   disbursementBeneficiaryId: string | null,
   invRaw: ImportInvoiceRecord,
 ) {
-  const existing = await tx.invoice.findUnique({
+  const existing = await tx.invoice.findFirst({
     where: {
-      invoiceNumber_supplierName: {
-        invoiceNumber: invRaw.invoiceNumber,
-        supplierName: invRaw.supplierName,
-      },
+      invoiceNumber: invRaw.invoiceNumber,
+      supplierName: invRaw.supplierName,
     },
   });
 

@@ -83,6 +83,9 @@ export async function buildReportData(
     ? `Hóa đơn chứng từ (${invoiceDetailParts.join("; ")})`
     : "Hóa đơn chứng từ (Cam kết bổ sung hóa đơn)";
 
+  // First beneficiary for flat UNC fields
+  const firstBen = d.beneficiaryLines.find((b) => b.beneficiaryName?.trim());
+
   // Format "Số giải ngân" as "5400LDS{yyyy}0...."
   const disbCountRaw = loan.disbursementCount ?? "";
   const disbNumber = `5400LDS${t.yyyy}0${String(disbCountRaw).padStart(3, "0")}`;
@@ -128,6 +131,16 @@ export async function buildReportData(
     "GN.Định kỳ trả gốc": d.principalSchedule ?? "",
     "GN.Định kỳ trả lãi": d.interestSchedule ?? "",
     "GN.Lãi suất vay": loan.interestRate ?? "",
+    "GN.Tiền mặt": 0, // Phương thức giải ngân tiền mặt (default 0 — chuyển khoản)
+
+    // --- Aliases: template dùng prefix HĐTD. cho một số field giải ngân ---
+    "HĐTD.Hạn trả cuối": fmtDate(d.repaymentEndDate),
+    "HĐTD.Lãi suất vay": loan.interestRate ?? "",
+    "HĐTD.Lãi suất chậm trả": "",
+    "HĐTD.Lãi suất quá hạn": "",
+    "HĐTD.Định kỳ trả lãi": d.interestSchedule ?? "",
+    "GN.Số tiền gốc nhận nợ": d.debtAmount ?? d.amount,
+
     "GN.Tổng mức cấp tín dụng": loan.loanAmount,
     "GN.Tổng Số tiền hóa đơn": totalInvoiceAmount,
     "GN.Số tiền nợ hóa đơn": totalInvoiceAmount,
@@ -138,6 +151,12 @@ export async function buildReportData(
 
     // --- Checklist: Invoice detail for "danh_muc_ho_so" ---
     "Hóa đơn chứng từ": invoiceDetail,
+
+    // --- Flat UNC fields (first beneficiary — for templates using [UNC.xxx] outside loop) ---
+    "UNC.Số tiền": firstBen?.amount ?? 0,
+    "UNC.Khách hàng thụ hưởng": firstBen?.beneficiaryName ?? "",
+    "UNC.Số tài khoản": firstBen?.accountNumber ?? "",
+    "UNC.Nơi mở tài khoản": firstBen?.bankName ?? "",
 
     // --- Loop: Beneficiary table (UNC) — filter empty lines ---
     UNC: d.beneficiaryLines

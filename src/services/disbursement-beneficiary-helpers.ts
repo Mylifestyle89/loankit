@@ -39,6 +39,25 @@ export async function createBeneficiaryLines(
     });
 
     if (b.invoices?.length) {
+      // VAT invoices (has_invoice): batch check duplicate invoiceNumber + supplierName
+      if (b.invoiceStatus === "has_invoice") {
+        const pairs = b.invoices
+          .filter((inv) => inv.invoiceNumber)
+          .map((inv) => ({ invoiceNumber: inv.invoiceNumber, supplierName: inv.supplierName }));
+        if (pairs.length > 0) {
+          const dups = await tx.invoice.findMany({
+            where: { OR: pairs },
+            select: { invoiceNumber: true, supplierName: true },
+            take: 1,
+          });
+          if (dups.length > 0) {
+            throw new ValidationError(
+              `Hóa đơn "${dups[0].invoiceNumber}" của "${dups[0].supplierName}" đã tồn tại.`,
+            );
+          }
+        }
+      }
+      // Bảng kê (bang_ke): allow duplicate item names freely
       await tx.invoice.createMany({
         data: b.invoices.map((inv) => ({
           disbursementId,

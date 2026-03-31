@@ -3,7 +3,6 @@
 import { useState, useCallback } from "react";
 import { Download, Loader2 } from "lucide-react";
 import { BaseModal } from "@/components/ui/BaseModal";
-import { DocxPreviewModal } from "@/components/docx-preview-modal";
 import { KHCN_DISBURSEMENT_TEMPLATES, type KhcnDisbursementTemplateKey } from "@/services/khcn-disbursement-template-config";
 import { saveFileWithPicker } from "@/lib/save-file-with-picker";
 
@@ -19,7 +18,6 @@ export function KhcnDisbursementReportModal({ loanId, disbursementId, onClose }:
   const [selectedKey, setSelectedKey] = useState<KhcnDisbursementTemplateKey>("bcdxgn");
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState("");
-  const [preview, setPreview] = useState<{ buffer: ArrayBuffer; fileName: string } | null>(null);
 
   const handleGenerate = useCallback(async () => {
     setGenerating(true);
@@ -34,36 +32,19 @@ export function KhcnDisbursementReportModal({ loanId, disbursementId, onClose }:
         const data = await res.json().catch(() => null);
         throw new Error(data?.error ?? "Tạo báo cáo thất bại");
       }
+      // Direct download (same as KHDN flow)
       const blob = await res.blob();
       const disposition = res.headers.get("Content-Disposition") ?? "";
       const match = disposition.match(/filename\*?=(?:UTF-8'')?([^;\s]+)/);
       const fileName = match ? decodeURIComponent(match[1]) : `${KHCN_DISBURSEMENT_TEMPLATES[selectedKey].label}.docx`;
-      const buffer = await blob.arrayBuffer();
-      setPreview({ buffer, fileName });
+      await saveFileWithPicker(blob, fileName);
+      onClose();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Lỗi không xác định");
     } finally {
       setGenerating(false);
     }
-  }, [loanId, disbursementId, selectedKey]);
-
-  const handleDownload = useCallback(async () => {
-    if (!preview) return;
-    const blob = new Blob([preview.buffer], { type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" });
-    await saveFileWithPicker(blob, preview.fileName);
-  }, [preview]);
-
-  // Show preview if available
-  if (preview) {
-    return (
-      <DocxPreviewModal
-        documentBuffer={preview.buffer}
-        fileName={preview.fileName}
-        onClose={() => { setPreview(null); onClose(); }}
-        onDownload={handleDownload}
-      />
-    );
-  }
+  }, [loanId, disbursementId, selectedKey, onClose]);
 
   return (
     <BaseModal open title="Tạo báo cáo giải ngân (KHCN)" onClose={onClose}>
