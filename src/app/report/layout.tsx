@@ -13,6 +13,7 @@ import {
   Banknote,
   Receipt,
   BookOpen,
+  FileText,
   LogOut,
   Menu,
   X,
@@ -68,6 +69,7 @@ const [hovered, setHovered] = useState(false);
 
   const links = [
     { href: "/report/khcn", label: "Hồ sơ KHCN", icon: Users },
+    { href: "/report/khcn/templates", label: "Mẫu KHCN", icon: FileText },
     { href: "/report/khdn", label: "Hồ sơ KHDN", icon: Building2 },
     { href: "/report/loans", label: t("nav.loans"), icon: Banknote },
     { href: "/report/invoices", label: t("nav.invoices"), icon: Receipt },
@@ -160,7 +162,9 @@ const [hovered, setHovered] = useState(false);
         {/* ── Nav links ── */}
         <nav className="flex flex-1 flex-col gap-0.5 overflow-y-auto px-1.5 py-1">
           {links.map((link) => {
-            const isActive = pathname.startsWith(link.href);
+            // Prefer longest matching prefix to avoid parent routes highlighting on child pages
+            const isActive = pathname.startsWith(link.href)
+              && !links.some((other) => other.href !== link.href && other.href.startsWith(link.href) && pathname.startsWith(other.href));
             const Icon = link.icon;
             return (
               <Link
