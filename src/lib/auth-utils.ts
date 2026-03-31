@@ -1,5 +1,5 @@
 /** Default redirect after login */
-export const DEFAULT_CALLBACK = "/report/khdn/mapping";
+export const DEFAULT_CALLBACK = "/report/khdn/customers";
 
 /** Sanitize callbackUrl to prevent open redirect attacks */
 export function safeCallbackUrl(raw: string | null): string {

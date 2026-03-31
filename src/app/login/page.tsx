@@ -37,7 +37,8 @@ function LoginForm() {
       return;
     }
 
-    router.push(callbackUrl);
+    // Hard navigation to ensure proxy re-evaluates with new session cookie
+    window.location.href = callbackUrl;
   }
 
   return (

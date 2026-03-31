@@ -1,13 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { ShieldCheck } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 import { safeCallbackUrl } from "@/lib/auth-utils";
 
 function Verify2FAForm() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = safeCallbackUrl(searchParams.get("callbackUrl"));
 
@@ -31,7 +30,8 @@ function Verify2FAForm() {
         setError(useBackup ? "Mã dự phòng không đúng" : "Mã xác thực không đúng");
         return;
       }
-      router.push(callbackUrl);
+      // Hard navigation to ensure proxy re-evaluates with new session cookie
+      window.location.href = callbackUrl;
     } catch {
       setError("Đã xảy ra lỗi, vui lòng thử lại");
     } finally {
