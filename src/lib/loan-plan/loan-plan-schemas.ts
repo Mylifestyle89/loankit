@@ -11,6 +11,7 @@ export const costItemSchema = z.object({
 
 export const revenueItemSchema = z.object({
   description: z.string(),
+  unit: z.string().optional(),
   qty: z.number(),
   unitPrice: z.number(),
   amount: z.number(),

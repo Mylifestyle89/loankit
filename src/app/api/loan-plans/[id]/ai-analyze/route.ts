@@ -57,7 +57,7 @@ Trả về JSON (không markdown, không \`\`\`) theo format:
     {"name": "Tên hạng mục chi phí", "unit": "ĐVT", "qty": 1, "unitPrice": 0, "amount": 0}
   ],
   "revenueItems": [
-    {"description": "Mô tả nguồn doanh thu", "qty": 1, "unitPrice": 0, "amount": 0}
+    {"description": "Mô tả nguồn doanh thu", "unit": "ĐVT (kg/con/đ)", "qty": 1, "unitPrice": 0, "amount": 0}
   ]
 }
 
@@ -80,7 +80,7 @@ Quy tắc:
       loanAmount?: number;
       loanMonths?: number;
       costItems?: { name: string; unit: string; qty: number; unitPrice: number; amount: number }[];
-      revenueItems?: { description: string; qty: number; unitPrice: number; amount: number }[];
+      revenueItems?: { description: string; unit?: string; qty: number; unitPrice: number; amount: number }[];
     };
 
     return NextResponse.json({

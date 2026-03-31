@@ -162,10 +162,11 @@ export default function LoanPlanEditorPage() {
     setSaving(false);
   }
 
-  function updateRevenue(idx: number, field: keyof RevenueItem, raw: string) {
+  function updateRevenue(idx: number, field: keyof RevenueItem | "unit", raw: string) {
     const next = [...revenueItems];
     const item = { ...next[idx] };
     if (field === "description") item.description = raw;
+    else if (field === "unit") item.unit = raw;
     else {
       const num = Number(raw) || 0;
       if (field === "qty") item.qty = num;
@@ -321,14 +322,15 @@ export default function LoanPlanEditorPage() {
         <h3 className="text-sm font-semibold mb-3">Doanh thu dự kiến</h3>
         <div className="space-y-2">
           {revenueItems.map((r, idx) => (
-            <div key={idx} className="grid grid-cols-4 gap-2 text-sm">
+            <div key={idx} className="grid grid-cols-[1fr_4rem_5rem_5rem_auto] gap-2 text-sm">
               <input className={inputCls} value={r.description} onChange={(e) => updateRevenue(idx, "description", e.target.value)} placeholder="Mô tả" />
+              <input className={inputCls} value={r.unit ?? ""} onChange={(e) => updateRevenue(idx, "unit", e.target.value)} placeholder="ĐVT" />
               <NumericInput className={inputCls} value={r.qty} onChange={(n) => updateRevenue(idx, "qty", String(n))} placeholder="SL" />
-              <NumericInput className={inputCls} value={r.unitPrice} onChange={(n) => updateRevenue(idx, "unitPrice", String(n))} placeholder="Đơn giá" />
+              <NumericInput className={inputCls} value={r.unitPrice} onChange={(n) => updateRevenue(idx, "unitPrice", String(n))} placeholder="ĐG" />
               <div className="flex items-center text-right tabular-nums font-medium text-sm">{r.amount.toLocaleString("vi-VN")}</div>
             </div>
           ))}
-          <button type="button" onClick={() => setRevenueItems([...revenueItems, { description: "", qty: 0, unitPrice: 0, amount: 0 }])}
+          <button type="button" onClick={() => setRevenueItems([...revenueItems, { description: "", unit: "đ", qty: 0, unitPrice: 0, amount: 0 }])}
             className="inline-flex items-center gap-1 text-xs text-violet-600 hover:underline">+ Thêm dòng doanh thu</button>
         </div>
       </div>

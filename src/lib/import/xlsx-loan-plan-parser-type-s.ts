@@ -132,7 +132,7 @@ export function parseTypeS(wb: WorkBook): XlsxParseResult {
     if (mode === "cost") {
       costItems.push({ name: colB, unit, qty: actualQty, unitPrice, amount });
     } else {
-      revenueItems.push({ description: colB, qty: actualQty, unitPrice, amount });
+      revenueItems.push({ description: colB, unit, qty: actualQty, unitPrice, amount });
     }
   }
 

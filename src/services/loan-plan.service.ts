@@ -37,6 +37,25 @@ export type CreatePlanInput = {
 
 export type UpdatePlanInput = Partial<Omit<CreatePlanInput, "customerId">>;
 
+/** Ensure every revenue item has numeric qty/unitPrice/amount (fix missing fields from AI/import) */
+function sanitizeRevenueItems(items: RevenueItem[]): RevenueItem[] {
+  return items.map((r) => {
+    const qty = Number(r.qty) || 0;
+    const unitPrice = Number(r.unitPrice) || 0;
+    const amount = Number(r.amount) || (qty * unitPrice);
+    return { description: r.description ?? "", unit: r.unit, qty, unitPrice, amount };
+  });
+}
+
+/** Extended trung_dai fields merged into financials_json */
+const EXTENDED_FINANCIAL_KEYS = [
+  "depreciation_years", "asset_unit_price", "land_area_sau",
+  "preferential_rate", "term_months", "construction_contract_no",
+  "construction_contract_date", "farmAddress",
+  "legal_assessment", "market_input", "market_output",
+  "labor_capability", "machinery_capability", "other_factors",
+] as const;
+
 function recalcFinancials(
   costItems: CostItem[],
   revenueItems: RevenueItem[],
@@ -51,7 +70,7 @@ function recalcFinancials(
 
 export async function createPlanFromTemplate(input: CreatePlanInput) {
   let costItems: CostItem[] = input.cost_items ?? [];
-  let revenueItems: RevenueItem[] = input.revenue_items ?? [];
+  let revenueItems: RevenueItem[] = sanitizeRevenueItems(input.revenue_items ?? []);
 
   // Seed from template defaults if provided
   if (input.templateId && costItems.length === 0) {
@@ -79,12 +98,7 @@ export async function createPlanFromTemplate(input: CreatePlanInput) {
   const financials: Record<string, unknown> = recalcFinancials(costItems, revenueItems, loanAmount, interestRate, turnoverCycles, tax);
 
   // Merge trung_dai extended fields into financials
-  const extKeys = ["depreciation_years", "asset_unit_price", "land_area_sau",
-    "preferential_rate", "term_months", "construction_contract_no",
-    "construction_contract_date", "farmAddress",
-    "legal_assessment", "market_input", "market_output",
-    "labor_capability", "machinery_capability", "other_factors"] as const;
-  for (const key of extKeys) {
+  for (const key of EXTENDED_FINANCIAL_KEYS) {
     if ((input as Record<string, unknown>)[key] !== undefined) {
       financials[key] = (input as Record<string, unknown>)[key];
     }
@@ -108,7 +122,7 @@ export async function updatePlan(id: string, data: UpdatePlanInput) {
   if (!existing) throw new NotFoundError(`LoanPlan ${id} not found`);
 
   const costItems: CostItem[] = data.cost_items ?? JSON.parse(existing.cost_items_json);
-  const revenueItems: RevenueItem[] = data.revenue_items ?? JSON.parse(existing.revenue_items_json);
+  const revenueItems: RevenueItem[] = sanitizeRevenueItems(data.revenue_items ?? JSON.parse(existing.revenue_items_json));
   const existingFinancials: Partial<LoanPlanFinancials> = JSON.parse(existing.financials_json);
   const loanAmount = data.loanAmount ?? existingFinancials.loanAmount ?? 0;
   const interestRate = data.interestRate ?? existingFinancials.interestRate ?? 0;
@@ -117,14 +131,7 @@ export async function updatePlan(id: string, data: UpdatePlanInput) {
   const financials: Record<string, unknown> = recalcFinancials(costItems, revenueItems, loanAmount, interestRate, turnoverCycles, tax);
 
   // Merge trung_dai extended fields into financials_json
-  const extendedKeys = [
-    "depreciation_years", "asset_unit_price", "land_area_sau",
-    "preferential_rate", "term_months", "construction_contract_no",
-    "construction_contract_date", "farmAddress",
-    "legal_assessment", "market_input", "market_output",
-    "labor_capability", "machinery_capability", "other_factors",
-  ] as const;
-  for (const key of extendedKeys) {
+  for (const key of EXTENDED_FINANCIAL_KEYS) {
     if (key in data) {
       financials[key] = (data as Record<string, unknown>)[key];
     } else if (key in existingFinancials) {

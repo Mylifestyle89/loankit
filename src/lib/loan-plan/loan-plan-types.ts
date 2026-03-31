@@ -10,6 +10,7 @@ export type CostItem = {
 
 export type RevenueItem = {
   description: string;
+  unit?: string;  // ĐVT (e.g. "kg", "đ") — optional, defaults to "đ" in builder
   qty: number;
   unitPrice: number;
   amount: number;

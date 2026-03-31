@@ -1,11 +1,6 @@
 // Types for loan plan editor page
 
-export type RevenueItem = {
-  description: string;
-  qty: number;
-  unitPrice: number;
-  amount: number;
-};
+export type { RevenueItem } from "@/lib/loan-plan/loan-plan-types";
 
 export type Financials = {
   totalDirectCost: number;
