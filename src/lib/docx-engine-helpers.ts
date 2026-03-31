@@ -217,8 +217,10 @@ export function cleanupRenderedDocXml(zip: import("pizzip")): void {
     if (!hasCells) return "";
     // Keep merged-cell rows (intentional header/layout spacers)
     if (/<w:vMerge/.test(row)) return row;
-    // Keep rows with explicit height — intentional blank form areas (e.g. "For bank use only")
-    if (/<w:trHeight/.test(row)) return row;
+    // Keep rows with explicit FIXED height — intentional blank form areas (e.g. "For bank use only").
+    // Only preserve w:hRule="exact" rows; Word auto-assigns trHeight to loop-residue rows
+    // which should still be cleaned up.
+    if (/<w:trHeight[^>]*w:hRule="exact"/.test(row)) return row;
     // Remove rows where all cells are empty text (loop marker residue)
     const visibleText = row.replace(/<[^>]+>/g, "").trim();
     return visibleText === "" ? "" : row;
