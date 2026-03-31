@@ -88,6 +88,22 @@ export function CustomerListView({ customerType, basePath, showSelect = false }:
     else { setError(data.error ?? "Delete failed."); }
   }
 
+  async function handleToggleType(id: string, currentType: string) {
+    const newType = currentType === "individual" ? "corporate" : "individual";
+    const label = newType === "individual" ? "Cá nhân (KHCN)" : "Doanh nghiệp (KHDN)";
+    const confirmed = window.confirm(
+      `Chuyển khách hàng sang "${label}"?\n\nLưu ý: Một số dữ liệu đặc trưng của loại hình hiện tại có thể không hiển thị sau khi chuyển đổi.`,
+    );
+    if (!confirmed) return;
+    const res = await fetch(`/api/customers/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ customer_type: newType }),
+    });
+    if ((await res.json()).ok) void loadCustomers();
+    else setError("Chuyển đổi thất bại");
+  }
+
   async function handleImport(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -207,6 +223,7 @@ export function CustomerListView({ customerType, basePath, showSelect = false }:
           onDeleteRequest={(id) => setDeletingId(id)}
           onDeleteConfirm={(id) => handleDelete(id)}
           onDeleteCancel={() => setDeletingId(null)}
+          onToggleType={handleToggleType}
           t={t}
         />
       ) : (
