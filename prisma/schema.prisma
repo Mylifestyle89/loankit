@@ -302,7 +302,7 @@ model Invoice {
   qty            Float?       // Bảng kê: số lượng
   unitPrice      Float?       // Bảng kê: đơn giá
 
-  @@unique([invoiceNumber, supplierName])
+  @@index([invoiceNumber, supplierName])
   @@index([disbursementId])
   @@index([disbursementBeneficiaryId])
   @@index([status])
