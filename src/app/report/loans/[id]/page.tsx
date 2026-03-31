@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 
 import { useLanguage } from "@/components/language-provider";
@@ -14,6 +14,7 @@ import { KhcnDisbursementReportModal } from "@/components/invoice-tracking/khcn-
 import { InvoiceFormModal } from "@/components/invoice-tracking/invoice-form-modal";
 import { PaginationControls } from "@/components/invoice-tracking/pagination-controls";
 import { DisbursementTable, type DisbursementRow } from "@/components/invoice-tracking/loan-detail-disbursement-table";
+import { LoanCollateralPicker, type PickerCollateral } from "./components/loan-collateral-picker";
 import { ArrowLeft, Banknote, CheckCircle, Layers, Zap } from "lucide-react";
 import { fmtDisplay as fmt, fmtDateDisplay as fmtDate } from "@/lib/invoice-tracking-format-helpers";
 
@@ -38,7 +39,9 @@ type Loan = {
   status: string;
   customer: { id: string; customer_name: string };
   isKhcn?: boolean;
+  selectedCollateralIds?: string;
 };
+
 
 const PAGE_SIZE = 20;
 
@@ -67,6 +70,9 @@ export default function LoanDetailPage() {
   const [editingDisbursementId, setEditingDisbursementId] = useState<string | null>(null);
   const [reportDisbursementId, setReportDisbursementId] = useState<string | null>(null);
   const [invoiceTarget, setInvoiceTarget] = useState<{ disbursementId: string; lineId: string; name: string; amount: number } | null>(null);
+
+  // Collateral picker
+  const [collaterals, setCollaterals] = useState<PickerCollateral[]>([]);
 
   // Debounce search input (400ms)
   const searchTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
@@ -126,6 +132,25 @@ export default function LoanDetailPage() {
 
   useEffect(() => { void loadLoan(); }, [loadLoan]);
   useEffect(() => { void loadDisbursements(); }, [loadDisbursements]);
+
+  // Fetch customer collaterals for picker (after loan loads)
+  useEffect(() => {
+    if (!loan?.customer?.id) return;
+    fetch(`/api/customers/${loan.customer.id}/collaterals`)
+      .then((r) => r.json())
+      .then((d) => {
+        setCollaterals((d.collaterals ?? []).map((c: any) => ({
+          id: c.id, name: c.name, collateral_type: c.collateral_type,
+          total_value: c.total_value, obligation: c.obligation,
+        })));
+      })
+      .catch(() => {});
+  }, [loan?.customer?.id]);
+
+  const selectedCollateralIds = useMemo(() => {
+    try { return JSON.parse(loan?.selectedCollateralIds || "[]") as string[]; }
+    catch { return [] as string[]; }
+  }, [loan?.selectedCollateralIds]);
 
   function handleCreated() {
     void loadDisbursements();
@@ -225,6 +250,23 @@ export default function LoanDetailPage() {
           )}
         </div>
       </div>
+
+      {/* Collateral picker */}
+      {collaterals.length > 0 && loan && (
+        <LoanCollateralPicker
+          collaterals={collaterals}
+          initialSelectedIds={selectedCollateralIds}
+          onSave={async (ids) => {
+            const res = await fetch(`/api/loans/${loan.id}`, {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ selectedCollateralIds: JSON.stringify(ids) }),
+            });
+            if (!res.ok) throw new Error("Lưu thất bại");
+            void loadLoan();
+          }}
+        />
+      )}
 
       {/* Summary cards */}
       {summary && (

@@ -204,6 +204,9 @@ model Loan {
   prior_contract_date   String?  // Ngày HĐ cũ
   prior_outstanding     Float?   // Dư nợ cũ
 
+  // Tài sản bảo đảm đã chọn cho khoản vay này
+  selectedCollateralIds String   @default("[]") // JSON array of Collateral IDs
+
   disbursements     Disbursement[]
   beneficiaries     Beneficiary[]
 

@@ -60,6 +60,8 @@ type FullCustomer = {
     nearestMaturity: string | null;
     coBorrowerCount: number;
     outstandingBalance: number;
+    totalCollateralValue: number;
+    totalObligation: number;
   };
 };
 

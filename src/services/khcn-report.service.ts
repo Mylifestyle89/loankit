@@ -26,6 +26,8 @@ import {
   buildOtherCollateralData,
   buildRelatedPersonData,
   buildSavingsCollateralData,
+  OVERDUE_INTEREST_LABEL,
+  LATE_PAYMENT_INTEREST_LABEL,
 } from "./khcn-report-data-builders";
 import {
   KHCN_DISBURSEMENT_TEMPLATES,
@@ -53,6 +55,17 @@ export async function buildKhcnReportData(
 
   const loan = c.loans[0]; // Already filtered by loanId in query
   const latestPlan = c.loan_plans[0];
+
+  // Filter collaterals by loan selection (empty = use all for backward compat)
+  let collaterals = c.collaterals;
+  if (loan?.selectedCollateralIds) {
+    try {
+      const selectedIds: string[] = JSON.parse(loan.selectedCollateralIds);
+      if (selectedIds.length > 0) {
+        collaterals = c.collaterals.filter((col) => selectedIds.includes(col.id));
+      }
+    } catch { /* invalid JSON — use all */ }
+  }
 
   const data: Record<string, unknown> = {
     // ── Date literals ──
@@ -121,14 +134,8 @@ export async function buildKhcnReportData(
     data["HĐTD.Lãi suất vay"] = typeof rate === "number" && rate > 0
       ? `${(rate < 1 ? rate * 100 : rate).toFixed(2).replace(".", ",")}%/năm`
       : "";
-    // Lãi suất quá hạn = 150% lãi suất trong hạn (theo quy định Agribank)
-    data["HĐTD.Lãi suất quá hạn"] = typeof rate === "number" && rate > 0
-      ? `${((rate < 1 ? rate * 100 : rate) * 1.5).toFixed(2).replace(".", ",")}%/năm`
-      : "";
-    // Lãi chậm trả = 130% lãi suất trong hạn
-    data["HĐTD.Lãi suất chậm trả"] = typeof rate === "number" && rate > 0
-      ? `${((rate < 1 ? rate * 100 : rate) * 1.3).toFixed(2).replace(".", ",")}%/năm`
-      : "";
+    data["HĐTD.Lãi suất quá hạn"] = OVERDUE_INTEREST_LABEL;
+    data["HĐTD.Lãi suất chậm trả"] = LATE_PAYMENT_INTEREST_LABEL;
     // Phương thức cho vay: ưu tiên text tự nhập trên HĐ (lending_method), sau đó map từ loan_method (sản phẩm)
     const lendingMethodMap: Record<string, string> = {
       tung_lan: "Cho vay từng lần",
@@ -172,8 +179,8 @@ export async function buildKhcnReportData(
     }
   }
 
-  // ── Collateral (TSBĐ) loop ──
-  data.TSBD = c.collaterals.map((col, i) => {
+  // ── Collateral (TSBĐ) loop — filtered by loan selection ──
+  data.TSBD = collaterals.map((col, i) => {
     const props = JSON.parse(col.properties_json || "{}");
     return {
       STT: i + 1,
@@ -187,9 +194,9 @@ export async function buildKhcnReportData(
   });
 
   // Total collateral summary — một nguồn hiển thị: có chi tiết TSBĐ → tổng từ DB collateral; không → snapshot trên khoản vay
-  const totalCollateralValue = c.collaterals.reduce((s, col) => s + (col.total_value ?? 0), 0);
-  const totalObligation = c.collaterals.reduce((s, col) => s + (col.obligation ?? 0), 0);
-  const useCollateralRows = c.collaterals.length > 0;
+  const totalCollateralValue = collaterals.reduce((s, col) => s + (col.total_value ?? 0), 0);
+  const totalObligation = collaterals.reduce((s, col) => s + (col.obligation ?? 0), 0);
+  const useCollateralRows = collaterals.length > 0;
   const displayCollateralTotal = useCollateralRows ? totalCollateralValue : Number(loan?.collateralValue ?? 0);
   const displayObligationTotal = useCollateralRows ? totalObligation : Number(loan?.securedObligation ?? 0);
 
@@ -209,11 +216,11 @@ export async function buildKhcnReportData(
     data["HĐTD.TNVBĐTĐ bằng chữ"] = oblWords;
   }
 
-  // Type-specific collateral flat fields
-  buildLandCollateralData(c.collaterals, data);
-  buildMovableCollateralData(c.collaterals, data);
-  buildSavingsCollateralData(c.collaterals, data);
-  buildOtherCollateralData(c.collaterals, data);
+  // Type-specific collateral flat fields (using filtered selection)
+  buildLandCollateralData(collaterals, data);
+  buildMovableCollateralData(collaterals, data);
+  buildSavingsCollateralData(collaterals, data);
+  buildOtherCollateralData(collaterals, data);
 
   // ── CoBorrower (TV = Thành viên đồng vay) ──
   buildCoBorrowerData(c.co_borrowers, data);

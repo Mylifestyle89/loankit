@@ -15,6 +15,8 @@ type KhcnProfileCardProps = {
     debtGroup: string | null;
     nearestMaturity: string | null;
     coBorrowerCount: number;
+    totalCollateralValue: number;
+    totalObligation: number;
   };
 };
 
@@ -80,6 +82,12 @@ export function KhcnProfileCard({ customer, summary }: KhcnProfileCardProps) {
           value={summary.coBorrowerCount > 0 ? "Có" : "Không"}
           className={summary.coBorrowerCount > 0 ? "text-blue-700 bg-blue-50 dark:bg-blue-500/10 dark:text-blue-400" : undefined}
         />
+        {summary.totalCollateralValue > 0 && (
+          <StatBadge label="Tổng TSBĐ" value={`${formatVND(summary.totalCollateralValue)} đ`} />
+        )}
+        {summary.totalObligation > 0 && (
+          <StatBadge label="Tổng NVBĐ" value={`${formatVND(summary.totalObligation)} đ`} />
+        )}
       </div>
     </div>
   );

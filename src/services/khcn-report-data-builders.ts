@@ -3,7 +3,7 @@
  * Re-exports from split modules for backward compatibility.
  */
 export { buildCustomerAliases, buildBranchStaffData } from "./khcn-builder-customer-branch";
-export { buildLoanExtendedData, buildDisbursementExtendedData, buildBeneficiaryLoopData } from "./khcn-builder-loan-disbursement";
+export { buildLoanExtendedData, buildDisbursementExtendedData, buildBeneficiaryLoopData, OVERDUE_INTEREST_LABEL, LATE_PAYMENT_INTEREST_LABEL } from "./khcn-builder-loan-disbursement";
 export { getCollateralCount } from "./khcn-builder-collateral-helpers";
 export { buildLandCollateralData } from "./khcn-builder-collateral-land";
 export { buildMovableCollateralData } from "./khcn-builder-collateral-movable";

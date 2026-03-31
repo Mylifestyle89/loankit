@@ -279,6 +279,7 @@ export const customerService = {
           },
         },
         co_borrowers: { select: { id: true } },
+        collaterals: { select: { id: true, total_value: true, obligation: true } },
         mapping_instances: {
           orderBy: { updatedAt: "desc" },
           include: { master: true },
@@ -334,6 +335,8 @@ export const customerService = {
       nearestMaturity: nearestEndDate?.toISOString() ?? null,
       coBorrowerCount: customer.co_borrowers.length,
       outstandingBalance: activeLoans.reduce((s: number, l: { loanAmount: number }) => s + l.loanAmount, 0),
+      totalCollateralValue: customer.collaterals.reduce((s: number, c: { total_value: number | null }) => s + (c.total_value ?? 0), 0),
+      totalObligation: customer.collaterals.reduce((s: number, c: { obligation: number | null }) => s + (c.obligation ?? 0), 0),
     };
 
     return { ...customer, summary };

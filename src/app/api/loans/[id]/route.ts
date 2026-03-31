@@ -44,6 +44,10 @@ const updateSchema = z.object({
   prior_contract_number: z.string().optional().nullable(),
   prior_contract_date: z.string().optional().nullable(),
   prior_outstanding: z.number().optional().nullable(),
+  selectedCollateralIds: z.string().refine(
+    (v) => { try { const a = JSON.parse(v); return Array.isArray(a) && a.every((i: unknown) => typeof i === "string"); } catch { return false; } },
+    { message: "Must be a JSON array of strings" },
+  ).optional(),
 });
 
 export async function GET(
