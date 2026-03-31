@@ -36,7 +36,27 @@ async function run() {
     const statements = sql.split(";").map((s) => s.trim()).filter((s) => s.length > 0);
     console.log("Migration:", dir, "(" + statements.length + " statements)");
 
+    // Detect RedefineTables pattern (DROP + recreate) — DANGEROUS on existing data.
+    // Only run safe statements: CREATE TABLE, CREATE INDEX, ALTER TABLE ADD COLUMN.
+    // Skip: PRAGMA, INSERT INTO "new_", DROP TABLE, ALTER TABLE RENAME (redefine steps).
+    const hasRedefine = sql.includes("RedefineTables") || sql.includes('DROP TABLE "');
+
     for (const stmt of statements) {
+      const upper = stmt.toUpperCase().replace(/\s+/g, " ").trim();
+
+      // Always safe: CREATE TABLE, CREATE INDEX, ALTER TABLE ADD COLUMN
+      const isSafe =
+        upper.startsWith("CREATE TABLE") ||
+        upper.startsWith("CREATE UNIQUE INDEX") ||
+        upper.startsWith("CREATE INDEX") ||
+        upper.startsWith("ALTER TABLE") && upper.includes("ADD COLUMN");
+
+      // Dangerous in redefine context: DROP, INSERT INTO new_, PRAGMA, RENAME
+      if (hasRedefine && !isSafe) {
+        console.log("  (skipped - redefine step)");
+        continue;
+      }
+
       try {
         await client.execute(stmt);
       } catch (e) {
