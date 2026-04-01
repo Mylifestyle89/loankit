@@ -100,7 +100,7 @@ describe("khcn-report-data-builders", () => {
           name: "Land 1",
           total_value: 1000000,
           obligation: 500000,
-          properties_json: JSON.stringify({ land_area: "100m2" }),
+          properties_json: JSON.stringify({ land_area: "100m2", land_type_1: "Đất ở" }),
         },
       ];
 
@@ -109,7 +109,7 @@ describe("khcn-report-data-builders", () => {
       const table = data["TSBD_DINH_GIA"] as unknown[];
       expect(Array.isArray(table)).toBe(true);
       expect(table[0]).toHaveProperty("Tên TSBĐ", "Land 1");
-      expect(table[0]).toHaveProperty("Tổng giá trị TS", 1000000);
+      expect(table[0]).toHaveProperty("Tổng giá trị TS", "1.000.000");
     });
 
     it("skips non-matching collateral types", () => {

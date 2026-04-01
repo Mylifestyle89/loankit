@@ -87,7 +87,9 @@ export function computeEffectiveValues(params: {
   for (const [fieldKey, formula] of formulaEntries) {
     const fieldDeps: string[] = [];
     for (const otherKey of formulaKeys) {
-      if (otherKey !== fieldKey && formula.includes(otherKey)) {
+      if (otherKey === fieldKey) continue;
+      const otherLabel = labelMap.get(otherKey);
+      if (formula.includes(otherKey) || (otherLabel && formula.includes(otherLabel))) {
         fieldDeps.push(otherKey);
       }
     }
