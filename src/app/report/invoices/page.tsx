@@ -1,11 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { AlertTriangle, Banknote, ChevronDown, ChevronRight, Clock, Eye, FileText, Layers, XCircle } from "lucide-react";
+import { AlertTriangle, Banknote, CheckSquare, ChevronDown, ChevronRight, Clock, Eye, FileText, Layers, XCircle } from "lucide-react";
 import Link from "next/link";
 
 import { useLanguage } from "@/components/language-provider";
-import { InvoiceTable } from "@/components/invoice-tracking/invoice-table";
+import { InvoiceTable, isSelectable } from "@/components/invoice-tracking/invoice-table";
 import { fmtDisplay as fmt } from "@/lib/invoice-tracking-format-helpers";
 import { CustomerSummaryCards } from "@/components/invoice-tracking/customer-summary-cards";
 import { useCustomerStore } from "@/stores/use-customer-store";
@@ -70,6 +70,8 @@ export default function InvoicesOverviewPage() {
   const [groupBy, setGroupBy] = useState<"none" | "disbursement">("none");
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkLoading, setBulkLoading] = useState(false);
 
   // Sync store -> local filter
   useEffect(() => {
@@ -102,6 +104,45 @@ export default function InvoicesOverviewPage() {
   useEffect(() => {
     void loadData();
   }, [loadData]);
+
+  // Clear selection when filters change
+  useEffect(() => { setSelectedIds(new Set()); }, [statusFilter, customerFilter]);
+
+  function toggleSelect(id: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  }
+
+  function toggleSelectAll() {
+    const eligible = invoices.filter(isSelectable);
+    const allSelected = eligible.every((inv) => selectedIds.has(inv.id));
+    setSelectedIds(allSelected ? new Set() : new Set(eligible.map((inv) => inv.id)));
+  }
+
+  async function handleBulkMarkPaid() {
+    const ids = Array.from(selectedIds);
+    if (ids.length === 0) return;
+    setBulkLoading(true);
+    try {
+      const res = await fetch("/api/invoices/bulk-mark-paid", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        alert(data?.error ?? "Cập nhật trạng thái thất bại");
+      }
+    } catch {
+      alert("Lỗi kết nối. Vui lòng thử lại.");
+    }
+    setSelectedIds(new Set());
+    setBulkLoading(false);
+    void loadData();
+  }
 
   async function handleMarkPaid(invoiceId: string) {
     try {
@@ -266,6 +307,31 @@ export default function InvoicesOverviewPage() {
         </button>
       </div>
 
+      {/* Bulk action toolbar */}
+      {selectedIds.size > 0 && (
+        <div className="flex items-center gap-3 rounded-xl border border-violet-200 dark:border-violet-500/20 bg-violet-50 dark:bg-violet-500/10 px-4 py-2.5">
+          <CheckSquare className="h-4 w-4 text-violet-600 dark:text-violet-400" />
+          <span className="text-sm font-medium text-violet-700 dark:text-violet-300">
+            Đã chọn {selectedIds.size} hóa đơn
+          </span>
+          <button
+            type="button"
+            onClick={handleBulkMarkPaid}
+            disabled={bulkLoading}
+            className="cursor-pointer ml-auto rounded-lg border border-green-300 dark:border-green-500/30 bg-green-50 dark:bg-green-500/10 px-3 py-1.5 text-xs font-medium text-green-700 dark:text-green-400 transition-colors hover:bg-green-100 dark:hover:bg-green-500/20 disabled:opacity-50"
+          >
+            {bulkLoading ? "Đang xử lý..." : "Hoàn thành đã chọn"}
+          </button>
+          <button
+            type="button"
+            onClick={() => setSelectedIds(new Set())}
+            className="cursor-pointer rounded-lg border border-zinc-200 dark:border-white/[0.09] px-3 py-1.5 text-xs text-zinc-600 dark:text-slate-400 transition-colors hover:bg-zinc-50 dark:hover:bg-white/[0.04]"
+          >
+            Bỏ chọn
+          </button>
+        </div>
+      )}
+
       {/* Invoice table / grouped view */}
       {loading ? (
         <div className="rounded-2xl border border-zinc-200 dark:border-white/[0.07] bg-white dark:bg-[#161616] shadow-sm overflow-hidden">
@@ -348,6 +414,10 @@ export default function InvoicesOverviewPage() {
                     invoices={g.invoices}
                     onMarkPaid={handleMarkPaid}
                     onSupplement={handleSupplement}
+                    selectable
+                    selectedIds={selectedIds}
+                    onToggleSelect={toggleSelect}
+                    onToggleSelectAll={toggleSelectAll}
                   />
                 )}
               </div>
@@ -361,6 +431,10 @@ export default function InvoicesOverviewPage() {
             invoices={invoices}
             onMarkPaid={handleMarkPaid}
             onSupplement={handleSupplement}
+            selectable
+            selectedIds={selectedIds}
+            onToggleSelect={toggleSelect}
+            onToggleSelectAll={toggleSelectAll}
           />
         </div>
       )}

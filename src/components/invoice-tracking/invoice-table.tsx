@@ -25,6 +25,10 @@ type Props = {
   onDelete?: (id: string) => void;
   /** Called when user clicks "Bổ sung" on a needs_supplement virtual entry */
   onSupplement?: (inv: Invoice) => void;
+  selectable?: boolean;
+  selectedIds?: Set<string>;
+  onToggleSelect?: (id: string) => void;
+  onToggleSelectAll?: () => void;
 };
 
 function isDueSoon(dueDate: string): boolean {
@@ -45,18 +49,37 @@ function deadlineCountdown(dueDate: string, status: string): string | null {
   return null;
 }
 
-export function InvoiceTable({ invoices, onMarkPaid, onDelete, onSupplement }: Props) {
+export function isSelectable(inv: { id: string; status: string }): boolean {
+  if (inv.id.startsWith("virtual-")) return false;
+  return inv.status === "pending" || inv.status === "overdue";
+}
+
+export function InvoiceTable({ invoices, onMarkPaid, onDelete, onSupplement, selectable, selectedIds, onToggleSelect, onToggleSelectAll }: Props) {
   const { t } = useLanguage();
 
   if (invoices.length === 0) {
     return <p className="p-6 text-sm text-zinc-500 dark:text-slate-400">{t("invoices.noData")}</p>;
   }
 
+  const eligibleInvoices = selectable ? invoices.filter(isSelectable) : [];
+  const allSelected = selectable && eligibleInvoices.length > 0 && eligibleInvoices.every((inv) => selectedIds?.has(inv.id));
+
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b border-zinc-200 dark:border-white/[0.07] bg-violet-50/50 dark:bg-white/[0.05] text-left">
+            {selectable && (
+              <th className="pl-4 pr-1 py-2.5 w-8">
+                <input
+                  type="checkbox"
+                  checked={allSelected}
+                  onChange={() => onToggleSelectAll?.()}
+                  className="h-4 w-4 rounded border-zinc-300 text-violet-600 focus:ring-violet-500 cursor-pointer"
+                  title="Chọn tất cả"
+                />
+              </th>
+            )}
             <th className="px-4 py-2.5 font-semibold whitespace-nowrap">{t("invoices.number")}</th>
             <th className="px-4 py-2.5 font-semibold whitespace-nowrap">{t("invoices.supplier")}</th>
             <th className="px-4 py-2.5 font-semibold whitespace-nowrap text-right">{t("invoices.amount")}</th>
@@ -76,6 +99,25 @@ export function InvoiceTable({ invoices, onMarkPaid, onDelete, onSupplement }: P
                   : ""
               }`}
             >
+              {selectable && (
+                <td className="pl-4 pr-1 py-2.5 w-8">
+                  {isSelectable(inv) ? (
+                    <input
+                      type="checkbox"
+                      checked={selectedIds?.has(inv.id) ?? false}
+                      onChange={() => onToggleSelect?.(inv.id)}
+                      className="h-4 w-4 rounded border-zinc-300 text-violet-600 focus:ring-violet-500 cursor-pointer"
+                    />
+                  ) : (
+                    <input
+                      type="checkbox"
+                      disabled
+                      className="h-4 w-4 rounded border-zinc-200 dark:border-zinc-700 opacity-30 cursor-not-allowed"
+                      title={inv.status === "needs_supplement" ? "Cần bổ sung đủ hóa đơn trước khi hoàn thành" : ""}
+                    />
+                  )}
+                </td>
+              )}
               <td className="px-4 py-2.5 font-medium whitespace-nowrap">{inv.invoiceNumber}</td>
               <td className="px-4 py-2.5">{inv.supplierName}</td>
               <td className="px-4 py-2.5 text-right tabular-nums">{fmt(inv.amount)}</td>

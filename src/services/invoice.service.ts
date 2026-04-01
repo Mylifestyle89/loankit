@@ -3,6 +3,14 @@ import { addOneMonthClamped } from "@/lib/invoice-tracking-format-helpers";
 import { prisma } from "@/lib/prisma";
 import { notificationService } from "@/services/notification.service";
 
+/** Prisma where clause to exclude invoices linked to bang_ke beneficiary lines */
+const EXCLUDE_BANG_KE_INVOICES = {
+  OR: [
+    { disbursementBeneficiary: { invoiceStatus: { not: "bang_ke" } } },
+    { disbursementBeneficiaryId: null },
+  ],
+};
+
 /** Recalculate invoiceStatus and invoiceAmount on a beneficiary line.
  * Status logic: pending (no invoices) → supplementing (has invoices but total < disbursement amount) → has_invoice (total >= amount) */
 async function recalcBeneficiaryStatus(beneficiaryLineId: string) {
@@ -87,7 +95,11 @@ export const invoiceService = {
     } as const;
 
     const realInvoices = await prisma.invoice.findMany({
-      where: { ...where, ...customerWhere },
+      where: {
+        ...where,
+        ...customerWhere,
+        ...EXCLUDE_BANG_KE_INVOICES,
+      },
       include: {
         disbursement: disbursementInclude,
         disbursementBeneficiary: { select: { amount: true, invoiceAmount: true } },
@@ -261,6 +273,28 @@ export const invoiceService = {
     return updated;
   },
 
+  /** Bulk mark invoices as paid. Uses updateMany + deduplicated beneficiary recalc. */
+  async bulkMarkPaid(ids: string[]) {
+    if (ids.length === 0) return { count: 0 };
+    // Get affected beneficiary IDs before update
+    const invoices = await prisma.invoice.findMany({
+      where: { id: { in: ids }, status: { in: ["pending", "overdue"] } },
+      select: { id: true, disbursementBeneficiaryId: true },
+    });
+    const validIds = invoices.map((inv) => inv.id);
+    if (validIds.length === 0) return { count: 0 };
+
+    await prisma.invoice.updateMany({
+      where: { id: { in: validIds } },
+      data: { status: "paid" },
+    });
+
+    // Deduplicate beneficiary recalcs
+    const beneficiaryIds = [...new Set(invoices.map((inv) => inv.disbursementBeneficiaryId).filter(Boolean))] as string[];
+    await Promise.all(beneficiaryIds.map(recalcBeneficiaryStatus));
+    return { count: validIds.length };
+  },
+
   async delete(id: string) {
     const existing = await prisma.invoice.findUnique({ where: { id } });
     if (!existing) throw new NotFoundError("Invoice not found.");
@@ -308,6 +342,7 @@ export const invoiceService = {
     const [disbCounts, invoiceStats, supplementCounts, loans] = await Promise.all([
       prisma.disbursement.groupBy({ by: ["loanId"], _count: true }),
       prisma.invoice.findMany({
+        where: { ...EXCLUDE_BANG_KE_INVOICES },
         select: {
           amount: true,
           status: true,
