@@ -29,7 +29,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" className="scroll-smooth" suppressHydrationWarning>
       <head>
         {/* Intentional dangerouslySetInnerHTML: theme flash prevention.
             Hardcoded string only — no user input, no XSS risk. */}

@@ -64,7 +64,7 @@ export function CustomerExportModal({ customers, onClose, onError }: Props) {
     }
   }
 
-  const checkboxCls = "rounded border-zinc-300 h-4 w-4 text-violet-600 focus:ring-violet-500/40";
+  const checkboxCls = "rounded border-zinc-300 h-4 w-4 text-violet-600 focus-visible:ring-violet-500/40 cursor-pointer";
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">

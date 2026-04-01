@@ -72,13 +72,13 @@ export function BeneficiarySection({
   return (
     <div className={sectionCls}>
       <div className="flex items-center justify-between mb-3">
-        <button type="button" onClick={() => setCollapsed(!collapsed)} className="cursor-pointer flex items-center gap-1 text-sm font-semibold">
+        <button type="button" onClick={() => setCollapsed(!collapsed)} className="cursor-pointer flex items-center gap-1 text-sm font-semibold rounded-md px-1.5 py-0.5 -ml-1.5 hover:bg-zinc-100 dark:hover:bg-white/[0.06] transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40">
           {collapsed ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
           Đơn vị thụ hưởng #{index + 1}
           {line.name && <span className="font-normal text-zinc-500 dark:text-slate-400 ml-1">— {line.name}</span>}
         </button>
         {canRemove && (
-          <button type="button" onClick={onRemove} className="cursor-pointer rounded p-1 text-zinc-400 hover:text-red-500 transition-colors duration-150">
+          <button type="button" onClick={onRemove} className="cursor-pointer rounded p-1 text-zinc-400 hover:text-red-500 transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500/40">
             <Trash2 className="h-4 w-4" />
           </button>
         )}

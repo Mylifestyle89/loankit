@@ -49,7 +49,7 @@ export function NotificationPanel() {
         <span className="text-sm font-semibold">{t("notifications.title")}</span>
         <button
           onClick={() => void markAllRead()}
-          className="cursor-pointer text-xs text-indigo-600 hover:underline dark:text-indigo-400 transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/50 rounded"
+          className="cursor-pointer text-xs text-indigo-600 dark:text-indigo-400 rounded px-1.5 py-0.5 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/50"
         >
           {t("notifications.markAllRead")}
         </button>
