@@ -50,9 +50,9 @@ function importSingleClient(client: BkClient): BkImportResult {
     }
   }
 
-  // Process all ClientAssets (HĐTD, SĐ, PA, GN, UNC, VBA, TCTD, TV)
+  // Process all ClientAssets (HĐTD, SĐ, STK, PA, GN, UNC, VBA, TCTD, TV)
   // Asset codes that can have multiple instances
-  const MULTI_ASSET_CODES = new Set(["SĐ", "VBA", "TCTD", "TV", "GN", "UNC"]);
+  const MULTI_ASSET_CODES = new Set(["SĐ", "STK", "VBA", "TCTD", "TV", "GN", "UNC"]);
   const assetGroups: Record<string, Record<string, string>[]> = {};
   let assetsMapped = 0;
 

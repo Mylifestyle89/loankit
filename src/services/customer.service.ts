@@ -16,6 +16,8 @@ import {
   extractAllCreditOther,
   extractAllDisbursements,
   extractAllBeneficiaries,
+  extractSavingsCollateral,
+  extractAllSavingsCollaterals,
 } from "./bk-to-customer-relations";
 import {
   toNumber,
@@ -209,6 +211,8 @@ export const customerService = {
         await tx.collateral.deleteMany({ where: { customerId: customer.id } });
         await tx.creditAtAgribank.deleteMany({ where: { customerId: customer.id } });
         await tx.creditAtOther.deleteMany({ where: { customerId: customer.id } });
+        // Clear loans (cascade deletes disbursements, beneficiaries, invoices)
+        await tx.loan.deleteMany({ where: { customerId: customer.id } });
       } else {
         customer = await tx.customer.create({ data: { customer_name: payload.customer_name, ...encryptedData } });
         created = true;
@@ -229,7 +233,9 @@ export const customerService = {
       });
       if (cbData.length) await tx.coBorrower.createMany({ data: cbData });
 
-      const colData = resolve("SĐ", extractAllCollaterals, extractCollateral).map(c => ({ customerId: customer.id, ...c }));
+      const landCol = resolve("SĐ", extractAllCollaterals, extractCollateral).map(c => ({ customerId: customer.id, ...c }));
+      const stkCol = resolve("STK", extractAllSavingsCollaterals, extractSavingsCollateral).map(c => ({ customerId: customer.id, ...c }));
+      const colData = [...landCol, ...stkCol];
       if (colData.length) await tx.collateral.createMany({ data: colData });
 
       const caData = resolve("VBA", extractAllCreditAgribank, extractCreditAgribank).map(c => ({ customerId: customer.id, ...c }));
@@ -241,16 +247,17 @@ export const customerService = {
       // Loan + Disbursement + Beneficiary (nested under loan)
       const loanData = extractLoan(values);
       if (loanData) {
-        const existingLoan = await tx.loan.findUnique({ where: { contractNumber: loanData.contractNumber } });
-        if (!existingLoan) {
-          const loan = await tx.loan.create({ data: { customerId: customer.id, ...loanData } });
+        const loan = await tx.loan.create({ data: { customerId: customer.id, ...loanData } });
 
-          const disbData = resolve("GN", extractAllDisbursements, extractDisbursement).map(d => ({ loanId: loan.id, disbursementDate: new Date(), ...d }));
-          if (disbData.length) await tx.disbursement.createMany({ data: disbData });
+        // Rebuild child data from current draft snapshot (idempotent import behavior).
+        await tx.beneficiary.deleteMany({ where: { loanId: loan.id } });
+        await tx.disbursement.deleteMany({ where: { loanId: loan.id } });
 
-          const benData = resolve("UNC", extractAllBeneficiaries, extractBeneficiary).map(b => ({ loanId: loan.id, ...b }));
-          if (benData.length) await tx.beneficiary.createMany({ data: benData });
-        }
+        const disbData = resolve("GN", extractAllDisbursements, extractDisbursement).map(d => ({ loanId: loan.id, disbursementDate: new Date(), ...d }));
+        if (disbData.length) await tx.disbursement.createMany({ data: disbData });
+
+        const benData = resolve("UNC", extractAllBeneficiaries, extractBeneficiary).map(b => ({ loanId: loan.id, ...b }));
+        if (benData.length) await tx.beneficiary.createMany({ data: benData });
       }
 
       const action = created ? "Tạo mới" : "Cập nhật";

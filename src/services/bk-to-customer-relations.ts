@@ -198,6 +198,46 @@ export function extractCollateral(values: Record<string, unknown>): CollateralDa
 
 export const extractAllCollaterals = (i: Record<string, unknown>[]) => extractAll(extractCollateral, i);
 
+// ── STK (Sổ Tiết kiệm / Giấy tờ có giá) → Collateral type "tiet_kiem" ──
+
+export function extractSavingsCollateral(values: Record<string, unknown>): CollateralData | null {
+  const serial = str(values["A.collateral.tk_serial"]);
+  if (!serial) return null;
+
+  const issuer = str(values["A.collateral.tk_issuer"]) ?? "";
+  const name = `TTK ${serial} - ${issuer}`.trim();
+
+  const props: Record<string, unknown> = { _subtype: "ttk" };
+  const propMapping: Record<string, string> = {
+    "A.collateral.tk_serial": "serial",
+    "A.collateral.tk_paper_number": "paper_number",
+    "A.collateral.tk_paper_type": "paper_type",
+    "A.collateral.tk_issuer": "issuer",
+    "A.collateral.tk_face_value": "face_value",
+    "A.collateral.tk_term": "term",
+    "A.collateral.tk_balance": "balance",
+    "A.collateral.tk_interest_rate": "interest_rate",
+    "A.collateral.tk_issue_date": "issue_date",
+    "A.collateral.tk_maturity_date": "maturity_date",
+    "A.collateral.tk_max_loan": "max_loan",
+    "A.collateral.tk_currency": "currency",
+  };
+  for (const [fwKey, propKey] of Object.entries(propMapping)) {
+    const v = str(values[fwKey]);
+    if (v) props[propKey] = v;
+  }
+
+  return {
+    collateral_type: "tiet_kiem",
+    name,
+    total_value: num(values["A.collateral.tk_balance"]) ?? num(values["A.collateral.tk_total_value"]),
+    obligation: num(values["A.collateral.tk_obligation"]),
+    properties_json: JSON.stringify(props),
+  };
+}
+
+export const extractAllSavingsCollaterals = (i: Record<string, unknown>[]) => extractAll(extractSavingsCollateral, i);
+
 // ── Loan from HĐTD asset ──
 
 type LoanData = {
@@ -230,7 +270,7 @@ export function extractLoan(values: Record<string, unknown>): LoanData | null {
   const loanAmount = num(values["A.proposal.loan_amount_agribank"]);
   if (!contractNumber || !loanAmount) return null;
 
-  const startDate = parseDate(values["A.credit.contract_sign_date"]) ?? new Date();
+  const startDate = parseDate(values["A.credit.contract_sign_date"]) ?? parseDate(values["A.proposal.loan_start_date"]) ?? new Date();
   const endDate = parseDate(values["A.proposal.loan_maturity_date"]) ?? new Date(startDate.getTime() + 365 * 24 * 3600000);
 
   return {

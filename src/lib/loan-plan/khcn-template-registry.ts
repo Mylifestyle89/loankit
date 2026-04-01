@@ -3,8 +3,11 @@
  * Each template has: file path, display name, category, and which loan methods it applies to.
  */
 
-import { ASSET_TEMPLATES, ASSET_CATEGORY_LABELS, ASSET_CATEGORY_KEYS } from "./khcn-asset-template-registry";
-export { ASSET_CATEGORY_KEYS };
+import { ASSET_TEMPLATES, ASSET_CATEGORY_LABELS, ASSET_CATEGORY_KEYS as _ASSET_KEYS } from "./khcn-asset-template-registry";
+import { CAMCO_TEMPLATES, CAMCO_ASSET_TEMPLATES, CAMCO_ASSET_CATEGORY_KEYS, CAMCO_ASSET_CATEGORY_LABELS } from "./khcn-camco-template-registry";
+
+/** Merged asset category keys (BĐS + động sản + cầm cố) */
+export const ASSET_CATEGORY_KEYS = new Set([..._ASSET_KEYS, ...CAMCO_ASSET_CATEGORY_KEYS]);
 
 export type KhcnDocTemplate = {
   path: string; // relative to project root
@@ -55,9 +58,13 @@ export const KHCN_TEMPLATES: KhcnDocTemplate[] = [
   // Hồ sơ tài sản — imported from asset registry
   ...ASSET_TEMPLATES,
 
-  // Chứng từ giải ngân — all methods
-  { path: `${BASE}/Chứng từ giải ngân/599 Uy nhiem chi A4.docx`, name: "Ủy nhiệm chi A4 (599)", category: "giai_ngan", methods: [] },
-  { path: `${BASE}/Chứng từ giải ngân/in UNC.docx`, name: "In UNC", category: "giai_ngan", methods: [] },
+  // Cầm cố Thẻ tiết kiệm — imported from camco registry
+  ...CAMCO_TEMPLATES,
+  ...CAMCO_ASSET_TEMPLATES,
+
+  // Chứng từ giải ngân — exclude cam_co (has own UNC templates)
+  { path: `${BASE}/Chứng từ giải ngân/599 Uy nhiem chi A4.docx`, name: "Ủy nhiệm chi A4 (599)", category: "giai_ngan", methods: ["tung_lan", "han_muc", "trung_dai", "tieu_dung"] },
+  { path: `${BASE}/Chứng từ giải ngân/in UNC.docx`, name: "In UNC", category: "giai_ngan", methods: ["tung_lan", "han_muc", "trung_dai", "tieu_dung"] },
   { path: `${BASE}/Chứng từ giải ngân/Hop dong cung ung vat tu.docx`, name: "HĐ cung ứng vật tư", category: "giai_ngan", methods: ["tung_lan", "han_muc"] },
   { path: `${BASE}/Chứng từ giải ngân/Bien ban giao nhan hang hoa.docx`, name: "BB giao nhận hàng hóa", category: "giai_ngan", methods: ["tung_lan", "han_muc"] },
   { path: `${BASE}/Chứng từ giải ngân/HĐ thi công nhà kính - BB nghiệm thu.docx`, name: "HĐ thi công nhà kính & BB nghiệm thu", category: "giai_ngan", methods: ["trung_dai"] },
@@ -73,6 +80,7 @@ export const DOC_CATEGORY_LABELS: Record<string, string> = {
   kiem_tra: "Biên bản kiểm tra",
   giai_ngan: "Chứng từ giải ngân",
   ...ASSET_CATEGORY_LABELS,
+  ...CAMCO_ASSET_CATEGORY_LABELS,
 };
 
 /** Filter templates by loan method. Empty methods[] = applies to all. */

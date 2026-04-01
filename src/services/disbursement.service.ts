@@ -33,6 +33,7 @@ export type CreateDisbursementInput = {
   purpose?: string;
   supportingDoc?: string;
   loanTerm?: number;
+  termUnit?: string;
   repaymentEndDate?: string;
   principalSchedule?: string;
   interestSchedule?: string;
@@ -57,6 +58,7 @@ export type FullUpdateDisbursementInput = {
   purpose?: string;
   supportingDoc?: string;
   loanTerm?: number;
+  termUnit?: string;
   repaymentEndDate?: string;
   principalSchedule?: string;
   interestSchedule?: string;
@@ -187,6 +189,7 @@ export const disbursementService = {
           purpose: input.purpose ?? null,
           supportingDoc: input.supportingDoc ?? null,
           loanTerm: input.loanTerm ?? null,
+          termUnit: input.termUnit ?? null,
           repaymentEndDate: repaymentEnd,
           principalSchedule: input.principalSchedule ?? null,
           interestSchedule: input.interestSchedule ?? null,
@@ -257,6 +260,7 @@ export const disbursementService = {
           purpose: input.purpose ?? null,
           supportingDoc: input.supportingDoc ?? null,
           loanTerm: input.loanTerm ?? null,
+          termUnit: input.termUnit ?? null,
           repaymentEndDate: repaymentEnd,
           principalSchedule: input.principalSchedule ?? null,
           interestSchedule: input.interestSchedule ?? null,

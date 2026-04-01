@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { Plus, X } from "lucide-react";
+import { useEffect, useState } from "react";
+import { ChevronDown, Plus, X } from "lucide-react";
 import { useLanguage } from "@/components/language-provider";
 import { fmtNumber, parseNumber, formatDateInput, dmy2iso, fmtDisplay, isoToDisplay } from "@/lib/invoice-tracking-format-helpers";
 import { numberToVietnameseWords } from "@/lib/number-to-vietnamese-words";
@@ -28,6 +28,32 @@ function emptyInvoiceLine(): InvoiceLine {
 
 function num(s: string): number { return Number(parseNumber(s)) || 0; }
 
+function fmtDmy(d: Date): string {
+  return `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`;
+}
+
+function calcEndDateFromTerm(startDmy: string, term: string, unit: "tháng" | "ngày"): string {
+  const iso = dmy2iso(startDmy);
+  const n = parseInt(term);
+  if (!iso || !n || n <= 0) return "";
+  const d = new Date(iso);
+  if (unit === "ngày") d.setDate(d.getDate() + n);
+  else d.setMonth(d.getMonth() + n);
+  return fmtDmy(d);
+}
+
+function calcTermFromEndDate(startDmy: string, endDmy: string, unit: "tháng" | "ngày"): string {
+  const isoStart = dmy2iso(startDmy);
+  const isoEnd = dmy2iso(endDmy);
+  if (!isoStart || !isoEnd) return "";
+  const s = new Date(isoStart);
+  const e = new Date(isoEnd);
+  if (e <= s) return "";
+  if (unit === "ngày") return String(Math.round((e.getTime() - s.getTime()) / (24 * 3600000)));
+  // Calendar month diff
+  return String((e.getFullYear() - s.getFullYear()) * 12 + (e.getMonth() - s.getMonth()));
+}
+
 export function DisbursementFormModal({ loanId, loanAmount = 0, editDisbursementId, onClose, onCreated }: Props) {
   const { t } = useLanguage();
   const isEdit = !!editDisbursementId;
@@ -39,6 +65,8 @@ export function DisbursementFormModal({ loanId, loanAmount = 0, editDisbursement
   const [supportingDoc, setSupportingDoc] = useState("");
   const [disbursementDate, setDisbursementDate] = useState("");
   const [loanTerm, setLoanTerm] = useState("");
+  const [termUnit, setTermUnit] = useState<"tháng" | "ngày">("tháng");
+  const [repaymentEndDateInput, setRepaymentEndDateInput] = useState("");
   const [principalSchedule, setPrincipalSchedule] = useState("");
   const [interestSchedule, setInterestSchedule] = useState("");
 
@@ -68,6 +96,8 @@ export function DisbursementFormModal({ loanId, loanAmount = 0, editDisbursement
         setSupportingDoc(d.supportingDoc ?? "");
         setDisbursementDate(isoToDisplay(d.disbursementDate));
         setLoanTerm(d.loanTerm != null ? String(d.loanTerm) : "");
+        setTermUnit(d.termUnit === "ngày" ? "ngày" : "tháng");
+        if (d.repaymentEndDate) setRepaymentEndDateInput(isoToDisplay(d.repaymentEndDate));
         setPrincipalSchedule(d.principalSchedule ?? "");
         setInterestSchedule(d.interestSchedule ?? "");
 
@@ -132,16 +162,39 @@ export function DisbursementFormModal({ loanId, loanAmount = 0, editDisbursement
   const remainingLimit = loanAmount - outstandingNum;
   const totalOutstanding = outstandingNum + debtNum;
 
-  const repaymentEndDate = useMemo(() => {
-    const iso = dmy2iso(disbursementDate);
-    const months = parseInt(loanTerm);
-    if (!iso || !months || months <= 0) return "";
-    const d = new Date(iso);
-    d.setMonth(d.getMonth() + months);
-    const dd = String(d.getDate()).padStart(2, "0");
-    const mm = String(d.getMonth() + 1).padStart(2, "0");
-    return `${dd}/${mm}/${d.getFullYear()}`;
-  }, [disbursementDate, loanTerm]);
+  // When user changes term → recalc end date
+  function handleTermChange(newTerm: string) {
+    setLoanTerm(newTerm);
+    const end = calcEndDateFromTerm(disbursementDate, newTerm, termUnit);
+    if (end) setRepaymentEndDateInput(end);
+  }
+
+  // When user changes term unit → recalc end date from current term
+  function handleTermUnitChange(newUnit: "tháng" | "ngày") {
+    setTermUnit(newUnit);
+    const end = calcEndDateFromTerm(disbursementDate, loanTerm, newUnit);
+    if (end) setRepaymentEndDateInput(end);
+  }
+
+  // When user changes end date → recalc term
+  function handleEndDateChange(newEnd: string) {
+    const formatted = formatDateInput(newEnd);
+    setRepaymentEndDateInput(formatted);
+    if (formatted.length === 10) {
+      const term = calcTermFromEndDate(disbursementDate, formatted, termUnit);
+      if (term) setLoanTerm(term);
+    }
+  }
+
+  // When disbursement date changes, recalc end date from current term
+  function handleDisbursementDateChange(newDate: string) {
+    const formatted = formatDateInput(newDate);
+    setDisbursementDate(formatted);
+    if (formatted.length === 10 && loanTerm) {
+      const end = calcEndDateFromTerm(formatted, loanTerm, termUnit);
+      if (end) setRepaymentEndDateInput(end);
+    }
+  }
 
   const beneficiarySum = beneficiaries.reduce((s, b) => s + num(b.amount), 0);
   const sumMismatch = debtNum > 0 && beneficiaries.some((b) => b.name.trim()) && Math.abs(beneficiarySum - debtNum) > 0.01;
@@ -197,7 +250,7 @@ export function DisbursementFormModal({ loanId, loanAmount = 0, editDisbursement
       return;
     }
 
-    const isoRepayment = repaymentEndDate ? dmy2iso(repaymentEndDate) : undefined;
+    const isoRepayment = repaymentEndDateInput ? dmy2iso(repaymentEndDateInput) : undefined;
 
     const payload = {
       amount: debtNum,
@@ -208,6 +261,7 @@ export function DisbursementFormModal({ loanId, loanAmount = 0, editDisbursement
       purpose: purpose || undefined,
       supportingDoc: supportingDoc || undefined,
       loanTerm: loanTerm ? parseInt(loanTerm) : undefined,
+      termUnit,
       repaymentEndDate: isoRepayment || undefined,
       principalSchedule: principalSchedule || undefined,
       interestSchedule: interestSchedule || undefined,
@@ -325,18 +379,38 @@ export function DisbursementFormModal({ loanId, loanAmount = 0, editDisbursement
                 <input type="text" value={supportingDoc} onChange={(e) => setSupportingDoc(e.target.value)} className={inputCls} />
               </label>
             </div>
-            <div className="grid grid-cols-3 gap-3 mt-3">
-              <label className="block">
+            <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-3">
+              <label className="block min-w-0">
                 <span className={labelCls}>Ngày giải ngân *</span>
-                <input type="text" required value={disbursementDate} onChange={(e) => setDisbursementDate(formatDateInput(e.target.value))} placeholder="dd/mm/yyyy" maxLength={10} className={inputCls} />
+                <input type="text" required value={disbursementDate} onChange={(e) => handleDisbursementDateChange(e.target.value)} placeholder="dd/mm/yyyy" maxLength={10} className={inputCls} />
               </label>
-              <label className="block">
-                <span className={labelCls}>Thời hạn (tháng)</span>
-                <input type="number" min={0} value={loanTerm} onChange={(e) => setLoanTerm(e.target.value)} className={inputCls} />
-              </label>
-              <label className="block">
+              <div className="block min-w-0">
+                <span className={labelCls}>Thời hạn</span>
+                <div className="flex gap-1.5">
+                  <input
+                    type="number"
+                    min={0}
+                    value={loanTerm}
+                    onChange={(e) => handleTermChange(e.target.value)}
+                    placeholder="0"
+                    className={`${inputCls} min-w-0 flex-1`}
+                  />
+                  <div className="relative shrink-0">
+                    <select
+                      value={termUnit}
+                      onChange={(e) => handleTermUnitChange(e.target.value as "tháng" | "ngày")}
+                      className={`${inputCls} w-[80px] appearance-none pr-7`}
+                    >
+                      <option value="tháng">tháng</option>
+                      <option value="ngày">ngày</option>
+                    </select>
+                    <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-zinc-400" />
+                  </div>
+                </div>
+              </div>
+              <label className="block min-w-0">
                 <span className={labelCls}>Hạn trả cuối cùng</span>
-                <input type="text" readOnly value={repaymentEndDate} className={readonlyCls} />
+                <input type="text" value={repaymentEndDateInput} onChange={(e) => handleEndDateChange(e.target.value)} placeholder="dd/mm/yyyy" maxLength={10} className={inputCls} />
               </label>
             </div>
             <div className="grid grid-cols-2 gap-3 mt-3">

@@ -159,7 +159,7 @@ model Loan {
   updatedAt       DateTime @updatedAt
   customerId      String
   customer        Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  contractNumber  String   @unique
+  contractNumber  String
   loanAmount      Float
   interestRate    Float?
   startDate       DateTime
@@ -210,6 +210,7 @@ model Loan {
   disbursements     Disbursement[]
   beneficiaries     Beneficiary[]
 
+  @@index([contractNumber])
   @@index([customerId])
   @@index([status])
   @@index([loan_method])
@@ -250,7 +251,8 @@ model Disbursement {
   totalOutstanding     Float?    // Tong du no (snapshot)
   purpose              String?   // Muc dich
   supportingDoc        String?   // Tai lieu chung minh
-  loanTerm             Int?      // Thoi han cho vay (months)
+  loanTerm             Int?      // Thoi han cho vay
+  termUnit             String?   @default("tháng") // "tháng" | "ngày"
   repaymentEndDate     DateTime? // Han tra cuoi cung
   principalSchedule    String?   // Dinh ky tra goc
   interestSchedule     String?   // Dinh ky tra lai

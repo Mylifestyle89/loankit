@@ -36,6 +36,7 @@ const createSchema = z.object({
   purpose: z.string().optional(),
   supportingDoc: z.string().optional(),
   loanTerm: z.number().int().optional(),
+  termUnit: z.enum(["tháng", "ngày"]).optional(),
   repaymentEndDate: z.string().optional(),
   principalSchedule: z.string().optional(),
   interestSchedule: z.string().optional(),

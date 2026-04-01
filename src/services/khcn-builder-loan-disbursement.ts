@@ -124,6 +124,7 @@ export function buildDisbursementExtendedData(
     debtAmount?: number | null; amount: number;
     supportingDoc?: string | null;
     loanTerm?: number | null;
+    termUnit?: string | null;
     repaymentEndDate?: Date | string | null;
     principalSchedule?: string | null;
     interestSchedule?: string | null;
@@ -140,12 +141,17 @@ export function buildDisbursementExtendedData(
     : "";
   data["GN.Tài liệu chứng minh"] = disb.supportingDoc ?? "";
   data["GN.Tiền mặt"] = "";
+  // Thời hạn: số + đơn vị (ngày/tháng)
+  const unit = disb.termUnit === "ngày" ? "ngày" : "tháng";
   data["GN.Thời hạn cho vay"] = disb.loanTerm ?? "";
+  data["GN.Kiểu thời hạn"] = disb.loanTerm ? unit : "";
   data["GN.Hạn trả cuối cùng"] = fmtDate(disb.repaymentEndDate);
   data["GN.Định kỳ trả gốc"] = disb.principalSchedule ?? "";
   data["GN.Định kỳ trả lãi"] = disb.interestSchedule ?? "";
   data["GN.Số tiền gốc nhận nợ"] = fmtN(disb.debtAmount ?? disb.amount);
   // Alias: một số mẫu dùng prefix HĐTD cho field giải ngân
+  data["HĐTD.Thời hạn vay"] = disb.loanTerm ? String(disb.loanTerm) : "";
+  data["HĐTD.Kiểu thời hạn"] = disb.loanTerm ? unit : "";
   data["HĐTD.Hạn trả cuối"] = fmtDate(disb.repaymentEndDate);
   data["HĐTD.Định kỳ trả lãi"] = disb.interestSchedule ?? "";
 }

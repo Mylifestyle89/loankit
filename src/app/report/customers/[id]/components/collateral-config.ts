@@ -3,7 +3,7 @@
 export const COLLATERAL_TYPES = [
   { value: "qsd_dat", label: "Bất động sản" },
   { value: "dong_san", label: "Động sản (Phương tiện GT)" },
-  { value: "tiet_kiem", label: "Thẻ tiết kiệm" },
+  { value: "tiet_kiem", label: "Cầm cố TTK / Giấy tờ có giá" },
   { value: "tai_san_khac", label: "Tài sản khác" },
 ] as const;
 
@@ -87,10 +87,13 @@ export const PROPERTY_LABELS: Record<string, string> = {
   manufacture_year: "Năm sản xuất", registration_number: "Giấy đăng ký số",
   registration_date: "Ngày cấp ĐK", registration_place: "Nơi cấp ĐK",
   insurance_amount: "Số tiền bảo hiểm", insurance_renewal_date: "Thời điểm gia hạn BH",
-  // Tiết kiệm
+  // Tiết kiệm / Giấy tờ có giá
+  _subtype: "Loại TSBĐ", // "ttk" (thẻ tiết kiệm) | "gtcg" (giấy tờ có giá)
+  paper_type: "Loại giấy tờ có giá", // "so_tiet_kiem" | "trai_phieu" | "chung_chi_tien_gui"
   issuer: "Tổ chức phát hành", term: "Kỳ hạn", balance: "Số dư",
   interest_rate: "Lãi suất", issue_date: "Ngày phát hành",
   maturity_date: "Ngày đến hạn", max_loan: "Mức vay tối đa",
+  face_value: "Mệnh giá", paper_number: "Số giấy tờ",
   // Tài sản khác
   doc_type: "Loại giấy tờ", doc_date: "Ngày cấp", doc_place: "Nơi cấp",
   issuing_agency: "Cơ quan cấp", insurance: "Mua bảo hiểm TSBĐ",
@@ -153,8 +156,12 @@ export const FORM_FIELDS: Record<string, { key: string; label: string }[]> = {
     { key: "insurance_renewal_date", label: "Thời điểm gia hạn BH" },
   ],
   tiet_kiem: [
+    { key: "_subtype", label: "Loại TSBĐ" },
+    { key: "paper_type", label: "Loại giấy tờ có giá" },
     { key: "serial", label: "Số seri" },
+    { key: "paper_number", label: "Số giấy tờ" },
     { key: "issuer", label: "Tổ chức phát hành" },
+    { key: "face_value", label: "Mệnh giá" },
     { key: "term", label: "Kỳ hạn" },
     { key: "balance", label: "Số dư" },
     { key: "interest_rate", label: "Lãi suất" },
@@ -180,6 +187,21 @@ export const DS_VEHICLE_KEYS = ["brand", "engine_number", "chassis_number", "col
 export const DS_REG_KEYS = ["registration_number", "registration_date", "registration_place"];
 export const DS_CONTRACT_KEYS = ["mortgage_name", "mortgage_contract", "mortgage_date", "guarantee_registry_place"];
 export const DS_INSURANCE_KEYS = ["insurance_status", "insurance_amount", "insurance_renewal_date"];
+
+/* ── Tiết kiệm / GTCG subtype & paper type options ── */
+export const TK_SUBTYPES = [
+  { value: "ttk", label: "Thẻ tiết kiệm" },
+  { value: "gtcg", label: "Giấy tờ có giá" },
+] as const;
+
+export const GTCG_PAPER_TYPES = [
+  { value: "so_tiet_kiem", label: "Sổ tiết kiệm" },
+  { value: "trai_phieu", label: "Trái phiếu" },
+  { value: "chung_chi_tien_gui", label: "Chứng chỉ tiền gửi" },
+] as const;
+
+/** Fields visible only for GTCG subtype */
+export const GTCG_ONLY_KEYS = new Set(["paper_type", "paper_number", "face_value"]);
 
 /* ── Formatting helpers ── */
 
@@ -217,6 +239,7 @@ export function fmtDate(v: string): string {
 export const NUMBER_KEYS = new Set([
   "land_value", "house_value", "max_obligation", "balance", "max_loan",
   "max_credit_ratio_land", "max_credit_ratio_attached", "construction_area",
+  "face_value",
   "land_area_1", "land_unit_price_1", "land_value_1",
   "land_area_2", "land_unit_price_2", "land_value_2",
   "land_area_3", "land_unit_price_3", "land_value_3", "insurance_amount",

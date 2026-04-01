@@ -9,6 +9,7 @@ import {
   QSD_CERT_KEYS, QSD_LAND_KEYS, QSD_HOUSE_KEYS, QSD_CONTRACT_KEYS,
   DS_VEHICLE_KEYS, DS_REG_KEYS, DS_CONTRACT_KEYS, DS_INSURANCE_KEYS,
   NUMBER_KEYS, DECIMAL_KEYS, DATE_KEYS, fmtNumber, fmtDecimal, fmtDate,
+  TK_SUBTYPES, GTCG_PAPER_TYPES, GTCG_ONLY_KEYS,
   type OwnerEntry, type AmendmentEntry, type CollateralItem,
 } from "./collateral-config";
 import { numberToVietnameseWords } from "@/lib/number-to-vietnamese-words";
@@ -214,10 +215,12 @@ export function CollateralForm({ customerId, initial, onSaved, onCancel }: {
           <span className="text-xs font-medium text-zinc-600 dark:text-zinc-400">Nghĩa vụ bảo đảm</span>
           <input type="text" value={obligation ? fmtNumber(obligation) : ""} onChange={(e) => setObligation(e.target.value.replace(/\D/g, ""))} className={inputCls} />
         </label>
-        <label className="block col-span-2 sm:col-span-3">
-          <span className="text-xs font-medium text-zinc-600 dark:text-zinc-400">Khái quát về lợi thế</span>
-          <input type="text" value={props.advantage_summary ?? ""} onChange={(e) => setProps((p) => ({ ...p, advantage_summary: e.target.value }))} className={inputCls} />
-        </label>
+        {type !== "tiet_kiem" && (
+          <label className="block col-span-2 sm:col-span-3">
+            <span className="text-xs font-medium text-zinc-600 dark:text-zinc-400">Khái quát về lợi thế</span>
+            <input type="text" value={props.advantage_summary ?? ""} onChange={(e) => setProps((p) => ({ ...p, advantage_summary: e.target.value }))} className={inputCls} />
+          </label>
+        )}
       </div>
 
       {/* ═══ QSD ĐẤT (Bất động sản) ═══ */}
@@ -366,8 +369,43 @@ export function CollateralForm({ customerId, initial, onSaved, onCancel }: {
         </div>
       )}
 
-      {/* ═══ Other types: flat grid ═══ */}
-      {type !== "qsd_dat" && type !== "dong_san" && fields.length > 0 && (
+      {/* ═══ TIẾT KIỆM / GIẤY TỜ CÓ GIÁ ═══ */}
+      {type === "tiet_kiem" && fields.length > 0 && (
+        <div className="space-y-3 pt-2 border-t border-zinc-200 dark:border-white/[0.07]">
+          {/* Subtype selector */}
+          <div className="flex gap-3">
+            {TK_SUBTYPES.map((st) => (
+              <label key={st.value} className="flex items-center gap-1.5 cursor-pointer">
+                <input type="radio" name="tk_subtype" value={st.value}
+                  checked={(props._subtype || "ttk") === st.value}
+                  onChange={() => setProps((p) => ({ ...p, _subtype: st.value }))}
+                  className="h-3.5 w-3.5 border-zinc-300 text-violet-600 focus:ring-violet-500/30" />
+                <span className="text-sm text-zinc-700 dark:text-zinc-300">{st.label}</span>
+              </label>
+            ))}
+          </div>
+          {/* GTCG: paper type dropdown */}
+          {props._subtype === "gtcg" && (
+            <label className="block">
+              <span className="text-xs font-medium text-zinc-600 dark:text-zinc-400">Loại giấy tờ có giá</span>
+              <select value={props.paper_type ?? ""} onChange={(e) => setProps((p) => ({ ...p, paper_type: e.target.value }))} className={inputCls}>
+                <option value="">— Chọn —</option>
+                {GTCG_PAPER_TYPES.map((pt) => <option key={pt.value} value={pt.value}>{pt.label}</option>)}
+              </select>
+            </label>
+          )}
+          {/* Remaining fields — hide GTCG-only fields when subtype is TTK */}
+          <div className="grid grid-cols-2 gap-3">
+            {fields
+              .filter((f) => f.key !== "_subtype" && f.key !== "paper_type")
+              .filter((f) => props._subtype === "gtcg" || !GTCG_ONLY_KEYS.has(f.key))
+              .map((f) => renderField(f.key, f.label))}
+          </div>
+        </div>
+      )}
+
+      {/* ═══ Other types: flat grid (tai_san_khac) ═══ */}
+      {type !== "qsd_dat" && type !== "dong_san" && type !== "tiet_kiem" && fields.length > 0 && (
         <div className="grid grid-cols-2 gap-3 pt-2 border-t border-zinc-200 dark:border-white/[0.07]">
           {fields.map((f) => renderField(f.key, f.label))}
         </div>

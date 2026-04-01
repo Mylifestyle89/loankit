@@ -4,6 +4,7 @@ export const METHOD_OPTIONS = [
   { value: "han_muc", label: "Hạn mức SXKD" },
   { value: "trung_dai", label: "Trung dài hạn SXKD" },
   { value: "tieu_dung", label: "Tiêu dùng" },
+  { value: "cam_co", label: "Vay cầm cố" },
 ] as const;
 
 export const METHOD_LABELS: Record<string, string> = {
@@ -11,6 +12,7 @@ export const METHOD_LABELS: Record<string, string> = {
   han_muc: "Hạn mức SXKD",
   trung_dai: "Trung dài hạn SXKD",
   tieu_dung: "Tiêu dùng",
+  cam_co: "Vay cầm cố",
 };
 
 export const CATEGORY_LABELS: Record<string, string> = {

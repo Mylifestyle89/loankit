@@ -125,9 +125,23 @@ export async function buildKhcnReportData(
     data["HĐTD.Số tiền vay"] = fmtN(loan.loanAmount);
     data["HĐTD.STvay bằng chữ"] = numberToVietnameseWords(loan.loanAmount);
     data["HĐTD.Mục đích vay"] = loan.purpose ?? "";
-    data["HĐTD.Thời hạn vay"] = loan.endDate
-      ? `${Math.round((loan.endDate.getTime() - loan.startDate.getTime()) / (30.44 * 24 * 3600000))} tháng`
-      : "";
+    // Thời hạn vay: tính tháng, nếu < 1 tháng → tính ngày (cầm cố thường ngắn hạn theo ngày)
+    if (loan.endDate) {
+      const diffMs = loan.endDate.getTime() - loan.startDate.getTime();
+      const diffDays = Math.round(diffMs / (24 * 3600000));
+      const diffMonths = (loan.endDate.getFullYear() - loan.startDate.getFullYear()) * 12
+        + (loan.endDate.getMonth() - loan.startDate.getMonth());
+      if (diffMonths < 1) {
+        data["HĐTD.Thời hạn vay"] = String(diffDays);
+        data["HĐTD.Kiểu thời hạn"] = "ngày";
+      } else {
+        data["HĐTD.Thời hạn vay"] = String(diffMonths);
+        data["HĐTD.Kiểu thời hạn"] = "tháng";
+      }
+    } else {
+      data["HĐTD.Thời hạn vay"] = "";
+      data["HĐTD.Kiểu thời hạn"] = "";
+    }
     data["HĐTD.Hạn trả cuối"] = fmtDate(loan.endDate);
     // Format lãi suất: 9.5 → "9,5%/năm"
     const rate = loan.interestRate;
@@ -240,7 +254,8 @@ export async function buildKhcnReportData(
     if (loan) {
       if (!data["PA.Mục đích vay"]) data["PA.Mục đích vay"] = loan.purpose ?? "";
       if (!data["PA.Thời hạn vay"] && loan.endDate) {
-        const months = Math.round((loan.endDate.getTime() - loan.startDate.getTime()) / (30.44 * 24 * 3600000));
+        const months = (loan.endDate.getFullYear() - loan.startDate.getFullYear()) * 12
+          + (loan.endDate.getMonth() - loan.startDate.getMonth());
         data["PA.Thời hạn vay"] = months > 0 ? String(months) : "";
       }
       if (!data["PA.Lãi suất vay"] && loan.interestRate) {

@@ -169,8 +169,8 @@ export const dataIoService = {
         // v2: import nested loans
         if (isV2 && "loans" in customerRaw && Array.isArray(customerRaw.loans)) {
           for (const loanRaw of customerRaw.loans as ImportLoanRecord[]) {
-            const existingLoan = await tx.loan.findUnique({
-              where: { contractNumber: loanRaw.contractNumber },
+            const existingLoan = await tx.loan.findFirst({
+              where: { customerId, contractNumber: loanRaw.contractNumber },
             });
 
             let loanId: string;
