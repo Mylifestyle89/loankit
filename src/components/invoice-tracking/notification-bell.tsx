@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { Bell } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useNotificationStore } from "./use-notification-store";
@@ -66,7 +67,11 @@ export function NotificationBell({ expanded }: { expanded: boolean }) {
         </AnimatePresence>
       </button>
 
-      {isOpen && <NotificationPanel style={{ position: "fixed", ...getPanelPos() }} />}
+      {/* Portal to document.body — escapes sidebar's stacking context (backdrop-blur creates new context) */}
+      {isOpen && createPortal(
+        <NotificationPanel style={{ position: "fixed", zIndex: 9999, ...getPanelPos() }} />,
+        document.body,
+      )}
     </div>
   );
 }
