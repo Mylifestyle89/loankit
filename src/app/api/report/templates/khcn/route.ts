@@ -21,5 +21,8 @@ export async function GET(req: NextRequest) {
     templates: items.map((t) => ({ path: t.path, name: t.name })),
   }));
 
-  return NextResponse.json({ ok: true, method, categories, total: templates.length });
+  return NextResponse.json(
+    { ok: true, method, categories, total: templates.length },
+    { headers: { "Cache-Control": "public, max-age=86400, stale-while-revalidate=3600" } },
+  );
 }

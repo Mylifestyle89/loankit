@@ -45,7 +45,10 @@ export async function GET(req: NextRequest) {
       .filter((e) => e.isFile() && e.name.toLowerCase().endsWith(".xlsx"))
       .map((e) => e.name)
       .sort((a, b) => a.localeCompare(b, "vi"));
-    return NextResponse.json({ ok: true, files });
+    return NextResponse.json(
+      { ok: true, files },
+      { headers: { "Cache-Control": "public, max-age=3600, stale-while-revalidate=600" } },
+    );
   } catch {
     return NextResponse.json({ ok: true, files: [] });
   }

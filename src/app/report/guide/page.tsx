@@ -1,11 +1,28 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import Markdown from "react-markdown";
-import rehypeSlug from "rehype-slug";
-import remarkGfm from "remark-gfm";
+import dynamic from "next/dynamic";
 import { Download, BookOpen, FileText, Users, UserCheck, Landmark, Wallet, Receipt, FileOutput, LayoutTemplate, Bell, UserCog, Wrench, HelpCircle } from "lucide-react";
-import { asBlob } from "html-docx-js-typescript";
+
+// Lazy-load heavy markdown rendering deps (react-markdown ~40KB + rehype/remark plugins)
+const MarkdownContent = dynamic(
+  () => import("react-markdown").then((mod) =>
+    Promise.all([import("rehype-slug"), import("remark-gfm")]).then(
+      ([rehypeSlug, remarkGfm]) => {
+        const Md = mod.default;
+        return {
+          default: ({ content }: { content: string }) => (
+            <Md rehypePlugins={[rehypeSlug.default]} remarkPlugins={[remarkGfm.default]}>
+              {content}
+            </Md>
+          ),
+        };
+      },
+    ),
+  ),
+  { ssr: false, loading: () => <div className="h-6 w-6 animate-spin rounded-full border-2 border-violet-200 border-t-violet-600" /> },
+);
+
 
 import { useLanguage } from "@/components/language-provider";
 
@@ -54,6 +71,7 @@ export default function GuidePage() {
 
   async function handleDownloadDocx() {
     if (!proseRef.current) return;
+    const { asBlob } = await import("html-docx-js-typescript");
     const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>body{font-family:Arial,sans-serif;font-size:12pt;line-height:1.6}h1{font-size:20pt;color:#5b21b6}h2{font-size:16pt;color:#6d28d9;border-bottom:1px solid #e5e7eb;padding-bottom:6px}h3{font-size:13pt;color:#7c3aed}blockquote{border-left:3px solid #a78bfa;padding-left:12px;color:#6b7280}hr{border:none;border-top:1px solid #d4d4d8;margin:16px 0}</style></head><body>${proseRef.current.innerHTML}</body></html>`;
     const blob = await asBlob(html) as Blob;
     const url = URL.createObjectURL(blob);
@@ -126,7 +144,7 @@ export default function GuidePage() {
           prose-code:text-violet-700 prose-code:dark:text-violet-300 prose-code:bg-violet-50 prose-code:dark:bg-violet-500/10 prose-code:px-1 prose-code:rounded
           prose-li:marker:text-violet-500
           prose-table:text-sm prose-th:bg-violet-50 prose-th:dark:bg-violet-500/10 prose-th:font-semibold prose-td:py-2">
-          <Markdown rehypePlugins={[rehypeSlug]} remarkPlugins={[remarkGfm]}>{content}</Markdown>
+          <MarkdownContent content={content} />
         </div>
       </div>
     </section>
