@@ -12,10 +12,18 @@ export function NotificationBell({ expanded }: { expanded: boolean }) {
   const { unreadCount, isOpen, toggle, startPolling } = useNotificationStore();
   const { t } = useLanguage();
   const permissionRequested = useRef(false);
+  const btnRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     startPolling();
   }, [startPolling]);
+
+  // Compute fixed position from button bounding rect
+  function getPanelPos() {
+    if (!btnRef.current) return { left: 0, bottom: 0 };
+    const rect = btnRef.current.getBoundingClientRect();
+    return { left: rect.right + 8, bottom: window.innerHeight - rect.bottom };
+  }
 
   const handleClick = () => {
     toggle();
@@ -28,6 +36,7 @@ export function NotificationBell({ expanded }: { expanded: boolean }) {
   return (
     <div className="relative">
       <button
+        ref={btnRef}
         type="button"
         onClick={handleClick}
         className={`flex w-full items-center rounded-lg py-1.5 text-xs font-medium text-zinc-400 transition-all duration-150 cursor-pointer hover:bg-slate-100/70 hover:text-zinc-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/50 dark:text-slate-500 dark:hover:bg-white/[0.06] dark:hover:text-slate-300 ${
@@ -57,7 +66,7 @@ export function NotificationBell({ expanded }: { expanded: boolean }) {
         </AnimatePresence>
       </button>
 
-      {isOpen && <NotificationPanel />}
+      {isOpen && <NotificationPanel style={{ position: "fixed", ...getPanelPos() }} />}
     </div>
   );
 }

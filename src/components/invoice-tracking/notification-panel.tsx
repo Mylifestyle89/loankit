@@ -21,7 +21,7 @@ function timeAgo(dateStr: string): string {
   return `${Math.floor(hours / 24)}d`;
 }
 
-export function NotificationPanel() {
+export function NotificationPanel({ style }: { style?: React.CSSProperties }) {
   const { notifications, markRead, markAllRead, close } = useNotificationStore();
   const { t } = useLanguage();
   const router = useRouter();
@@ -41,9 +41,10 @@ export function NotificationPanel() {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: -8 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="absolute bottom-full left-0 mb-2 w-80 rounded-xl border border-slate-200/60 bg-white shadow-lg dark:border-white/[0.08] dark:bg-[#1a1a1a] z-[60]"
+      initial={{ opacity: 0, x: -8 }}
+      animate={{ opacity: 1, x: 0 }}
+      style={style}
+      className="w-80 rounded-xl border border-slate-200/60 bg-white shadow-lg dark:border-white/[0.08] dark:bg-[#1a1a1a] z-[60]"
     >
       <div className="flex items-center justify-between border-b border-slate-200/60 px-4 py-2.5 dark:border-white/[0.07]">
         <span className="text-sm font-semibold">{t("notifications.title")}</span>
