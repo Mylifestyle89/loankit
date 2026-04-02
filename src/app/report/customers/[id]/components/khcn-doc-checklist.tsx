@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Download, FileText, Check, Sparkles } from "lucide-react";
 
 import { DocxPreviewModal } from "@/components/docx-preview-modal";
@@ -97,10 +97,12 @@ export function KhcnDocChecklist({
   }, []);
 
   const [generating, setGenerating] = useState<string | null>(null);
+  const generatingRef = useRef(false);
   const [preview, setPreview] = useState<{ buffer: ArrayBuffer; filename: string } | null>(null);
 
   const handleGenerate = useCallback(async (path: string, name: string) => {
-    if (!customerId || generating) return;
+    if (!customerId || generatingRef.current) return;
+    generatingRef.current = true;
     setGenerating(path);
     try {
       const res = await fetch("/api/report/templates/khcn/generate", {
@@ -118,9 +120,13 @@ export function KhcnDocChecklist({
         : name + ".docx";
 
       // Download directly — skip preview to avoid CSP/render crashes
-      const blob = await res.blob();
+      const buffer = await res.arrayBuffer();
+      const blob = new Blob([buffer], {
+        type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      });
       await saveFileWithPicker(blob, filename);
     } catch { /* ignore */ }
+    generatingRef.current = false;
     setGenerating(null);
   }, [customerId, loanId]);
 
