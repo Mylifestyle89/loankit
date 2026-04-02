@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Download, FileText, Check, Sparkles } from "lucide-react";
+import { Download, FileText, Check, Sparkles, Upload } from "lucide-react";
 
 import { DocxPreviewModal } from "@/components/docx-preview-modal";
 import { METHOD_OPTIONS } from "@/lib/loan-plan/loan-plan-constants";
@@ -94,6 +94,28 @@ export function KhcnDocChecklist({
 
   const handleDownload = useCallback((path: string) => {
     window.open(`/api/report/templates/open?path=${encodeURIComponent(path)}`, "_blank");
+  }, []);
+
+  // Replace template file (upload new .docx to overwrite existing)
+  const replaceInputRef = useRef<HTMLInputElement | null>(null);
+  const replacePathRef = useRef<string | null>(null);
+  const handleReplace = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    const targetPath = replacePathRef.current;
+    e.target.value = "";
+    if (!file || !targetPath) return;
+    if (!file.name.toLowerCase().endsWith(".docx")) return;
+    try {
+      const buffer = await file.arrayBuffer();
+      const res = await fetch(`/api/report/template/save-docx?path=${encodeURIComponent(targetPath)}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/octet-stream" },
+        body: buffer,
+      });
+      const data = await res.json();
+      if (!data.ok) throw new Error(data.error ?? "Upload thất bại");
+    } catch { /* silent — template files are non-critical */ }
+    replacePathRef.current = null;
   }, []);
 
   const [generating, setGenerating] = useState<string | null>(null);
@@ -268,6 +290,14 @@ export function KhcnDocChecklist({
                       >
                         <Download className="h-3.5 w-3.5" />
                       </button>
+                      <button
+                        type="button"
+                        onClick={() => { replacePathRef.current = t.path; replaceInputRef.current?.click(); }}
+                        className="shrink-0 rounded-md p-1.5 text-zinc-400 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-500/10 transition-colors"
+                        title="Thay mẫu"
+                      >
+                        <Upload className="h-3.5 w-3.5" />
+                      </button>
                     </div>
                   );
                 })}
@@ -278,6 +308,9 @@ export function KhcnDocChecklist({
       )}
       {/* Placeholder reference panel */}
       <KhcnPlaceholderPanel />
+
+      {/* Hidden file input for template replace */}
+      <input ref={replaceInputRef} type="file" accept=".docx" className="hidden" onChange={handleReplace} />
 
       {/* Preview modal */}
       {preview && (
