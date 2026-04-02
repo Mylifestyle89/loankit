@@ -119,12 +119,9 @@ export function KhcnDocChecklist({
         ? decodeURIComponent(cd.split("filename*=UTF-8''")[1] ?? name + ".docx")
         : name + ".docx";
 
-      // Download directly — skip preview to avoid CSP/render crashes
+      // Show preview first, let user verify before downloading
       const buffer = await res.arrayBuffer();
-      const blob = new Blob([buffer], {
-        type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-      });
-      await saveFileWithPicker(blob, filename);
+      setPreview({ buffer, filename });
     } catch { /* ignore */ }
     generatingRef.current = false;
     setGenerating(null);
