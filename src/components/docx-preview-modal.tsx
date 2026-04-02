@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { Component, useCallback, useState, type ReactNode } from "react";
 import dynamic from "next/dynamic";
 import { AlertTriangle, Download, X } from "lucide-react";
 
@@ -38,6 +38,14 @@ function PreviewFallback({ onDownload }: { onDownload: () => void }) {
       </button>
     </div>
   );
+}
+
+/** Error boundary to catch uncaught render errors from the docx editor (CSP blocks, ProseMirror crashes, etc.) */
+class DocxEditorErrorBoundary extends Component<{ children: ReactNode; fallback: ReactNode }, { hasError: boolean }> {
+  state = { hasError: false };
+  static getDerivedStateFromError() { return { hasError: true }; }
+  componentDidCatch(error: Error) { console.warn("[DocxPreview] render crash:", error.message); }
+  render() { return this.state.hasError ? this.props.fallback : this.props.children; }
 }
 
 type Props = {
@@ -88,10 +96,12 @@ export function DocxPreviewModal({ documentBuffer, fileName, onClose, onDownload
           {parseError ? (
             <PreviewFallback onDownload={onDownload} />
           ) : (
-            <EigenpalDocxEditor
-              documentBuffer={documentBuffer.slice(0)}
-              onError={handleEditorError}
-            />
+            <DocxEditorErrorBoundary fallback={<PreviewFallback onDownload={onDownload} />}>
+              <EigenpalDocxEditor
+                documentBuffer={documentBuffer.slice(0)}
+                onError={handleEditorError}
+              />
+            </DocxEditorErrorBoundary>
           )}
         </div>
       </div>
