@@ -100,7 +100,7 @@ export function KhcnDocChecklist({
   const [preview, setPreview] = useState<{ buffer: ArrayBuffer; filename: string } | null>(null);
 
   const handleGenerate = useCallback(async (path: string, name: string) => {
-    if (!customerId) return;
+    if (!customerId || generating) return;
     setGenerating(path);
     try {
       const res = await fetch("/api/report/templates/khcn/generate", {

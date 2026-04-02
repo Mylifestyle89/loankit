@@ -36,8 +36,10 @@ export async function saveFileWithPicker(blob: Blob, suggestedName: string): Pro
       await writable.close();
       return;
     } catch (err) {
-      // User cancelled picker or API error — fall through to legacy download
+      // User cancelled or any picker error — don't fall through to avoid double download
       if (err instanceof DOMException && err.name === "AbortError") return;
+      console.warn("[saveFileWithPicker] picker error:", err);
+      // Fall through to legacy download only if picker completely failed
     }
   }
 
