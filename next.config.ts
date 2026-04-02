@@ -12,11 +12,11 @@ const SECURITY_HEADERS = [
     value: [
       "default-src 'self'",
       `script-src 'self' 'unsafe-inline' 'unsafe-eval' ${ONLYOFFICE_URL}`,
-      `style-src 'self' 'unsafe-inline' ${ONLYOFFICE_URL}`,
+      `style-src 'self' 'unsafe-inline' ${ONLYOFFICE_URL} https://fonts.googleapis.com`,
       `img-src 'self' data: blob: ${ONLYOFFICE_URL}`,
       `frame-src 'self' ${ONLYOFFICE_URL}`,
       `connect-src 'self' ${ONLYOFFICE_URL}`,
-      "font-src 'self' data: https://r2cdn.perplexity.ai",
+      "font-src 'self' data: https://r2cdn.perplexity.ai https://fonts.gstatic.com",
       "object-src 'none'",
       "base-uri 'self'",
       "form-action 'self'",
