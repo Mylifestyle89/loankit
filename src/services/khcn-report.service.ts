@@ -312,9 +312,10 @@ export async function generateKhcnReport(
   // Flatten first beneficiary into UNC.* flat placeholders
   flattenUncPlaceholders(data, overrides);
 
-  // Count collaterals of matching type for clone count
+  // Count collaterals of matching type for clone count (skip if template uses loops)
   const collaterals = data.TSBD as Array<{ "Loại TSBĐ": string }> | undefined;
-  const count = (isAssetTemplate && prefix && collateralType && collaterals)
+  const noClone = templateEntry?.noClone === true;
+  const count = (isAssetTemplate && prefix && collateralType && collaterals && !noClone)
     ? collaterals.filter((c) => c["Loại TSBĐ"] === collateralType).length
     : 0;
 

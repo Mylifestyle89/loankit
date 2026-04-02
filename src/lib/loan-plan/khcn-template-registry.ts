@@ -15,6 +15,8 @@ export type KhcnDocTemplate = {
   category: string;
   /** Which loan methods this template applies to. Empty = all methods. */
   methods: string[];
+  /** Skip multi-asset section cloning — template uses loop arrays instead */
+  noClone?: boolean;
 };
 
 const BASE = "report_assets/KHCN templates";
