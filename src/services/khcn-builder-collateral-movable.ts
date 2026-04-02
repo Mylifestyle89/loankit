@@ -25,7 +25,9 @@ function extractMovableFields(
     "Số chỗ ngồi": p.seat_count ?? p.seats ?? p.so_cho ?? "",
     "Giấy đăng ký số": p.registration_number ?? p.giay_dk ?? "",
     "Ngày cấp ĐK": p.registration_date ?? p.cap_ngay ?? "",
+    "Cấp ngày": p.registration_date ?? p.cap_ngay ?? "", // alias for template [ĐS.Cấp ngày]
     "Nơi cấp ĐK": p.registration_place ?? p.co_quan_cap ?? "",
+    "Cơ quan cấp": p.registration_place ?? p.co_quan_cap ?? "", // alias for template [ĐS.Cơ quan cấp]
     "Giá trị tài sản": fmtN(col.total_value),
     "GTTS bằng chữ": col.total_value ? numberToVietnameseWords(col.total_value) : "",
     "Nghĩa vụ bảo đảm": fmtN(col.obligation),
