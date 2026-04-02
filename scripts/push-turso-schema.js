@@ -41,7 +41,7 @@ async function run() {
     // Skip: PRAGMA, INSERT INTO "new_", DROP TABLE, ALTER TABLE RENAME (redefine steps).
     const hasRedefine = sql.includes("RedefineTables") || sql.includes('DROP TABLE "');
 
-    for (const stmt of statements) {
+    for (let stmt of statements) {
       const upper = stmt.toUpperCase().replace(/\s+/g, " ").trim();
 
       // Always safe: CREATE TABLE, CREATE INDEX, ALTER TABLE ADD COLUMN
@@ -49,22 +49,25 @@ async function run() {
         upper.startsWith("CREATE TABLE") ||
         upper.startsWith("CREATE UNIQUE INDEX") ||
         upper.startsWith("CREATE INDEX") ||
-        upper.startsWith("ALTER TABLE") && upper.includes("ADD COLUMN");
+        (upper.startsWith("ALTER TABLE") && upper.includes("ADD COLUMN"));
 
       // Dangerous in redefine context: DROP, INSERT INTO new_, PRAGMA, RENAME
-      if (hasRedefine && !isSafe) {
-        console.log("  (skipped - redefine step)");
-        continue;
+      if (hasRedefine && !isSafe) continue;
+
+      // Add IF NOT EXISTS to prevent constraint errors on re-deploy
+      if (upper.startsWith("CREATE TABLE") && !upper.includes("IF NOT EXISTS")) {
+        stmt = stmt.replace(/CREATE TABLE/i, "CREATE TABLE IF NOT EXISTS");
+      }
+      if ((upper.startsWith("CREATE UNIQUE INDEX") || upper.startsWith("CREATE INDEX")) && !upper.includes("IF NOT EXISTS")) {
+        stmt = stmt.replace(/CREATE (UNIQUE )?INDEX/i, (m) => m + " IF NOT EXISTS");
       }
 
       try {
         await client.execute(stmt);
       } catch (e) {
-        if (e.message?.includes("already exists") || e.message?.includes("duplicate column")) {
-          console.log("  (skipped - already exists)");
-        } else {
-          console.error("  ERROR:", e.message);
-        }
+        // Silently skip already-applied schema changes
+        if (e.message?.includes("already exists") || e.message?.includes("duplicate column")) continue;
+        console.error("  ERROR:", e.message);
       }
     }
   }
