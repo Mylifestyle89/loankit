@@ -63,15 +63,16 @@ Số tiền giữ nguyên định dạng gốc. Ngày tháng dd/mm/yyyy. Trả v
 book_number, owner_name, bank_name, amount, currency, term_months, interest_rate, open_date, maturity_date, confidence.`,
   },
   vehicle_reg: {
-    description: "Giấy đăng ký xe",
+    description: "Giấy chứng nhận đăng ký xe ô tô / xe máy",
     fields: [
       "plate_number", "owner_name", "vehicle_type", "brand_model",
       "color", "frame_number", "engine_number", "registration_date",
+      "seat_count", "manufacture_year", "registration_number",
     ],
-    prompt: `Đây là ảnh Giấy đăng ký xe (ô tô / xe máy) Việt Nam.
+    prompt: `Đây là ảnh Giấy chứng nhận đăng ký xe (ô tô / xe máy) Việt Nam.
 Hãy trích xuất chính xác các trường sau. Nếu không đọc được, để "".
 Ngày tháng dd/mm/yyyy. Trả về JSON với key:
-plate_number, owner_name, vehicle_type, brand_model, color, frame_number, engine_number, registration_date, confidence.`,
+plate_number (biển số), owner_name (chủ xe), vehicle_type (loại xe), brand_model (nhãn hiệu/model), color (màu sơn), frame_number (số khung), engine_number (số máy), registration_date (ngày đăng ký), seat_count (số chỗ ngồi), manufacture_year (năm sản xuất), registration_number (số giấy đăng ký), confidence.`,
   },
 };
 

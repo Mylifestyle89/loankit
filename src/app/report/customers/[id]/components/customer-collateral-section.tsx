@@ -38,10 +38,15 @@ export function CustomerCollateralSection({ customerId }: { customerId: string }
       props.bank_name = fields.bank_name ?? "";
       props.maturity_date = fields.maturity_date ?? "";
     } else if (documentType === "vehicle_reg") {
-      props.plate_number = fields.plate_number ?? "";
-      props.brand_model = fields.brand_model ?? "";
-      props.frame_number = fields.frame_number ?? "";
+      props.license_plate = fields.plate_number ?? "";
+      props.brand = fields.brand_model ?? "";
+      props.chassis_number = fields.frame_number ?? "";
       props.engine_number = fields.engine_number ?? "";
+      props.color = fields.color ?? "";
+      props.registration_date = fields.registration_date ?? "";
+      props.seat_count = fields.seat_count ?? "";
+      props.manufacture_year = fields.manufacture_year ?? "";
+      props.registration_number = fields.registration_number ?? "";
     }
 
     setScanPrefill({

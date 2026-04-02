@@ -28,8 +28,9 @@ const FIELD_LABELS: Record<string, string> = {
   currency: "Loại tiền", term_months: "Kỳ hạn (tháng)", interest_rate: "Lãi suất",
   open_date: "Ngày mở", maturity_date: "Ngày đáo hạn",
   plate_number: "Biển số", vehicle_type: "Loại xe", brand_model: "Hãng/Model",
-  color: "Màu", frame_number: "Số khung", engine_number: "Số máy",
-  registration_date: "Ngày đăng ký",
+  color: "Màu sơn", frame_number: "Số khung", engine_number: "Số máy",
+  registration_date: "Ngày đăng ký", seat_count: "Số chỗ ngồi",
+  manufacture_year: "Năm sản xuất", registration_number: "Số giấy ĐK",
 };
 
 export function DocumentScannerDialog({ open, onClose, onConfirm, allowedTypes }: Props) {
