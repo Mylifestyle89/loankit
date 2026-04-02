@@ -119,9 +119,15 @@ export function KhcnDocChecklist({
         ? decodeURIComponent(cd.split("filename*=UTF-8''")[1] ?? name + ".docx")
         : name + ".docx";
 
-      // Show preview first, let user verify before downloading
-      const buffer = await res.arrayBuffer();
-      setPreview({ buffer, filename });
+      // Download directly via <a download>
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 200);
     } catch { /* ignore */ }
     generatingRef.current = false;
     setGenerating(null);
