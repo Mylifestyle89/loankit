@@ -6,6 +6,7 @@ import type { WorkBook } from "xlsx";
 import * as XLSX from "xlsx";
 import type { CostItem, RevenueItem } from "@/lib/loan-plan/loan-plan-types";
 import type { XlsxParseResult, XlsxParseMeta } from "./xlsx-loan-plan-types";
+import { parseNum } from "./xlsx-number-utils";
 
 // Known cost item names -> default units
 const KNOWN_UNITS: Record<string, string> = {
@@ -42,16 +43,6 @@ const META_KEY_MAP: Record<string, keyof XlsxParseMeta> = {
   "Địa chỉ đất NN": "farmAddress",
 };
 
-/** Parse number, handling VND formatting (thousand-sep dots) while preserving real decimals */
-function parseNum(val: unknown): number {
-  if (typeof val === "number") return val;
-  let s = String(val).replace(/[\sđ]/g, "").replace(/%$/, "");
-  // Vietnamese: comma = decimal separator, dot = thousand separator
-  // Strip thousand-separator dots (digit.digit{3}), then replace comma with dot for decimal
-  s = s.replace(/\.(?=\d{3}(?:\D|$))/g, "").replace(",", ".");
-  const n = Number(s);
-  return isNaN(n) ? 0 : n;
-}
 
 /** Parse percentage value (could be 0.085, 8.5%, "8,5%/năm") */
 function parseRate(val: unknown): number {

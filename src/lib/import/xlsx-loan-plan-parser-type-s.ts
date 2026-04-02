@@ -7,24 +7,8 @@ import type { WorkBook } from "xlsx";
 import * as XLSX from "xlsx";
 import type { CostItem, RevenueItem } from "@/lib/loan-plan/loan-plan-types";
 import type { XlsxParseResult, XlsxParseMeta } from "./xlsx-loan-plan-types";
+import { parseNum, parseDecimal } from "./xlsx-number-utils";
 
-/** Parse VND-formatted number or raw number */
-function parseNum(val: unknown): number {
-  if (typeof val === "number") return val;
-  let s = String(val).replace(/[\sđ%]/g, "");
-  // Handle Vietnamese thousand-sep dots: 1.000.000 → 1000000
-  s = s.replace(/\.(?=\d{3}(?:\D|$))/g, "").replace(",", ".");
-  const n = Number(s);
-  return isNaN(n) ? 0 : n;
-}
-
-/** Parse decimal value (diện tích, tỷ lệ) */
-function parseDecimal(val: unknown): number {
-  if (typeof val === "number") return val;
-  const s = String(val).replace(/[\sđ%]/g, "").replace(",", ".");
-  const n = parseFloat(s);
-  return isNaN(n) ? 0 : n;
-}
 
 /** Map Vietnamese label → meta key */
 const META_LABEL_MAP: Record<string, keyof XlsxParseMeta> = {

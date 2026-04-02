@@ -4,6 +4,19 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ## [Unreleased]
 
+### Added - Type B XLSX Parser with Smart Section Detection
+- **New Modules**
+  - `xlsx-number-utils.ts` - Shared parseNum/parseDecimal for Vietnamese number formatting (thousand-sep dots, comma decimals)
+  - `xlsx-section-detector.ts` - Smart section detection for generic PAKD files (cost items, revenue items, summary metadata)
+- **Parser Enhancement**
+  - Type B parser now auto-detects cost/revenue/summary sections using Vietnamese section markers
+  - Extracts financial metadata (lãi vay, thuế, vốn tự có, nhu cầu vốn) from summary rows
+  - Supports generic PAKD Excel files beyond typed formats
+  - Column mapping shared across Types A, B, S via `xlsx-number-utils`
+- **Types A & S Updated**
+  - Use shared `parseNum/parseDecimal` functions from `xlsx-number-utils.ts`
+  - Improved consistency across all XLSX parsers
+
 ## [v2.0.0] - 2026-03-19
 
 ### Major Release - KHCN Implementation Complete

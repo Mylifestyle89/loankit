@@ -1,38 +1,38 @@
-// Type B parser: vertical table format
-// Rows have columns: STT | Tên hàng | ĐVT | Số lượng | Đơn giá | Thành tiền
-// Header names vary in casing/wording — use fuzzy matching
+// Type B parser: vertical table format with smart section detection
+// Handles generic PAKD files (thiết bị y tế, mùi nệm, etc.)
+// Delegates section detection + meta extraction to xlsx-section-detector
 
 import type { WorkBook } from "xlsx";
 import * as XLSX from "xlsx";
-import type { CostItem } from "@/lib/loan-plan/loan-plan-types";
+import type { CostItem, RevenueItem } from "@/lib/loan-plan/loan-plan-types";
 import type { XlsxParseResult } from "./xlsx-loan-plan-types";
+import { parseNum } from "./xlsx-number-utils";
+import { SECTION_MARKERS, splitSections, extractSummaryMeta, type ColumnMapping } from "./xlsx-section-detector";
 
-// Fuzzy patterns for each column role
+// Fuzzy patterns for each column role (order-independent matching)
 const COL_PATTERNS: Record<string, RegExp> = {
   stt: /^(stt|tt|#|s[oố]\s*tt)$/i,
-  name: /t[eê]n\s*h[aà]ng|n[oộ]i\s*dung|kho[aả]n\s*m[uụ]c|h[aạ]ng\s*m[uụ]c|di[eễ]n\s*gi[aả]i/i,
+  name: /t[eê]n\s*(h[aà]ng|s[aả]n\s*ph[aẩ]m)|n[oộ]i\s*dung|kho[aả]n\s*m[uụ]c|h[aạ]ng\s*m[uụ]c|di[eễ]n\s*gi[aả]i|s[aả]n\s*ph[aẩ]m|danh\s*m[uụ]c/i,
   unit: /[đd][oơ]n\s*v[iị]|[đd]vt/i,
   qty: /s[oố]\s*l[uư][oợ]ng|^sl$/i,
   unitPrice: /[đd][oơ]n\s*gi[aá]|^[đd]g$/i,
   amount: /th[aà]nh\s*ti[eề]n|^tt$/i,
 };
 
-// Summary/total row indicators — skip these rows
+// Summary/total row indicators — skip these when extracting items
 const SKIP_ROW_PATTERNS = /^(t[oổ]ng|c[oộ]ng|total|sum)/i;
 
-type ColumnMapping = { name: number; unit: number; qty: number; unitPrice: number; amount: number };
-
-/** Find header row and column mapping in first 10 rows */
-function findHeaderRow(rows: unknown[][]): { rowIndex: number; cols: ColumnMapping } | null {
-  for (let i = 0; i < Math.min(rows.length, 10); i++) {
-    const row = rows[i].map((c) => String(c).trim());
+/** Find header row and column mapping in first 10 rows from startFrom */
+function findHeaderRow(rows: unknown[][], startFrom = 0): { rowIndex: number; cols: ColumnMapping } | null {
+  for (let i = startFrom; i < Math.min(rows.length, startFrom + 10); i++) {
+    const row = rows[i]?.map((c) => String(c).trim()) ?? [];
     const mapping: Partial<ColumnMapping> = {};
 
     for (let j = 0; j < row.length; j++) {
       const cell = row[j];
       if (!cell) continue;
       for (const [role, pattern] of Object.entries(COL_PATTERNS)) {
-        if (role === "stt") continue; // skip STT, not needed in output
+        if (role === "stt") continue;
         if (pattern.test(cell) && !(role in mapping)) {
           mapping[role as keyof ColumnMapping] = j;
         }
@@ -56,17 +56,38 @@ function findHeaderRow(rows: unknown[][]): { rowIndex: number; cols: ColumnMappi
   return null;
 }
 
-/** Parse number, handling VND formatting (thousand-sep dots) while preserving real decimals */
-function parseNum(val: unknown): number {
-  if (typeof val === "number") return val;
-  let s = String(val).replace(/[\sđ]/g, "");
-  s = s.replace(/\.(?=\d{3}(?:\D|$))/g, "").replace(",", ".");
-  const n = Number(s);
-  return isNaN(n) ? 0 : n;
+/** Extract items (cost or revenue) from a row range using column mapping */
+function extractItems(rows: unknown[][], startRow: number, endRow: number, cols: ColumnMapping): { name: string; unit: string; qty: number; unitPrice: number; amount: number }[] {
+  const items: { name: string; unit: string; qty: number; unitPrice: number; amount: number }[] = [];
+
+  for (let i = startRow; i <= endRow && i < rows.length; i++) {
+    const row = rows[i];
+    const nameVal = String(row[cols.name] ?? "").trim();
+
+    // Skip empty, summary, or section header rows
+    if (!nameVal) continue;
+    if (SKIP_ROW_PATTERNS.test(nameVal)) continue;
+    if (/^[IVX]+\.?\s/.test(nameVal)) continue;
+    if (SECTION_MARKERS.costTotal.test(nameVal) || SECTION_MARKERS.revenue.test(nameVal) ||
+        SECTION_MARKERS.profit.test(nameVal) || SECTION_MARKERS.directCost.test(nameVal) ||
+        SECTION_MARKERS.indirectCost.test(nameVal) || SECTION_MARKERS.interest.test(nameVal)) continue;
+
+    const qty = cols.qty >= 0 ? parseNum(row[cols.qty]) : 0;
+    const unitPrice = cols.unitPrice >= 0 ? parseNum(row[cols.unitPrice]) : 0;
+    const amount = cols.amount >= 0 ? parseNum(row[cols.amount]) : qty * unitPrice;
+    const unit = cols.unit >= 0 ? String(row[cols.unit] ?? "").trim() || "đơn vị" : "đơn vị";
+
+    if (amount === 0 && qty === 0 && unitPrice === 0) continue;
+
+    items.push({ name: nameVal, unit, qty, unitPrice, amount });
+  }
+
+  return items;
 }
 
 /**
- * Parse Type B XLSX: vertical table with fuzzy header matching
+ * Parse Type B XLSX: vertical table with smart section detection.
+ * Extracts cost items, revenue items, and summary metadata.
  */
 export function parseTypeB(wb: WorkBook): XlsxParseResult {
   const ws = wb.Sheets[wb.SheetNames[0]];
@@ -79,39 +100,44 @@ export function parseTypeB(wb: WorkBook): XlsxParseResult {
   }
 
   const { rowIndex, cols } = headerResult;
-  const costItems: CostItem[] = [];
 
-  // Parse data rows after header
-  for (let i = rowIndex + 1; i < rows.length; i++) {
-    const row = rows[i];
-    const nameVal = String(row[cols.name] ?? "").trim();
+  // Detect section boundaries (cost/summary/revenue)
+  const bounds = splitSections(rows, rowIndex, cols);
 
-    // Skip empty or summary rows
-    if (!nameVal) continue;
-    if (SKIP_ROW_PATTERNS.test(nameVal)) continue;
-    // Skip Roman numeral section headers (I, II, III, IV)
-    if (/^[IVX]+\.?\s/.test(nameVal)) continue;
+  // Extract cost items (from header to costEnd)
+  const costItems: CostItem[] = extractItems(rows, rowIndex + 1, bounds.costEnd, cols);
 
-    const qty = cols.qty >= 0 ? parseNum(row[cols.qty]) : 0;
-    const unitPrice = cols.unitPrice >= 0 ? parseNum(row[cols.unitPrice]) : 0;
-    const amount = cols.amount >= 0 ? parseNum(row[cols.amount]) : qty * unitPrice;
-    const unit = cols.unit >= 0 ? String(row[cols.unit] ?? "").trim() || "đơn vị" : "đơn vị";
+  // Extract revenue items if revenue section detected
+  let revenueItems: RevenueItem[] = [];
+  if (bounds.revenueStart >= 0) {
+    // Try to find a new header row in revenue section (column names may differ)
+    const revenueHeader = findHeaderRow(rows, bounds.revenueStart);
+    const revCols = revenueHeader ? revenueHeader.cols : cols;
+    const revStartRow = revenueHeader ? revenueHeader.rowIndex + 1 : bounds.revenueStart + 1;
 
-    // Skip rows with no meaningful data
-    if (amount === 0 && qty === 0 && unitPrice === 0) continue;
-
-    costItems.push({ name: nameVal, unit, qty, unitPrice, amount });
+    const rawRevenue = extractItems(rows, revStartRow, bounds.revenueEnd, revCols);
+    revenueItems = rawRevenue.map((item) => ({
+      description: item.name,
+      unit: item.unit,
+      qty: item.qty,
+      unitPrice: item.unitPrice,
+      amount: item.amount,
+    }));
   }
 
+  // Extract summary metadata (lãi vay, thuế, vốn tự có)
+  const meta = extractSummaryMeta(rows, bounds, cols);
+
   if (costItems.length === 0) warnings.push("Không tìm thấy khoản mục chi phí nào trong bảng");
+  if (bounds.revenueStart >= 0 && revenueItems.length === 0) warnings.push("Phát hiện section doanh thu nhưng không parse được khoản mục nào");
 
   return {
     status: warnings.length > 0 ? "partial" : "success",
-    message: `Đã parse ${costItems.length} khoản mục chi phí từ file Type B`,
+    message: `Đã parse ${costItems.length} chi phí + ${revenueItems.length} doanh thu từ file Type B`,
     detectedType: "B",
     costItems,
-    revenueItems: [],
-    meta: {},
+    revenueItems,
+    meta,
     warnings,
   };
 }

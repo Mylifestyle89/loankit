@@ -494,6 +494,54 @@ This is a Next.js-based financial reporting and invoice tracking application bui
 5. docxtemplater injects field values into indexed placeholders
 6. Final DOCX contains all collaterals rendered sequentially
 
+## XLSX Loan Plan Parser Architecture
+
+**Purpose:** Parse and extract loan plan data from Excel files with multiple format support and smart section detection.
+
+### Parser Types
+
+1. **Type A Parser** - Horizontal table format (cost items in columns)
+2. **Type B Parser** - Vertical table format with smart section detection for generic PAKD files
+3. **Type S Parser** - Single-row summary format with aggregated values
+
+### Core Components
+
+**Shared Utilities** (`src/lib/import/xlsx-number-utils.ts`)
+- `parseNum()` - Handle VND formatting (thousand-sep dots, preserve decimals)
+- `parseDecimal()` - Lenient decimal parsing for area, ratios, etc.
+
+**Section Detection** (`src/lib/import/xlsx-section-detector.ts`)
+- `splitSections()` - Detect cost/revenue/summary boundaries using Vietnamese markers
+- `extractSummaryMeta()` - Extract financial metadata (lãi vay, thuế, vốn tự có, nhu cầu vốn)
+- Pattern-based section detection: `SECTION_MARKERS` for cost totals, revenue, profit, interest, tax, loan need, own capital
+
+**Type B Parser** (`src/lib/import/xlsx-loan-plan-parser-type-b.ts`)
+- Auto-detect column headers (name, unit, quantity, unit price, amount)
+- Smart section detection for generic PAKD files
+- Extract: cost items array, revenue items array, financial metadata
+
+**Auto-Detection** (`src/lib/import/xlsx-loan-plan-detector.ts`)
+- Analyzes Excel structure (row count, column patterns)
+- Routes to appropriate parser (Type A/B/S)
+- Fallback: Type B for generic PAKD files
+
+### Data Flow
+
+1. User uploads Excel file
+2. Auto-detector examines structure, selects parser type
+3. Parser detects header row, identifies column mapping (name, unit, qty, price, amount)
+4. Type B: Split sections using Vietnamese section markers
+5. Extract items from cost/revenue ranges
+6. Extract summary metadata from marker rows
+7. Return structured `XlsxParseResult` with cost items, revenue items, metadata
+
+### Type B Use Cases
+
+- Generic PAKD files (thiết bị y tế, mùi nệm, etc.)
+- Any vertical-format Excel with cost and revenue sections
+- Handles missing optional columns (unit, quantity)
+- Flexible column header matching (order-independent)
+
 ## Performance Optimizations
 
 - Service layer caching reduces repeated DB queries

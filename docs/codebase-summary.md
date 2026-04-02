@@ -160,7 +160,15 @@ src/
 │   │   ├── bk-importer.ts            # BK file importer
 │   │   ├── bk-types.ts               # BK format types
 │   │   ├── bk-mapping.ts             # BK field mappings
-│   │   └── bk-normalizer.ts          # BK data normalization
+│   │   ├── bk-normalizer.ts          # BK data normalization
+│   │   ├── xlsx-number-utils.ts      # Shared parseNum/parseDecimal for XLSX parsers
+│   │   ├── xlsx-section-detector.ts  # Section detection + metadata extraction for generic PAKD files
+│   │   ├── xlsx-loan-plan-types.ts   # XLSX parsing types
+│   │   ├── xlsx-loan-plan-parser.ts  # Main XLSX loan plan router
+│   │   ├── xlsx-loan-plan-detector.ts # Auto-detect parser type (A/B/S)
+│   │   ├── xlsx-loan-plan-parser-type-a.ts # Type A parser (horizontal format)
+│   │   ├── xlsx-loan-plan-parser-type-b.ts # Type B parser (vertical format with smart section detection)
+│   │   └── xlsx-loan-plan-parser-type-s.ts # Type S parser (single-row summary format)
 │   │
 │   ├── onlyoffice/
 │   │   └── config.ts                 # OnlyOffice integration config
