@@ -54,6 +54,8 @@ export type UpdateLoanInput = {
   prior_contract_number?: string | null;
   prior_contract_date?: string | null;
   prior_outstanding?: number | null;
+  // Tài sản bảo đảm đã chọn (JSON array of collateral IDs)
+  selectedCollateralIds?: string;
 };
 
 export const loanService = {
@@ -177,6 +179,7 @@ export const loanService = {
       "expected_revenue", "expected_cost", "expected_profit", "from_project",
       "other_income", "other_income_detail", "customer_rating", "debt_group", "scoring_period",
       "prior_contract_number", "prior_contract_date", "prior_outstanding",
+      "selectedCollateralIds",
     ];
     for (const key of passthrough) {
       if (input[key] !== undefined) data[key] = input[key];
