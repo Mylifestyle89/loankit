@@ -117,9 +117,9 @@ export function KhcnDocChecklist({
         ? decodeURIComponent(cd.split("filename*=UTF-8''")[1] ?? name + ".docx")
         : name + ".docx";
 
-      // Always show preview first, let user verify before downloading
-      const buffer = await res.arrayBuffer();
-      setPreview({ buffer, filename });
+      // Download directly — skip preview to avoid CSP/render crashes
+      const blob = await res.blob();
+      await saveFileWithPicker(blob, filename);
     } catch { /* ignore */ }
     setGenerating(null);
   }, [customerId, loanId]);
