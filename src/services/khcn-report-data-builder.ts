@@ -16,6 +16,7 @@ import {
   buildCoBorrowerData,
   buildCreditAgribankData,
   buildCreditOtherData,
+  buildUnifiedCreditLoop,
   buildCustomerAliases,
   buildDisbursementExtendedData,
   buildLandCollateralData,
@@ -223,6 +224,7 @@ export async function buildKhcnReportData(
   buildRelatedPersonData(c.related_persons, data);
   buildCreditAgribankData(c.credit_agribank, data);
   buildCreditOtherData(c.credit_other, data);
+  buildUnifiedCreditLoop(data);
 
   if (latestPlan) {
     buildLoanPlanExtendedData(latestPlan, data);

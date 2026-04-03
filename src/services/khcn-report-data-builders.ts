@@ -9,5 +9,5 @@ export { buildLandCollateralData } from "./khcn-builder-collateral-land";
 export { buildMovableCollateralData } from "./khcn-builder-collateral-movable";
 export { buildSavingsCollateralData, buildOtherCollateralData } from "./khcn-builder-collateral-savings-other";
 export { buildCoBorrowerData, buildRelatedPersonData } from "./khcn-builder-persons";
-export { buildCreditAgribankData, buildCreditOtherData } from "./khcn-builder-credit";
+export { buildCreditAgribankData, buildCreditOtherData, buildUnifiedCreditLoop } from "./khcn-builder-credit";
 export { buildLoanPlanExtendedData } from "./khcn-builder-loan-plan";
