@@ -228,7 +228,11 @@ export function useMappingApiMutations({
 
     let latest = runData.job;
     input.onProgress?.(latest);
-    while (latest.phase === "running" || latest.phase === "analyzing") {
+    let attempts = 0;
+    const maxRetries = 300; // ~4 minutes total
+
+    while ((latest.phase === "running" || latest.phase === "analyzing") && attempts < maxRetries) {
+      attempts++;
       await new Promise((resolve) => setTimeout(resolve, 800));
       const pollRes = await fetch(
         `/api/report/auto-process/jobs/${encodeURIComponent(latest.job_id)}`,
@@ -239,6 +243,10 @@ export function useMappingApiMutations({
         throw new Error(pollData.error ?? "Không thể theo dõi tiến trình batch.");
       latest = pollData.job;
       input.onProgress?.(latest);
+    }
+
+    if (attempts >= maxRetries) {
+      throw new Error("Quá thời gian: Xử lý batch tốn quá nhiều thời gian. Vui lòng thử lại sau.");
     }
     if (latest.phase !== "completed") throw new Error(latest.error ?? "Batch chưa hoàn tất.");
     return latest;

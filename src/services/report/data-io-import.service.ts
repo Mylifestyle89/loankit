@@ -87,13 +87,10 @@ async function upsertInvoice(
   disbursementId: string,
   disbursementBeneficiaryId: string | null,
   invRaw: ImportInvoiceRecord,
+  invoiceMap: Map<string, { id: string }>,
 ) {
-  const existing = await tx.invoice.findFirst({
-    where: {
-      invoiceNumber: invRaw.invoiceNumber,
-      supplierName: invRaw.supplierName,
-    },
-  });
+  const mapKey = `${invRaw.invoiceNumber}_${invRaw.supplierName}`;
+  const existing = invoiceMap.get(mapKey);
 
   const invData = {
     amount: invRaw.amount,
@@ -107,7 +104,7 @@ async function upsertInvoice(
   if (existing) {
     await tx.invoice.update({ where: { id: existing.id }, data: invData });
   } else {
-    await tx.invoice.create({
+    const created = await tx.invoice.create({
       data: {
         ...invData,
         invoiceNumber: invRaw.invoiceNumber,
@@ -116,6 +113,7 @@ async function upsertInvoice(
         disbursementBeneficiaryId,
       },
     });
+    invoiceMap.set(mapKey, { id: created.id });
   }
 }
 
@@ -143,17 +141,61 @@ export async function importData(input: {
   let invoicesImported = 0;
 
   await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-    for (const customerRaw of customersInput) {
-      const existing = await tx.customer.findUnique({
-        where: { customer_code: customerRaw.customer_code },
+    // 1. PRE-FETCH ALL EXISTING ENTITIES TO AVOID N+1
+    const allCustomerCodes = customersInput.map((c) => c.customer_code).filter(Boolean);
+    const existingCustomers = await tx.customer.findMany({
+      where: { customer_code: { in: allCustomerCodes } },
+      select: { id: true, customer_code: true },
+    });
+    const customerMap = new Map(existingCustomers.map((c) => [c.customer_code, c]));
+
+    const allContractNumbers = customersInput
+      .flatMap((c) => (isV2 && "loans" in c && Array.isArray(c.loans) ? c.loans.map((l) => l.contractNumber) : []))
+      .filter(Boolean);
+    const existingLoans = await tx.loan.findMany({
+      where: { contractNumber: { in: allContractNumbers } },
+      select: { id: true, customerId: true, contractNumber: true },
+    });
+    const loanMap = new Map(existingLoans.map((l) => [`${l.customerId}_${l.contractNumber}`, l]));
+
+    const allBenNames = customersInput
+      .flatMap((c) => (isV2 && "loans" in c && Array.isArray(c.loans) ? c.loans.flatMap((l) => (l.beneficiaries || []).map((b) => b.name)) : []))
+      .filter(Boolean);
+    const existingBens = await tx.beneficiary.findMany({
+      where: { name: { in: allBenNames } },
+      select: { id: true, loanId: true, name: true, accountNumber: true },
+    });
+    const benMap = new Map(existingBens.map((b) => [`${b.loanId}_${b.name}_${b.accountNumber || ""}`, b]));
+
+    const allInvoiceNumbers = customersInput.flatMap((c) => {
+      if (!isV2 || !("loans" in c) || !Array.isArray(c.loans)) return [];
+      return c.loans.flatMap((l) => {
+        if (!Array.isArray(l.disbursements)) return [];
+        return l.disbursements.flatMap((d) => {
+          const invs = Array.isArray(d.invoices) ? d.invoices.map((i) => i.invoiceNumber) : [];
+          const lines = Array.isArray(d.beneficiaryLines)
+            ? d.beneficiaryLines.flatMap((bl) => (Array.isArray(bl.invoices) ? bl.invoices.map((i) => i.invoiceNumber) : []))
+            : [];
+          return [...invs, ...lines];
+        });
       });
+    }).filter(Boolean);
+    const existingInvoices = await tx.invoice.findMany({
+      where: { invoiceNumber: { in: allInvoiceNumbers } },
+      select: { id: true, invoiceNumber: true, supplierName: true },
+    });
+    const invoiceMap = new Map(existingInvoices.map((i) => [`${i.invoiceNumber}_${i.supplierName}`, i]));
+
+    // 2. PROCESS SEQUENTIALLY (Writes are fast in SQLite, N+1 reads were the bottleneck)
+    for (const customerRaw of customersInput) {
+      const existingCust = customerMap.get(customerRaw.customer_code);
 
       let customerId: string;
-      if (existing) {
+      if (existingCust) {
         await tx.customer.update({
-          where: { id: existing.id },
+          where: { id: existingCust.id },
           data: {
-            customer_name: customerRaw.customer_name ?? existing.customer_name,
+            customer_name: customerRaw.customer_name ?? undefined,
             address: customerRaw.address,
             main_business: customerRaw.main_business,
             charter_capital: customerRaw.charter_capital,
@@ -163,7 +205,7 @@ export async function importData(input: {
             data_json: customerRaw.data_json,
           },
         });
-        customerId = existing.id;
+        customerId = existingCust.id;
       } else {
         const created = await tx.customer.create({
           data: {
@@ -179,14 +221,14 @@ export async function importData(input: {
           },
         });
         customerId = created.id;
+        customerMap.set(customerRaw.customer_code, { id: customerId, customer_code: customerRaw.customer_code });
       }
       customersImported++;
 
       if (isV2 && "loans" in customerRaw && Array.isArray(customerRaw.loans)) {
         for (const loanRaw of customerRaw.loans as ImportLoanRecord[]) {
-          const existingLoan = await tx.loan.findFirst({
-            where: { customerId, contractNumber: loanRaw.contractNumber },
-          });
+          const loanKey = `${customerId}_${loanRaw.contractNumber}`;
+          const existingLoan = loanMap.get(loanKey);
 
           let loanId: string;
           const loanData = {
@@ -210,16 +252,15 @@ export async function importData(input: {
               data: { ...loanData, contractNumber: loanRaw.contractNumber, customerId },
             });
             loanId = created.id;
+            loanMap.set(loanKey, { id: loanId, customerId, contractNumber: loanRaw.contractNumber });
           }
           loansImported++;
 
           if (Array.isArray(loanRaw.beneficiaries)) {
             for (const benRaw of loanRaw.beneficiaries) {
-              const existingBen = await tx.beneficiary.findFirst({
-                where: { loanId, name: benRaw.name, accountNumber: benRaw.accountNumber ?? undefined },
-              });
-              if (!existingBen) {
-                await tx.beneficiary.create({
+              const benKey = `${loanId}_${benRaw.name}_${benRaw.accountNumber || ""}`;
+              if (!benMap.has(benKey)) {
+                const createdBen = await tx.beneficiary.create({
                   data: {
                     loanId,
                     name: benRaw.name,
@@ -227,6 +268,7 @@ export async function importData(input: {
                     bankName: benRaw.bankName ?? null,
                   },
                 });
+                benMap.set(benKey, { id: createdBen.id, loanId, name: benRaw.name, accountNumber: benRaw.accountNumber ?? null });
               }
             }
           }
@@ -256,7 +298,7 @@ export async function importData(input: {
 
               if (Array.isArray(disbRaw.invoices)) {
                 for (const invRaw of disbRaw.invoices) {
-                  await upsertInvoice(tx, createdDisb.id, null, invRaw);
+                  await upsertInvoice(tx, createdDisb.id, null, invRaw, invoiceMap);
                   invoicesImported++;
                 }
               }
@@ -276,7 +318,7 @@ export async function importData(input: {
                   });
                   if (Array.isArray(lineRaw.invoices)) {
                     for (const invRaw of lineRaw.invoices) {
-                      await upsertInvoice(tx, createdDisb.id, dbLine.id, invRaw);
+                      await upsertInvoice(tx, createdDisb.id, dbLine.id, invRaw, invoiceMap);
                       invoicesImported++;
                     }
                   }

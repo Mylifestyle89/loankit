@@ -146,9 +146,7 @@ export default function LoansPage() {
         onStatusFilterChange={setStatusFilter}
         customerTypeFilter={customerTypeFilter}
         onCustomerTypeFilterChange={setCustomerTypeFilter}
-        sortBy={sortBy}
-        sortOrder={sortOrder}
-        onSort={handleSort}
+
         viewMode={viewMode}
         onViewModeChange={setViewMode}
         hasFilters={!!hasFilters}

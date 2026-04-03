@@ -7,10 +7,7 @@
  * clear-filters button, and view-mode toggle for the loans list page.
  */
 
-import {
-  ArrowUpDown, ChevronDown, ChevronUp,
-  LayoutGrid, List, Search, X,
-} from "lucide-react";
+import { LayoutGrid, List, Search, X } from "lucide-react";
 import { useLanguage } from "@/components/language-provider";
 
 type SortKey = "contractNumber" | "customerName" | "loanAmount" | "startDate" | "status" | "";
@@ -35,9 +32,7 @@ type Props = {
   onStatusFilterChange: (value: string) => void;
   customerTypeFilter: string;
   onCustomerTypeFilterChange: (value: string) => void;
-  sortBy: SortKey;
-  sortOrder: "asc" | "desc";
-  onSort: (key: SortKey) => void;
+
   viewMode: "table" | "card";
   onViewModeChange: (mode: "table" | "card") => void;
   hasFilters: boolean;
@@ -48,7 +43,7 @@ export function LoanListFilters({
   search, onSearchChange,
   statusFilter, onStatusFilterChange,
   customerTypeFilter, onCustomerTypeFilterChange,
-  sortBy, sortOrder, onSort,
+
   viewMode, onViewModeChange,
   hasFilters, onClearFilters,
 }: Props) {
@@ -61,15 +56,7 @@ export function LoanListFilters({
         : "border-zinc-200 bg-white text-zinc-600 hover:border-violet-200 dark:border-white/[0.09] dark:bg-[#1a1a1a] dark:text-slate-400 dark:hover:border-violet-500/20"
     }`;
 
-  function SortIcon({ col }: { col: SortKey }) {
-    if (sortBy !== col) return <ArrowUpDown className="h-3 w-3 opacity-40" />;
-    return sortOrder === "asc"
-      ? <ChevronUp className="h-3 w-3 text-violet-600 dark:text-violet-400" />
-      : <ChevronDown className="h-3 w-3 text-violet-600 dark:text-violet-400" />;
-  }
 
-  void SortIcon; // exported for external use below if needed — suppress unused warning
-  void onSort; // used by table component, not here in filter bar
 
   return (
     <div className="flex flex-wrap items-center gap-3">
