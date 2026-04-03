@@ -12,8 +12,8 @@ import type { MappingSuggestResponse } from "../../types";
 import type { FieldHint } from "@/services/ai-mapping.service";
 import { generateFieldCatalogFromBk } from "@/lib/import/bk-importer";
 import { useAutoTagging } from "../../hooks/useAutoTagging";
-import { type MappingLink } from "../MappingCanvas";
-import { type SystemLogEntry, type SystemLogType } from "../SystemLogCard";
+import { type MappingLink } from "../mapping-canvas";
+import { type SystemLogEntry, type SystemLogType } from "../system-log-card";
 import { FinancialAnalysisModal } from "@/components/financial-analysis/FinancialAnalysisModal";
 import { type SuggestReviewItem } from "./ai-suggest-review-table";
 

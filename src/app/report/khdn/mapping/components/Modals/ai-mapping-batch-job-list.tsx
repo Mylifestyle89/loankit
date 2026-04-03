@@ -5,7 +5,7 @@
 import { type RefObject } from "react";
 import { motion } from "framer-motion";
 import { FileText } from "lucide-react";
-import { SystemLogCard, type SystemLogEntry } from "../SystemLogCard";
+import { SystemLogCard, type SystemLogEntry } from "../system-log-card";
 import { getSignedFileUrl } from "@/lib/report/signed-file-url";
 import type { AutoProcessJob } from "../../types";
 

@@ -5,7 +5,7 @@ import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable"
 import type { FieldCatalogItem } from "@/lib/report/config-schema";
 import type { TypeLabelMap } from "../helpers";
 import type { OcrSuggestionMap } from "../types";
-import { FieldRow } from "./FieldRow";
+import { FieldRow } from "./field-row";
 
 type GroupedTreeNode = {
   parent: string;

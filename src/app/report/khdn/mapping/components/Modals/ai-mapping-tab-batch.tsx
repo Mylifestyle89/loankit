@@ -4,7 +4,7 @@
 
 import { type ChangeEvent, type RefObject } from "react";
 import { Download } from "lucide-react";
-import { type SystemLogEntry } from "../SystemLogCard";
+import { type SystemLogEntry } from "../system-log-card";
 import { BatchJobList } from "./ai-mapping-batch-job-list";
 import type { AutoProcessJob } from "../../types";
 

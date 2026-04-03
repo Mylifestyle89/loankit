@@ -19,10 +19,10 @@ import {
 } from "lucide-react";
 
 import { useLanguage } from "@/components/language-provider";
-import { ThemeToggle } from "@/components/ui/ThemeToggle";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { NotificationBell } from "@/components/invoice-tracking/notification-bell";
 import { CustomerContextIndicator } from "@/components/customer-context-indicator";
-import { GlobalModalProvider } from "./khdn/mapping/components/GlobalModalProvider";
+import { GlobalModalProvider } from "./khdn/mapping/components/global-modal-provider";
 import { authClient } from "@/lib/auth-client";
 import { useCustomerData } from "@/hooks/use-customer-data";
 

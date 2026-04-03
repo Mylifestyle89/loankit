@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { ModalRegistry } from "./ModalRegistry";
+import { ModalRegistry } from "./modal-registry";
 
 type GlobalModalProviderProps = {
   children: ReactNode;

@@ -3,8 +3,8 @@ import type { DragEndEvent, SensorDescriptor, SensorOptions } from "@dnd-kit/cor
 import type { FieldCatalogItem } from "@/lib/report/config-schema";
 import type { TypeLabelMap } from "../helpers";
 import type { OcrSuggestionMap } from "../types";
-import { EditingTemplateBanner } from "./EditingTemplateBanner";
-import { FieldCatalogBoard } from "./FieldCatalogBoard";
+import { EditingTemplateBanner } from "./editing-template-banner";
+import { FieldCatalogBoard } from "./field-catalog-board";
 
 type GroupedTreeNode = {
   parent: string;

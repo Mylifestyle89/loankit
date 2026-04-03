@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { BaseModal } from "@/components/ui/BaseModal";
+import { BaseModal } from "@/components/ui/base-modal";
 import { useModalStore } from "@/lib/report/use-modal-store";
 
 export function CreateMasterTemplateModal() {

@@ -1,13 +1,13 @@
 import type { Dispatch, SetStateAction } from "react";
 import type { FieldCatalogItem } from "@/lib/report/config-schema";
-import { FieldTemplateModals } from "./Modals/FieldTemplateModals";
-import { EditGroupModal } from "./Modals/EditGroupModal";
-import { ChangeFieldGroupModal } from "./Modals/ChangeFieldGroupModal";
-import { MergeGroupsModal } from "./Modals/MergeGroupsModal";
-import { AddFieldModal } from "./Modals/AddFieldModal";
-import { FunctionListModal } from "./Modals/FunctionListModal";
-import { FormulaModal } from "./Modals/FormulaModal";
-import { ImportTemplateGroupModal } from "./Modals/ImportTemplateGroupModal";
+import { FieldTemplateModals } from "./modals/field-template-modals";
+import { EditGroupModal } from "./modals/edit-group-modal";
+import { ChangeFieldGroupModal } from "./modals/change-field-group-modal";
+import { MergeGroupsModal } from "./modals/merge-groups-modal";
+import { AddFieldModal } from "./modals/add-field-modal";
+import { FunctionListModal } from "./modals/function-list-modal";
+import { FormulaModal } from "./modals/formula-modal";
+import { ImportTemplateGroupModal } from "./modals/import-template-group-modal";
 import type { FieldTemplateItem } from "../types";
 
 type MappingModalsProps = {

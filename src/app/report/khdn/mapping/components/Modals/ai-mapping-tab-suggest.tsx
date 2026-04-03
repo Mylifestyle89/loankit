@@ -4,7 +4,7 @@
 
 import { type RefObject, useMemo } from "react";
 import { motion } from "framer-motion";
-import { MappingCanvas, type MappingLink } from "../MappingCanvas";
+import { MappingCanvas, type MappingLink } from "../mapping-canvas";
 import { MappingChip } from "./ai-mapping-chip";
 import { getChipVariant } from "./ai-mapping-modal-utils";
 import { AiSuggestReviewTable, buildReviewItems, type SuggestReviewItem } from "./ai-suggest-review-table";

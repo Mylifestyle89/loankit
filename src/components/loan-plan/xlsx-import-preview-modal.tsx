@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { BaseModal } from "@/components/ui/BaseModal";
+import { BaseModal } from "@/components/ui/base-modal";
 import { AlertTriangle, CheckCircle, Upload } from "lucide-react";
 import type { XlsxParseResult } from "@/lib/import/xlsx-loan-plan-types";
 import type { CostItem } from "@/lib/loan-plan/loan-plan-types";

@@ -3,7 +3,7 @@
 import { useState, useRef } from "react";
 import type { DocumentType } from "@/services/ocr-document-prompts";
 import { DOCUMENT_TYPE_LABELS, VALID_DOCUMENT_TYPES } from "@/services/ocr-document-prompts";
-import { BaseModal } from "@/components/ui/BaseModal";
+import { BaseModal } from "@/components/ui/base-modal";
 
 const MAX_FILES = 4;
 

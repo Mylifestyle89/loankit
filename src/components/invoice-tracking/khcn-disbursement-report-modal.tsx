@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { Download, Loader2 } from "lucide-react";
-import { BaseModal } from "@/components/ui/BaseModal";
+import { BaseModal } from "@/components/ui/base-modal";
 import { KHCN_DISBURSEMENT_TEMPLATES, type KhcnDisbursementTemplateKey } from "@/services/khcn-disbursement-template-config";
 import { saveFileWithPicker } from "@/lib/save-file-with-picker";
 

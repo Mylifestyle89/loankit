@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { FileText, Download, Loader2 } from "lucide-react";
 
-import { BaseModal } from "@/components/ui/BaseModal";
+import { BaseModal } from "@/components/ui/base-modal";
 import { useLanguage } from "@/components/language-provider";
 
 type TemplateKey = "bcdx" | "giay_nhan_no" | "danh_muc_ho_so" | "in_unc" | "cam_ket_bo_sung_chung_tu";

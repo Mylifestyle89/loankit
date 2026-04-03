@@ -5,7 +5,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useUiStore } from "../stores/use-ui-store";
 import { SidebarToolsSection } from "./sidebar/sidebar-tools-section";
 import { SidebarDataIoSection } from "./sidebar/sidebar-data-io-section";
-import { DocxMergeModal } from "./Modals/DocxMergeModal";
+import { DocxMergeModal } from "./modals/docx-merge-modal";
 
 export type MappingSidebarProps = {
   openMergeGroupsModal: () => void;

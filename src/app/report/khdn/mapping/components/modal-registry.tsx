@@ -2,9 +2,9 @@
 
 import { useMemo } from "react";
 import { useModalStore } from "@/lib/report/use-modal-store";
-import { AiMappingModal } from "./Modals/AiMappingModal";
-import { DeleteGroupConfirmModal } from "./Modals/DeleteGroupConfirmModal";
-import { CreateMasterTemplateModal } from "./Modals/CreateMasterTemplateModal";
+import { AiMappingModal } from "./modals/ai-mapping-modal";
+import { DeleteGroupConfirmModal } from "./modals/delete-group-confirm-modal";
+import { CreateMasterTemplateModal } from "./modals/create-master-template-modal";
 
 export function ModalRegistry() {
   const isAiOpen = useModalStore((s) => s.isOpen && s.view === "aiMapping");
