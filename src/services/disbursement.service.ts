@@ -65,6 +65,12 @@ export type FullUpdateDisbursementInput = {
   beneficiaries?: BeneficiaryLineInput[];
 };
 
+export type DisbursementFieldSuggestions = {
+  principalSchedule: string[];
+  interestSchedule: string[];
+  purpose: string[];
+};
+
 export type ListByLoanOpts = {
   page?: number;
   pageSize?: number;
@@ -276,6 +282,29 @@ export const disbursementService = {
     const existing = await prisma.disbursement.findUnique({ where: { id } });
     if (!existing) throw new NotFoundError("Disbursement not found.");
     await prisma.disbursement.delete({ where: { id } });
+  },
+
+  async getFieldSuggestions(loanId: string): Promise<DisbursementFieldSuggestions> {
+    const loan = await prisma.loan.findUnique({
+      where: { id: loanId },
+      select: { customerId: true },
+    });
+    if (!loan) return { principalSchedule: [], interestSchedule: [], purpose: [] };
+
+    // Use relation filter to avoid a separate sibling-loan-IDs query
+    const rows = await prisma.disbursement.findMany({
+      where: { loan: { customerId: loan.customerId } },
+      select: { principalSchedule: true, interestSchedule: true, purpose: true },
+    });
+
+    const collect = (key: keyof DisbursementFieldSuggestions) =>
+      [...new Set(rows.map((r) => r[key]).filter((v): v is string => !!v?.trim()))];
+
+    return {
+      principalSchedule: collect("principalSchedule"),
+      interestSchedule: collect("interestSchedule"),
+      purpose: collect("purpose"),
+    };
   },
 
   async getSurplusDeficit(id: string) {

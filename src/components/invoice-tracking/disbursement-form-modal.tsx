@@ -11,6 +11,8 @@ import {
   tempId, emptyBeneficiaryLine, emptyInvoiceLine, num,
   calcEndDateFromTerm, calcTermFromEndDate,
 } from "./disbursement-form-helpers";
+import { SuggestInput } from "@/components/suggest-input";
+import type { DisbursementFieldSuggestions } from "@/services/disbursement.service";
 
 type Props = {
   loanId: string;
@@ -41,6 +43,11 @@ export function DisbursementFormModal({ loanId, loanAmount = 0, editDisbursement
 
   // Saved beneficiaries for search
   const [savedBeneficiaries, setSavedBeneficiaries] = useState<SavedBeneficiary[]>([]);
+
+  // Field suggestions from customer's disbursement history
+  const [fieldSuggestions, setFieldSuggestions] = useState<DisbursementFieldSuggestions>(
+    { principalSchedule: [], interestSchedule: [], purpose: [] }
+  );
 
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -119,6 +126,17 @@ export function DisbursementFormModal({ loanId, loanAmount = 0, editDisbursement
         const data = await res.json();
         if (data.ok) setSavedBeneficiaries(data.beneficiaries ?? []);
       } catch { /* ignore */ }
+    })();
+  }, [loanId]);
+
+  // Fetch field suggestions from customer's disbursement history (non-critical, silent fail)
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch(`/api/loans/${loanId}/disbursement-suggestions`);
+        const data = await res.json();
+        if (data.ok) setFieldSuggestions(data.suggestions);
+      } catch { /* ignore — suggestions are UX enhancement only */ }
     })();
   }, [loanId]);
 
@@ -338,7 +356,7 @@ export function DisbursementFormModal({ loanId, loanAmount = 0, editDisbursement
             <div className="grid grid-cols-2 gap-3 mt-3">
               <label className="block">
                 <span className={labelCls}>Mục đích</span>
-                <input type="text" value={purpose} onChange={(e) => setPurpose(e.target.value)} className={inputCls} />
+                <SuggestInput value={purpose} onChange={setPurpose} suggestions={fieldSuggestions.purpose} className={inputCls} />
               </label>
               <label className="block">
                 <span className={labelCls}>Tài liệu chứng minh</span>
@@ -382,11 +400,11 @@ export function DisbursementFormModal({ loanId, loanAmount = 0, editDisbursement
             <div className="grid grid-cols-2 gap-3 mt-3">
               <label className="block">
                 <span className={labelCls}>Định kỳ trả gốc</span>
-                <input type="text" value={principalSchedule} onChange={(e) => setPrincipalSchedule(e.target.value)} className={inputCls} />
+                <SuggestInput value={principalSchedule} onChange={setPrincipalSchedule} suggestions={fieldSuggestions.principalSchedule} className={inputCls} />
               </label>
               <label className="block">
                 <span className={labelCls}>Định kỳ trả lãi</span>
-                <input type="text" value={interestSchedule} onChange={(e) => setInterestSchedule(e.target.value)} className={inputCls} />
+                <SuggestInput value={interestSchedule} onChange={setInterestSchedule} suggestions={fieldSuggestions.interestSchedule} className={inputCls} />
               </label>
             </div>
           </div>
