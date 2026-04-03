@@ -225,6 +225,45 @@ export async function importData(input: {
       }
       customersImported++;
 
+      // Import collaterals, loan_plans, co_borrowers, related_persons, credit
+      const raw = customerRaw as Record<string, unknown>;
+      if (Array.isArray(raw.collaterals)) {
+        await tx.collateral.deleteMany({ where: { customerId } });
+        for (const col of raw.collaterals as Record<string, unknown>[]) {
+          await tx.collateral.create({ data: { ...col, id: undefined, customerId } as never });
+        }
+      }
+      if (Array.isArray(raw.loan_plans)) {
+        await tx.loanPlan.deleteMany({ where: { customerId } });
+        for (const lp of raw.loan_plans as Record<string, unknown>[]) {
+          await tx.loanPlan.create({ data: { ...lp, id: undefined, customerId } as never });
+        }
+      }
+      if (Array.isArray(raw.co_borrowers)) {
+        await tx.coBorrower.deleteMany({ where: { customerId } });
+        for (const cb of raw.co_borrowers as Record<string, unknown>[]) {
+          await tx.coBorrower.create({ data: { ...cb, id: undefined, customerId } as never });
+        }
+      }
+      if (Array.isArray(raw.related_persons)) {
+        await tx.relatedPerson.deleteMany({ where: { customerId } });
+        for (const rp of raw.related_persons as Record<string, unknown>[]) {
+          await tx.relatedPerson.create({ data: { ...rp, id: undefined, customerId } as never });
+        }
+      }
+      if (Array.isArray(raw.credit_agribank)) {
+        await tx.creditAtAgribank.deleteMany({ where: { customerId } });
+        for (const ca of raw.credit_agribank as Record<string, unknown>[]) {
+          await tx.creditAtAgribank.create({ data: { ...ca, id: undefined, customerId } as never });
+        }
+      }
+      if (Array.isArray(raw.credit_other)) {
+        await tx.creditAtOther.deleteMany({ where: { customerId } });
+        for (const co of raw.credit_other as Record<string, unknown>[]) {
+          await tx.creditAtOther.create({ data: { ...co, id: undefined, customerId } as never });
+        }
+      }
+
       if (isV2 && "loans" in customerRaw && Array.isArray(customerRaw.loans)) {
         for (const loanRaw of customerRaw.loans as ImportLoanRecord[]) {
           const loanKey = `${customerId}_${loanRaw.contractNumber}`;

@@ -27,6 +27,12 @@ const fullCustomerInclude = {
       },
     },
   },
+  collaterals: true,
+  loan_plans: true,
+  co_borrowers: true,
+  related_persons: true,
+  credit_agribank: true,
+  credit_other: true,
 } satisfies Prisma.CustomerInclude;
 
 // ---------------------------------------------------------------------------

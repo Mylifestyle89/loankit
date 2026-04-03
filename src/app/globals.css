@@ -160,10 +160,11 @@ body {
 }
 
 /* ── Heading typography (weight hierarchy for visual clarity) ── */
-h1 { font-family: var(--font-heading), sans-serif; font-weight: 800; letter-spacing: -0.03em; }
-h2 { font-family: var(--font-heading), sans-serif; font-weight: 700; letter-spacing: -0.02em; }
-h3 { font-family: var(--font-heading), sans-serif; font-weight: 600; letter-spacing: -0.015em; }
-h4 { font-family: var(--font-heading), sans-serif; font-weight: 600; letter-spacing: var(--tracking-tight); }
+h1, h2, h3, h4 { font-family: var(--font-heading), sans-serif; }
+h1 { font-weight: 800; letter-spacing: -0.03em; }
+h2 { font-weight: 700; letter-spacing: -0.02em; }
+h3 { font-weight: 600; letter-spacing: -0.015em; }
+h4 { font-weight: 600; letter-spacing: var(--tracking-tight); }
 
 /* ── Native <select> dropdown dark mode ── */
 /* color-scheme on html.dark doesn't always cascade to the native popup on Windows */
