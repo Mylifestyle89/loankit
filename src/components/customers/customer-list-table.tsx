@@ -17,6 +17,8 @@ export type Customer = {
   legal_representative_title: string | null;
   organization_type: string | null;
   updatedAt: string;
+  activeLoanCount?: number;
+  activeLoanTotal?: number;
 };
 
 export function SortIcon({ active, dir }: { active: boolean; dir: "asc" | "desc" }) {
@@ -57,9 +59,8 @@ export function CustomerTable({
               <th className={thCls} onClick={() => onSort("customer_name")}>
                 <span className="inline-flex items-center gap-1">Tên khách hàng <SortIcon active={sortKey === "customer_name"} dir={sortDir} /></span>
               </th>
-              <th className={thCls} onClick={() => onSort("customer_code")}>
-                <span className="inline-flex items-center gap-1">Mã KH <SortIcon active={sortKey === "customer_code"} dir={sortDir} /></span>
-              </th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-zinc-500 dark:text-slate-400">Khoản vay</th>
+              <th className="px-4 py-3 text-right text-xs font-semibold text-zinc-500 dark:text-slate-400">Tổng dư nợ</th>
               <th className="px-4 py-3 text-left text-xs font-semibold text-zinc-500 dark:text-slate-400">Địa chỉ</th>
               <th className={thCls} onClick={() => onSort("updatedAt")}>
                 <span className="inline-flex items-center gap-1">Cập nhật <SortIcon active={sortKey === "updatedAt"} dir={sortDir} /></span>
@@ -85,10 +86,15 @@ export function CustomerTable({
                       {c.customer_name}
                     </Link>
                   </td>
-                  <td className={tdCls}>
-                    <span className="inline-flex items-center rounded-full bg-violet-50 dark:bg-violet-500/10 px-2 py-0.5 text-xs font-medium text-violet-700 dark:text-violet-400 ring-1 ring-violet-500/20">
-                      {c.customer_code}
-                    </span>
+                  <td className={`${tdCls} tabular-nums`}>
+                    {c.activeLoanCount ? (
+                      <span className="inline-flex items-center rounded-full bg-emerald-50 dark:bg-emerald-500/10 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:text-emerald-400">
+                        {c.activeLoanCount}
+                      </span>
+                    ) : <span className="text-zinc-300 dark:text-slate-600">—</span>}
+                  </td>
+                  <td className={`${tdCls} text-right tabular-nums text-xs`}>
+                    {c.activeLoanTotal ? new Intl.NumberFormat("vi-VN").format(c.activeLoanTotal) : "—"}
                   </td>
                   <td className={`${tdCls} text-zinc-500 dark:text-slate-400 max-w-xs truncate`}>{c.address ?? "—"}</td>
                   <td className={`${tdCls} text-zinc-400 dark:text-slate-500 tabular-nums text-xs`}>

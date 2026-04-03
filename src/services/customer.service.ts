@@ -44,10 +44,20 @@ export const customerService = {
     const skip = ((filter?.page ?? 1) - 1) * take;
     const where = filter?.customer_type ? { customer_type: filter.customer_type } : undefined;
     const [data, total] = await Promise.all([
-      prisma.customer.findMany({ where, orderBy: { updatedAt: "desc" }, take, skip }),
+      prisma.customer.findMany({
+        where, orderBy: { updatedAt: "desc" }, take, skip,
+        include: { loans: { where: { status: "active" }, select: { loanAmount: true } } },
+      }),
       prisma.customer.count({ where }),
     ]);
-    return { data: data.map(decryptCustomerPii), total, page: filter?.page ?? 1, limit: take };
+    return {
+      data: data.map((c) => {
+        const { loans, ...rest } = c;
+        const decrypted = decryptCustomerPii(rest);
+        return { ...decrypted, activeLoanCount: loans.length, activeLoanTotal: loans.reduce((s, l) => s + l.loanAmount, 0) };
+      }),
+      total, page: filter?.page ?? 1, limit: take,
+    };
   },
 
   async getCustomerById(id: string): Promise<Customer> {
