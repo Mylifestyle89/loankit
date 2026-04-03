@@ -158,6 +158,7 @@ export async function buildReportData(
     "UNC.Khách hàng thụ hưởng": firstBen?.beneficiaryName ?? "",
     "UNC.Số tài khoản": firstBen?.accountNumber ?? "",
     "UNC.Nơi mở tài khoản": firstBen?.bankName ?? "",
+    "UNC.Tổng giá trị hóa đơn": firstBen?.invoices?.reduce((s, inv) => s + inv.amount, 0) || firstBen?.invoiceAmount || 0,
 
     // --- Loop: Beneficiary table (UNC) — filter empty lines ---
     UNC: d.beneficiaryLines
@@ -168,6 +169,7 @@ export async function buildReportData(
         "Số tài khoản": b.accountNumber ?? "",
         "Nơi mở tài khoản": b.bankName ?? "",
         "Số tiền": b.amount,
+        "Tổng giá trị hóa đơn": b.invoices?.reduce((s, inv) => s + inv.amount, 0) || b.invoiceAmount || 0,
       })),
 
     // --- Loop: Invoice table (HD) — filter empty lines ---
@@ -241,6 +243,7 @@ function buildUncDataForLine(baseData: Record<string, unknown>, line: Record<str
     "UNC.Nơi mở tài khoản": line["Nơi mở tài khoản"],
     "UNC.Số tiền": line["Số tiền"],
     "UNC.ST bằng chữ": numberToVietnameseWords(Number(line["Số tiền"]) || 0),
+    "UNC.Tổng giá trị hóa đơn": line["Tổng giá trị hóa đơn"] ?? 0,
   };
 }
 

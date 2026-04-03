@@ -51,8 +51,8 @@ export function buildBranchStaffData(
   data["TÊN CHI NHÁNH/PGD"] = branch?.name_uppercase ?? branch?.name?.toUpperCase() ?? "";
   data["Mã CN"] = branch?.branch_code ?? "";
   data["Địa chỉ trụ sở"] = branch?.address ?? "";
-  data["Địa danh"] = branch?.district ?? branch?.province ?? "";
-  data["Địa bàn"] = branch?.province ?? "";
+  data["Địa danh"] = branch?.district || branch?.province || "";
+  data["Địa bàn"] = branch?.province || "";
   data["Điện thoại"] = branch?.phone ?? "";
   data["Điện thoại CN"] = branch?.phone ?? "";
   data["Fax"] = branch?.fax ?? "";

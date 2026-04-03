@@ -88,6 +88,7 @@ export const KHCN_PLACEHOLDER_GROUPS: PlaceholderGroup[] = [
       "UNC.Số tiền",
       "UNC.ST bằng chữ",
       "UNC.Nội dung",
+      "UNC.Tổng giá trị hóa đơn",
     ],
   },
   {
