@@ -2,7 +2,6 @@ import type { Metadata, Viewport } from "next";
 
 import { LanguageProvider } from "@/components/language-provider";
 import { ThemeProvider } from "@/components/theme-provider";
-import "../../node_modules/@eigenpal/docx-js-editor/dist/styles.css";
 import "./globals.css";
 
 // Fallback fonts for offline/restricted environments
