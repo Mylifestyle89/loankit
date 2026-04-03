@@ -4,7 +4,7 @@ export const messages: Record<Locale, Record<string, string>> = {
   vi: {
     "lang.vi": "Tiếng Việt",
     "lang.en": "English",
-    "home.title": "Công cụ tạo BCDXCV",
+    "home.title": "Loankit — Công cụ tạo hồ sơ vay",
     "home.desc":
       "Framework đã sẵn sàng cho phép thêm/chỉnh field, quản lý template, build/validate và export DOCX.",
     "home.openWorkspace": "Mở không gian báo cáo",
@@ -518,7 +518,7 @@ export const messages: Record<Locale, Record<string, string>> = {
   en: {
     "lang.vi": "Tiếng Việt",
     "lang.en": "English",
-    "home.title": "BCDXCV Report Tool",
+    "home.title": "Loankit — Loan Documentation Tool",
     "home.desc":
       "The framework is ready for field editing, template management, build/validate, and DOCX export.",
     "home.openWorkspace": "Open Report Workspace",

@@ -19,7 +19,7 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "BCDXCV — Công cụ tạo hồ sơ vay",
+  title: "Loankit — Công cụ tạo hồ sơ vay",
   description: "Nền tảng tạo báo cáo đề xuất cho vay, hồ sơ tài sản bảo đảm và chứng từ giải ngân",
 };
 
