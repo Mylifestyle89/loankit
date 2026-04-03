@@ -138,6 +138,11 @@ src/
 │   ├── auth-client.ts                # Better Auth client config
 │   ├── auth-guard.ts                 # API guards (requireSession, requireAdmin, requireEditorOrAdmin, requireOwnerOrAdmin)
 │   │
+│   ├── ai/
+│   │   ├── ai-provider-resolver.ts   # Unified AI provider selection (OpenAI/Gemini)
+│   │   ├── extract-json-from-ai-response.ts # Shared JSON extraction logic
+│   │   └── index.ts                  # Named exports (tree-shaking safe)
+│   │
 │   ├── notifications/
 │   │   └── deadline-scheduler.ts     # Hourly invoice deadline checker
 │   │
@@ -205,6 +210,48 @@ plans/
     ├── reports/
     └── visuals/
 ```
+
+## AI Provider Resolution (Phase 0AB - Tech Debt Refactor)
+
+**Location:** `src/lib/ai/`
+
+**Purpose:** Single source of truth for AI provider selection and JSON extraction across all services.
+
+**Components:**
+- **ai-provider-resolver.ts** - Determines AI provider (OpenAI/Gemini) based on env config
+  - Type: `AiProviderName` ("openai" | "gemini")
+  - Type: `ResolvedAiProvider` { provider, apiKey, model }
+  - Function: `resolveAiProvider(opts?)` - Returns resolved provider with API key and model
+  - Priority: Explicit `AI_MAPPING_PROVIDER` env var → auto-detect from available keys (OpenAI first)
+
+- **extract-json-from-ai-response.ts** - Shared JSON extraction from AI responses
+  - Used by: document-extraction, ai-mapping, financial-analysis services
+  - Eliminates duplicate JSON parsing logic
+
+- **index.ts** - Named exports only (tree-shaking safe, no barrel re-export anti-pattern)
+  - Exports: `resolveAiProvider`, `AiProviderName`, `ResolvedAiProvider`, `extractJsonFromAiResponse`
+
+**Environment Variables:**
+```
+AI_MAPPING_PROVIDER           # Optional: explicit provider selection ("openai" or "gemini")
+OPENAI_API_KEY                # Required if using OpenAI
+OPENAI_MODEL                  # Optional (default: "gpt-4o-mini")
+GEMINI_API_KEY                # Alternative to GOOGLE_API_KEY
+GOOGLE_API_KEY                # Fallback for Gemini
+GEMINI_MODEL                  # Optional (default: "gemini-1.5-flash")
+```
+
+**Usage Example:**
+```typescript
+import { resolveAiProvider } from '@/lib/ai';
+
+const { provider, apiKey, model } = resolveAiProvider({
+  defaultOpenAiModel: 'gpt-4o',
+  defaultGeminiModel: 'gemini-2.0-flash'
+});
+```
+
+---
 
 ## Services Overview
 
@@ -456,6 +503,53 @@ npx prisma studio      # Prisma data browser
 - **Validation:** Zod schemas for all API inputs
 - **Error Handling:** Custom AppError classes
 - **Testing:** Jest configuration with test coverage
+
+## Tech Debt Refactoring Completed (Phase 0AB-0C, Phases 1-7)
+
+### Phase 0AB: Shared AI Module Extraction
+1. **Purpose:** Eliminate duplicate AI provider logic across services
+2. **Files Created:** `src/lib/ai/` (3 files, ~150 LOC total)
+   - ai-provider-resolver.ts - Single provider resolution logic
+   - extract-json-from-ai-response.ts - Shared JSON extraction
+   - index.ts - Named exports (tree-shaking safe)
+3. **Services Updated:** document-extraction, ai-mapping services now import from shared module
+4. **Impact:** Reduced code duplication, improved maintainability, centralized AI config
+
+### Phase 0C: FinancialAnalysisModal Consolidation
+1. **Purpose:** Merge 2 component variants (main + KHDN) into 1 configurable component
+2. **File:** `src/components/financial-analysis/FinancialAnalysisModal.tsx`
+3. **Changes:**
+   - Unified API: Accepts both `onApply` and `onApplyValues` callbacks
+   - New props: `embedded?: boolean`, `animated?: boolean`, `showStepDots?: boolean`
+   - Conditional rendering for animation/embedded modes
+   - Backward compatible with existing KHDN usage
+4. **Benefit:** Reduced component duplication, single maintenance point
+
+### Phases 1-6: File Modularization
+1. **Scope:** Split ~30 files >300 LOC into sub-modules with barrel re-exports
+2. **Pattern Applied:**
+   ```
+   Before:  FieldCatalogBoard.tsx (395 LOC)
+   After:   field-catalog-board/
+            ├── index.ts (barrel)
+            ├── field-catalog-board.tsx
+            ├── field-catalog-board-header.tsx
+            └── field-catalog-board-table.tsx
+   ```
+3. **Sub-modules Created:** Components, services, hooks, pages split into focused modules
+4. **Barrel Exports:** Named exports only for tree-shaking safety
+
+### Phase 7: File Naming Convention
+1. **Scope:** Renamed 38 PascalCase files to kebab-case
+2. **Examples:**
+   - FieldRow.tsx → field-row.tsx
+   - AiMappingModal.tsx → ai-mapping-modal.tsx
+   - CustomerPickerModal.tsx → customer-picker-modal.tsx
+3. **New Standard:** All new files must use kebab-case naming for consistency with LLM tool indexing
+
+**Result:** Codebase now follows consistent modularization patterns with clear separation of concerns and improved file organization.
+
+---
 
 ## Recent Additions
 

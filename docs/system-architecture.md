@@ -398,6 +398,76 @@ This is a Next.js-based financial reporting and invoice tracking application bui
 - Validation via Zod (fast, compiled schemas)
 - Timeout management prevents hanging requests
 
+## AI Provider Resolution Module (Phase 0AB - Tech Debt Refactor)
+
+**Location:** `src/lib/ai/`
+
+**Purpose:** Single source of truth for AI provider selection and JSON extraction across all services.
+
+**Architecture:**
+```
+┌──────────────────────────────────────────┐
+│  src/lib/ai/ (NEW)                       │
+│  ├─ ai-provider-resolver.ts              │
+│  │  └─ resolveAiProvider()               │
+│  │     Returns: { provider, apiKey, model}
+│  ├─ extract-json-from-ai-response.ts     │
+│  │  └─ Shared JSON extraction logic      │
+│  └─ index.ts (named exports only)        │
+└────────────┬─────────────────────────────┘
+             │
+    ┌────────┼────────┬──────────────┐
+    ▼        ▼        ▼              ▼
+document-  ai-      financial-     other-ai-
+extraction mapping  analysis       services
+```
+
+**Components:**
+
+1. **ai-provider-resolver.ts** - Provider selection logic
+   - **Type:** `AiProviderName = "openai" | "gemini"`
+   - **Type:** `ResolvedAiProvider = { provider, apiKey, model }`
+   - **Function:** `resolveAiProvider(opts?)` - Returns resolved provider
+   - **Logic:**
+     1. Check explicit `AI_MAPPING_PROVIDER` env var
+     2. Auto-detect: OpenAI if `OPENAI_API_KEY` exists
+     3. Auto-detect: Gemini if `GEMINI_API_KEY` or `GOOGLE_API_KEY` exists
+     4. Throw error if no provider configured
+
+2. **extract-json-from-ai-response.ts** - Shared JSON extraction
+   - Eliminates duplicate parsing across services
+   - Handles both OpenAI and Gemini response formats
+
+3. **index.ts** - Named exports only (tree-shaking safe)
+   - Exports: `resolveAiProvider`, `AiProviderName`, `ResolvedAiProvider`, `extractJsonFromAiResponse`
+   - No barrel re-export anti-pattern
+
+**Environment Configuration:**
+```
+AI_MAPPING_PROVIDER           # Optional: "openai" or "gemini"
+OPENAI_API_KEY                # OpenAI API key
+OPENAI_MODEL                  # Optional (default: "gpt-4o-mini")
+GEMINI_API_KEY                # Gemini API key
+GOOGLE_API_KEY                # Alternative for Gemini
+GEMINI_MODEL                  # Optional (default: "gemini-1.5-flash")
+```
+
+**Usage Pattern:**
+```typescript
+import { resolveAiProvider } from '@/lib/ai';
+
+const { provider, apiKey, model } = resolveAiProvider();
+// Use provider, apiKey, model for API calls
+```
+
+**Benefits:**
+- Single point of change for provider logic
+- Consistent error handling across services
+- Easier to add new providers or switch strategies
+- Type-safe: Exported types catch misuse at compile time
+
+---
+
 ## Authentication & Authorization
 
 **System:** Better Auth v1.5.4 with Prisma adapter
