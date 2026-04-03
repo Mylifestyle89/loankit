@@ -3,10 +3,14 @@
 import { useEffect, useState } from "react";
 import { ChevronDown, Plus, X } from "lucide-react";
 import { useLanguage } from "@/components/language-provider";
-import { fmtNumber, parseNumber, formatDateInput, dmy2iso, fmtDisplay, isoToDisplay } from "@/lib/invoice-tracking-format-helpers";
+import { fmtNumber, formatDateInput, dmy2iso, fmtDisplay, isoToDisplay } from "@/lib/invoice-tracking-format-helpers";
 import { numberToVietnameseWords } from "@/lib/number-to-vietnamese-words";
 import { BeneficiarySection, type BeneficiaryLine, type InvoiceLine, type SavedBeneficiary } from "./beneficiary-section-form";
 import { inputCls, readonlyCls, labelCls, sectionCls } from "./form-styles";
+import {
+  tempId, emptyBeneficiaryLine, emptyInvoiceLine, num,
+  calcEndDateFromTerm, calcTermFromEndDate,
+} from "./disbursement-form-helpers";
 
 type Props = {
   loanId: string;
@@ -15,44 +19,6 @@ type Props = {
   onClose: () => void;
   onCreated: () => void;
 };
-
-let _tempId = 0;
-function tempId() { return `tmp_${++_tempId}_${Date.now()}`; }
-
-function emptyBeneficiaryLine(): BeneficiaryLine {
-  return { tempId: tempId(), beneficiaryId: null, name: "", address: "", accountNumber: "", bankName: "", amount: "", invoiceStatus: "pending", invoices: [] };
-}
-function emptyInvoiceLine(): InvoiceLine {
-  return { tempId: tempId(), supplierName: "", invoiceNumber: "", issueDate: "", amount: "" };
-}
-
-function num(s: string): number { return Number(parseNumber(s)) || 0; }
-
-function fmtDmy(d: Date): string {
-  return `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`;
-}
-
-function calcEndDateFromTerm(startDmy: string, term: string, unit: "tháng" | "ngày"): string {
-  const iso = dmy2iso(startDmy);
-  const n = parseInt(term);
-  if (!iso || !n || n <= 0) return "";
-  const d = new Date(iso);
-  if (unit === "ngày") d.setDate(d.getDate() + n);
-  else d.setMonth(d.getMonth() + n);
-  return fmtDmy(d);
-}
-
-function calcTermFromEndDate(startDmy: string, endDmy: string, unit: "tháng" | "ngày"): string {
-  const isoStart = dmy2iso(startDmy);
-  const isoEnd = dmy2iso(endDmy);
-  if (!isoStart || !isoEnd) return "";
-  const s = new Date(isoStart);
-  const e = new Date(isoEnd);
-  if (e <= s) return "";
-  if (unit === "ngày") return String(Math.round((e.getTime() - s.getTime()) / (24 * 3600000)));
-  // Calendar month diff
-  return String((e.getFullYear() - s.getFullYear()) * 12 + (e.getMonth() - s.getMonth()));
-}
 
 export function DisbursementFormModal({ loanId, loanAmount = 0, editDisbursementId, onClose, onCreated }: Props) {
   const { t } = useLanguage();

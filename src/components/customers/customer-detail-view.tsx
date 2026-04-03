@@ -16,6 +16,11 @@ import { CustomerBranchStaffSection } from "@/app/report/customers/[id]/componen
 import { CustomerCreditInfoSection } from "@/app/report/customers/[id]/components/customer-credit-info-section";
 import { KhcnProfileCard } from "@/app/report/customers/[id]/components/khcn-profile-card";
 import { CustomerInfoForm } from "@/app/report/customers/[id]/components/customer-info-form";
+import {
+  corporateTabs,
+  individualTabs,
+  type TabKey,
+} from "./customer-detail-tabs-config";
 
 type FullCustomer = {
   id: string;
@@ -65,24 +70,6 @@ type FullCustomer = {
   };
 };
 
-const corporateTabs = [
-  { key: "branch", label: "Nơi cho vay" },
-  { key: "info", label: "Người vay" },
-  { key: "credit", label: "Thông tin tín dụng" },
-  { key: "loans", label: "Khoản vay" },
-  { key: "collateral", label: "TSBĐ" },
-  { key: "templates", label: "In mẫu biểu" },
-] as const;
-
-const individualTabs = [
-  { key: "branch", label: "Nơi cho vay" },
-  { key: "info", label: "Thông tin" },
-  { key: "loans-credit", label: "Khoản vay & Tín dụng" },
-  { key: "collateral", label: "TSBĐ" },
-  { key: "templates", label: "In mẫu biểu" },
-] as const;
-
-type TabKey = (typeof corporateTabs)[number]["key"] | (typeof individualTabs)[number]["key"];
 
 type CustomerDetailViewProps = {
   customerType: "corporate" | "individual";
