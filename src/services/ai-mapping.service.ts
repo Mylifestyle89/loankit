@@ -8,7 +8,6 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 
 import {
   buildPrompt,
-  extractJsonObject,
   fuzzyFallback,
   fuzzyGroupingFallback,
   parseSuggestionResult,
@@ -91,7 +90,7 @@ async function suggestViaOpenAI(
   };
   const content = data.choices?.[0]?.message?.content;
   if (!content) throw new ValidationError("OpenAI returned empty suggestion content.");
-  const json = extractJsonObject(content);
+  const json = extractJsonFromAiResponse(content);
   return parseSuggestionResult(json, excelHeaders, wordPlaceholders, includeGrouping);
 }
 

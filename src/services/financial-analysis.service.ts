@@ -153,12 +153,6 @@ async function callOpenAI(
   return { text, model };
 }
 
-// ─── JSON Parsing (delegated to shared module) ──────────────────────────────
-
-function extractJsonObject(raw: string): Record<string, string> {
-  return extractJsonFromAiResponse(raw) as Record<string, string>;
-}
-
 /**
  * Validate and filter the parsed JSON — keep only expected field keys
  * and ensure all values are strings.
@@ -203,7 +197,7 @@ export const financialAnalysisService = {
       ? await callOpenAI(systemPrompt, userPrompt)
       : await callGemini(systemPrompt, userPrompt);
 
-    const parsed = extractJsonObject(response.text);
+    const parsed = extractJsonFromAiResponse(response.text) as Record<string, string>;
     const expectedKeys = new Set(fields.map((f) => f.field_key));
     const values = sanitiseValues(parsed, expectedKeys);
 

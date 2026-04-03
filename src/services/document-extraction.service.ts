@@ -16,6 +16,7 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 import { SystemError, ValidationError } from "@/core/errors/app-error";
+import { resolveAiProvider } from "@/lib/ai";
 import type { FieldCatalogItem } from "@/lib/report/config-schema";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -284,20 +285,10 @@ export const documentExtractionService = {
   ): Promise<DocumentFieldExtraction[]> {
     if (!documentText.trim() || fields.length === 0) return [];
 
-    const envProvider = (process.env.AI_MAPPING_PROVIDER ?? "").toLowerCase();
     try {
-      if (envProvider === "openai") {
-        return await callProvider(documentText, fields, extractViaOpenAI);
-      }
-      if (envProvider === "gemini") {
-        return await callProvider(documentText, fields, extractViaGemini);
-      }
-      if (process.env.OPENAI_API_KEY) {
-        return await callProvider(documentText, fields, extractViaOpenAI);
-      }
-      if (process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY) {
-        return await callProvider(documentText, fields, extractViaGemini);
-      }
+      const resolved = resolveAiProvider();
+      const providerFn = resolved.provider === "openai" ? extractViaOpenAI : extractViaGemini;
+      return await callProvider(documentText, fields, providerFn);
     } catch (error) {
       // Ghi log để debug, không throw — đây là bước bổ sung, không block luồng chính
       if (process.env.NODE_ENV === "development") {
