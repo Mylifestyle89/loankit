@@ -1,5 +1,5 @@
 import { reverseTagSuggestionSchema, type ReverseTagSuggestion } from "@/lib/report/config-schema";
-
+import { normalizeText, scoreTokenOverlap } from "@/lib/text/normalize";
 type ExcelCell = {
   header: string;
   value: string;
@@ -32,16 +32,6 @@ const VI_SYNONYMS: Record<string, string[]> = {
   contract_id: ["so hdtd", "so hop dong", "ma hop dong", "hdtd"],
 };
 
-function normalizeText(input: string): string {
-  return input
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .replace(/[^a-z0-9\s]/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
 function toTagKey(input: string): string {
   return normalizeText(input).replace(/\s+/g, "_");
 }
@@ -70,17 +60,6 @@ function normalizeCurrencyVariants(input: string): string {
   if (raw.includes("trieu")) return "1000000_text";
   if (raw.includes("ty")) return "1000000000_text";
   return raw;
-}
-
-function scoreTokenOverlap(a: string, b: string): number {
-  const aTokens = new Set(normalizeText(a).split(" ").filter(Boolean));
-  const bTokens = new Set(normalizeText(b).split(" ").filter(Boolean));
-  if (aTokens.size === 0 || bTokens.size === 0) return 0;
-  let overlap = 0;
-  for (const token of aTokens) {
-    if (bTokens.has(token)) overlap += 1;
-  }
-  return overlap / Math.max(aTokens.size, bTokens.size);
 }
 
 function semanticSignalScore(text: string, header: string): { score: number; signals: string[] } {

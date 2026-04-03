@@ -25,22 +25,7 @@ type DisbursementSummary = {
   completedCount: number;
 };
 
-type Loan = {
-  id: string;
-  contractNumber: string;
-  loanAmount: number;
-  interestRate: number | null;
-  startDate: string;
-  endDate: string;
-  purpose: string | null;
-  collateralValue: number | null;
-  securedObligation: number | null;
-  disbursementLimitByAsset: number | null;
-  status: string;
-  customer: { id: string; customer_name: string };
-  isKhcn?: boolean;
-  selectedCollateralIds?: string;
-};
+import type { Loan } from "../types";
 
 
 const PAGE_SIZE = 20;

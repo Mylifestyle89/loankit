@@ -9,11 +9,7 @@ import type { TypeLabelMap } from "../helpers";
 import type { OcrSuggestionMap } from "../types";
 import { FieldCatalogToolbar } from "./field-catalog-toolbar";
 import { FieldCatalogGroupSection } from "./field-catalog-group-section";
-
-type GroupedTreeNode = {
-  parent: string;
-  children: Array<{ fullPath: string; subgroup: string; fields: FieldCatalogItem[] }>;
-};
+import type { GroupedTreeNode } from "@/core/use-cases/mapping-engine";
 
 type FieldCatalogBoardProps = {
   t: (key: string) => string;

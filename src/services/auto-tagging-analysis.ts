@@ -9,9 +9,9 @@ import {
   callAI,
   sanitizeSuggestions,
   buildAutoTagPrompt,
-  extractJsonObject,
   fuzzyFallback,
 } from "./auto-tagging-ai-helpers";
+import { extractJsonFromAiResponse } from "@/lib/ai";
 import { extractParagraphs } from "./auto-tagging-docx-parser";
 import type { DocxParagraph, TagSuggestion, ReverseSuggestionResult } from "./auto-tagging-types";
 
@@ -36,7 +36,7 @@ export async function analyzeDocument(
   try {
     const responseText = await callAI(prompt);
     if (!responseText) throw new ValidationError("AI trả về rỗng.");
-    const json = extractJsonObject(responseText);
+    const json = extractJsonFromAiResponse(responseText);
     suggestions = sanitizeSuggestions(json, headerSet, paragraphs);
   } catch (error) {
     if (error instanceof ValidationError && error.message.includes("configured")) throw error;

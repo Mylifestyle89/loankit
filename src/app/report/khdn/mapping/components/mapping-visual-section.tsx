@@ -5,11 +5,7 @@ import type { TypeLabelMap } from "../helpers";
 import type { OcrSuggestionMap } from "../types";
 import { EditingTemplateBanner } from "./editing-template-banner";
 import { FieldCatalogBoard } from "./field-catalog-board";
-
-type GroupedTreeNode = {
-  parent: string;
-  children: Array<{ fullPath: string; subgroup: string; fields: FieldCatalogItem[] }>;
-};
+import type { GroupedTreeNode } from "@/core/use-cases/mapping-engine";
 
 type MappingVisualSectionProps = {
   t: (key: string) => string;

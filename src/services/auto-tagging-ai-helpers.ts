@@ -1,8 +1,7 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 import { SystemError, ValidationError } from "@/core/errors/app-error";
-import { resolveAiProvider, extractJsonFromAiResponse } from "@/lib/ai";
-
+import { extractJsonFromAiResponse, resolveAiProvider } from "@/lib/ai";
 import type { DocxParagraph, TagSuggestion } from "./auto-tagging-types";
 
 // ---------------------------------------------------------------------------
@@ -49,13 +48,6 @@ export function buildAutoTagPrompt(
     docLines,
   ].join("\n");
 }
-
-// ---------------------------------------------------------------------------
-// JSON extraction & sanitization (reuse pattern from ai-mapping)
-// ---------------------------------------------------------------------------
-
-// Re-export from shared module for backward compat
-export const extractJsonObject = extractJsonFromAiResponse;
 
 export function sanitizeSuggestions(
   raw: unknown,
@@ -145,20 +137,7 @@ export async function callAI(prompt: string): Promise<string> {
   return resolved.provider === "openai" ? callOpenAI(prompt) : callGemini(prompt);
 }
 
-// ---------------------------------------------------------------------------
-// Fuzzy fallback (no AI)
-// ---------------------------------------------------------------------------
-
-export function normalizeText(input: string): string {
-  return input
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .replace(/[^a-z0-9\s]/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
+import { normalizeText } from "@/lib/text/normalize";
 export function fuzzyFallback(paragraphs: DocxParagraph[], headers: string[]): TagSuggestion[] {
   const results: TagSuggestion[] = [];
   const usedHeaders = new Set<string>();

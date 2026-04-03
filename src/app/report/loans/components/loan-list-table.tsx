@@ -17,20 +17,7 @@ import { fmtDisplay as fmt, fmtDateDisplay as fmtDate } from "@/lib/invoice-trac
 import { useLanguage } from "@/components/language-provider";
 import type { SortKey } from "./loan-list-filters";
 
-type Loan = {
-  id: string;
-  contractNumber: string;
-  loanAmount: number;
-  interestRate: number | null;
-  loan_method: string;
-  collateralValue: number | null;
-  startDate: string;
-  endDate: string;
-  status: string;
-  purpose: string | null;
-  customer: { id: string; customer_name: string; customer_type?: string };
-  _count: { disbursements: number };
-};
+import type { Loan } from "../types";
 
 const LOAN_METHOD_LABELS: Record<string, string> = {
   tung_lan: "Từng lần",

@@ -10,8 +10,7 @@
 import { CheckSquare, Layers } from "lucide-react";
 import { useLanguage } from "@/components/language-provider";
 
-type Customer = { id: string; customer_name: string; email?: string | null };
-
+import type { Customer } from "../types";
 type Props = {
   statusFilter: string;
   onStatusFilterChange: (value: string) => void;

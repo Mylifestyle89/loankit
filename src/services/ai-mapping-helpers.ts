@@ -3,48 +3,12 @@
  * suggestion sanitization, JSON parsing utilities.
  */
 import { ValidationError } from "@/core/errors/app-error";
-import { extractJsonFromAiResponse } from "@/lib/ai";
+
 
 import type { FieldHint, GroupingSuggestion, MappingSuggestion, MappingSuggestionResult } from "./ai-mapping.service";
 
-// ---------------------------------------------------------------------------
-// Text normalization
-// ---------------------------------------------------------------------------
+import { normalizeText, tokenize, scoreTokenOverlap } from "@/lib/text/normalize";
 
-export function normalizeText(input: string): string {
-  return input
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[{}[\]()]/g, " ")
-    .toLowerCase()
-    .replace(/[^a-z0-9\s]/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
-export function tokenize(input: string): string[] {
-  return normalizeText(input)
-    .split(" ")
-    .map((s) => s.trim())
-    .filter(Boolean);
-}
-
-export function scoreTokenOverlap(a: string, b: string): number {
-  const aTokens = new Set(tokenize(a));
-  const bTokens = new Set(tokenize(b));
-  if (aTokens.size === 0 || bTokens.size === 0) return 0;
-  let overlap = 0;
-  for (const token of aTokens) {
-    if (bTokens.has(token)) overlap += 1;
-  }
-  return overlap / Math.max(aTokens.size, bTokens.size);
-}
-
-// ---------------------------------------------------------------------------
-// JSON extraction (delegates to @/lib/ai)
-// ---------------------------------------------------------------------------
-
-export const extractJsonObject = extractJsonFromAiResponse;
 
 // ---------------------------------------------------------------------------
 // Suggestion sanitization

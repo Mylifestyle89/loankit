@@ -6,11 +6,7 @@ import type { FieldCatalogItem } from "@/lib/report/config-schema";
 import type { TypeLabelMap } from "../helpers";
 import type { OcrSuggestionMap } from "../types";
 import { FieldRow } from "./field-row";
-
-type GroupedTreeNode = {
-  parent: string;
-  children: Array<{ fullPath: string; subgroup: string; fields: FieldCatalogItem[] }>;
-};
+import type { GroupedTreeNode } from "@/core/use-cases/mapping-engine";
 
 type FieldCatalogGroupSectionProps = {
   node: GroupedTreeNode;

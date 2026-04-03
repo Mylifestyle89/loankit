@@ -13,20 +13,7 @@ import { LoanStatusBadge } from "@/components/invoice-tracking/loan-status-badge
 import { fmtDisplay as fmt, fmtDateDisplay as fmtDate } from "@/lib/invoice-tracking-format-helpers";
 import { useLanguage } from "@/components/language-provider";
 
-type Loan = {
-  id: string;
-  contractNumber: string;
-  loanAmount: number;
-  interestRate: number | null;
-  startDate: string;
-  endDate: string;
-  purpose: string | null;
-  collateralValue: number | null;
-  securedObligation: number | null;
-  disbursementLimitByAsset: number | null;
-  status: string;
-  customer: { id: string; customer_name: string };
-};
+import type { Loan } from "../../types";
 
 type Props = {
   loan: Loan;

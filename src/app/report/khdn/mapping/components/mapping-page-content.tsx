@@ -24,7 +24,7 @@ import { ImportGroupPromptModal } from "./modals/import-group-prompt-modal";
 import { OcrReviewModal } from "./modals/ocr-review-modal";
 import { SnapshotRestoreModal } from "./modals/snapshot-restore-modal";
 import { SystemLogCard } from "./system-log-card";
-import { FinancialAnalysisModal } from "@/components/financial-analysis-modal";
+import { FinancialAnalysisModal } from "@/components/financial-analysis/financial-analysis-modal";
 import { useCustomerStore } from "../stores/use-customer-store";
 import { useFieldTemplateStore } from "../stores/use-field-template-store";
 import { useUiStore } from "../stores/use-ui-store";

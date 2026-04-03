@@ -10,20 +10,7 @@ import { LoanListFilters } from "./components/loan-list-filters";
 import { LoanListTable } from "./components/loan-list-table";
 import type { SortKey } from "./components/loan-list-filters";
 
-type Loan = {
-  id: string;
-  contractNumber: string;
-  loanAmount: number;
-  interestRate: number | null;
-  loan_method: string;
-  collateralValue: number | null;
-  startDate: string;
-  endDate: string;
-  status: string;
-  purpose: string | null;
-  customer: { id: string; customer_name: string; customer_type?: string };
-  _count: { disbursements: number };
-};
+import type { Loan } from "./types";
 
 export default function LoansPage() {
   const { t } = useLanguage();

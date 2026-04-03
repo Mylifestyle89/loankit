@@ -13,10 +13,10 @@ export {
   callAI,
   sanitizeSuggestions,
   buildAutoTagPrompt,
-  extractJsonObject,
-  normalizeText,
   fuzzyFallback,
 } from "./auto-tagging-ai-helpers";
+import { extractJsonFromAiResponse } from "@/lib/ai";
+import { normalizeText } from "@/lib/text/normalize";
 export { analyzeDocument, reverseEngineerTemplate } from "./auto-tagging-analysis";
 export { replaceWithTags } from "./auto-tagging-replace";
 
