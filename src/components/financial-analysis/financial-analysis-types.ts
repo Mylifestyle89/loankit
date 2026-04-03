@@ -25,5 +25,13 @@ export type FinancialAnalysisModalProps = {
   isOpen: boolean;
   onClose: () => void;
   fieldCatalog: FieldCatalogItem[];
-  onApply: (values: Record<string, string>) => void;
+  onApply?: (values: Record<string, string>) => void;
+  /** Alias for onApply — KHDN compat */
+  onApplyValues?: (values: Record<string, string>) => void;
+  /** Render without overlay backdrop (embedded inside a parent modal) */
+  embedded?: boolean;
+  /** Enable framer-motion animations (default: false) */
+  animated?: boolean;
+  /** Show StepDots progress indicator instead of numbered step bar (default: false) */
+  showStepDots?: boolean;
 };

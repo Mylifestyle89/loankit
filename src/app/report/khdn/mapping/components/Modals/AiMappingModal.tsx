@@ -14,7 +14,7 @@ import { generateFieldCatalogFromBk } from "@/lib/import/bk-importer";
 import { useAutoTagging } from "../../hooks/useAutoTagging";
 import { type MappingLink } from "../MappingCanvas";
 import { type SystemLogEntry, type SystemLogType } from "../SystemLogCard";
-import { FinancialAnalysisModal } from "./FinancialAnalysisModal";
+import { FinancialAnalysisModal } from "@/components/financial-analysis/FinancialAnalysisModal";
 import { type SuggestReviewItem } from "./ai-suggest-review-table";
 
 import { type Props, type ModalSection, type BkImportResult } from "./ai-mapping-modal-types";

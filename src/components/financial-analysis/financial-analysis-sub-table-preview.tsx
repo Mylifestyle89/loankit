@@ -1,15 +1,19 @@
 import type { SubTable } from "@/lib/bctc-extractor";
-import { fmt } from "./financial-analysis-constants";
+import { fmtNum } from "./financial-analysis-utils";
 
 // SubTablePreview: renders sub-tables (phaiThu, tonKho, phaiTra) with max 20 rows
 export function SubTablePreview({ subTable }: { subTable: SubTable }) {
-  if (!subTable.rows.length) return <p className="px-3 py-2 text-xs text-slate-400">Không có dữ liệu</p>;
+  if (!subTable.rows.length)
+    return <p className="px-3 py-2 text-xs text-slate-400">Không có dữ liệu</p>;
   return (
     <table className="w-full text-xs">
       <thead>
         <tr className="bg-slate-50/80 dark:bg-white/[0.03] text-left">
           {subTable.headers.map((h) => (
-            <th key={h} className="px-2 py-1.5 font-semibold text-slate-600 dark:text-slate-400 max-w-[140px] truncate">
+            <th
+              key={h}
+              className="px-2 py-1.5 font-semibold text-slate-600 dark:text-slate-400 max-w-[140px] truncate"
+            >
               {h}
             </th>
           ))}
@@ -29,7 +33,7 @@ export function SubTablePreview({ subTable }: { subTable: SubTable }) {
                       : "text-slate-600 dark:text-slate-300"
                   }`}
                 >
-                  {typeof v === "number" ? fmt(v) : v ?? ""}
+                  {typeof v === "number" ? fmtNum(v) : v ?? ""}
                 </td>
               );
             })}
@@ -37,7 +41,10 @@ export function SubTablePreview({ subTable }: { subTable: SubTable }) {
         ))}
         {subTable.rows.length > 20 && (
           <tr>
-            <td colSpan={subTable.headers.length} className="px-2 py-1.5 text-center text-slate-400 dark:text-slate-500 italic">
+            <td
+              colSpan={subTable.headers.length}
+              className="px-2 py-1.5 text-center text-slate-400 dark:text-slate-500 italic"
+            >
               ... và {subTable.rows.length - 20} dòng nữa
             </td>
           </tr>

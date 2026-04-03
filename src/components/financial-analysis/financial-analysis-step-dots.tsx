@@ -11,9 +11,9 @@ export function StepDots({ step }: { step: number }) {
             key={s}
             className={`h-1.5 rounded-full transition-all duration-300 ${
               s === step
-                ? "w-6 bg-violet-500"
+                ? "w-6 bg-emerald-500"
                 : s < step
-                ? "w-1.5 bg-violet-300 dark:bg-violet-400"
+                ? "w-1.5 bg-emerald-300 dark:bg-emerald-400"
                 : "w-1.5 bg-slate-200 dark:bg-white/[0.1]"
             }`}
           />

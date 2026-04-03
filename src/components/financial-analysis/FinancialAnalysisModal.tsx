@@ -11,6 +11,7 @@ import {
   AlertCircle,
   Loader2,
   RotateCcw,
+  ArrowLeft,
 } from "lucide-react";
 
 import type { BctcExtractResult } from "@/lib/bctc-extractor";
@@ -29,7 +30,11 @@ export function FinancialAnalysisModal({
   onClose,
   fieldCatalog,
   onApply,
+  onApplyValues,
+  embedded = false,
 }: FinancialAnalysisModalProps) {
+  // Unified apply callback — supports both onApply and onApplyValues (khdn compat)
+  const applyFn = onApply ?? onApplyValues ?? (() => {});
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const [step, setStep] = useState<Step>(1);
@@ -152,7 +157,7 @@ export function FinancialAnalysisModal({
 
   function handleApply() {
     if (!analysisData) return;
-    onApply(analysisData.editedValues);
+    applyFn(analysisData.editedValues);
     handleClose();
   }
 
@@ -173,14 +178,8 @@ export function FinancialAnalysisModal({
     (k) => editedValues[k] !== originalAiValues[k],
   ).length;
 
-  return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-label="Phân tích Tài chính BCTC"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
-    >
-      <div className="flex w-full max-w-[95vw] md:max-w-3xl flex-col rounded-2xl bg-white dark:bg-[#141414] shadow-2xl max-h-[92vh]">
+  const cardContent = (
+      <div className={`flex w-full flex-col rounded-2xl bg-white dark:bg-[#141414] shadow-2xl ${embedded ? "max-h-full" : "max-w-[95vw] md:max-w-3xl max-h-[92vh]"}`}>
 
         {/* Header */}
         <div className="flex flex-shrink-0 items-center justify-between border-b border-slate-200 dark:border-white/[0.07] px-5 py-3.5">
@@ -195,14 +194,25 @@ export function FinancialAnalysisModal({
               </span>
             )}
           </div>
-          <button
-            type="button"
-            onClick={handleClose}
-            aria-label="Đóng modal"
-            className="rounded-lg p-1.5 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.07] transition-colors"
-          >
-            <X className="h-5 w-5" />
-          </button>
+          {embedded ? (
+            <button
+              type="button"
+              onClick={handleClose}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 dark:border-white/[0.1] px-3 py-1.5 text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/[0.05] transition-colors"
+            >
+              <ArrowLeft className="h-3.5 w-3.5" />
+              Quay lại
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={handleClose}
+              aria-label="Đóng modal"
+              className="rounded-lg p-1.5 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.07] transition-colors"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          )}
         </div>
 
         {/* Step indicator */}
@@ -529,6 +539,20 @@ export function FinancialAnalysisModal({
           </div>
         </div>
       </div>
+  );
+
+  // Embedded mode: render content inline without fixed overlay
+  if (embedded) return cardContent;
+
+  // Standard mode: render as fixed overlay modal
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label="Phân tích Tài chính BCTC"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+    >
+      {cardContent}
     </div>
   );
 }
