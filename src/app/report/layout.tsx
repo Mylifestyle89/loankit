@@ -116,7 +116,7 @@ const [hovered, setHovered] = useState(false);
             : { width: expanded ? SIDEBAR_EXPANDED : SIDEBAR_COLLAPSED }
         }
         transition={sidebarSpring}
-        className="fixed inset-y-0 left-0 z-40 flex flex-col overflow-hidden border-r border-slate-200/50 bg-white/90 backdrop-blur-xl dark:border-white/[0.08] dark:bg-[#141414]/90 max-md:z-50 max-md:shadow-2xl"
+        className="fixed inset-y-0 left-0 z-40 flex flex-col overflow-hidden border-r border-zinc-100/80 bg-white/95 backdrop-blur-2xl dark:border-white/[0.05] dark:bg-[#141414]/95 max-md:z-50 max-md:shadow-2xl"
         style={{ willChange: isMobile ? "transform" : "width" }}
       >
         {/* Shadow when expanded — pure CSS instead of AnimatePresence */}
@@ -169,14 +169,18 @@ const [hovered, setHovered] = useState(false);
                 key={link.href}
                 href={link.href}
                 title={!expanded ? link.label : undefined}
-                className={`group flex items-center rounded-lg py-2 max-md:py-3 text-sm font-medium transition-all duration-150 ${
+                className={`group relative flex items-center rounded-lg py-2 max-md:py-3 text-sm font-medium transition-all duration-150 ${
                   expanded ? "gap-2.5 px-2.5 justify-start" : "justify-center px-0"
                 } ${
                   isActive
-                    ? "bg-indigo-50 text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-400"
-                    : "text-zinc-500 hover:bg-slate-100/70 hover:text-zinc-800 dark:text-slate-400 dark:hover:bg-white/[0.06] dark:hover:text-slate-200"
+                    ? "bg-indigo-50/80 text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-400"
+                    : "text-zinc-500 hover:bg-zinc-50 hover:text-zinc-800 dark:text-slate-400 dark:hover:bg-white/[0.04] dark:hover:text-slate-200"
                 }`}
               >
+                {/* Active pill indicator */}
+                {isActive && (
+                  <span className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-[3px] rounded-full bg-indigo-600 dark:bg-indigo-400" />
+                )}
                 <Icon
                   className={`h-[17px] w-[17px] shrink-0 ${
                     isActive

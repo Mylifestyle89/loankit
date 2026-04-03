@@ -159,14 +159,11 @@ body {
   transition: background-color 0.2s var(--ease-out), color 0.15s var(--ease-out);
 }
 
-/* ── Heading typography ── */
-h1,
-h2,
-h3,
-h4 {
-  font-family: var(--font-heading), sans-serif;
-  letter-spacing: var(--tracking-tight);
-}
+/* ── Heading typography (weight hierarchy for visual clarity) ── */
+h1 { font-family: var(--font-heading), sans-serif; font-weight: 800; letter-spacing: -0.03em; }
+h2 { font-family: var(--font-heading), sans-serif; font-weight: 700; letter-spacing: -0.02em; }
+h3 { font-family: var(--font-heading), sans-serif; font-weight: 600; letter-spacing: -0.015em; }
+h4 { font-family: var(--font-heading), sans-serif; font-weight: 600; letter-spacing: var(--tracking-tight); }
 
 /* ── Native <select> dropdown dark mode ── */
 /* color-scheme on html.dark doesn't always cascade to the native popup on Windows */
@@ -191,6 +188,52 @@ h4 {
 /* Prevent flex children from overflowing parent width */
 .panel-flex-safe {
   min-width: 0;
+}
+
+/* ── Premium surface utilities (Bigtech SaaS depth) ── */
+.surface-card {
+  border-radius: 1rem;
+  border: 1px solid rgb(244 244 245); /* zinc-100 */
+  background: white;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 8px 24px rgba(0,0,0,0.03);
+}
+.dark .surface-card {
+  border-color: rgba(255,255,255,0.06);
+  background: #161616;
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.04);
+}
+.surface-card-interactive {
+  transition: box-shadow 300ms var(--ease-out), transform 200ms var(--ease-out);
+}
+.surface-card-interactive:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.06), 0 12px 32px rgba(0,0,0,0.04);
+  transform: translateY(-1px);
+}
+.dark .surface-card-interactive:hover {
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.08), 0 4px 16px rgba(0,0,0,0.3);
+}
+
+/* ── Button glow on hover (CTA buttons) ── */
+.btn-glow {
+  transition: box-shadow 200ms var(--ease-out), transform 200ms var(--ease-out);
+}
+.btn-glow:hover {
+  box-shadow: 0 0 20px rgba(124,58,237,0.25);
+  transform: translateY(-1px);
+}
+
+/* ── Focus glow ring (keyboard nav) ── */
+.focus-glow:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--bg-base), 0 0 0 4px rgba(99,102,241,0.5);
+}
+
+/* ── Reduced motion: disable transforms ── */
+@media (prefers-reduced-motion: reduce) {
+  .surface-card-interactive:hover,
+  .btn-glow:hover {
+    transform: none;
+  }
 }
 
 /* Aurora ambient removed — clean neutral dark mode */

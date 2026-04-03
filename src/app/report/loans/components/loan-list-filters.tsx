@@ -50,10 +50,10 @@ export function LoanListFilters({
   const { t } = useLanguage();
 
   const filterBtnCls = (active: boolean) =>
-    `cursor-pointer rounded-lg px-3 py-1.5 text-xs font-medium border transition-all duration-150 ${
+    `cursor-pointer px-3 py-1.5 text-xs font-medium transition-all duration-150 first:rounded-l-lg last:rounded-r-lg ${
       active
-        ? "border-violet-300 bg-violet-50 text-violet-700 dark:border-violet-500/30 dark:bg-violet-500/15 dark:text-violet-400"
-        : "border-zinc-200 bg-white text-zinc-600 hover:border-violet-200 dark:border-white/[0.09] dark:bg-[#1a1a1a] dark:text-slate-400 dark:hover:border-violet-500/20"
+        ? "bg-indigo-600 text-white shadow-sm dark:bg-indigo-500"
+        : "bg-white text-zinc-600 hover:bg-zinc-50 dark:bg-[#1a1a1a] dark:text-slate-400 dark:hover:bg-white/[0.06]"
     }`;
 
 
@@ -81,8 +81,8 @@ export function LoanListFilters({
         )}
       </div>
 
-      {/* Customer type filter */}
-      <div className="flex items-center gap-1">
+      {/* Customer type filter — segmented control */}
+      <div className="flex items-center rounded-lg border border-zinc-200 dark:border-white/[0.09] overflow-hidden">
         {CUSTOMER_TYPE_OPTIONS.map((opt) => (
           <button
             key={opt.value}
