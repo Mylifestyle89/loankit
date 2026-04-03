@@ -1,81 +1,71 @@
+/**
+ * fs-store — framework state load/save + re-export barrel.
+ * Sub-modules: fs-store-mapping-io.ts, fs-store-state-ops.ts.
+ */
 import fs from "node:fs/promises";
 import path from "node:path";
 
 import { prisma } from "@/lib/prisma";
+import { REPORT_STATE_FILE } from "@/lib/report/constants";
 import {
-  DEFAULT_ALIAS_FILE,
-  DEFAULT_MAPPING_FILE,
-  DEFAULT_TEMPLATE_FILE,
-  REPORT_STATE_FILE,
-} from "@/lib/report/constants";
-import {
-  aliasMapSchema,
   frameworkStateSchema,
-  type AliasMap,
-  type FieldCatalogItem,
   type FrameworkState,
-  type MappingMaster,
-  mappingMasterSchema,
   type MappingVersion,
   type TemplateProfile,
 } from "@/lib/report/config-schema";
 import {
   normalizeFieldCatalogGroupsVi,
   normalizeFieldCatalogLabelsVi,
-  translateFieldLabelVi,
 } from "@/lib/report/field-labels";
 import { fileLockService } from "@/lib/report/file-lock.service";
-import { FINANCIAL_FIELD_CATALOG } from "@/lib/report/financial-field-catalog";
 import {
   ensureDirectories,
   fsErrorCode,
-  inferType,
   isIgnorableFsError,
   isReadOnlyFsError,
   pruneOldBackups,
-  readJsonFile,
-  toGroup,
   tsForFilename,
-  writeJsonFile,
 } from "@/lib/report/fs-store-helpers";
+import {
+  buildCatalog,
+  mergeFinancialCatalog,
+  readMappingFile,
+  readAliasFile,
+} from "@/lib/report/fs-store-mapping-io";
+import {
+  DEFAULT_ALIAS_FILE,
+  DEFAULT_MAPPING_FILE,
+  DEFAULT_TEMPLATE_FILE,
+} from "@/lib/report/constants";
+
+// Re-export all public API from sub-modules so consumers import from "@/lib/report/fs-store"
+export {
+  readMappingFile,
+  parseMappingJson,
+  readAliasFile,
+  parseAliasJson,
+  buildCatalog,
+  mergeFinancialCatalog,
+} from "@/lib/report/fs-store-mapping-io";
+
+export {
+  createMappingDraft,
+  publishMappingVersion,
+  setActiveTemplate,
+  updateTemplateInventory,
+  appendRunLog,
+} from "@/lib/report/fs-store-state-ops";
+
+// ---------------------------------------------------------------------------
+// Internal constants
+// ---------------------------------------------------------------------------
 
 const REPORT_CONFIG_DB_KEY = "framework_state";
-
 const nowIso = () => new Date().toISOString();
 
-export async function readMappingFile(mappingPath: string): Promise<MappingMaster> {
-  const absolute = path.join(process.cwd(), mappingPath);
-  const parsed = await readJsonFile<unknown>(absolute);
-  return mappingMasterSchema.parse(parsed);
-}
-
-/** Parse mapping JSON from inline DB string (avoids filesystem read). */
-export function parseMappingJson(json: string): MappingMaster {
-  return mappingMasterSchema.parse(JSON.parse(json));
-}
-
-export async function readAliasFile(aliasPath: string): Promise<AliasMap> {
-  const absolute = path.join(process.cwd(), aliasPath);
-  const parsed = await readJsonFile<unknown>(absolute);
-  return aliasMapSchema.parse(parsed);
-}
-
-/** Parse alias JSON from inline DB string (avoids filesystem read). */
-export function parseAliasJson(json: string): AliasMap {
-  return aliasMapSchema.parse(JSON.parse(json));
-}
-
-function buildCatalog(mapping: MappingMaster): FieldCatalogItem[] {
-  return mapping.mappings.map((item) => ({
-    field_key: item.template_field,
-    label_vi: translateFieldLabelVi(item.template_field),
-    group: toGroup(item.template_field),
-    type: inferType(item.template_field, item.normalizer),
-    required: item.status !== "MISSING",
-    normalizer: item.normalizer,
-    examples: item.sources.map((source) => `${source.source}:${source.path}`),
-  }));
-}
+// ---------------------------------------------------------------------------
+// Bootstrap helpers (internal)
+// ---------------------------------------------------------------------------
 
 function bootstrapTemplateProfiles(): TemplateProfile[] {
   return [
@@ -102,6 +92,7 @@ async function bootstrapState(): Promise<FrameworkState> {
   const draftMappingPath = `report_assets/config/versions/${versionId}.mapping.json`;
   const draftAliasPath = `report_assets/config/versions/${versionId}.alias.json`;
 
+  const { writeJsonFile } = await import("@/lib/report/fs-store-helpers");
   await writeJsonFile(path.join(process.cwd(), draftMappingPath), mapping);
   const alias = await readAliasFile(DEFAULT_ALIAS_FILE);
   await writeJsonFile(path.join(process.cwd(), draftAliasPath), alias);
@@ -128,20 +119,6 @@ async function bootstrapState(): Promise<FrameworkState> {
   return frameworkStateSchema.parse(state);
 }
 
-/**
- * Merge FINANCIAL_FIELD_CATALOG items into the existing catalog.
- * Idempotent: only adds items whose field_key does not already exist.
- */
-function mergeFinancialCatalog(catalog: FieldCatalogItem[]): {
-  catalog: FieldCatalogItem[];
-  changed: boolean;
-} {
-  const existing = new Set(catalog.map((item) => item.field_key));
-  const toAdd = FINANCIAL_FIELD_CATALOG.filter((item) => !existing.has(item.field_key));
-  if (toAdd.length === 0) return { catalog, changed: false };
-  return { catalog: [...catalog, ...toAdd], changed: true };
-}
-
 const EMPTY_STATE: FrameworkState = frameworkStateSchema.parse({
   field_catalog: [],
   field_templates: [],
@@ -152,7 +129,10 @@ const EMPTY_STATE: FrameworkState = frameworkStateSchema.parse({
   active_template_id: "",
 });
 
-/** Try loading state from DB first (works on Vercel), fall back to filesystem. */
+// ---------------------------------------------------------------------------
+// DB persistence
+// ---------------------------------------------------------------------------
+
 async function loadStateFromDb(): Promise<FrameworkState | null> {
   try {
     const row = await prisma.reportConfig.findUnique({ where: { key: REPORT_CONFIG_DB_KEY } });
@@ -163,7 +143,6 @@ async function loadStateFromDb(): Promise<FrameworkState | null> {
   }
 }
 
-/** Persist state to DB (always works, even on read-only FS). */
 async function saveStateToDb(state: FrameworkState): Promise<void> {
   try {
     const json = JSON.stringify(state);
@@ -177,6 +156,29 @@ async function saveStateToDb(state: FrameworkState): Promise<void> {
   }
 }
 
+// ---------------------------------------------------------------------------
+// Normalize + persist helper
+// ---------------------------------------------------------------------------
+
+async function normalizeAndPersist(parsed: FrameworkState): Promise<FrameworkState> {
+  const mergedFinancial = mergeFinancialCatalog(parsed.field_catalog);
+  if (mergedFinancial.changed) {
+    parsed.field_catalog = mergedFinancial.catalog;
+  }
+
+  const normalizedLabels = normalizeFieldCatalogLabelsVi(parsed.field_catalog);
+  const normalizedGroups = normalizeFieldCatalogGroupsVi(normalizedLabels.catalog);
+  if (mergedFinancial.changed || normalizedLabels.changed || normalizedGroups.changed) {
+    parsed.field_catalog = normalizedGroups.catalog;
+    await saveState(parsed);
+  }
+  return parsed;
+}
+
+// ---------------------------------------------------------------------------
+// Public API: loadState / saveState / getActiveMappingVersion / getActiveTemplateProfile
+// ---------------------------------------------------------------------------
+
 export async function loadState(): Promise<FrameworkState> {
   // 1. Try DB first (works on Vercel read-only FS)
   const fromDb = await loadStateFromDb();
@@ -186,6 +188,7 @@ export async function loadState(): Promise<FrameworkState> {
 
   // 2. Fall back to filesystem (local dev)
   await ensureDirectories();
+  const { readJsonFile } = await import("@/lib/report/fs-store-helpers");
   let stateRaw: unknown;
   try {
     stateRaw = await readJsonFile<unknown>(REPORT_STATE_FILE);
@@ -203,25 +206,8 @@ export async function loadState(): Promise<FrameworkState> {
   }
 
   const parsed = frameworkStateSchema.parse(stateRaw);
-  // Seed DB from file so future reads use DB
   await saveStateToDb(parsed);
   return normalizeAndPersist(parsed);
-}
-
-/** Merge financial catalog + normalize labels, persist if changed. */
-async function normalizeAndPersist(parsed: FrameworkState): Promise<FrameworkState> {
-  const mergedFinancial = mergeFinancialCatalog(parsed.field_catalog);
-  if (mergedFinancial.changed) {
-    parsed.field_catalog = mergedFinancial.catalog;
-  }
-
-  const normalizedLabels = normalizeFieldCatalogLabelsVi(parsed.field_catalog);
-  const normalizedGroups = normalizeFieldCatalogGroupsVi(normalizedLabels.catalog);
-  if (mergedFinancial.changed || normalizedLabels.changed || normalizedGroups.changed) {
-    parsed.field_catalog = normalizedGroups.catalog;
-    await saveState(parsed);
-  }
-  return parsed;
 }
 
 export async function saveState(state: FrameworkState): Promise<void> {
@@ -255,92 +241,11 @@ export async function saveState(state: FrameworkState): Promise<void> {
 
     await fs.writeFile(REPORT_STATE_FILE, nextRaw, "utf-8");
   } catch (err) {
-    if (isIgnorableFsError(err)) return; // Vercel read-only FS — DB already saved above
+    if (isIgnorableFsError(err)) return;
     throw err;
   } finally {
     await fileLockService.releaseLock("report_assets");
   }
-}
-
-export async function createMappingDraft(params: {
-  createdBy: string;
-  notes?: string;
-  mapping: MappingMaster;
-  aliasMap: AliasMap;
-  fieldCatalog?: FieldCatalogItem[];
-}): Promise<{ state: FrameworkState; version: MappingVersion }> {
-  const state = await loadState();
-  const id = `draft-${Date.now()}`;
-  const mappingPath = `report_assets/config/versions/${id}.mapping.json`;
-  const aliasPath = `report_assets/config/versions/${id}.alias.json`;
-
-  const parsedMapping = mappingMasterSchema.parse(params.mapping);
-  const parsedAlias = aliasMapSchema.parse(params.aliasMap);
-
-  // Write to filesystem (best-effort, skipped on Vercel read-only FS)
-  try {
-    await writeJsonFile(path.join(process.cwd(), mappingPath), parsedMapping);
-    await writeJsonFile(path.join(process.cwd(), aliasPath), parsedAlias);
-  } catch (err) {
-    if (!isIgnorableFsError(err)) throw err;
-  }
-
-  const version: MappingVersion = {
-    id,
-    status: "draft",
-    created_by: params.createdBy,
-    created_at: nowIso(),
-    mapping_json_path: mappingPath,
-    alias_json_path: aliasPath,
-    notes: params.notes ?? "",
-  };
-
-  state.mapping_versions = [version, ...state.mapping_versions];
-  state.active_mapping_version_id = id;
-  state.field_catalog = params.fieldCatalog ?? buildCatalog(params.mapping);
-  await saveState(state);
-  return { state, version };
-}
-
-export async function publishMappingVersion(versionId: string): Promise<FrameworkState> {
-  const state = await loadState();
-  state.mapping_versions = state.mapping_versions.map((version) =>
-    version.id === versionId ? { ...version, status: "published" } : version,
-  );
-  state.active_mapping_version_id = versionId;
-  await saveState(state);
-  return state;
-}
-
-export async function setActiveTemplate(templateId: string): Promise<FrameworkState> {
-  const state = await loadState();
-  state.template_profiles = state.template_profiles.map((template) => ({
-    ...template,
-    active: template.id === templateId,
-  }));
-  state.active_template_id = templateId;
-  await saveState(state);
-  return state;
-}
-
-export async function updateTemplateInventory(templateId: string, inventoryPath: string): Promise<FrameworkState> {
-  const state = await loadState();
-  state.template_profiles = state.template_profiles.map((template) =>
-    template.id === templateId
-      ? {
-          ...template,
-          placeholder_inventory_path: inventoryPath,
-        }
-      : template,
-  );
-  await saveState(state);
-  return state;
-}
-
-export async function appendRunLog(log: FrameworkState["run_logs"][number]): Promise<void> {
-  const state = await loadState();
-  state.run_logs = [log, ...state.run_logs].slice(0, 100);
-  await saveState(state);
 }
 
 export async function getActiveMappingVersion(stateOverride?: FrameworkState): Promise<MappingVersion> {

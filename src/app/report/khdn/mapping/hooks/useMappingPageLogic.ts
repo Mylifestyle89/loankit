@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 import { useLanguage } from "@/components/language-provider";
 import { useModalStore } from "@/lib/report/use-modal-store";
@@ -28,6 +28,7 @@ import { useTemplateActions } from "./useTemplateActions";
 import { useAiOcrActions } from "./useAiOcrActions";
 import { useDragAndDrop } from "./useDragAndDrop";
 import { useMappingEffects } from "./useMappingEffects";
+import { useMappingModalState } from "./use-mapping-modal-state";
 
 /**
  * Aggregates all state, computed values, and handlers for the Mapping page.
@@ -37,16 +38,19 @@ export function useMappingPageLogic() {
   const { t } = useLanguage();
   const searchParams = useSearchParams();
 
-  // ── Local UI state ─────────────────────────────────────────────────────────
-  const [financialAnalysisOpen, setFinancialAnalysisOpen] = useState(false);
-  const [snapshotRestoreOpen, setSnapshotRestoreOpen] = useState(false);
-  const [customerPickerOpen, setCustomerPickerOpen] = useState(false);
-  const [templatePickerOpen, setTemplatePickerOpen] = useState(false);
-
-  // Hidden file input for toolbar Upload button
-  const toolbarUploadRef = useRef<HTMLInputElement>(null);
-  const ocrLogEndRef = useRef<HTMLDivElement | null>(null);
-  const openedAiSuggestionFromQueryRef = useRef(false);
+  // ── Modal state (local UI) ─────────────────────────────────────────────────
+  const {
+    financialAnalysisOpen, setFinancialAnalysisOpen,
+    snapshotRestoreOpen, setSnapshotRestoreOpen,
+    customerPickerOpen, setCustomerPickerOpen,
+    templatePickerOpen, setTemplatePickerOpen,
+    toolbarUploadRef,
+    ocrLogEndRef,
+    openedAiSuggestionFromQueryRef,
+    handleOpenOcrReview,
+    handleAcceptOcrSuggestion,
+    handleDeclineOcrSuggestion,
+  } = useMappingModalState();
 
   useAutoSaveSnapshot();
 
@@ -119,7 +123,6 @@ export function useMappingPageLogic() {
   const collapsedParentGroups = useGroupUiStore((s) => s.collapsedParentGroups);
 
   const undoHistory = useUndoStore((s) => s.undoHistory);
-
   const openModal = useModalStore((s) => s.openModal);
 
   // ── Dispatches ─────────────────────────────────────────────────────────────
@@ -329,30 +332,27 @@ export function useMappingPageLogic() {
     return () => window.removeEventListener("keydown", handler);
   }, [undoLastAction]);
 
-  // ── Memoized callbacks ─────────────────────────────────────────────────────
-  const handleOpenCustomerPicker = useCallback(() => setCustomerPickerOpen(true), []);
-  const handleOpenTemplatePicker = useCallback(() => setTemplatePickerOpen(true), []);
-  const handleUploadDocument = useCallback(() => toolbarUploadRef.current?.click(), []);
+  // ── Toolbar callbacks ──────────────────────────────────────────────────────
+  const handleOpenCustomerPicker = useCallback(() => setCustomerPickerOpen(true), [setCustomerPickerOpen]);
+  const handleOpenTemplatePicker = useCallback(() => setTemplatePickerOpen(true), [setTemplatePickerOpen]);
+  const handleUploadDocument = useCallback(() => toolbarUploadRef.current?.click(), [toolbarUploadRef]);
   const handleOpenFinancialAnalysis = useCallback(() => {
     if (!selectedCustomerId) {
       useUiStore.getState().setStatus({ error: "Xin hãy chọn khách hàng trước khi sử dụng Phân tích tài chính." });
       return;
     }
     setFinancialAnalysisOpen(true);
-  }, [selectedCustomerId]);
-  const handleOpenOcrReview = useCallback(() => useUiStore.getState().setModals({ ocrReview: true }), []);
-  const handleSaveEditedFieldTemplate = useCallback(() => void saveEditedFieldTemplate(), [saveEditedFieldTemplate]);
-  const handlePromoteToMasterTemplate = useCallback(() => void promoteToMasterTemplate(), [promoteToMasterTemplate]);
+  }, [selectedCustomerId, setFinancialAnalysisOpen]);
+  const handleSaveEditedFieldTemplate = useCallback(
+    () => void saveEditedFieldTemplate(),
+    [saveEditedFieldTemplate],
+  );
+  const handlePromoteToMasterTemplate = useCallback(
+    () => void promoteToMasterTemplate(),
+    [promoteToMasterTemplate],
+  );
   const handleOpenFormulaModal = useCallback(
     (fieldKey: string) => useUiStore.getState().setContext({ formulaFieldKey: fieldKey }),
-    [],
-  );
-  const handleAcceptOcrSuggestion = useCallback(
-    (fk: string) => void useOcrStore.getState().acceptSuggestion(fk),
-    [],
-  );
-  const handleDeclineOcrSuggestion = useCallback(
-    (fk: string) => useOcrStore.getState().declineSuggestion(fk),
     [],
   );
 
