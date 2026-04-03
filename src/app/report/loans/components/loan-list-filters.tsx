@@ -50,10 +50,10 @@ export function LoanListFilters({
   const { t } = useLanguage();
 
   const filterBtnCls = (active: boolean) =>
-    `cursor-pointer px-3 py-1.5 text-xs font-medium transition-all duration-150 first:rounded-l-lg last:rounded-r-lg ${
+    `cursor-pointer px-3 py-1.5 text-xs font-medium transition-all duration-150 ${
       active
         ? "bg-indigo-600 text-white shadow-sm dark:bg-indigo-500"
-        : "bg-white text-zinc-600 hover:bg-zinc-50 dark:bg-[#1a1a1a] dark:text-slate-400 dark:hover:bg-white/[0.06]"
+        : "bg-white text-zinc-500 hover:text-zinc-800 dark:bg-[#1a1a1a] dark:text-slate-400 dark:hover:text-slate-200"
     }`;
 
 
