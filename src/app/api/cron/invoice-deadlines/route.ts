@@ -12,9 +12,11 @@ function safeCompare(a: string, b: string): boolean {
 }
 
 export async function GET(req: NextRequest) {
-  // Validate cron secret with timing-safe comparison
-  const secret = req.headers.get("x-cron-secret");
+  // Validate cron secret — supports both Vercel Cron (Authorization: Bearer) and custom header (x-cron-secret)
   const expected = process.env.CRON_SECRET;
+  const bearer = req.headers.get("authorization")?.replace("Bearer ", "");
+  const custom = req.headers.get("x-cron-secret");
+  const secret = bearer || custom;
   if (!expected || !secret || !safeCompare(secret, expected)) {
     return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
   }
