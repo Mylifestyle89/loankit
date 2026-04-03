@@ -1,6 +1,7 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 import { SystemError, ValidationError } from "@/core/errors/app-error";
+import { resolveAiProvider, extractJsonFromAiResponse } from "@/lib/ai";
 
 import type { DocxParagraph, TagSuggestion } from "./auto-tagging-types";
 
@@ -53,19 +54,8 @@ export function buildAutoTagPrompt(
 // JSON extraction & sanitization (reuse pattern from ai-mapping)
 // ---------------------------------------------------------------------------
 
-export function extractJsonObject(raw: string): unknown {
-  const trimmed = raw.trim();
-  if (trimmed.startsWith("{") && trimmed.endsWith("}")) return JSON.parse(trimmed);
-  const fenced = trimmed.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
-  if (fenced?.[1]) {
-    const inner = fenced[1].trim();
-    if (inner.startsWith("{") && inner.endsWith("}")) return JSON.parse(inner);
-  }
-  const start = trimmed.indexOf("{");
-  const end = trimmed.lastIndexOf("}");
-  if (start >= 0 && end > start) return JSON.parse(trimmed.slice(start, end + 1));
-  throw new ValidationError("AI response is not valid JSON.");
-}
+// Re-export from shared module for backward compat
+export const extractJsonObject = extractJsonFromAiResponse;
 
 export function sanitizeSuggestions(
   raw: unknown,
@@ -151,12 +141,8 @@ async function callOpenAI(prompt: string): Promise<string> {
 }
 
 export async function callAI(prompt: string): Promise<string> {
-  const provider = (process.env.AI_MAPPING_PROVIDER ?? "").toLowerCase();
-  if (provider === "openai") return callOpenAI(prompt);
-  if (provider === "gemini") return callGemini(prompt);
-  if (process.env.OPENAI_API_KEY) return callOpenAI(prompt);
-  if (process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY) return callGemini(prompt);
-  throw new ValidationError("No AI provider configured (set OPENAI_API_KEY or GEMINI_API_KEY).");
+  const resolved = resolveAiProvider();
+  return resolved.provider === "openai" ? callOpenAI(prompt) : callGemini(prompt);
 }
 
 // ---------------------------------------------------------------------------

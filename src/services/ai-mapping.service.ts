@@ -1,4 +1,5 @@
 import { SystemError, ValidationError } from "@/core/errors/app-error";
+import { resolveAiProvider, extractJsonFromAiResponse } from "@/lib/ai";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 export type MappingSuggestion = Record<string, string>;
@@ -54,27 +55,8 @@ function scoreTokenOverlap(a: string, b: string): number {
   return overlap / Math.max(aTokens.size, bTokens.size);
 }
 
-function extractJsonObject(raw: string): unknown {
-  const trimmed = raw.trim();
-  if (trimmed.startsWith("{") && trimmed.endsWith("}")) {
-    return JSON.parse(trimmed);
-  }
-
-  const fencedMatch = trimmed.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
-  if (fencedMatch?.[1]) {
-    const inner = fencedMatch[1].trim();
-    if (inner.startsWith("{") && inner.endsWith("}")) {
-      return JSON.parse(inner);
-    }
-  }
-
-  const start = trimmed.indexOf("{");
-  const end = trimmed.lastIndexOf("}");
-  if (start >= 0 && end > start) {
-    return JSON.parse(trimmed.slice(start, end + 1));
-  }
-  throw new ValidationError("AI response is not valid JSON.");
-}
+// extractJsonObject delegated to @/lib/ai/extract-json-from-ai-response
+const extractJsonObject = extractJsonFromAiResponse;
 
 function sanitizeSuggestion(raw: unknown, excelHeaders: string[], wordPlaceholders: string[]): MappingSuggestion {
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
@@ -324,23 +306,24 @@ export const aiMappingService = {
       throw new ValidationError("excelHeaders/wordPlaceholders contains only empty values.");
     }
 
-    const provider = (process.env.AI_MAPPING_PROVIDER ?? "").toLowerCase();
+    let resolved: ReturnType<typeof resolveAiProvider> | null = null;
     try {
-      if (provider === "openai") {
-        return await suggestViaOpenAI(uniqueHeaders, uniquePlaceholders, includeGrouping, fieldHints);
-      }
-      if (provider === "gemini") {
-        return await suggestViaGemini(uniqueHeaders, uniquePlaceholders, includeGrouping, fieldHints);
-      }
-      if (process.env.OPENAI_API_KEY) {
-        return await suggestViaOpenAI(uniqueHeaders, uniquePlaceholders, includeGrouping, fieldHints);
-      }
-      if (process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY) {
-        return await suggestViaGemini(uniqueHeaders, uniquePlaceholders, includeGrouping, fieldHints);
-      }
+      resolved = resolveAiProvider();
+    } catch {
+      // No AI provider — use fuzzy fallback
+    }
+
+    if (!resolved) {
       const mapping = fuzzyFallback(uniqueHeaders, uniquePlaceholders);
       const grouping = includeGrouping ? fuzzyGroupingFallback(uniqueHeaders) : undefined;
       return grouping ? { mapping, grouping } : { mapping };
+    }
+
+    try {
+      if (resolved.provider === "openai") {
+        return await suggestViaOpenAI(uniqueHeaders, uniquePlaceholders, includeGrouping, fieldHints);
+      }
+      return await suggestViaGemini(uniqueHeaders, uniquePlaceholders, includeGrouping, fieldHints);
     } catch (error) {
       if (error instanceof ValidationError) {
         throw error;

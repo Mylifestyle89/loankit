@@ -18,6 +18,7 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 
 import { SystemError, ValidationError } from "@/core/errors/app-error";
 import type { BctcExtractResult } from "@/lib/bctc-extractor";
+import { resolveAiProvider, extractJsonFromAiResponse } from "@/lib/ai";
 
 import { formatBctcData } from "./financial-analysis-formatters";
 
@@ -152,49 +153,10 @@ async function callOpenAI(
   return { text, model };
 }
 
-// ─── JSON Parsing ─────────────────────────────────────────────────────────────
+// ─── JSON Parsing (delegated to shared module) ──────────────────────────────
 
 function extractJsonObject(raw: string): Record<string, string> {
-  const trimmed = raw.trim();
-
-  // 1) Direct parse
-  try {
-    const parsed = JSON.parse(trimmed);
-    if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
-      return parsed as Record<string, string>;
-    }
-  } catch {
-    // continue
-  }
-
-  // 2) Extract from markdown code block
-  const fenced = trimmed.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
-  if (fenced?.[1]) {
-    try {
-      const parsed = JSON.parse(fenced[1].trim());
-      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
-        return parsed as Record<string, string>;
-      }
-    } catch {
-      // continue
-    }
-  }
-
-  // 3) Find first { ... } block
-  const start = trimmed.indexOf("{");
-  const end = trimmed.lastIndexOf("}");
-  if (start >= 0 && end > start) {
-    try {
-      const parsed = JSON.parse(trimmed.slice(start, end + 1));
-      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
-        return parsed as Record<string, string>;
-      }
-    } catch {
-      // continue
-    }
-  }
-
-  throw new ValidationError("AI response is not valid JSON.", { raw: trimmed.slice(0, 500) });
+  return extractJsonFromAiResponse(raw) as Record<string, string>;
 }
 
 /**
@@ -234,28 +196,12 @@ export const financialAnalysisService = {
     const systemPrompt = systemPromptOverride ?? DEFAULT_SYSTEM_PROMPT;
     const userPrompt = buildUserPrompt(bctcData, fields, qualitativeContext);
 
-    // Select provider (same priority as ai-mapping.service)
-    const provider = (process.env.AI_MAPPING_PROVIDER ?? "").toLowerCase();
-    let response: { text: string; model: string };
-    let providerName: "gemini" | "openai";
-
-    if (provider === "openai") {
-      response = await callOpenAI(systemPrompt, userPrompt);
-      providerName = "openai";
-    } else if (provider === "gemini") {
-      response = await callGemini(systemPrompt, userPrompt);
-      providerName = "gemini";
-    } else if (process.env.OPENAI_API_KEY) {
-      response = await callOpenAI(systemPrompt, userPrompt);
-      providerName = "openai";
-    } else if (process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY) {
-      response = await callGemini(systemPrompt, userPrompt);
-      providerName = "gemini";
-    } else {
-      throw new ValidationError(
-        "No AI provider configured. Set GEMINI_API_KEY or OPENAI_API_KEY.",
-      );
-    }
+    // Select provider via shared resolver
+    const resolved = resolveAiProvider({ defaultGeminiModel: "gemini-2.5-flash" });
+    const providerName = resolved.provider;
+    const response = providerName === "openai"
+      ? await callOpenAI(systemPrompt, userPrompt)
+      : await callGemini(systemPrompt, userPrompt);
 
     const parsed = extractJsonObject(response.text);
     const expectedKeys = new Set(fields.map((f) => f.field_key));
