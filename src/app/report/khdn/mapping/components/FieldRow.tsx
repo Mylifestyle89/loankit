@@ -1,5 +1,5 @@
 import { memo, useCallback, useMemo, useRef, useState } from "react";
-import { Pencil, Trash2, GripVertical, FunctionSquare, Check, X, FileText } from "lucide-react";
+import { GripVertical } from "lucide-react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import type { FieldCatalogItem } from "@/lib/report/config-schema";
@@ -8,11 +8,11 @@ import {
     formatNumberVnDisplay,
     formatPercentVnDisplay,
     toDateInputValue,
-    toBusinessType,
-    toInternalType,
-    TypeLabelMap,
+    type TypeLabelMap,
 } from "../helpers";
 import type { ExtractSuggestionSource } from "../types";
+import { FieldRowDisplay } from "./field-row-display";
+import { FieldRowControls } from "./field-row-controls";
 
 export type FieldRowProps = {
     field: FieldCatalogItem;
@@ -108,20 +108,28 @@ export const FieldRow = memo(function FieldRow({
         if (field.type === "date") return toDateInputValue(value);
         return value === null || value === undefined ? "" : String(value);
     }, [field.type, value]);
+
     const [localText, setLocalText] = useState(displayText);
     const [isFocused, setIsFocused] = useState(false);
-
     const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    const isReadOnly = valueReadOnly || hasFormula;
+    const readOnlyClassName = isReadOnly
+        ? "cursor-not-allowed bg-violet-50/30 dark:bg-white/[0.04] text-zinc-500 hover:border-transparent focus:border-transparent focus:ring-0"
+        : "";
+
+    const inputClassName =
+        "h-8 w-full rounded border border-transparent bg-transparent px-2 py-1 text-sm transition-colors placeholder:text-zinc-700 hover:border-zinc-200 focus:border-violet-500 focus:bg-white dark:focus:bg-white/[0.06] focus:outline-none focus:ring-1 focus:ring-violet-500";
+
+    const textareaClassName =
+        "min-h-[80px] w-full rounded border border-transparent bg-transparent px-2 py-1.5 font-mono text-sm transition-colors whitespace-pre placeholder:text-zinc-700 hover:border-zinc-200 focus:border-violet-500 focus:bg-white dark:focus:bg-white/[0.06] focus:outline-none focus:ring-1 focus:ring-violet-500";
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         if (isReadOnly) return;
         const newVal = e.target.value;
         setLocalText(newVal);
-
         if (timeoutRef.current) clearTimeout(timeoutRef.current);
-        timeoutRef.current = setTimeout(() => {
-            onManualChange(field, newVal);
-        }, 400);
+        timeoutRef.current = setTimeout(() => { onManualChange(field, newVal); }, 400);
     };
 
     const handleBlur = () => {
@@ -130,6 +138,7 @@ export const FieldRow = memo(function FieldRow({
         if (timeoutRef.current) clearTimeout(timeoutRef.current);
         onManualChange(field, localText);
     };
+
     const handleFocus = () => {
         setLocalText(displayText);
         setIsFocused(true);
@@ -143,21 +152,16 @@ export const FieldRow = memo(function FieldRow({
             const key = e.key;
             const colIdx = COLS.indexOf(col);
 
-            // ↑ / ↓ / Enter — di chuyển hàng trong cùng cột
             if (key === "ArrowUp" || key === "ArrowDown" || key === "Enter") {
-                // Select thì dùng ↑↓ để chọn option, không override
                 if (col === "type" && (key === "ArrowUp" || key === "ArrowDown")) return;
                 e.preventDefault();
-                const all = Array.from(
-                    document.querySelectorAll<HTMLElement>(`[data-field-col="${col}"]`),
-                );
+                const all = Array.from(document.querySelectorAll<HTMLElement>(`[data-field-col="${col}"]`));
                 const idx = all.indexOf(e.currentTarget as HTMLElement);
                 const target = key === "ArrowUp" ? all[idx - 1] : all[idx + 1];
                 target?.focus();
                 return;
             }
 
-            // ← khi cursor ở đầu — chuyển sang cột trước trong cùng hàng
             if (key === "ArrowLeft" && colIdx > 0) {
                 const input = e.currentTarget as HTMLInputElement;
                 if ((input.selectionStart ?? 0) === 0 && (input.selectionEnd ?? 0) === 0) {
@@ -168,7 +172,6 @@ export const FieldRow = memo(function FieldRow({
                 return;
             }
 
-            // → khi cursor ở cuối — chuyển sang cột tiếp theo trong cùng hàng
             if (key === "ArrowRight" && colIdx < COLS.length - 1) {
                 const input = e.currentTarget as HTMLInputElement;
                 const len = (input as HTMLInputElement).value?.length ?? 0;
@@ -182,17 +185,7 @@ export const FieldRow = memo(function FieldRow({
         [],
     );
 
-    const inputClassName =
-        "h-8 w-full rounded border border-transparent bg-transparent px-2 py-1 text-sm transition-colors placeholder:text-zinc-700 hover:border-zinc-200 focus:border-violet-500 focus:bg-white dark:focus:bg-white/[0.06] focus:outline-none focus:ring-1 focus:ring-violet-500";
-
-    const textareaClassName =
-        "min-h-[80px] w-full rounded border border-transparent bg-transparent px-2 py-1.5 font-mono text-sm transition-colors whitespace-pre placeholder:text-zinc-700 hover:border-zinc-200 focus:border-violet-500 focus:bg-white dark:focus:bg-white/[0.06] focus:outline-none focus:ring-1 focus:ring-violet-500";
-
-    const isReadOnly = valueReadOnly || hasFormula;
-    const readOnlyClassName = isReadOnly
-        ? "cursor-not-allowed bg-violet-50/30 dark:bg-white/[0.04] text-zinc-500 hover:border-transparent focus:border-transparent focus:ring-0"
-        : "";
-
+    // Value input — varies by field type
     const valueInput =
         field.type === "date" ? (
             <input
@@ -266,7 +259,19 @@ export const FieldRow = memo(function FieldRow({
     const hasPendingOcr = ocrSuggestion?.status === "pending";
 
     return (
-        <div ref={setNodeRef} style={style} data-field-row={field.field_key} className={`group min-w-0 grid grid-cols-1 gap-2 border-t border-zinc-100 dark:border-white/[0.06] px-3 py-2 text-sm transition-colors md:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)_minmax(110px,140px)_auto] ${isDragging ? "bg-violet-50/30 dark:bg-white/[0.06] opacity-80 shadow-md ring-1 ring-zinc-200" : hasPendingOcr ? "bg-amber-50/60 dark:bg-amber-500/10 hover:bg-amber-50/80 dark:hover:bg-amber-500/15" : "bg-white dark:bg-transparent hover:bg-violet-50/30 dark:hover:bg-white/[0.04]"}`}>
+        <div
+            ref={setNodeRef}
+            style={style}
+            data-field-row={field.field_key}
+            className={`group min-w-0 grid grid-cols-1 gap-2 border-t border-zinc-100 dark:border-white/[0.06] px-3 py-2 text-sm transition-colors md:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)_minmax(110px,140px)_auto] ${
+                isDragging
+                    ? "bg-violet-50/30 dark:bg-white/[0.06] opacity-80 shadow-md ring-1 ring-zinc-200"
+                    : hasPendingOcr
+                    ? "bg-amber-50/60 dark:bg-amber-500/10 hover:bg-amber-50/80 dark:hover:bg-amber-500/15"
+                    : "bg-white dark:bg-transparent hover:bg-violet-50/30 dark:hover:bg-white/[0.04]"
+            }`}
+        >
+            {/* Col 1: drag handle + label + metadata */}
             <div className="flex min-w-0 items-start gap-2 pt-0.5">
                 <div className="mt-1 flex flex-col gap-0 opacity-0 transition-opacity group-hover:opacity-100">
                     <button
@@ -279,133 +284,39 @@ export const FieldRow = memo(function FieldRow({
                         <GripVertical className="h-4 w-4" />
                     </button>
                 </div>
-                <div className="min-w-0 flex-1">
-                    <input
-                        value={field.label_vi}
-                        onChange={(e) => onFieldLabelChange(field.field_key, e.target.value)}
-                        onKeyDown={(e) => navigateField(e, "label")}
-                        data-field-col="label"
-                        aria-label="Tên hiển thị field"
-                        className="w-full truncate rounded border border-transparent bg-transparent px-2 py-1 text-sm font-medium text-zinc-800 dark:text-slate-200 transition-colors hover:border-zinc-200 focus:border-violet-500 focus:bg-white dark:focus:bg-white/[0.06] focus:outline-none focus:ring-1 focus:ring-violet-500"
-                        title={field.label_vi}
-                    />
-                    {showTechnicalKeys ? (
-                        <p className="mt-0.5 px-2 font-mono text-[10px] text-zinc-700 dark:text-slate-400">{field.field_key}</p>
-                    ) : null}
-                    <div className="mt-0.5 flex items-center justify-between gap-2 px-2">
-                        <p className="truncate text-[10px] text-zinc-400 dark:text-slate-500" title={sampleData || "Chưa có dữ liệu mẫu"}>
-                            Sample Data: {sampleData || "—"}
-                        </p>
-                        {templateUsage && templateUsage.length > 0 && (
-                            <span
-                                className="inline-flex flex-shrink-0 items-center gap-0.5 rounded-full bg-violet-100 dark:bg-violet-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-violet-700 dark:text-violet-400"
-                                title={`Dùng trong: ${templateUsage.join(", ")}`}
-                            >
-                                <FileText className="h-2.5 w-2.5" />
-                                {templateUsage.length}
-                            </span>
-                        )}
-                        <span
-                            className={`inline-flex flex-shrink-0 items-center rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${confidenceScore >= 90
-                                    ? "bg-emerald-100 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
-                                    : confidenceScore >= 60
-                                        ? "bg-amber-100 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400"
-                                        : "bg-rose-100 dark:bg-rose-500/10 text-rose-700 dark:text-rose-400"
-                                }`}
-                            title="Confidence Score (heuristic)"
-                        >
-                            {confidenceScore}%
-                        </span>
-                    </div>
-                </div>
+                <FieldRowDisplay
+                    field={field}
+                    showTechnicalKeys={showTechnicalKeys}
+                    sampleData={sampleData}
+                    confidenceScore={confidenceScore}
+                    templateUsage={templateUsage}
+                    ocrSuggestion={ocrSuggestion}
+                    onFieldLabelChange={onFieldLabelChange}
+                    onAcceptOcrSuggestion={onAcceptOcrSuggestion}
+                    onDeclineOcrSuggestion={onDeclineOcrSuggestion}
+                    navigateField={navigateField}
+                />
             </div>
+
+            {/* Col 2: value input */}
             <div className="min-w-0 w-full pt-1">
                 {valueInput}
-                {hasPendingOcr ? (
-                    <div className="mt-1 flex flex-wrap items-center gap-1.5 px-1">
-                        <span className="rounded-full border border-amber-200 dark:border-amber-500/30 bg-amber-100 dark:bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold text-amber-700 dark:text-amber-400">
-                            Pending Review ({Math.round((ocrSuggestion?.confidenceScore ?? 0) * 100)}%)
-                        </span>
-                        <span
-                            className={`rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${
-                                ocrSuggestion?.source === "docx_ai"
-                                    ? "bg-violet-100 dark:bg-violet-500/10 text-violet-700 dark:text-violet-400"
-                                    : "bg-sky-100 dark:bg-sky-500/10 text-sky-700 dark:text-sky-400"
-                            }`}
-                        >
-                            {ocrSuggestion?.source === "docx_ai" ? "DOCX" : "OCR"}
-                        </span>
-                        <p className="text-[10px] text-amber-700 dark:text-amber-400 px-1 truncate max-w-[200px]" title={ocrSuggestion?.proposedValue}>
-                            → {ocrSuggestion?.proposedValue}
-                        </p>
-                        <button
-                            type="button"
-                            onClick={() => onAcceptOcrSuggestion?.(field.field_key)}
-                            className="inline-flex items-center gap-1 rounded-md border border-emerald-200 dark:border-emerald-500/30 bg-emerald-50 dark:bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 dark:text-emerald-400 transition-colors hover:bg-emerald-100 dark:hover:bg-emerald-500/20"
-                        >
-                            <Check className="h-3 w-3" />
-                            Accept
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => onDeclineOcrSuggestion?.(field.field_key)}
-                            className="inline-flex items-center gap-1 rounded-md border border-rose-200 dark:border-rose-500/30 bg-rose-50 dark:bg-rose-500/10 px-2 py-0.5 text-[10px] font-semibold text-rose-700 dark:text-rose-400 transition-colors hover:bg-rose-100 dark:hover:bg-rose-500/20"
-                        >
-                            <X className="h-3 w-3" />
-                            Decline
-                        </button>
-                    </div>
-                ) : null}
             </div>
-            <div className="min-w-0 w-full pt-1">
-                <select
-                    value={toBusinessType(field.type)}
-                    onChange={(e) =>
-                        onFieldTypeChange(
-                            field.field_key,
-                            toInternalType(e.target.value as "string" | "number" | "percent" | "date" | "table")
-                        )
-                    }
-                    onKeyDown={(e) => navigateField(e, "type")}
-                    data-field-col="type"
-                    aria-label={`Kiểu dữ liệu cho ${field.label_vi}`}
-                    className="cursor-pointer h-8 w-full rounded border border-transparent bg-transparent px-1.5 py-1 text-sm text-zinc-800 dark:text-slate-200 transition-colors hover:border-zinc-200 focus:border-violet-500 focus:bg-white dark:focus:bg-white/[0.06] focus:outline-none focus:ring-1 focus:ring-violet-500"
-                >
-                    <option value="string">{typeLabels.string}</option>
-                    <option value="number">{typeLabels.number}</option>
-                    <option value="percent">{typeLabels.percent}</option>
-                    <option value="date">{typeLabels.date}</option>
-                    <option value="table">{typeLabels.table}</option>
-                </select>
-            </div>
-            <div className="flex items-center justify-center gap-1 pt-1 opacity-0 transition-opacity group-hover:opacity-100">
-                {formulaAllowed && onOpenFormula ? (
-                    <button
-                        type="button"
-                        onClick={onOpenFormula}
-                        className={`rounded p-1 ${hasFormula ? "bg-amber-100 text-amber-800" : "text-zinc-700 hover:bg-violet-100 hover:text-violet-900"}`}
-                        title={hasFormula ? "Sửa công thức" : "Nhập công thức"}
-                    >
-                        <FunctionSquare className="h-3.5 w-3.5" />
-                    </button>
-                ) : null}
-                <button
-                    type="button"
-                    onClick={() => onOpenChangeGroupModal(field.field_key)}
-                    className="rounded p-1 text-zinc-700 hover:bg-violet-100 hover:text-violet-900"
-                    title={changeGroupTitle}
-                >
-                    <Pencil className="h-3.5 w-3.5" />
-                </button>
-                <button
-                    type="button"
-                    onClick={() => onDeleteField(field.field_key)}
-                    className="rounded p-1 text-zinc-700 hover:bg-red-50 hover:text-red-700"
-                    title={deleteFieldTitle}
-                >
-                    <Trash2 className="h-3.5 w-3.5" />
-                </button>
-            </div>
+
+            {/* Col 3 + 4: type selector + action buttons */}
+            <FieldRowControls
+                field={field}
+                typeLabels={typeLabels}
+                formulaAllowed={formulaAllowed}
+                hasFormula={hasFormula}
+                changeGroupTitle={changeGroupTitle}
+                deleteFieldTitle={deleteFieldTitle}
+                onFieldTypeChange={onFieldTypeChange}
+                onOpenChangeGroupModal={onOpenChangeGroupModal}
+                onDeleteField={onDeleteField}
+                onOpenFormula={onOpenFormula}
+                navigateField={navigateField}
+            />
         </div>
     );
 });
