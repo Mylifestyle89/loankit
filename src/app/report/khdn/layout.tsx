@@ -22,9 +22,9 @@ export default function KhdnLayout({ children }: { children: React.ReactNode }) 
       <div className="relative overflow-hidden rounded-2xl border border-indigo-100 dark:border-indigo-500/10 bg-gradient-to-br from-indigo-50 via-white to-violet-50 dark:from-indigo-950/30 dark:via-[#141414] dark:to-violet-950/20 p-5">
         <div className="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-indigo-200/30 blur-2xl dark:bg-indigo-500/10" />
         <div className="relative">
-          <h1 className="text-xl font-bold tracking-tight bg-gradient-to-r from-violet-700 to-fuchsia-600 dark:from-violet-400 dark:to-fuchsia-400 bg-clip-text text-transparent">
+          <h2 className="text-xl font-bold tracking-tight bg-gradient-to-r from-violet-700 to-fuchsia-600 dark:from-violet-400 dark:to-fuchsia-400 bg-clip-text text-transparent">
             Khách hàng doanh nghiệp
-          </h1>
+          </h2>
           <p className="mt-1 text-sm text-zinc-500 dark:text-slate-400">
             Quản lý hồ sơ khách hàng doanh nghiệp (KHDN)
           </p>
