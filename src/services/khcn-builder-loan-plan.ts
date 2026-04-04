@@ -110,6 +110,7 @@ export function buildLoanPlanExtendedData(
   data["PA.Thuế"] = fmtN(financials.tax);
   data["PA.Nhu cầu vốn vay"] = fmtN(financials.loanNeed ?? financials.loanAmount);
   data["PA.Vòng quay vốn"] = financials.turnoverCycles ?? "";
+  data["PA.Phân tích vòng quay vốn"] = financials.turnover_analysis ?? "";
 
   // Build separate loop arrays + flat summary placeholders for cost/revenue table
   try {

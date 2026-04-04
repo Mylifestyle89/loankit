@@ -47,6 +47,7 @@ export const createPlanSchema = z.object({
   labor_capability: z.string().optional(),
   machinery_capability: z.string().optional(),
   other_factors: z.string().optional(),
+  turnover_analysis: z.string().optional(),
 });
 
 export const updatePlanSchema = createPlanSchema.omit({ customerId: true });

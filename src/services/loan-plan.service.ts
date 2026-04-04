@@ -54,6 +54,7 @@ const EXTENDED_FINANCIAL_KEYS = [
   "construction_contract_date", "farmAddress",
   "legal_assessment", "market_input", "market_output",
   "labor_capability", "machinery_capability", "other_factors",
+  "turnover_analysis",
 ] as const;
 
 function recalcFinancials(

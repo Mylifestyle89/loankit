@@ -31,4 +31,5 @@ export type Financials = {
   labor_capability?: string;
   machinery_capability?: string;
   other_factors?: string;
+  turnover_analysis?: string; // Phân tích vòng quay vốn
 };

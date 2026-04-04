@@ -13,6 +13,11 @@ import { SmartField } from "@/components/smart-field";
 import { NumericInput } from "./numeric-input";
 import { fmtVND, formatPercentInputFromRate } from "./loan-plan-editor-utils";
 
+/** Returns true if value is a valid rate input: empty string or decimal number (e.g. "9,5" or "7.5") */
+function isRateInput(value: string): boolean {
+  return value === "" || /^\d+([,.]\d*)?$/.test(value);
+}
+
 // ─── LoanPlanInfoGrid ──────────────────────────────────────────────────────────
 
 type InfoGridProps = {
@@ -28,6 +33,8 @@ type InfoGridProps = {
   onLandAreaSauChange: (v: number) => void;
   farmAddress: string;
   onFarmAddressChange: (v: string) => void;
+  turnoverAnalysis: string;
+  onTurnoverAnalysisChange: (v: string) => void;
 };
 
 export function LoanPlanInfoGrid({
@@ -37,6 +44,7 @@ export function LoanPlanInfoGrid({
   loanAmount, onLoanAmountChange,
   landAreaSau, onLandAreaSauChange,
   farmAddress, onFarmAddressChange,
+  turnoverAnalysis, onTurnoverAnalysisChange,
 }: InfoGridProps) {
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 rounded-2xl border border-zinc-200 dark:border-white/[0.07] bg-white dark:bg-[#161616] p-5 shadow-sm">
@@ -52,8 +60,7 @@ export function LoanPlanInfoGrid({
           value={interestRateInput}
           onChange={(e) => {
             const raw = e.target.value.trim();
-            if (raw === "") { onInterestRateInputChange(""); return; }
-            if (/^\d+([,.]\d*)?$/.test(raw)) onInterestRateInputChange(raw);
+            if (isRateInput(raw)) onInterestRateInputChange(raw);
           }}
           className={inputCls}
           placeholder="VD: 9,5"
@@ -93,6 +100,17 @@ export function LoanPlanInfoGrid({
           onChange={(e) => onFarmAddressChange(e.target.value)}
           className={inputCls}
           placeholder="VD: xã ABC, huyện XYZ"
+        />
+      </label>
+      {/* Phân tích vòng quay vốn — resizable textarea spanning full width */}
+      <label className="block sm:col-span-2 lg:col-span-4">
+        <span className="text-xs font-medium text-zinc-500">Phân tích vòng quay vốn</span>
+        <textarea
+          value={turnoverAnalysis}
+          onChange={(e) => onTurnoverAnalysisChange(e.target.value)}
+          className={`${inputCls} min-h-[60px] resize-y`}
+          rows={3}
+          placeholder="VD: Căn cứ xác định vòng quay vốn lưu động dự kiến kỳ kế hoạch: Hoa Ly có chu kỳ sinh trưởng khoảng 3-4 tháng..."
         />
       </label>
     </div>
@@ -180,7 +198,7 @@ export function LoanPlanTrungDaiSection({
             value={preferentialRateInput}
             onChange={(e) => {
               const r = e.target.value.trim();
-              if (r === "" || /^\d+([,.]\d*)?$/.test(r)) onPreferentialRateInputChange(r);
+              if (isRateInput(r)) onPreferentialRateInputChange(r);
             }}
             className={inputCls}
             placeholder="VD: 7,5"

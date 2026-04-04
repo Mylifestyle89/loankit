@@ -49,7 +49,7 @@ export const KHCN_TEMPLATES: KhcnDocTemplate[] = [
   { path: `${BASE}/Phương án sử dụng vốn/2268.01G PASDV vay trung, dai han co TSBD.docx`, name: "PA sử dụng vốn trung dài hạn (2268.01G)", category: "phuong_an", methods: ["trung_dai"] },
 
   // Báo cáo đề xuất
-  { path: `${BASE}/Báo cáo đề xuất/2268.02B BCDXCV ngan han co TSBD cat tuong.docx`, name: "BCĐX ngắn hạn - Cát tường", category: "bao_cao", methods: ["tung_lan"] },
+  { path: `${BASE}/Báo cáo đề xuất/2268.02B BCDXCV ngan han co TSBD cat tuong.docx`, name: "BCĐX ngắn hạn từng lần", category: "bao_cao", methods: ["tung_lan"] },
   { path: `${BASE}/Báo cáo đề xuất/2268.02B BCDXCV ngan han HMTD.docx`, name: "BCĐX ngắn hạn - HMTD", category: "bao_cao", methods: ["han_muc"] },
   { path: `${BASE}/Báo cáo đề xuất/2268.02C BCDXCV trung, dai han nha kinh.docx`, name: "BCĐX trung dài hạn - Nhà kính", category: "bao_cao", methods: ["trung_dai"] },
 

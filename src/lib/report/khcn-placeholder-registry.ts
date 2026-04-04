@@ -221,7 +221,7 @@ export const KHCN_PLACEHOLDER_GROUPS: PlaceholderGroup[] = [
       "PA.Vốn đối ứng", "PA.Tỷ lệ vốn đối ứng", "PA.Tỷ lệ vốn tự có",
       "PA.Tổng chi phí trực tiếp", "PA.Tổng chi phí gián tiếp", "PA.Tổng chi phí",
       "PA.Tổng doanh thu dự kiến", "PA.Tổng chi phí dự kiến", "PA.Lợi nhuận dự kiến",
-      "PA.Thu nhập", "PA.Sản lượng", "PA.Vòng quay vốn",
+      "PA.Thu nhập", "PA.Sản lượng", "PA.Vòng quay vốn", "PA.Phân tích vòng quay vốn",
       "PA.Số sào đất", "PA.Địa chỉ đất NN",
       "PA.Số tiền hợp đồng cung ứng", "PA.Số tiền đặt cọc",
       "PA.Số HĐTD cũ",
@@ -269,6 +269,16 @@ export const KHCN_PLACEHOLDER_GROUPS: PlaceholderGroup[] = [
       "HDTD.Phí trả trước năm 1", "HDTD.Min trả trước năm 1", "HDTD.Max trả trước năm 1",
       "HDTD.Phí trả trước năm 2", "HDTD.Min trả trước năm 2", "HDTD.Max trả trước năm 2",
       "HDTD.Phí trả trước năm 3+", "HDTD.Min trả trước năm 3+", "HDTD.Max trả trước năm 3+",
+    ],
+  },
+  {
+    label: "Tài liệu liên quan PA",
+    prefix: "TLPA",
+    loop: "TLPA",
+    items: [
+      "TLPA.Loại tài liệu", "TLPA.Số tài liệu", "TLPA.Cơ quan cấp",
+      "TLPA.Ngày cấp", "TLPA.Ghi chú",
+      "TLPA.Số lượng",
     ],
   },
 ];
