@@ -18,13 +18,7 @@ import { useLanguage } from "@/components/language-provider";
 import type { SortKey } from "./loan-list-filters";
 
 import type { Loan } from "../types";
-
-const LOAN_METHOD_LABELS: Record<string, string> = {
-  tung_lan: "Từng lần",
-  han_muc: "Hạn mức",
-  trung_dai: "Trung dài hạn",
-  tieu_dung: "Tiêu dùng",
-};
+import { METHOD_SHORT_LABELS as LOAN_METHOD_LABELS } from "@/lib/loan-plan/loan-plan-constants";
 
 type Props = {
   loans: Loan[];

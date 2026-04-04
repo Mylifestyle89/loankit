@@ -139,6 +139,9 @@ model Customer {
   /// JSON object: extra attributes (report field_key -> value) for mapping/export
   data_json String? @default("{}")
 
+  /// JSON array: documents related to loan plan (PA) - GCN đăng ký kinh doanh, ATTP, etc.
+  documents_pa_json String? @default("[]")
+
   mapping_instances MappingInstance[]
   loans            Loan[]
   loan_plans       LoanPlan[]
@@ -548,6 +551,25 @@ model DropdownOption {
   @@unique([field_key, label])
   @@index([field_key])
   @@map("dropdown_options")
+}
+
+/// Sản phẩm tín dụng (Master Data)
+model LoanProduct {
+  id              String   @id @default(cuid())
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  code            String   @unique // VD: KHCN-VLD-TL
+  name            String   // VD: Cho vay bổ sung VLĐ ngắn hạn KHCN - từng lần
+  customer_type   String   // individual | corporate
+  loan_method     String   // tung_lan | han_muc | trung_dai | tieu_dung
+  description     String?  // Mô tả thêm
+  sort_order      Int      @default(0)
+  is_active       Boolean  @default(true)
+
+  @@index([customer_type])
+  @@index([is_active])
+  @@map("loan_products")
 }
 
 /// Chi nhánh / Phòng giao dịch

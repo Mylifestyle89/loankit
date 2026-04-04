@@ -15,6 +15,15 @@ export const METHOD_LABELS: Record<string, string> = {
   cam_co: "Vay cầm cố",
 };
 
+/** Short labels for loan methods (used in tables, admin UI) */
+export const METHOD_SHORT_LABELS: Record<string, string> = {
+  tung_lan: "Từng lần",
+  han_muc: "Hạn mức",
+  trung_dai: "Trung dài hạn",
+  tieu_dung: "Tiêu dùng",
+  cam_co: "Cầm cố",
+};
+
 export const CATEGORY_LABELS: Record<string, string> = {
   nong_nghiep: "Nông nghiệp",
   kinh_doanh: "Kinh doanh",
