@@ -2,9 +2,7 @@
 
 import { Plus, Pencil, Trash2, Layers } from "lucide-react";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
-import type { FieldCatalogItem } from "@/lib/report/config-schema";
-import type { TypeLabelMap } from "../helpers";
-import type { OcrSuggestionMap } from "../types";
+import type { CatalogViewData, CatalogGroupActions, CatalogFieldActions } from "../types";
 import { FieldRow } from "./field-row";
 import type { GroupedTreeNode } from "@/core/use-cases/mapping-engine";
 
@@ -12,62 +10,18 @@ type FieldCatalogGroupSectionProps = {
   node: GroupedTreeNode;
   t: (key: string) => string;
   collapsedParentGroups: string[];
-  values: Record<string, unknown>;
-  fieldCatalog: FieldCatalogItem[];
-  showTechnicalKeys: boolean;
-  typeLabels: TypeLabelMap;
-  formulas: Record<string, string>;
-  confidenceByField: Record<string, number>;
-  sampleByField: Record<string, string>;
-  ocrSuggestionsByField: OcrSuggestionMap;
-  // Group actions
-  toggleRepeaterGroup: (groupPath: string) => void;
-  prepareAddFieldForGroup: (groupPath: string) => void;
-  openEditGroupModal: (group: string) => void;
-  onDeleteGroup: (groupPath: string) => void;
-  // Field actions
-  onRepeaterItemChange: (groupPath: string, index: number, field: FieldCatalogItem, rawVal: string) => void;
-  onManualChange: (field: FieldCatalogItem, rawValue: string) => void;
-  removeRepeaterItem: (groupPath: string, index: number) => void;
-  addRepeaterItem: (groupPath: string) => void;
-  onFieldLabelChange: (fieldKey: string, labelVi: string) => void;
-  onFieldTypeChange: (fieldKey: string, type: FieldCatalogItem["type"]) => void;
-  onMoveField: (fieldKey: string, direction: "up" | "down") => void;
-  onOpenChangeGroupModal: (fieldKey: string) => void;
-  onDeleteField: (fieldKey: string) => void;
-  onOpenFormulaModal: (fieldKey: string) => void;
-  onAcceptOcrSuggestion: (fieldKey: string) => void;
-  onDeclineOcrSuggestion: (fieldKey: string) => void;
+  data: CatalogViewData;
+  groupActions: Pick<CatalogGroupActions, "toggleRepeaterGroup" | "prepareAddFieldForGroup" | "openEditGroupModal" | "onDeleteGroup">;
+  fieldActions: CatalogFieldActions;
 };
 
 export function FieldCatalogGroupSection({
   node,
   t,
   collapsedParentGroups,
-  values,
-  fieldCatalog,
-  showTechnicalKeys,
-  typeLabels,
-  formulas,
-  confidenceByField,
-  sampleByField,
-  ocrSuggestionsByField,
-  toggleRepeaterGroup,
-  prepareAddFieldForGroup,
-  openEditGroupModal,
-  onDeleteGroup,
-  onRepeaterItemChange,
-  onManualChange,
-  removeRepeaterItem,
-  addRepeaterItem,
-  onFieldLabelChange,
-  onFieldTypeChange,
-  onMoveField,
-  onOpenChangeGroupModal,
-  onDeleteField,
-  onOpenFormulaModal,
-  onAcceptOcrSuggestion,
-  onDeclineOcrSuggestion,
+  data: { values, fieldCatalog, showTechnicalKeys, typeLabels, formulas, confidenceByField, sampleByField, ocrSuggestionsByField },
+  groupActions: { toggleRepeaterGroup, prepareAddFieldForGroup, openEditGroupModal, onDeleteGroup },
+  fieldActions: { onRepeaterItemChange, onManualChange, removeRepeaterItem, addRepeaterItem, onFieldLabelChange, onFieldTypeChange, onMoveField, onOpenChangeGroupModal, onDeleteField, onOpenFormulaModal, onAcceptOcrSuggestion, onDeclineOcrSuggestion },
 }: FieldCatalogGroupSectionProps) {
   const isCollapsed = collapsedParentGroups.includes(node.parent);
 

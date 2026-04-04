@@ -4,9 +4,7 @@ import { motion } from "framer-motion";
 import { DndContext, closestCenter, type DragEndEvent, type SensorDescriptor, type SensorOptions } from "@dnd-kit/core";
 import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
 import { Group, Panel, Separator } from "react-resizable-panels";
-import type { FieldCatalogItem } from "@/lib/report/config-schema";
-import type { TypeLabelMap } from "../helpers";
-import type { OcrSuggestionMap } from "../types";
+import type { CatalogViewData, CatalogGroupActions, CatalogFieldActions } from "../types";
 import { FieldCatalogToolbar } from "./field-catalog-toolbar";
 import { FieldCatalogGroupSection } from "./field-catalog-group-section";
 import type { GroupedTreeNode } from "@/core/use-cases/mapping-engine";
@@ -19,35 +17,9 @@ type FieldCatalogBoardProps = {
   hasContext: boolean;
   parentGroups: string[];
   collapsedParentGroups: string[];
-  collapseAllGroups: () => void;
-  expandAllGroups: () => void;
-  onOpenAddFieldModal: () => void;
-  openCreateSubgroupModal: (parentGroup: string) => void;
-  toggleParentCollapse: (parent: string) => void;
-  toggleRepeaterGroup: (groupPath: string) => void;
-  prepareAddFieldForGroup: (groupPath: string) => void;
-  openEditGroupModal: (group: string) => void;
-  onDeleteGroup: (groupPath: string) => void;
-  values: Record<string, unknown>;
-  fieldCatalog: FieldCatalogItem[];
-  showTechnicalKeys: boolean;
-  typeLabels: TypeLabelMap;
-  onRepeaterItemChange: (groupPath: string, index: number, field: FieldCatalogItem, rawVal: string) => void;
-  onManualChange: (field: FieldCatalogItem, rawValue: string) => void;
-  removeRepeaterItem: (groupPath: string, index: number) => void;
-  addRepeaterItem: (groupPath: string) => void;
-  onFieldLabelChange: (fieldKey: string, labelVi: string) => void;
-  onFieldTypeChange: (fieldKey: string, type: FieldCatalogItem["type"]) => void;
-  onMoveField: (fieldKey: string, direction: "up" | "down") => void;
-  onOpenChangeGroupModal: (fieldKey: string) => void;
-  onDeleteField: (fieldKey: string) => void;
-  formulas: Record<string, string>;
-  onOpenFormulaModal: (fieldKey: string) => void;
-  confidenceByField: Record<string, number>;
-  sampleByField: Record<string, string>;
-  ocrSuggestionsByField: OcrSuggestionMap;
-  onAcceptOcrSuggestion: (fieldKey: string) => void;
-  onDeclineOcrSuggestion: (fieldKey: string) => void;
+  data: CatalogViewData;
+  groupActions: CatalogGroupActions;
+  fieldActions: CatalogFieldActions;
 };
 
 export const FieldCatalogBoard = memo(function FieldCatalogBoard({
@@ -58,40 +30,16 @@ export const FieldCatalogBoard = memo(function FieldCatalogBoard({
   hasContext,
   parentGroups,
   collapsedParentGroups,
-  collapseAllGroups,
-  expandAllGroups,
-  onOpenAddFieldModal,
-  openCreateSubgroupModal,
-  toggleParentCollapse,
-  toggleRepeaterGroup,
-  prepareAddFieldForGroup,
-  openEditGroupModal,
-  onDeleteGroup,
-  values,
-  fieldCatalog,
-  showTechnicalKeys,
-  typeLabels,
-  onRepeaterItemChange,
-  onManualChange,
-  removeRepeaterItem,
-  addRepeaterItem,
-  onFieldLabelChange,
-  onFieldTypeChange,
-  onMoveField,
-  onOpenChangeGroupModal,
-  onDeleteField,
-  formulas,
-  onOpenFormulaModal,
-  confidenceByField,
-  sampleByField,
-  ocrSuggestionsByField,
-  onAcceptOcrSuggestion,
-  onDeclineOcrSuggestion,
+  data,
+  groupActions,
+  fieldActions,
 }: FieldCatalogBoardProps) {
+  const { collapseAllGroups, expandAllGroups, onOpenAddFieldModal, openCreateSubgroupModal, toggleParentCollapse } = groupActions;
+
   return (
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd} modifiers={[restrictToVerticalAxis]}>
       <motion.div
-        key={fieldCatalog.map((f) => f.field_key).join(",")}
+        key={data.fieldCatalog.map((f) => f.field_key).join(",")}
         initial={{ opacity: 0.35 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.22, ease: "easeOut" }}
@@ -200,30 +148,9 @@ export const FieldCatalogBoard = memo(function FieldCatalogBoard({
                   node={node}
                   t={t}
                   collapsedParentGroups={collapsedParentGroups}
-                  values={values}
-                  fieldCatalog={fieldCatalog}
-                  showTechnicalKeys={showTechnicalKeys}
-                  typeLabels={typeLabels}
-                  formulas={formulas}
-                  confidenceByField={confidenceByField}
-                  sampleByField={sampleByField}
-                  ocrSuggestionsByField={ocrSuggestionsByField}
-                  toggleRepeaterGroup={toggleRepeaterGroup}
-                  prepareAddFieldForGroup={prepareAddFieldForGroup}
-                  openEditGroupModal={openEditGroupModal}
-                  onDeleteGroup={onDeleteGroup}
-                  onRepeaterItemChange={onRepeaterItemChange}
-                  onManualChange={onManualChange}
-                  removeRepeaterItem={removeRepeaterItem}
-                  addRepeaterItem={addRepeaterItem}
-                  onFieldLabelChange={onFieldLabelChange}
-                  onFieldTypeChange={onFieldTypeChange}
-                  onMoveField={onMoveField}
-                  onOpenChangeGroupModal={onOpenChangeGroupModal}
-                  onDeleteField={onDeleteField}
-                  onOpenFormulaModal={onOpenFormulaModal}
-                  onAcceptOcrSuggestion={onAcceptOcrSuggestion}
-                  onDeclineOcrSuggestion={onDeclineOcrSuggestion}
+                  data={data}
+                  groupActions={groupActions}
+                  fieldActions={fieldActions}
                 />
               ))}
             </div>
