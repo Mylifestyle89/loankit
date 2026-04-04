@@ -70,11 +70,11 @@ export function LoanListTable({ loans, viewMode, sortBy, sortOrder, onSort, onDe
               </th>
               <th className="px-4 py-3 text-center font-medium">Lãi suất</th>
               <th className="px-4 py-3 text-center font-medium">Phương thức</th>
-              <th className={`${thCls} text-center`} onClick={() => onSort("startDate")}>
-                <span className="inline-flex items-center gap-1 justify-center">Thời hạn <SortIcon col="startDate" sortBy={sortBy} sortOrder={sortOrder} /></span>
+              <th className={thCls} onClick={() => onSort("startDate")}>
+                <span className="inline-flex items-center gap-1">Thời hạn <SortIcon col="startDate" sortBy={sortBy} sortOrder={sortOrder} /></span>
               </th>
-              <th className={`${thCls} text-center`} onClick={() => onSort("status")}>
-                <span className="inline-flex items-center gap-1 justify-center">Trạng thái <SortIcon col="status" sortBy={sortBy} sortOrder={sortOrder} /></span>
+              <th className={thCls} onClick={() => onSort("status")}>
+                <span className="inline-flex items-center gap-1">Trạng thái <SortIcon col="status" sortBy={sortBy} sortOrder={sortOrder} /></span>
               </th>
               <th className="px-4 py-3 text-right font-medium" />
             </tr>
@@ -93,9 +93,9 @@ export function LoanListTable({ loans, viewMode, sortBy, sortOrder, onSort, onDe
                 </td>
                 <td className="px-4 py-3 text-right font-semibold tabular-nums">{fmt(loan.loanAmount)}</td>
                 <td className="px-4 py-3 text-center tabular-nums">{loan.interestRate != null ? `${loan.interestRate}%` : "—"}</td>
-                <td className="px-4 py-3 text-center">{LOAN_METHOD_LABELS[loan.loan_method] ?? loan.loan_method}</td>
-                <td className="px-4 py-3 text-center text-xs text-zinc-500 dark:text-slate-400">{fmtDate(loan.startDate)} — {fmtDate(loan.endDate)}</td>
-                <td className="px-4 py-3 text-center"><LoanStatusBadge status={loan.status} /></td>
+                <td className="px-4 py-3 text-center text-xs whitespace-nowrap">{LOAN_METHOD_LABELS[loan.loan_method] ?? loan.loan_method}</td>
+                <td className="px-4 py-3 text-xs tabular-nums text-zinc-500 dark:text-slate-400 whitespace-nowrap">{fmtDate(loan.startDate)} — {fmtDate(loan.endDate)}</td>
+                <td className="px-4 py-3"><LoanStatusBadge status={loan.status} /></td>
                 <td className="px-4 py-3 text-right">
                   <button
                     type="button"

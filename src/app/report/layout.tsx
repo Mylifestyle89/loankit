@@ -9,6 +9,7 @@ import {
   Users,
   Globe,
   ChevronRight,
+  Home,
   Settings,
   Banknote,
   Receipt,
@@ -67,6 +68,7 @@ const [hovered, setHovered] = useState(false);
   }, [mobileOpen]);
 
   const links = [
+    { href: "/report", label: "Trang chủ", icon: Home },
     { href: "/report/khcn", label: "Hồ sơ KHCN", icon: Users },
     { href: "/report/khdn", label: "Hồ sơ KHDN", icon: Building2 },
     { href: "/report/loans", label: t("nav.loans"), icon: Banknote },
