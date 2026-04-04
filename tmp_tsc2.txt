@@ -1,4 +1,0 @@
-﻿src/app/report/mapping/hooks/useAiOcrActions.ts(10,15): error TS2459: Module '"../stores/use-ocr-store"' declares 'OcrProcessResponse' locally, but it is not exported.
-src/app/report/mapping/hooks/useAiOcrActions.ts(10,35): error TS2305: Module '"../stores/use-ocr-store"' has no exported member 'RepeaterSuggestionItem'.
-src/app/report/mapping/hooks/useAiOcrActions.ts(76,34): error TS7006: Parameter 'job' implicitly has an 'any' type.
-src/app/report/mapping/page.tsx(671,18): error TS2304: Cannot find name 'handleApplyFinancialValues'.
