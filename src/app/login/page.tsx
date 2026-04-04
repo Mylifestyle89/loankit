@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ChevronRight } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 import { safeCallbackUrl } from "@/lib/auth-utils";
 import { useLanguage } from "@/components/language-provider";
@@ -43,13 +42,9 @@ function LoginForm() {
 
   return (
     <div className="relative z-10 w-full max-w-sm rounded-2xl border border-white/10 bg-white/[0.04] p-8 shadow-2xl backdrop-blur-sm">
-      <div className="mx-auto mb-6 flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600 shadow-md">
-        <ChevronRight className="h-5 w-5 text-white" />
-      </div>
-
-      <h1 className="mb-6 text-center text-xl font-semibold text-white">
+      <h2 className="mb-6 text-center text-lg font-semibold text-white">
         {t("login.title")}
-      </h1>
+      </h2>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
