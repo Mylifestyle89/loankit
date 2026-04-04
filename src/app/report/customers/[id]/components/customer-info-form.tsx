@@ -5,7 +5,9 @@ import { DropdownOptionsProvider } from "@/lib/hooks/dropdown-options-context";
 import { CustomerCoBorrowerSection } from "./customer-co-borrower-section";
 import { CustomerRelatedPersonSection } from "./customer-related-person-section";
 import { DocumentScannerDialog } from "./document-scanner-dialog";
+import { DocumentPARepeater, type DocumentPAEntry } from "./customer-documents-pa-repeater";
 import { useLanguage } from "@/components/language-provider";
+import { useGroupVisibility, isFieldVisible } from "@/lib/field-visibility/use-field-visibility";
 
 const inputCls =
   "mt-1 w-full rounded-md border border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] text-zinc-900 dark:text-slate-100 px-3 py-2 shadow-sm transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40";
@@ -45,6 +47,8 @@ type Props = {
   customerId: string;
   form: FormState;
   setForm: React.Dispatch<React.SetStateAction<FormState>>;
+  documentsPa: DocumentPAEntry[];
+  setDocumentsPa: React.Dispatch<React.SetStateAction<DocumentPAEntry[]>>;
   infoSubTab: "general" | "co-borrower" | "related";
   setInfoSubTab: (tab: "general" | "co-borrower" | "related") => void;
   saving: boolean;
@@ -58,6 +62,8 @@ export function CustomerInfoForm({
   customerId,
   form,
   setForm,
+  documentsPa,
+  setDocumentsPa,
   infoSubTab,
   setInfoSubTab,
   saving,
@@ -67,6 +73,10 @@ export function CustomerInfoForm({
   handleSubmit,
 }: Props) {
   const { t } = useLanguage();
+  const visibilityData = { customer_type: form.customer_type };
+  const showCorporate = useGroupVisibility("customer.corporate_fields", visibilityData);
+  const showIndividual = useGroupVisibility("customer.individual_fields", visibilityData);
+  const showScanButton = isFieldVisible("customer.scan_button", visibilityData);
 
   return (
     <div className="space-y-4">
@@ -126,7 +136,7 @@ export function CustomerInfoForm({
                 Doanh nghiệp
               </button>
             </div>
-            {form.customer_type === "individual" && (
+            {showScanButton && (
               <button type="button" onClick={() => setScannerOpen(true)}
                 className="ml-auto inline-flex items-center gap-1.5 rounded-lg border border-violet-200 dark:border-violet-500/30 bg-violet-50 dark:bg-violet-500/10 px-3 py-1.5 text-xs font-medium text-violet-700 dark:text-violet-400 hover:bg-violet-100 dark:hover:bg-violet-500/20 transition-colors">
                 📷 Scan tài liệu
@@ -145,7 +155,7 @@ export function CustomerInfoForm({
             <span className="text-sm font-medium">{t("customers.address")}</span>
             <SmartField fieldKey="customer.address" value={form.address} onChange={(val) => setForm((p) => ({ ...p, address: val }))} className={inputCls} />
           </label>
-          {form.customer_type === "corporate" && (
+          {showCorporate && (
             <>
               <label className="block">
                 <span className="text-sm font-medium">Ngành nghề SXKD</span>
@@ -169,7 +179,7 @@ export function CustomerInfoForm({
               </label>
             </>
           )}
-          {form.customer_type === "individual" && (
+          {showIndividual && (
             <>
               <label className="block">
                 <span className="text-sm font-medium">Danh xưng</span>
@@ -240,6 +250,13 @@ export function CustomerInfoForm({
               </div>
             </>
           )}
+
+          {/* Tài liệu liên quan PA */}
+          <div className="border-t border-zinc-200 dark:border-white/[0.07] pt-4">
+            <h3 className="text-sm font-semibold mb-3">Tài liệu liên quan PA</h3>
+            <DocumentPARepeater documents={documentsPa} onChange={setDocumentsPa} />
+          </div>
+
           <div className="flex items-center gap-3 pt-2">
             <button
               type="submit"

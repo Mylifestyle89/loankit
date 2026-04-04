@@ -29,6 +29,7 @@ import {
   OVERDUE_INTEREST_LABEL,
   LATE_PAYMENT_INTEREST_LABEL,
 } from "./khcn-report-data-builders";
+import { buildDocumentsPAData } from "./khcn-builder-documents-pa";
 import { loadFullCustomer } from "./khcn-report-data-loader";
 import { mergeKhcnPriorContractAliases } from "./khcn-report-helpers";
 
@@ -222,6 +223,7 @@ export async function buildKhcnReportData(
 
   buildCoBorrowerData(c.co_borrowers, data);
   buildRelatedPersonData(c.related_persons, data);
+  buildDocumentsPAData(c, data);
   buildCreditAgribankData(c.credit_agribank, data);
   buildCreditOtherData(c.credit_other, data);
   buildUnifiedCreditLoop(data);

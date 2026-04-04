@@ -1,4 +1,5 @@
 import type { FieldCatalogItem } from "@/lib/report/config-schema";
+import type { TypeLabelMap } from "./helpers";
 
 export type MappingApiResponse = {
   ok: boolean;
@@ -234,3 +235,46 @@ export type ImportGroupPrompt = {
   missingPath: string;
   level: "parent" | "subgroup";
 } | null;
+
+// ─── Field Catalog component prop group types ───────────────────────────────
+
+/** Read-only view data shared between FieldCatalogBoard and FieldCatalogGroupSection */
+export type CatalogViewData = {
+  values: Record<string, unknown>;
+  fieldCatalog: FieldCatalogItem[];
+  showTechnicalKeys: boolean;
+  typeLabels: TypeLabelMap;
+  formulas: Record<string, string>;
+  confidenceByField: Record<string, number>;
+  sampleByField: Record<string, string>;
+  ocrSuggestionsByField: OcrSuggestionMap;
+};
+
+/** Group-level actions for FieldCatalogBoard (superset of what GroupSection needs) */
+export type CatalogGroupActions = {
+  collapseAllGroups: () => void;
+  expandAllGroups: () => void;
+  onOpenAddFieldModal: () => void;
+  openCreateSubgroupModal: (parentGroup: string) => void;
+  toggleParentCollapse: (parent: string) => void;
+  toggleRepeaterGroup: (groupPath: string) => void;
+  prepareAddFieldForGroup: (groupPath: string) => void;
+  openEditGroupModal: (group: string) => void;
+  onDeleteGroup: (groupPath: string) => void;
+};
+
+/** Field-level actions shared between FieldCatalogBoard and FieldCatalogGroupSection */
+export type CatalogFieldActions = {
+  onRepeaterItemChange: (groupPath: string, index: number, field: FieldCatalogItem, rawVal: string) => void;
+  onManualChange: (field: FieldCatalogItem, rawValue: string) => void;
+  removeRepeaterItem: (groupPath: string, index: number) => void;
+  addRepeaterItem: (groupPath: string) => void;
+  onFieldLabelChange: (fieldKey: string, labelVi: string) => void;
+  onFieldTypeChange: (fieldKey: string, type: FieldCatalogItem["type"]) => void;
+  onMoveField: (fieldKey: string, direction: "up" | "down") => void;
+  onOpenChangeGroupModal: (fieldKey: string) => void;
+  onDeleteField: (fieldKey: string) => void;
+  onOpenFormulaModal: (fieldKey: string) => void;
+  onAcceptOcrSuggestion: (fieldKey: string) => void;
+  onDeclineOcrSuggestion: (fieldKey: string) => void;
+};

@@ -42,11 +42,19 @@ export function CustomerListView({ customerType, basePath, showSelect = false }:
   const loadCustomers = useCallback(async () => {
     setLoading(true);
     setError("");
-    const res = await fetch(`/api/customers?type=${customerType}`, { cache: "no-store" });
-    const data = (await res.json()) as ApiResponse;
-    if (!data.ok) { setError(data.error ?? t("customers.err.load")); setLoading(false); return; }
-    setCustomers(data.customers ?? []);
-    setLoading(false);
+    try {
+      const res = await fetch(`/api/customers?type=${customerType}`, { cache: "no-store" });
+      const data = (await res.json()) as ApiResponse;
+      if (!data.ok) {
+        setError(data.error ?? t("customers.err.load"));
+        return;
+      }
+      setCustomers(data.customers ?? []);
+    } catch {
+      setError(t("customers.err.load"));
+    } finally {
+      setLoading(false);
+    }
   }, [t, customerType]);
 
   useEffect(() => {

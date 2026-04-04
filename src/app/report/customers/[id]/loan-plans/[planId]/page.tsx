@@ -47,6 +47,7 @@ export default function LoanPlanEditorPage() {
   const [laborCapability, setLaborCapability] = useState("");
   const [machineryCapability, setMachineryCapability] = useState("");
   const [otherFactors, setOtherFactors] = useState("");
+  const [turnoverAnalysis, setTurnoverAnalysis] = useState("");
   const xlsxInputRef = useRef<HTMLInputElement>(null);
   const interestRate = parsePercentInputToRate(interestRateInput);
   const preferentialRate = parsePercentInputToRate(preferentialRateInput);
@@ -106,6 +107,7 @@ export default function LoanPlanEditorPage() {
       setLaborCapability(fin.labor_capability ?? "");
       setMachineryCapability(fin.machinery_capability ?? "");
       setOtherFactors(fin.other_factors ?? "");
+      setTurnoverAnalysis(fin.turnover_analysis ?? "");
     } catch (err) { setError(err instanceof Error ? err.message : "Lỗi tải dữ liệu"); }
     setLoading(false);
   }, [planId]);
@@ -154,7 +156,7 @@ export default function LoanPlanEditorPage() {
           } : {}),
           // Đánh giá tín dụng
           legal_assessment: legalAssessment, market_input: marketInput, market_output: marketOutput,
-          labor_capability: laborCapability, machinery_capability: machineryCapability, other_factors: otherFactors,
+          labor_capability: laborCapability, machinery_capability: machineryCapability, other_factors: otherFactors, turnover_analysis: turnoverAnalysis,
         }),
       });
       const data = await res.json();
@@ -227,6 +229,7 @@ export default function LoanPlanEditorPage() {
         loanAmount={loanAmount} onLoanAmountChange={setLoanAmount}
         landAreaSau={landAreaSau} onLandAreaSauChange={setLandAreaSau}
         farmAddress={farmAddress} onFarmAddressChange={setFarmAddress}
+        turnoverAnalysis={turnoverAnalysis} onTurnoverAnalysisChange={setTurnoverAnalysis}
       />
 
       {/* ── Trung dài hạn: Khấu hao & Tài sản đầu tư ── */}

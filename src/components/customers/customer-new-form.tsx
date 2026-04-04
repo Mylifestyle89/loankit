@@ -8,6 +8,7 @@ import { ArrowLeft } from "lucide-react";
 import { useLanguage } from "@/components/language-provider";
 import { SmartField } from "@/components/smart-field";
 import { DropdownOptionsProvider } from "@/lib/hooks/dropdown-options-context";
+import { useGroupVisibility } from "@/lib/field-visibility/use-field-visibility";
 
 const inputCls =
   "mt-1 w-full rounded-md border border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] text-zinc-900 dark:text-slate-100 px-3 py-2 shadow-sm transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40";
@@ -80,6 +81,9 @@ export function CustomerNewForm({ customerType, basePath }: CustomerNewFormProps
     }
   }
 
+  const visibilityData = { customer_type: customerType };
+  const showCorporate = useGroupVisibility("customer.corporate_fields", visibilityData);
+  const showIndividual = useGroupVisibility("customer.individual_fields", visibilityData);
   const typeLabel = customerType === "individual" ? "Khách hàng cá nhân" : "Khách hàng doanh nghiệp";
 
   return (
@@ -122,7 +126,7 @@ export function CustomerNewForm({ customerType, basePath }: CustomerNewFormProps
           </label>
 
           {/* Corporate-only fields */}
-          {customerType === "corporate" && (
+          {showCorporate && (
             <>
               <label className="block">
                 <span className="text-sm font-medium">Ngành nghề SXKD</span>
@@ -148,7 +152,7 @@ export function CustomerNewForm({ customerType, basePath }: CustomerNewFormProps
           )}
 
           {/* Individual-only fields */}
-          {customerType === "individual" && (
+          {showIndividual && (
             <>
               <label className="block">
                 <span className="text-sm font-medium">CCCD/CMND</span>

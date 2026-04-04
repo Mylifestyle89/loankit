@@ -116,6 +116,7 @@ export const FORM_FIELDS: Record<string, { key: string; label: string }[]> = {
     { key: "map_sheet", label: "Số tờ bản đồ" },
     { key: "land_purpose", label: "Mục đích sử dụng" },
     { key: "land_use_term", label: "Thời hạn sử dụng đất" },
+    { key: "land_origin", label: "Nguồn gốc sử dụng đất" },
     { key: "ownership_form", label: "Hình thức sở hữu (Đất)" },
     { key: "shared_area", label: "Sử dụng chung" },
     { key: "private_area", label: "Sử dụng riêng" },
@@ -182,7 +183,7 @@ export const FORM_FIELDS: Record<string, { key: string; label: string }[]> = {
 
 /* ── Field grouping keys for form sections ── */
 export const QSD_CERT_KEYS = ["certificate_name", "serial", "certificate_issue_date", "issuing_authority", "registry_number"];
-export const QSD_LAND_KEYS = ["land_address", "land_area", "land_area_words", "lot_number", "map_sheet", "land_purpose", "land_use_term", "ownership_form", "shared_area", "private_area"];
+export const QSD_LAND_KEYS = ["land_address", "land_area", "land_area_words", "lot_number", "map_sheet", "land_purpose", "land_use_term", "land_origin", "ownership_form", "shared_area", "private_area"];
 export const QSD_HOUSE_KEYS = ["house_type", "construction_area", "floor_area", "house_structure", "house_ownership", "house_level", "floor_number", "house_value", "year_built", "initial_construction_value", "other_construction", "other_construction_value", "surface_rights_doc", "asset_usage_status", "house_appraisal_area", "house_unit_price", "house_appraisal_value"];
 export const QSD_CONTRACT_KEYS = ["mortgage_name", "mortgage_contract", "mortgage_date", "guarantee_registry_place"];
 

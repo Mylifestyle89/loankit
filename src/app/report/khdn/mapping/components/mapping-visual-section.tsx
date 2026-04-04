@@ -131,35 +131,32 @@ export const MappingVisualSection = memo(function MappingVisualSection({
         hasContext={hasContext}
         parentGroups={parentGroups}
         collapsedParentGroups={collapsedParentGroups}
-        collapseAllGroups={collapseAllGroups}
-        expandAllGroups={expandAllGroups}
-        onOpenAddFieldModal={() => setAddingFieldModal(true)}
-        openCreateSubgroupModal={openCreateSubgroupModal}
-        toggleParentCollapse={toggleParentCollapse}
-        toggleRepeaterGroup={toggleRepeaterGroup}
-        prepareAddFieldForGroup={prepareAddFieldForGroup}
-        openEditGroupModal={openEditGroupModal}
-        onDeleteGroup={onDeleteGroup}
-        values={values}
-        fieldCatalog={fieldCatalog}
-        showTechnicalKeys={showTechnicalKeys}
-        typeLabels={typeLabels}
-        onRepeaterItemChange={onRepeaterItemChange}
-        onManualChange={onManualChange}
-        removeRepeaterItem={removeRepeaterItem}
-        addRepeaterItem={addRepeaterItem}
-        onFieldLabelChange={onFieldLabelChange}
-        onFieldTypeChange={onFieldTypeChange}
-        onMoveField={moveField}
-        onOpenChangeGroupModal={openChangeGroupModal}
-        onDeleteField={deleteField}
-        formulas={formulas}
-        onOpenFormulaModal={onOpenFormulaModal}
-        confidenceByField={confidenceByField}
-        sampleByField={sampleByField}
-        ocrSuggestionsByField={ocrSuggestionsByField}
-        onAcceptOcrSuggestion={onAcceptOcrSuggestion}
-        onDeclineOcrSuggestion={onDeclineOcrSuggestion}
+        data={{ values, fieldCatalog, showTechnicalKeys, typeLabels, formulas, confidenceByField, sampleByField, ocrSuggestionsByField }}
+        groupActions={{
+          collapseAllGroups,
+          expandAllGroups,
+          onOpenAddFieldModal: () => setAddingFieldModal(true),
+          openCreateSubgroupModal,
+          toggleParentCollapse,
+          toggleRepeaterGroup,
+          prepareAddFieldForGroup,
+          openEditGroupModal,
+          onDeleteGroup,
+        }}
+        fieldActions={{
+          onRepeaterItemChange,
+          onManualChange,
+          removeRepeaterItem,
+          addRepeaterItem,
+          onFieldLabelChange,
+          onFieldTypeChange,
+          onMoveField: moveField,
+          onOpenChangeGroupModal: openChangeGroupModal,
+          onDeleteField: deleteField,
+          onOpenFormulaModal,
+          onAcceptOcrSuggestion,
+          onDeclineOcrSuggestion,
+        }}
       />
     </section>
   );

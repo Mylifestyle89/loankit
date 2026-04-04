@@ -1,6 +1,6 @@
 {
   "name": "cong-cu-tao-bcdxcv",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -31,6 +31,7 @@
     "@prisma/adapter-libsql": "^7.4.2",
     "@prisma/client": "^7.4.2",
     "@tailwindcss/typography": "^0.5.19",
+    "@vercel/speed-insights": "^2.0.0",
     "better-auth": "^1.5.4",
     "better-sqlite3": "^12.6.2",
     "docx-merger": "^1.2.2",

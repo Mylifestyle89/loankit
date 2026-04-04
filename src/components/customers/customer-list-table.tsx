@@ -59,7 +59,7 @@ export function CustomerTable({
               <th className={thCls} onClick={() => onSort("customer_name")}>
                 <span className="inline-flex items-center gap-1">Tên khách hàng <SortIcon active={sortKey === "customer_name"} dir={sortDir} /></span>
               </th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-zinc-500 dark:text-slate-400">Khoản vay</th>
+              <th className="px-4 py-3 text-center text-xs font-semibold text-zinc-500 dark:text-slate-400">Khoản vay</th>
               <th className="px-4 py-3 text-right text-xs font-semibold text-zinc-500 dark:text-slate-400">Tổng dư nợ</th>
               <th className="px-4 py-3 text-left text-xs font-semibold text-zinc-500 dark:text-slate-400">Địa chỉ</th>
               <th className={thCls} onClick={() => onSort("updatedAt")}>
@@ -86,7 +86,7 @@ export function CustomerTable({
                       {c.customer_name}
                     </Link>
                   </td>
-                  <td className={`${tdCls} tabular-nums`}>
+                  <td className={`${tdCls} text-center tabular-nums`}>
                     {c.activeLoanCount ? (
                       <span className="inline-flex items-center rounded-full bg-emerald-50 dark:bg-emerald-500/10 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:text-emerald-400">
                         {c.activeLoanCount}

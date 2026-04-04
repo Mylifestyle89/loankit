@@ -44,6 +44,7 @@ type FullCustomer = {
   gender: string | null;
   cic_product_name: string | null;
   cic_product_code: string | null;
+  documents_pa_json: string | null;
   active_branch_id: string | null;
   relationship_officer: string | null;
   appraiser: string | null;
@@ -116,6 +117,7 @@ export function CustomerDetailView({ customerType, basePath }: CustomerDetailVie
     cic_product_name: "",
     cic_product_code: "",
   });
+  const [documentsPa, setDocumentsPa] = useState<Array<{ document_type: string; number: string; issuing_authority: string; issue_date: string; notes: string }>>([]);
 
   const loadCustomer = useCallback(async () => {
     setLoading(true);
@@ -153,6 +155,12 @@ export function CustomerDetailView({ customerType, basePath }: CustomerDetailVie
         cic_product_name: c.cic_product_name ?? "",
         cic_product_code: c.cic_product_code ?? "",
       });
+      try {
+        const docs = JSON.parse(c.documents_pa_json || "[]");
+        setDocumentsPa(docs);
+      } catch {
+        setDocumentsPa([]);
+      }
       setLoading(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Network error");
@@ -206,6 +214,7 @@ export function CustomerDetailView({ customerType, basePath }: CustomerDetailVie
           gender: form.gender || null,
           cic_product_name: form.cic_product_name.trim() || null,
           cic_product_code: form.cic_product_code.trim() || null,
+          documents_pa_json: JSON.stringify(documentsPa),
         }),
       });
       const data = (await res.json()) as { ok: boolean; error?: string };
@@ -282,6 +291,8 @@ export function CustomerDetailView({ customerType, basePath }: CustomerDetailVie
           customerId={id}
           form={form}
           setForm={setForm}
+          documentsPa={documentsPa}
+          setDocumentsPa={setDocumentsPa}
           infoSubTab={infoSubTab}
           setInfoSubTab={setInfoSubTab}
           saving={saving}
