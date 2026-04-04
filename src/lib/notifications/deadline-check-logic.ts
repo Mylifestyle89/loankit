@@ -25,7 +25,16 @@ export async function runDeadlineCheck(): Promise<DeadlineCheckResult> {
 
   // Invoice include pattern for customer access
   const invoiceInclude = {
-    disbursement: { include: { loan: { include: { customer: true } } } },
+    disbursement: {
+      include: {
+        loan: {
+          include: {
+            // Avoid selecting full customer row to stay compatible with older local DB schemas.
+            customer: { select: { id: true, customer_name: true, email: true } },
+          },
+        },
+      },
+    },
   } as const;
 
   // Batch-fetch recent notifications for dedup (avoids N+1)

@@ -45,8 +45,27 @@ export const customerService = {
     const where = filter?.customer_type ? { customer_type: filter.customer_type } : undefined;
     const [data, total] = await Promise.all([
       prisma.customer.findMany({
-        where, orderBy: { updatedAt: "desc" }, take, skip,
-        include: { loans: { where: { status: "active" }, select: { loanAmount: true } } },
+        where,
+        orderBy: { updatedAt: "desc" },
+        take,
+        skip,
+        select: {
+          id: true,
+          customer_code: true,
+          customer_name: true,
+          customer_type: true,
+          address: true,
+          main_business: true,
+          charter_capital: true,
+          legal_representative_name: true,
+          legal_representative_title: true,
+          organization_type: true,
+          updatedAt: true,
+          phone: true,
+          cccd: true,
+          spouse_cccd: true,
+          loans: { where: { status: "active" }, select: { loanAmount: true } },
+        },
       }),
       prisma.customer.count({ where }),
     ]);
