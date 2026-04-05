@@ -207,6 +207,19 @@ export const GTCG_PAPER_TYPES = [
 /** Fields visible only for GTCG subtype */
 export const GTCG_ONLY_KEYS = new Set(["paper_type", "paper_number", "face_value"]);
 
+/* ── Rounding options for land/house valuation ── */
+export const ROUNDING_OPTIONS = [
+  { value: "0", label: "Không làm tròn" },
+  { value: "1000", label: "Hàng nghìn" },
+  { value: "1000000", label: "Hàng triệu" },
+] as const;
+
+/** Round down to nearest precision (e.g. 4.714.600 → 4.000.000 at hàng triệu) */
+export function roundDown(value: number, precision: number): number {
+  if (!precision || precision <= 0) return value;
+  return Math.floor(value / precision) * precision;
+}
+
 /* ── Formatting helpers ── */
 
 export function fmtNumber(v: string): string {

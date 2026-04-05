@@ -4,7 +4,7 @@ import React from "react";
 import { Trash2 } from "lucide-react";
 import { inputCls } from "./shared-form-styles";
 import { SmartField } from "@/components/smart-field";
-import { fmtNumber, type OwnerEntry, type AmendmentEntry } from "./collateral-config";
+import { fmtNumber, roundDown, ROUNDING_OPTIONS, type OwnerEntry, type AmendmentEntry } from "./collateral-config";
 
 /* ── Owner inline row (repeater) ── */
 export function OwnerRow({ owner, index, onChange, onRemove }: {
@@ -110,27 +110,57 @@ export function LandTypeRows({ props, setProps }: {
   props: Record<string, string>;
   setProps: React.Dispatch<React.SetStateAction<Record<string, string>>>;
 }) {
-  /* Auto-calculate Thành tiền = Diện tích × Đơn giá when either changes */
+  const rounding = props.land_rounding ?? "0";
+  const precision = Number(rounding) || 0;
+
+  /** Compute raw value (exact) for a land row */
+  const computeRaw = (next: Record<string, string>, idx: number) => {
+    const areaStr = (next[`land_area_${idx}`] ?? "").replace(/,/g, ".");
+    const area = parseFloat(areaStr) || 0;
+    const price = Number((next[`land_unit_price_${idx}`] ?? "0").replace(/\./g, "")) || 0;
+    return area && price ? Math.round(area * price) : 0;
+  };
+
   const setField = (key: string, val: string) => {
     setProps((p) => {
       const next = { ...p, [key]: val };
-      // Detect which row was changed and recalculate land_value_N
       const match = key.match(/^land_(area|unit_price)_(\d)$/);
       if (match) {
-        const idx = match[2];
-        // Diện tích cho phép thập phân (dùng dấu . hoặc , làm decimal separator)
-        const areaStr = (next[`land_area_${idx}`] ?? "").replace(/,/g, ".");
-        const area = parseFloat(areaStr) || 0;
-        const price = Number((next[`land_unit_price_${idx}`] ?? "0").replace(/\./g, "")) || 0;
-        next[`land_value_${idx}`] = area && price ? String(Math.round(area * price)) : "";
+        const raw = computeRaw(next, Number(match[2]));
+        const rounded = precision > 0 ? roundDown(raw, precision) : raw;
+        next[`land_value_${match[2]}`] = rounded ? String(rounded) : "";
       }
       return next;
     });
   };
+
+  /** Recalculate all rows when rounding changes */
+  const handleRoundingChange = (val: string) => {
+    setProps((p) => {
+      const next: Record<string, string> = { ...p, land_rounding: val };
+      const prec = Number(val) || 0;
+      for (const i of [1, 2, 3]) {
+        const raw = computeRaw(next, i);
+        const rounded = prec > 0 ? roundDown(raw, prec) : raw;
+        next[`land_value_${i}`] = rounded ? String(rounded) : "";
+      }
+      return next;
+    });
+  };
+
   const rows = [1, 2, 3] as const;
   return (
     <div className="space-y-2">
-      <h5 className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">Chi tiết giá trị đất</h5>
+      <div className="flex items-center justify-between">
+        <h5 className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">Chi tiết giá trị đất</h5>
+        <select
+          value={rounding}
+          onChange={(e) => handleRoundingChange(e.target.value)}
+          className={`${inputCls} w-36 text-[11px]`}
+        >
+          {ROUNDING_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+        </select>
+      </div>
       <div className="grid grid-cols-[1fr_6rem_7rem_8rem] gap-2 items-end">
         <span className="text-[10px] text-zinc-400 font-medium">Loại đất</span>
         <span className="text-[10px] text-zinc-400 font-medium">Diện tích</span>
@@ -142,6 +172,9 @@ export function LandTypeRows({ props, setProps }: {
         const areaKey = `land_area_${i}`;
         const priceKey = `land_unit_price_${i}`;
         const valKey = `land_value_${i}`;
+        const raw = computeRaw(props, i);
+        const displayed = Number(props[valKey] || "0");
+        const showTooltip = precision > 0 && raw !== displayed && raw > 0;
         return (
           <div key={i} className="grid grid-cols-[1fr_6rem_7rem_8rem] gap-2 items-center">
             <SmartField
@@ -168,6 +201,7 @@ export function LandTypeRows({ props, setProps }: {
               type="text"
               readOnly
               value={props[valKey] ? fmtNumber(props[valKey]) : ""}
+              title={showTooltip ? `Gốc: ${fmtNumber(String(raw))}` : undefined}
               className={`${inputCls} bg-zinc-50 dark:bg-white/[0.03] cursor-default`}
               placeholder="đồng"
             />

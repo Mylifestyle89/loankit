@@ -10,6 +10,7 @@ import {
   DS_VEHICLE_KEYS, DS_REG_KEYS, DS_CONTRACT_KEYS, DS_INSURANCE_KEYS,
   NUMBER_KEYS, DECIMAL_KEYS, DATE_KEYS, fmtNumber, fmtDecimal, fmtDate,
   TK_SUBTYPES, GTCG_PAPER_TYPES, GTCG_ONLY_KEYS,
+  ROUNDING_OPTIONS, roundDown,
   type OwnerEntry, type AmendmentEntry, type CollateralItem,
 } from "./collateral-config";
 import { numberToVietnameseWords } from "@/lib/number-to-vietnamese-words";
@@ -267,9 +268,28 @@ export function CollateralForm({ customerId, initial, onSaved, onCancel }: {
             {hasAssetOnLand && (
               <>
                 {renderGroup(QSD_HOUSE_KEYS.filter((k) => !k.startsWith("house_appraisal")))}
-                {/* Định giá nhà: DT × Đơn giá = Thành tiền */}
+                {/* Định giá nhà: DT × Đơn giá = Thành tiền (with rounding) */}
                 <div className="mt-3">
-                  <h5 className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider mb-2">Định giá nhà ở</h5>
+                  <div className="flex items-center justify-between mb-2">
+                    <h5 className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">Định giá nhà ở</h5>
+                    <select
+                      value={props.house_rounding ?? "0"}
+                      onChange={(e) => {
+                        const prec = Number(e.target.value) || 0;
+                        setProps((p) => {
+                          const next: Record<string, string> = { ...p, house_rounding: e.target.value };
+                          const area = parseFloat((next.house_appraisal_area ?? "0").replace(/,/g, ".")) || 0;
+                          const price = Number((next.house_unit_price ?? "0").replace(/\./g, "")) || 0;
+                          const raw = area && price ? Math.round(area * price) : 0;
+                          next.house_appraisal_value = raw ? String(prec > 0 ? roundDown(raw, prec) : raw) : "";
+                          return next;
+                        });
+                      }}
+                      className={`${inputCls} w-36 text-[11px]`}
+                    >
+                      {ROUNDING_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+                    </select>
+                  </div>
                   <div className="grid grid-cols-3 gap-2">
                     <label className="block">
                       <span className="text-[10px] text-zinc-400">DT định giá (m²)</span>
@@ -280,7 +300,9 @@ export function CollateralForm({ customerId, initial, onSaved, onCancel }: {
                             const next: Record<string, string> = { ...p, house_appraisal_area: v };
                             const area = parseFloat(v.replace(/,/g, ".")) || 0;
                             const price = Number((next.house_unit_price ?? "0").replace(/\./g, "")) || 0;
-                            next.house_appraisal_value = area && price ? String(Math.round(area * price)) : "";
+                            const raw = area && price ? Math.round(area * price) : 0;
+                            const prec = Number(next.house_rounding ?? "0") || 0;
+                            next.house_appraisal_value = raw ? String(prec > 0 ? roundDown(raw, prec) : raw) : "";
                             return next;
                           });
                         }}
@@ -296,7 +318,9 @@ export function CollateralForm({ customerId, initial, onSaved, onCancel }: {
                             const next: Record<string, string> = { ...p, house_unit_price: v };
                             const area = parseFloat((next.house_appraisal_area ?? "0").replace(/,/g, ".")) || 0;
                             const price = Number(v) || 0;
-                            next.house_appraisal_value = area && price ? String(Math.round(area * price)) : "";
+                            const raw = area && price ? Math.round(area * price) : 0;
+                            const prec = Number(next.house_rounding ?? "0") || 0;
+                            next.house_appraisal_value = raw ? String(prec > 0 ? roundDown(raw, prec) : raw) : "";
                             return next;
                           });
                         }}
@@ -304,9 +328,20 @@ export function CollateralForm({ customerId, initial, onSaved, onCancel }: {
                     </label>
                     <label className="block">
                       <span className="text-[10px] text-zinc-400">Thành tiền</span>
-                      <input type="text" readOnly
-                        value={props.house_appraisal_value ? fmtNumber(props.house_appraisal_value) : ""}
-                        className={`${inputCls} bg-zinc-50 dark:bg-white/[0.03] cursor-default`} placeholder="đồng" />
+                      {(() => {
+                        const area = parseFloat((props.house_appraisal_area ?? "0").replace(/,/g, ".")) || 0;
+                        const price = Number((props.house_unit_price ?? "0").replace(/\./g, "")) || 0;
+                        const raw = area && price ? Math.round(area * price) : 0;
+                        const displayed = Number(props.house_appraisal_value || "0");
+                        const prec = Number(props.house_rounding ?? "0") || 0;
+                        const showTooltip = prec > 0 && raw !== displayed && raw > 0;
+                        return (
+                          <input type="text" readOnly
+                            value={props.house_appraisal_value ? fmtNumber(props.house_appraisal_value) : ""}
+                            title={showTooltip ? `Gốc: ${fmtNumber(String(raw))}` : undefined}
+                            className={`${inputCls} bg-zinc-50 dark:bg-white/[0.03] cursor-default`} placeholder="đồng" />
+                        );
+                      })()}
                     </label>
                   </div>
                 </div>

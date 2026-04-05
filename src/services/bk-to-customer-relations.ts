@@ -180,6 +180,19 @@ export function extractCollateral(values: Record<string, unknown>): CollateralDa
     "A.collateral.loan_to_value_ratio": "loan_to_value_ratio",
     "A.collateral.revaluation_period": "revaluation_period",
     "A.collateral.appraisal_purpose": "appraisal_purpose",
+    // Chi tiết định giá đất (3 loại)
+    "A.collateral.land_type_1": "land_type_1",
+    "A.collateral.land_type_2": "land_type_2",
+    "A.collateral.land_type_3": "land_type_3",
+    "A.collateral.land_area_1": "land_area_1",
+    "A.collateral.land_area_2": "land_area_2",
+    "A.collateral.land_area_3": "land_area_3",
+    "A.collateral.land_unit_price_1": "land_unit_price_1",
+    "A.collateral.land_unit_price_2": "land_unit_price_2",
+    "A.collateral.land_unit_price_3": "land_unit_price_3",
+    "A.collateral.land_value_1": "land_value_1",
+    "A.collateral.land_value_2": "land_value_2",
+    "A.collateral.land_value_3": "land_value_3",
   };
 
   for (const [fwKey, propKey] of Object.entries(propMapping)) {
