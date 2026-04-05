@@ -86,6 +86,13 @@ export function parseTypeS(wb: WorkBook): XlsxParseResult {
   const revenueItems: RevenueItem[] = [];
   let mode: "cost" | "revenue" = "cost";
 
+  // Detect column layout: 7-col (with SL/sào) vs 6-col (direct Qty+Price)
+  // 7-col: STT | Name | Unit | UnitPrice | SL/sào | SL thực tế | Thành tiền
+  // 6-col: STT | Name | Unit | Số lượng  | Đơn giá | Thành tiền
+  const headerRow = rows.find((r) => /^STT$/i.test(String(r[0] ?? "").trim()));
+  const colCount = headerRow ? headerRow.filter((c: unknown) => String(c ?? "").trim()).length : 7;
+  const is6Col = colCount <= 6;
+
   for (let i = 0; i < rows.length; i++) {
     const row = rows[i];
     const colB = String(row[1] ?? "").trim();
@@ -102,13 +109,21 @@ export function parseTypeS(wb: WorkBook): XlsxParseResult {
     // Skip empty name rows
     if (!colB) continue;
 
-    // Parse columns: A=STT, B=Name, C=Unit, D=UnitPrice, E=SL/sào, F=SL thực tế, G=Thành tiền
     const unit = String(row[2] ?? "").trim() || "đơn vị";
-    const unitPrice = parseNum(row[3]);
-    // Prefer actual qty (col F) if available, otherwise calc from định mức × số sào
-    const qtyPerSao = parseNum(row[4]);
-    const actualQty = parseNum(row[5]) || (qtyPerSao * acreage);
-    const amount = parseNum(row[6]) || (unitPrice * actualQty);
+    let unitPrice: number, actualQty: number, amount: number;
+
+    if (is6Col) {
+      // 6-col: D=Qty, E=UnitPrice, F=Amount
+      actualQty = parseNum(row[3]);
+      unitPrice = parseNum(row[4]);
+      amount = parseNum(row[5]) || (unitPrice * actualQty);
+    } else {
+      // 7-col: D=UnitPrice, E=SL/sào, F=SL thực tế, G=Amount
+      unitPrice = parseNum(row[3]);
+      const qtyPerSao = parseNum(row[4]);
+      actualQty = parseNum(row[5]) || (qtyPerSao * acreage);
+      amount = parseNum(row[6]) || (unitPrice * actualQty);
+    }
 
     // Skip rows with no meaningful data
     if (amount === 0 && actualQty === 0 && unitPrice === 0) continue;
