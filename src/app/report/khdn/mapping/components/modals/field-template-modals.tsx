@@ -50,7 +50,7 @@ export function FieldTemplateModals({
                             <button
                                 type="button"
                                 onClick={closeEditFieldTemplatePicker}
-                                className="flex items-center gap-1.5 rounded-md border border-zinc-200 dark:border-white/[0.09] dark:text-slate-200 px-3 py-1.5 text-xs hover:bg-violet-50/30 dark:hover:bg-white/[0.06]"
+                                className="flex items-center gap-1.5 rounded-md border border-zinc-200 dark:border-white/[0.09] dark:text-slate-200 px-3 py-1.5 text-xs hover:bg-amber-50/30 dark:hover:bg-white/[0.06]"
                             >
                                 <X className="h-3.5 w-3.5" />
                                 {t("mapping.fieldTemplate.cancel")}
@@ -58,7 +58,7 @@ export function FieldTemplateModals({
                             <button
                                 type="button"
                                 onClick={() => startEditingExistingTemplate(editPickerTemplateId)}
-                                className="flex items-center gap-1.5 rounded-md bg-gradient-to-r from-violet-600 to-fuchsia-600 px-3 py-1.5 text-xs text-white"
+                                className="flex items-center gap-1.5 rounded-md bg-gradient-to-r from-amber-600 to-orange-500 px-3 py-1.5 text-xs text-white"
                             >
                                 <Pencil className="h-3.5 w-3.5" />
                                 {t("mapping.fieldTemplate.startEditing")}

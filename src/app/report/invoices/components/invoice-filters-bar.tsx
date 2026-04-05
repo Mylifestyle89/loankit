@@ -47,7 +47,7 @@ export function InvoiceFiltersBar({
         <select
           value={statusFilter}
           onChange={(e) => onStatusFilterChange(e.target.value)}
-          className="cursor-pointer rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] px-3 py-2 text-sm shadow-sm transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40"
+          className="cursor-pointer rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] px-3 py-2 text-sm shadow-sm transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/40"
         >
           <option value="">{t("invoices.all")}</option>
           <option value="needs_supplement">{t("invoices.status.needs_supplement")}</option>
@@ -58,7 +58,7 @@ export function InvoiceFiltersBar({
         <select
           value={customerFilter}
           onChange={(e) => onCustomerFilterChange(e.target.value)}
-          className="cursor-pointer rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] px-3 py-2 text-sm shadow-sm transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40"
+          className="cursor-pointer rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] px-3 py-2 text-sm shadow-sm transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/40"
         >
           <option value="">{t("invoices.filterCustomer")}</option>
           {customers.map((c) => (
@@ -68,10 +68,10 @@ export function InvoiceFiltersBar({
         <button
           type="button"
           onClick={onToggleGroupBy}
-          className={`cursor-pointer inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40 ${
+          className={`cursor-pointer inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/40 ${
             groupBy === "disbursement"
-              ? "border-violet-300 dark:border-violet-500/30 bg-violet-50 dark:bg-violet-500/10 text-violet-700 dark:text-violet-400"
-              : "border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] text-zinc-600 dark:text-slate-400 hover:border-violet-200 dark:hover:border-violet-500/20"
+              ? "border-amber-300 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400"
+              : "border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] text-zinc-600 dark:text-slate-400 hover:border-amber-200 dark:hover:border-amber-500/20"
           }`}
         >
           <Layers className="h-4 w-4" />
@@ -81,9 +81,9 @@ export function InvoiceFiltersBar({
 
       {/* Bulk action toolbar */}
       {selectedCount > 0 && (
-        <div className="flex items-center gap-3 rounded-xl border border-violet-200 dark:border-violet-500/20 bg-violet-50 dark:bg-violet-500/10 px-4 py-2.5">
-          <CheckSquare className="h-4 w-4 text-violet-600 dark:text-violet-400" />
-          <span className="text-sm font-medium text-violet-700 dark:text-violet-300">
+        <div className="flex items-center gap-3 rounded-xl border border-amber-200 dark:border-amber-500/20 bg-amber-50 dark:bg-amber-500/10 px-4 py-2.5">
+          <CheckSquare className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+          <span className="text-sm font-medium text-amber-700 dark:text-amber-300">
             Đã chọn {selectedCount} hóa đơn
           </span>
           <button

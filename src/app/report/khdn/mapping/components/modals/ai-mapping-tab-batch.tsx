@@ -82,21 +82,21 @@ export function BatchTab({
   return (
     <div className="border-t border-white/40 px-4 py-4">
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-        <h4 className="text-sm font-semibold text-violet-900 dark:text-violet-400">
+        <h4 className="text-sm font-semibold text-amber-900 dark:text-amber-400">
           {t("mapping.smartAutoBatch.sectionTitle")}
         </h4>
-        <div className="inline-flex rounded-md border border-violet-200/60 bg-white/50 p-0.5 text-xs dark:border-violet-500/30 dark:bg-white/[0.04]">
+        <div className="inline-flex rounded-md border border-amber-200/60 bg-white/50 p-0.5 text-xs dark:border-amber-500/30 dark:bg-white/[0.04]">
           <button
             type="button"
             onClick={() => setInputMode("manual")}
-            className={`rounded px-2 py-1 transition-colors ${inputMode === "manual" ? "bg-violet-700 text-white" : "text-zinc-700 hover:bg-white/60 dark:text-slate-200 dark:hover:bg-white/[0.06]"}`}
+            className={`rounded px-2 py-1 transition-colors ${inputMode === "manual" ? "bg-amber-700 text-white" : "text-zinc-700 hover:bg-white/60 dark:text-slate-200 dark:hover:bg-white/[0.06]"}`}
           >
             {t("mapping.smartAutoBatch.modeManual")}
           </button>
           <button
             type="button"
             onClick={() => setInputMode("assets")}
-            className={`rounded px-2 py-1 transition-colors ${inputMode === "assets" ? "bg-violet-700 text-white" : "text-zinc-700 hover:bg-white/60 dark:text-slate-200 dark:hover:bg-white/[0.06]"}`}
+            className={`rounded px-2 py-1 transition-colors ${inputMode === "assets" ? "bg-amber-700 text-white" : "text-zinc-700 hover:bg-white/60 dark:text-slate-200 dark:hover:bg-white/[0.06]"}`}
           >
             {t("mapping.smartAutoBatch.modeAssets")}
           </button>
@@ -109,17 +109,17 @@ export function BatchTab({
           <span className="block text-xs font-medium text-zinc-700 dark:text-slate-200">
             {t("mapping.smartAutoBatch.excelLabel")}
           </span>
-          <div className="rounded-lg border-2 border-violet-300 bg-white/70 px-3 py-2 shadow-sm transition-colors focus-within:border-violet-500 focus-within:ring-2 focus:ring-violet-200 dark:border-violet-500/30 dark:bg-white/[0.04]">
+          <div className="rounded-lg border-2 border-amber-300 bg-white/70 px-3 py-2 shadow-sm transition-colors focus-within:border-amber-500 focus-within:ring-2 focus:ring-amber-200 dark:border-amber-500/30 dark:bg-white/[0.04]">
             {inputMode === "manual" ? (
               <div className="flex flex-col gap-1.5">
-                <span className="text-xs text-violet-600 dark:text-violet-400">
+                <span className="text-xs text-amber-600 dark:text-amber-400">
                   {t("mapping.smartAutoBatch.chooseFile")}
                 </span>
                 <input
                   type="file"
                   accept=".csv,.xlsx,.xls,.json,.md"
                   onChange={(e) => void handleManualDataFile(e)}
-                  className="block w-full text-xs file:mr-2 file:rounded-md file:border-2 file:border-violet-400 file:bg-violet-50 file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-zinc-700 file:hover:bg-violet-100"
+                  className="block w-full text-xs file:mr-2 file:rounded-md file:border-2 file:border-amber-400 file:bg-amber-50 file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-zinc-700 file:hover:bg-amber-100"
                 />
                 {!manualExcelPath && (
                   <span className="text-[11px] text-zinc-500 dark:text-slate-400">
@@ -132,14 +132,14 @@ export function BatchTab({
                 <button
                   type="button"
                   onClick={() => void loadAssetOptions()}
-                  className="rounded-md border-2 border-violet-300 bg-white px-2 py-1.5 text-xs font-medium text-zinc-700 transition-colors hover:border-violet-500 hover:bg-violet-50 dark:border-violet-500/30 dark:bg-white/[0.04] dark:text-slate-200 dark:hover:bg-violet-500/10"
+                  className="rounded-md border-2 border-amber-300 bg-white px-2 py-1.5 text-xs font-medium text-zinc-700 transition-colors hover:border-amber-500 hover:bg-amber-50 dark:border-amber-500/30 dark:bg-white/[0.04] dark:text-slate-200 dark:hover:bg-amber-500/10"
                 >
                   {t("mapping.smartAutoBatch.loadFiles")}
                 </button>
                 <select
                   value={selectedExcel}
                   onChange={(e) => setSelectedExcel(e.target.value)}
-                  className="mt-2 w-full rounded-lg border-2 border-violet-300 bg-white px-2 py-2 text-sm focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-200 dark:border-violet-500/30 dark:bg-[#141414]/90 dark:text-slate-100"
+                  className="mt-2 w-full rounded-lg border-2 border-amber-300 bg-white px-2 py-2 text-sm focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-200 dark:border-amber-500/30 dark:bg-[#141414]/90 dark:text-slate-100"
                   disabled={inputMode !== "assets"}
                 >
                   <option value="">{t("mapping.smartAutoBatch.selectExcel")}</option>
@@ -158,17 +158,17 @@ export function BatchTab({
           <span className="block text-xs font-medium text-zinc-700 dark:text-slate-200">
             {t("mapping.smartAutoBatch.templateLabel")}
           </span>
-          <div className="rounded-lg border-2 border-violet-300 bg-white/70 px-3 py-2 shadow-sm transition-colors focus-within:border-violet-500 focus-within:ring-2 focus:ring-violet-200 dark:border-violet-500/30 dark:bg-white/[0.04]">
+          <div className="rounded-lg border-2 border-amber-300 bg-white/70 px-3 py-2 shadow-sm transition-colors focus-within:border-amber-500 focus-within:ring-2 focus:ring-amber-200 dark:border-amber-500/30 dark:bg-white/[0.04]">
             {inputMode === "manual" ? (
               <div className="flex flex-col gap-1.5">
-                <span className="text-xs text-violet-600 dark:text-violet-400">
+                <span className="text-xs text-amber-600 dark:text-amber-400">
                   {t("mapping.smartAutoBatch.chooseFile")}
                 </span>
                 <input
                   type="file"
                   accept=".docx,.doc"
                   onChange={(e) => void handleManualTemplateFile(e)}
-                  className="block w-full text-xs file:mr-2 file:rounded-md file:border-2 file:border-violet-400 file:bg-violet-50 file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-zinc-700 file:hover:bg-violet-100"
+                  className="block w-full text-xs file:mr-2 file:rounded-md file:border-2 file:border-amber-400 file:bg-amber-50 file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-zinc-700 file:hover:bg-amber-100"
                 />
                 {!manualTemplatePath && (
                   <span className="text-[11px] text-zinc-500 dark:text-slate-400">
@@ -180,7 +180,7 @@ export function BatchTab({
               <select
                 value={selectedTemplate}
                 onChange={(e) => setSelectedTemplate(e.target.value)}
-                className="w-full rounded-lg border-2 border-violet-300 bg-white px-2 py-2 text-sm focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-200 dark:border-violet-500/30 dark:bg-[#141414]/90 dark:text-slate-100"
+                className="w-full rounded-lg border-2 border-amber-300 bg-white px-2 py-2 text-sm focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-200 dark:border-amber-500/30 dark:bg-[#141414]/90 dark:text-slate-100"
                 disabled={inputMode !== "assets"}
               >
                 <option value="">{t("mapping.smartAutoBatch.selectTemplate")}</option>
@@ -198,7 +198,7 @@ export function BatchTab({
           <input
             value={jobType}
             onChange={(e) => setJobType(e.target.value)}
-            className="mt-1 w-full rounded-md border border-violet-200/60 bg-white/50 px-2 py-1.5 text-sm dark:border-violet-500/30 dark:bg-white/[0.04] dark:text-slate-100"
+            className="mt-1 w-full rounded-md border border-amber-200/60 bg-white/50 px-2 py-1.5 text-sm dark:border-amber-500/30 dark:bg-white/[0.04] dark:text-slate-100"
           />
         </label>
 
@@ -208,7 +208,7 @@ export function BatchTab({
             value={rootKeyOverride}
             onChange={(e) => setRootKeyOverride(e.target.value)}
             placeholder={autoProcessJob?.suggested_root_key || t("mapping.smartAutoBatch.autoDetectPlaceholder")}
-            className="mt-1 w-full rounded-md border border-violet-200/60 bg-white/50 px-2 py-1.5 text-sm dark:border-violet-500/30 dark:bg-white/[0.04] dark:text-slate-100"
+            className="mt-1 w-full rounded-md border border-amber-200/60 bg-white/50 px-2 py-1.5 text-sm dark:border-amber-500/30 dark:bg-white/[0.04] dark:text-slate-100"
           />
         </label>
       </div>
@@ -226,7 +226,7 @@ export function BatchTab({
           type="button"
           onClick={() => void startSmartAutoBatch()}
           disabled={autoProcessing || uploadingData || uploadingTemplate}
-          className="rounded-lg bg-gradient-to-r from-violet-600 to-fuchsia-600 px-3 py-1.5 text-sm text-white shadow-sm shadow-violet-500/25 transition-colors hover:brightness-110 disabled:opacity-60"
+          className="rounded-lg bg-gradient-to-r from-amber-600 to-orange-500 px-3 py-1.5 text-sm text-white shadow-sm shadow-amber-500/25 transition-colors hover:brightness-110 disabled:opacity-60"
         >
           {autoProcessing ? t("mapping.smartAutoBatch.running") : t("mapping.smartAutoBatch.start")}
         </button>
@@ -234,7 +234,7 @@ export function BatchTab({
           type="button"
           onClick={() => void onOpenOutputFolder()}
           disabled={!autoProcessJob || autoProcessJob.phase !== "completed"}
-          className="rounded-lg border border-zinc-300 bg-white/80 px-3 py-1.5 text-sm text-zinc-700 transition-colors hover:bg-violet-50 hover:border-violet-300 disabled:opacity-60 dark:border-white/[0.08] dark:bg-white/[0.04] dark:text-slate-200 dark:hover:bg-violet-500/10 dark:hover:border-violet-500/30"
+          className="rounded-lg border border-zinc-300 bg-white/80 px-3 py-1.5 text-sm text-zinc-700 transition-colors hover:bg-amber-50 hover:border-amber-300 disabled:opacity-60 dark:border-white/[0.08] dark:bg-white/[0.04] dark:text-slate-200 dark:hover:bg-amber-500/10 dark:hover:border-amber-500/30"
         >
           {t("mapping.smartAutoBatch.openOutput")}
         </button>
@@ -247,7 +247,7 @@ export function BatchTab({
             type="button"
             onClick={() => void handleDownloadAllZip()}
             disabled={downloadingZip}
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-fuchsia-600 px-4 py-3 text-sm font-medium text-white shadow-lg shadow-violet-500/25 transition-all hover:brightness-110 hover:shadow-violet-500/30 disabled:opacity-70"
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-amber-600 to-orange-500 px-4 py-3 text-sm font-medium text-white shadow-lg shadow-amber-500/25 transition-all hover:brightness-110 hover:shadow-amber-500/30 disabled:opacity-70"
           >
             <Download className="h-4 w-4" />
             {downloadingZip ? "Đang tạo file..." : "Tải xuống tất cả (.zip)"}

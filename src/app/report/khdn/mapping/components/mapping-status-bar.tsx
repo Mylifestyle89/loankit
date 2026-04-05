@@ -44,7 +44,7 @@ export function MappingStatusBar({
           type="button"
           onClick={undoLastAction}
           disabled={undoHistoryLength === 0}
-          className="inline-flex items-center gap-1.5 rounded-md border border-zinc-200 dark:border-white/[0.10] bg-white dark:bg-white/[0.05] px-2.5 py-1.5 font-medium text-zinc-700 dark:text-slate-200 transition-colors hover:bg-zinc-50 dark:hover:bg-white/[0.06] focus-visible:ring-2 focus-visible:ring-violet-500/40 disabled:opacity-40"
+          className="inline-flex items-center gap-1.5 rounded-md border border-zinc-200 dark:border-white/[0.10] bg-white dark:bg-white/[0.05] px-2.5 py-1.5 font-medium text-zinc-700 dark:text-slate-200 transition-colors hover:bg-zinc-50 dark:hover:bg-white/[0.06] focus-visible:ring-2 focus-visible:ring-amber-500/40 disabled:opacity-40"
         >
           <Undo2 className="h-3.5 w-3.5" />
           {t("mapping.undo")} ({undoHistoryLength}/5)
@@ -75,7 +75,7 @@ export function MappingStatusBar({
         )}
         <span className="text-slate-400 dark:text-slate-500">|</span>
         <div className="flex items-center gap-1.5">
-          <span className="font-semibold text-violet-600 dark:text-violet-400">{mappedFieldCount}</span>
+          <span className="font-semibold text-amber-600 dark:text-amber-400">{mappedFieldCount}</span>
           <span>/</span>
           <span>{fieldCount}</span>
           <span className="text-slate-500 dark:text-slate-400">mapped</span>

@@ -45,13 +45,13 @@ function CustomerTypeBadge({ type }: { type?: string }) {
 function SortIcon({ col, sortBy, sortOrder }: { col: SortKey; sortBy: SortKey; sortOrder: "asc" | "desc" }) {
   if (sortBy !== col) return <ArrowUpDown className="h-3 w-3 opacity-40" />;
   return sortOrder === "asc"
-    ? <ChevronUp className="h-3 w-3 text-violet-600 dark:text-violet-400" />
-    : <ChevronDown className="h-3 w-3 text-violet-600 dark:text-violet-400" />;
+    ? <ChevronUp className="h-3 w-3 text-amber-600 dark:text-amber-400" />
+    : <ChevronDown className="h-3 w-3 text-amber-600 dark:text-amber-400" />;
 }
 
 export function LoanListTable({ loans, viewMode, sortBy, sortOrder, onSort, onDelete }: Props) {
   const { t } = useLanguage();
-  const thCls = "px-4 py-3 text-left font-medium cursor-pointer select-none hover:text-violet-600 dark:hover:text-violet-400 transition-colors";
+  const thCls = "px-4 py-3 text-left font-medium cursor-pointer select-none hover:text-amber-600 dark:hover:text-amber-400 transition-colors";
 
   if (viewMode === "table") {
     return (
@@ -81,9 +81,9 @@ export function LoanListTable({ loans, viewMode, sortBy, sortOrder, onSort, onDe
           </thead>
           <tbody>
             {loans.map((loan) => (
-              <tr key={loan.id} className="border-b border-zinc-50 dark:border-white/[0.03] hover:bg-violet-50/30 dark:hover:bg-violet-500/5 transition-colors">
+              <tr key={loan.id} className="border-b border-zinc-50 dark:border-white/[0.03] hover:bg-amber-50/30 dark:hover:bg-amber-500/5 transition-colors">
                 <td className="px-4 py-3 font-medium">
-                  <Link href={`/report/loans/${loan.id}`} className="text-violet-600 dark:text-violet-400 hover:underline">
+                  <Link href={`/report/loans/${loan.id}`} className="text-amber-600 dark:text-amber-400 hover:underline">
                     {loan.contractNumber}
                   </Link>
                 </td>
@@ -119,7 +119,7 @@ export function LoanListTable({ loans, viewMode, sortBy, sortOrder, onSort, onDe
       {loans.map((loan) => (
         <div
           key={loan.id}
-          className="group relative rounded-xl border border-zinc-200 dark:border-white/[0.07] bg-white dark:bg-[#161616] p-4 shadow-sm transition-all duration-200 hover:shadow-md hover:border-violet-200 dark:hover:border-violet-500/20"
+          className="group relative rounded-xl border border-zinc-200 dark:border-white/[0.07] bg-white dark:bg-[#161616] p-4 shadow-sm transition-all duration-200 hover:shadow-md hover:border-amber-200 dark:hover:border-amber-500/20"
         >
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0 flex-1">
@@ -131,7 +131,7 @@ export function LoanListTable({ loans, viewMode, sortBy, sortOrder, onSort, onDe
               <p className="mt-0.5 text-sm text-zinc-500 dark:text-slate-400">{loan.customer.customer_name}</p>
             </div>
             <div className="text-right shrink-0">
-              <p className="text-lg font-bold tabular-nums bg-gradient-to-r from-violet-700 to-fuchsia-600 dark:from-violet-400 dark:to-fuchsia-400 bg-clip-text text-transparent">
+              <p className="text-lg font-bold tabular-nums bg-gradient-to-r from-amber-700 to-orange-500 dark:from-amber-400 dark:to-orange-400 bg-clip-text text-transparent">
                 {fmt(loan.loanAmount)}
               </p>
               <p className="text-xs text-zinc-400 dark:text-slate-500">VND</p>
@@ -149,7 +149,7 @@ export function LoanListTable({ loans, viewMode, sortBy, sortOrder, onSort, onDe
           <div className="mt-3 flex items-center gap-2 border-t border-zinc-100 dark:border-white/[0.05] pt-3">
             <Link
               href={`/report/loans/${loan.id}`}
-              className="inline-flex items-center gap-1 rounded-lg bg-violet-50 dark:bg-violet-500/10 px-3 py-1.5 text-xs font-medium text-violet-700 dark:text-violet-400 transition-colors duration-150 hover:bg-violet-100 dark:hover:bg-violet-500/20"
+              className="inline-flex items-center gap-1 rounded-lg bg-amber-50 dark:bg-amber-500/10 px-3 py-1.5 text-xs font-medium text-amber-700 dark:text-amber-400 transition-colors duration-150 hover:bg-amber-100 dark:hover:bg-amber-500/20"
             >
               {t("common.view")}<ArrowRight className="h-3 w-3" />
             </Link>

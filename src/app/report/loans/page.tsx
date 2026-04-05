@@ -98,18 +98,18 @@ export default function LoansPage() {
   return (
     <section className="space-y-5">
       {/* Header */}
-      <div className="relative overflow-hidden rounded-2xl border border-violet-100 dark:border-violet-500/10 bg-gradient-to-br from-violet-50 via-white to-fuchsia-50 dark:from-violet-950/30 dark:via-[#141414] dark:to-fuchsia-950/20 p-5">
-        <div className="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-violet-200/30 blur-2xl dark:bg-violet-500/10" />
+      <div className="relative overflow-hidden rounded-2xl border border-amber-100 dark:border-amber-500/10 bg-gradient-to-br from-amber-50 via-white to-orange-50 dark:from-amber-950/30 dark:via-[#141414] dark:to-orange-950/20 p-5">
+        <div className="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-amber-200/30 blur-2xl dark:bg-amber-500/10" />
         <div className="relative flex items-start justify-between">
           <div>
-            <h2 className="text-xl font-bold tracking-tight bg-gradient-to-r from-violet-700 to-fuchsia-600 dark:from-violet-400 dark:to-fuchsia-400 bg-clip-text text-transparent">
+            <h2 className="text-xl font-bold tracking-tight bg-gradient-to-r from-amber-700 to-orange-500 dark:from-amber-400 dark:to-orange-400 bg-clip-text text-transparent">
               {t("loans.title")}
             </h2>
             <p className="mt-1 text-sm text-zinc-500 dark:text-slate-400">{t("loans.desc")}</p>
             {error && <p className="mt-2 text-sm text-red-600 dark:text-red-400" role="alert">{error}</p>}
           </div>
           <Link href="/report/loans/new"
-            className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-violet-600 to-fuchsia-600 px-4 py-2 text-sm font-medium text-white shadow-sm shadow-violet-500/25 transition-all duration-200 hover:shadow-md hover:shadow-violet-500/30 hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/50">
+            className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-amber-600 to-orange-500 px-4 py-2 text-sm font-medium text-white shadow-sm shadow-amber-500/25 transition-all duration-200 hover:shadow-md hover:shadow-amber-500/30 hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/50">
             <Plus className="h-4 w-4" />
             {t("loans.add")}
           </Link>
@@ -118,8 +118,8 @@ export default function LoansPage() {
         {/* Quick stats */}
         <div className="relative mt-4 flex gap-6 text-sm">
           <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-100 dark:bg-violet-500/15">
-              <Layers className="h-4 w-4 text-violet-600 dark:text-violet-400" />
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-100 dark:bg-amber-500/15">
+              <Layers className="h-4 w-4 text-amber-600 dark:text-amber-400" />
             </div>
             <div>
               <p className="text-xs text-zinc-400 dark:text-slate-500">{t("loans.title")}</p>
@@ -156,7 +156,7 @@ export default function LoansPage() {
       {/* Content */}
       {loading ? (
         <div className="flex items-center justify-center py-12">
-          <div className="h-6 w-6 animate-spin rounded-full border-2 border-violet-200 border-t-violet-600 dark:border-violet-800 dark:border-t-violet-400" />
+          <div className="h-6 w-6 animate-spin rounded-full border-2 border-amber-200 border-t-amber-600 dark:border-amber-800 dark:border-t-amber-400" />
         </div>
       ) : loans.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-zinc-300 dark:border-white/[0.08] py-12 text-center">

@@ -34,7 +34,7 @@ export default function DashboardPage() {
     <div className="mx-auto max-w-3xl px-4 py-10 space-y-8">
       {/* Hero greeting */}
       <div>
-        <h1 className="text-2xl font-bold tracking-tight bg-gradient-to-r from-violet-700 to-fuchsia-600 dark:from-violet-400 dark:to-fuchsia-400 bg-clip-text text-transparent">
+        <h1 className="text-2xl font-bold tracking-tight bg-gradient-to-r from-amber-700 to-orange-500 dark:from-amber-400 dark:to-orange-400 bg-clip-text text-transparent">
           Xin chào, {userName}
         </h1>
         <p className="mt-1 text-sm text-zinc-500 dark:text-slate-400 capitalize">{today}</p>
@@ -53,17 +53,17 @@ export default function DashboardPage() {
           <Link
             key={m.href}
             href={m.href}
-            className="group relative overflow-hidden rounded-2xl border border-violet-100 dark:border-violet-500/10 bg-gradient-to-br from-violet-50/80 via-white to-fuchsia-50/60 dark:from-violet-950/30 dark:via-[#161616] dark:to-fuchsia-950/20 p-5 transition-all duration-200 hover:shadow-lg hover:shadow-violet-500/10 hover:border-violet-200 dark:hover:border-violet-500/20 cursor-pointer"
+            className="group relative overflow-hidden rounded-2xl border border-amber-100 dark:border-amber-500/10 bg-gradient-to-br from-amber-50/80 via-white to-orange-50/60 dark:from-amber-950/30 dark:via-[#161616] dark:to-orange-950/20 p-5 transition-all duration-200 hover:shadow-lg hover:shadow-amber-500/10 hover:border-amber-200 dark:hover:border-amber-500/20 cursor-pointer"
           >
             <div className="flex items-center gap-4">
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-violet-600 to-fuchsia-600 text-white shadow-sm shadow-violet-500/25">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-amber-600 to-orange-500 text-white shadow-sm shadow-amber-500/25">
                 <m.icon className="h-5 w-5" />
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold text-zinc-900 dark:text-slate-100">{m.label}</p>
                 <p className="text-xs text-zinc-500 dark:text-slate-400">{m.desc}</p>
               </div>
-              <ArrowRight className="h-4 w-4 text-zinc-300 dark:text-slate-600 transition-transform duration-200 group-hover:translate-x-1 group-hover:text-violet-500" />
+              <ArrowRight className="h-4 w-4 text-zinc-300 dark:text-slate-600 transition-transform duration-200 group-hover:translate-x-1 group-hover:text-amber-500" />
             </div>
           </Link>
         ))}
@@ -79,8 +79,8 @@ export default function DashboardPage() {
 
 function StatCard({ label, value }: { label: string; value?: number }) {
   return (
-    <div className="rounded-2xl border border-violet-100 dark:border-white/[0.07] bg-white dark:bg-[#161616] p-5 text-center shadow-sm">
-      <p className="text-3xl font-bold tracking-tight bg-gradient-to-r from-violet-700 to-fuchsia-600 dark:from-violet-400 dark:to-fuchsia-400 bg-clip-text text-transparent">
+    <div className="rounded-2xl border border-amber-100 dark:border-white/[0.07] bg-white dark:bg-[#161616] p-5 text-center shadow-sm">
+      <p className="text-3xl font-bold tracking-tight bg-gradient-to-r from-amber-700 to-orange-500 dark:from-amber-400 dark:to-orange-400 bg-clip-text text-transparent">
         {value !== undefined ? value : "–"}
       </p>
       <p className="mt-1 text-xs text-zinc-500 dark:text-slate-400">{label}</p>

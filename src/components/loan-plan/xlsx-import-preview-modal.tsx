@@ -75,7 +75,7 @@ export function XlsxImportPreviewModal({ open, onClose, parseResult, isSaving, o
           Hủy
         </button>
         <button type="button" onClick={handleConfirm} disabled={isSaving || costItems.length === 0}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-violet-600 to-fuchsia-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:brightness-110 disabled:opacity-50">
+          className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-amber-600 to-orange-500 px-4 py-2 text-sm font-medium text-white shadow-sm hover:brightness-110 disabled:opacity-50">
           {isSaving ? <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/30 border-t-white" /> : <CheckCircle className="h-3.5 w-3.5" />}
           Xác nhận tạo PA
         </button>
@@ -161,9 +161,9 @@ export function XlsxImportPreviewModal({ open, onClose, parseResult, isSaving, o
 /** Upload button trigger for XLSX import */
 export function XlsxImportButton({ onFileSelect, isUploading }: { onFileSelect: (file: File) => void; isUploading: boolean }) {
   return (
-    <label className="inline-flex items-center gap-1.5 rounded-lg border border-violet-200 dark:border-violet-500/30 bg-violet-50 dark:bg-violet-500/10 px-4 py-2 text-sm font-medium text-violet-700 dark:text-violet-400 hover:bg-violet-100 dark:hover:bg-violet-500/20 cursor-pointer transition-colors">
+    <label className="inline-flex items-center gap-1.5 rounded-lg border border-amber-200 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-500/10 px-4 py-2 text-sm font-medium text-amber-700 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-500/20 cursor-pointer transition-colors">
       {isUploading ? (
-        <div className="h-4 w-4 animate-spin rounded-full border-2 border-violet-300 border-t-violet-600" />
+        <div className="h-4 w-4 animate-spin rounded-full border-2 border-amber-300 border-t-amber-600" />
       ) : (
         <Upload className="h-4 w-4" />
       )}

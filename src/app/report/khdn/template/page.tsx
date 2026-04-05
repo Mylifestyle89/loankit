@@ -156,17 +156,17 @@ function TemplatePageInner() {
   }
 
   if (loading) {
-    return <div className="flex items-center justify-center py-16"><div className="h-6 w-6 animate-spin rounded-full border-2 border-violet-200 border-t-violet-600 dark:border-violet-800 dark:border-t-violet-400" /></div>;
+    return <div className="flex items-center justify-center py-16"><div className="h-6 w-6 animate-spin rounded-full border-2 border-amber-200 border-t-amber-600 dark:border-amber-800 dark:border-t-amber-400" /></div>;
   }
 
   return (
     <section className="space-y-5">
       {/* Header */}
-      <div className="relative overflow-hidden rounded-2xl border border-violet-100 dark:border-violet-500/10 bg-gradient-to-br from-violet-50 via-white to-fuchsia-50 dark:from-violet-950/30 dark:via-[#141414] dark:to-fuchsia-950/20 p-5">
-        <div className="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-violet-200/30 blur-2xl dark:bg-violet-500/10" />
+      <div className="relative overflow-hidden rounded-2xl border border-amber-100 dark:border-amber-500/10 bg-gradient-to-br from-amber-50 via-white to-orange-50 dark:from-amber-950/30 dark:via-[#141414] dark:to-orange-950/20 p-5">
+        <div className="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-amber-200/30 blur-2xl dark:bg-amber-500/10" />
         <div className="relative flex items-start justify-between">
           <div>
-            <h2 className="text-xl font-bold tracking-tight bg-gradient-to-r from-violet-700 to-fuchsia-600 dark:from-violet-400 dark:to-fuchsia-400 bg-clip-text text-transparent">{t("nav.template")}</h2>
+            <h2 className="text-xl font-bold tracking-tight bg-gradient-to-r from-amber-700 to-orange-500 dark:from-amber-400 dark:to-orange-400 bg-clip-text text-transparent">{t("nav.template")}</h2>
             <p className="mt-1 text-sm text-zinc-500 dark:text-slate-400">{t("template.desc")}</p>
             {message && <p className="mt-2 text-sm text-emerald-600 dark:text-emerald-400">{message}</p>}
             {error && <p className="mt-2 text-sm text-red-600 dark:text-red-400">{error}</p>}
@@ -178,7 +178,7 @@ function TemplatePageInner() {
       <div className="flex gap-1 rounded-xl bg-zinc-100 dark:bg-white/[0.05] p-1">
         {VALID_TABS.map((tab) => (
           <button key={tab} type="button" onClick={() => setActiveTab(tab)}
-            className={`flex-1 rounded-lg px-4 py-2 text-sm font-medium transition-all ${activeTab === tab ? "bg-white dark:bg-[#1e1e1e] shadow-sm text-violet-700 dark:text-violet-400" : "text-zinc-500 dark:text-slate-400 hover:text-zinc-700 dark:hover:text-slate-300"}`}>
+            className={`flex-1 rounded-lg px-4 py-2 text-sm font-medium transition-all ${activeTab === tab ? "bg-white dark:bg-[#1e1e1e] shadow-sm text-amber-700 dark:text-amber-400" : "text-zinc-500 dark:text-slate-400 hover:text-zinc-700 dark:hover:text-slate-300"}`}>
             {TAB_LABELS[tab]}
           </button>
         ))}
@@ -206,8 +206,8 @@ function TemplatePageInner() {
           <FieldReferencePanel fieldTemplates={fi.fieldTemplates} selectedFieldTemplateId={fi.selectedFieldTemplateId} onFieldTemplateChange={fi.setSelectedFieldTemplateId}
             fieldsByGroup={fi.fieldsByGroup} groups={fi.groups} onCopyField={fi.injectField} copyFeedback={fi.copyFeedback} />
           {validation.validating && (
-            <div className="flex items-center gap-2 rounded-lg border border-violet-200 dark:border-violet-500/20 bg-violet-50 dark:bg-violet-950/30 px-4 py-3 text-sm text-violet-700 dark:text-violet-400">
-              <div className="h-4 w-4 animate-spin rounded-full border-2 border-violet-200 border-t-violet-600" /> Đang kiểm tra {validation.fileName}...
+            <div className="flex items-center gap-2 rounded-lg border border-amber-200 dark:border-amber-500/20 bg-amber-50 dark:bg-amber-950/30 px-4 py-3 text-sm text-amber-700 dark:text-amber-400">
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-amber-200 border-t-amber-600" /> Đang kiểm tra {validation.fileName}...
             </div>
           )}
           {validation.error && <p className="text-sm text-red-600 dark:text-red-400">{validation.error}</p>}
@@ -239,7 +239,7 @@ function TemplatePageInner() {
 // Wrap with Suspense for useSearchParams (required by Next.js App Router)
 export default function TemplatePage() {
   return (
-    <Suspense fallback={<div className="flex items-center justify-center py-16"><div className="h-6 w-6 animate-spin rounded-full border-2 border-violet-200 border-t-violet-600 dark:border-violet-800 dark:border-t-violet-400" /></div>}>
+    <Suspense fallback={<div className="flex items-center justify-center py-16"><div className="h-6 w-6 animate-spin rounded-full border-2 border-amber-200 border-t-amber-600 dark:border-amber-800 dark:border-t-amber-400" /></div>}>
       <TemplatePageInner />
     </Suspense>
   );

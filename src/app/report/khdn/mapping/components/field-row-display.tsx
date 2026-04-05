@@ -47,7 +47,7 @@ export function FieldRowDisplay({
           onKeyDown={(e) => navigateField(e, "label")}
           data-field-col="label"
           aria-label="Tên hiển thị field"
-          className="w-full truncate rounded border border-transparent bg-transparent px-2 py-1 text-sm font-medium text-zinc-800 dark:text-slate-200 transition-colors hover:border-zinc-200 focus:border-violet-500 focus:bg-white dark:focus:bg-white/[0.06] focus:outline-none focus:ring-1 focus:ring-violet-500"
+          className="w-full truncate rounded border border-transparent bg-transparent px-2 py-1 text-sm font-medium text-zinc-800 dark:text-slate-200 transition-colors hover:border-zinc-200 focus:border-amber-500 focus:bg-white dark:focus:bg-white/[0.06] focus:outline-none focus:ring-1 focus:ring-amber-500"
           title={field.label_vi}
         />
         {showTechnicalKeys && (
@@ -61,7 +61,7 @@ export function FieldRowDisplay({
           </p>
           {templateUsage && templateUsage.length > 0 && (
             <span
-              className="inline-flex flex-shrink-0 items-center gap-0.5 rounded-full bg-violet-100 dark:bg-violet-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-violet-700 dark:text-violet-400"
+              className="inline-flex flex-shrink-0 items-center gap-0.5 rounded-full bg-amber-100 dark:bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700 dark:text-amber-400"
               title={`Dùng trong: ${templateUsage.join(", ")}`}
             >
               <FileText className="h-2.5 w-2.5" />
@@ -91,7 +91,7 @@ export function FieldRowDisplay({
             <span
               className={`rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${
                 ocrSuggestion?.source === "docx_ai"
-                  ? "bg-violet-100 dark:bg-violet-500/10 text-violet-700 dark:text-violet-400"
+                  ? "bg-amber-100 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400"
                   : "bg-sky-100 dark:bg-sky-500/10 text-sky-700 dark:text-sky-400"
               }`}
             >

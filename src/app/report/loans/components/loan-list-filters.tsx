@@ -52,7 +52,7 @@ export function LoanListFilters({
   const filterBtnCls = (active: boolean) =>
     `cursor-pointer px-3 py-1.5 text-xs font-medium transition-all duration-150 ${
       active
-        ? "bg-indigo-600 text-white shadow-sm dark:bg-indigo-500"
+        ? "bg-orange-600 text-white shadow-sm dark:bg-orange-500"
         : "bg-white text-zinc-500 hover:text-zinc-800 dark:bg-[#1a1a1a] dark:text-slate-400 dark:hover:text-slate-200"
     }`;
 
@@ -68,7 +68,7 @@ export function LoanListFilters({
           value={search}
           onChange={(e) => onSearchChange(e.target.value)}
           placeholder="Tìm theo số HĐ hoặc tên khách hàng..."
-          className="w-full rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] pl-9 pr-9 py-2 text-sm shadow-sm transition-all duration-150 placeholder:text-zinc-400 dark:placeholder:text-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40"
+          className="w-full rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] pl-9 pr-9 py-2 text-sm shadow-sm transition-all duration-150 placeholder:text-zinc-400 dark:placeholder:text-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/40"
         />
         {search && (
           <button
@@ -99,7 +99,7 @@ export function LoanListFilters({
       <select
         value={statusFilter}
         onChange={(e) => onStatusFilterChange(e.target.value)}
-        className="cursor-pointer rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] px-3 py-1.5 text-xs font-medium shadow-sm transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40"
+        className="cursor-pointer rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] px-3 py-1.5 text-xs font-medium shadow-sm transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/40"
       >
         {STATUS_OPTIONS.map((opt) => (
           <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -122,7 +122,7 @@ export function LoanListFilters({
         <button
           type="button"
           onClick={() => onViewModeChange("table")}
-          className={`cursor-pointer rounded-md p-1.5 transition-colors ${viewMode === "table" ? "bg-violet-100 text-violet-700 dark:bg-violet-500/15 dark:text-violet-400" : "text-zinc-400 hover:text-zinc-600 dark:hover:text-slate-300"}`}
+          className={`cursor-pointer rounded-md p-1.5 transition-colors ${viewMode === "table" ? "bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-400" : "text-zinc-400 hover:text-zinc-600 dark:hover:text-slate-300"}`}
           title="Dạng bảng"
         >
           <List className="h-4 w-4" />
@@ -130,7 +130,7 @@ export function LoanListFilters({
         <button
           type="button"
           onClick={() => onViewModeChange("card")}
-          className={`cursor-pointer rounded-md p-1.5 transition-colors ${viewMode === "card" ? "bg-violet-100 text-violet-700 dark:bg-violet-500/15 dark:text-violet-400" : "text-zinc-400 hover:text-zinc-600 dark:hover:text-slate-300"}`}
+          className={`cursor-pointer rounded-md p-1.5 transition-colors ${viewMode === "card" ? "bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-400" : "text-zinc-400 hover:text-zinc-600 dark:hover:text-slate-300"}`}
           title="Dạng thẻ"
         >
           <LayoutGrid className="h-4 w-4" />

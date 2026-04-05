@@ -21,7 +21,7 @@ type Props = {
   fieldCatalogEmpty: boolean;
 };
 
-const selectCls = "min-w-48 rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] dark:text-slate-100 px-3 py-2 text-sm shadow-sm transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40";
+const selectCls = "min-w-48 rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] dark:text-slate-100 px-3 py-2 text-sm shadow-sm transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/40";
 
 export function FieldInjectionToolbar(props: Props) {
   const { t } = useLanguage();
@@ -54,7 +54,7 @@ export function FieldInjectionToolbar(props: Props) {
             ))}
           </select>
         </div>
-        <button type="button" onClick={props.onInject} disabled={!props.selectedFieldKey} className="rounded-lg bg-gradient-to-r from-violet-600 to-fuchsia-600 px-4 py-2 text-sm font-medium text-white shadow-sm shadow-violet-500/25 transition-all duration-200 hover:shadow-md hover:shadow-violet-500/30 hover:brightness-110 disabled:opacity-50">
+        <button type="button" onClick={props.onInject} disabled={!props.selectedFieldKey} className="rounded-lg bg-gradient-to-r from-amber-600 to-orange-500 px-4 py-2 text-sm font-medium text-white shadow-sm shadow-amber-500/25 transition-all duration-200 hover:shadow-md hover:shadow-amber-500/30 hover:brightness-110 disabled:opacity-50">
           {t("template.editor.injectButton")}
         </button>
         {props.copyFeedback && (

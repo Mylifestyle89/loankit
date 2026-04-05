@@ -171,17 +171,17 @@ export function TemplateValidationReportModal({ report, fileName, onSave, onClos
               value={savePath}
               onChange={(e) => setSavePath(e.target.value)}
               placeholder="report_assets/template.docx"
-              className="flex-1 rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40"
+              className="flex-1 rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/40"
             />
             <button
               type="button" onClick={handleSave} disabled={saving || !savePath}
-              className="rounded-lg bg-gradient-to-r from-violet-600 to-fuchsia-600 px-5 py-2 text-sm font-medium text-white shadow-sm shadow-violet-500/25 hover:brightness-110 disabled:opacity-50"
+              className="rounded-lg bg-gradient-to-r from-amber-600 to-orange-500 px-5 py-2 text-sm font-medium text-white shadow-sm shadow-amber-500/25 hover:brightness-110 disabled:opacity-50"
             >
               {saving ? "Đang lưu..." : "Lưu"}
             </button>
             <button
               type="button" onClick={onClose}
-              className="rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] px-4 py-2 text-sm shadow-sm hover:border-violet-200 dark:hover:border-violet-500/20"
+              className="rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] px-4 py-2 text-sm shadow-sm hover:border-amber-200 dark:hover:border-amber-500/20"
             >
               Hủy
             </button>

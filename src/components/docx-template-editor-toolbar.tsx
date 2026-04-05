@@ -65,7 +65,7 @@ export function DocxTemplateEditorToolbar({
           <select
             value={selectedGroup}
             onChange={(e) => onSelectGroup(e.target.value)}
-            className="min-w-48 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-white/[0.10] dark:bg-[#141414]/80 dark:text-slate-100"
+            className="min-w-48 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500 dark:border-white/[0.10] dark:bg-[#141414]/80 dark:text-slate-100"
           >
             {groups.map((group) => (
               <option key={group} value={group}>
@@ -81,7 +81,7 @@ export function DocxTemplateEditorToolbar({
           <select
             value={selectedFieldKey}
             onChange={(e) => onSelectFieldKey(e.target.value)}
-            className="min-w-72 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:opacity-50 dark:border-white/[0.10] dark:bg-[#141414]/80 dark:text-slate-100"
+            className="min-w-72 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500 disabled:opacity-50 dark:border-white/[0.10] dark:bg-[#141414]/80 dark:text-slate-100"
             disabled={fieldsInSelectedGroup.length === 0}
           >
             {fieldsInSelectedGroup.map((field) => (
@@ -96,7 +96,7 @@ export function DocxTemplateEditorToolbar({
           type="button"
           onClick={onInsert}
           disabled={!selectedFieldKey}
-          className="flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-indigo-700 disabled:opacity-50 dark:bg-indigo-600 dark:hover:bg-indigo-700"
+          className="flex items-center gap-2 rounded-lg bg-orange-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-orange-700 disabled:opacity-50 dark:bg-orange-600 dark:hover:bg-orange-700"
           title={selectedFieldKey ? `Chèn [${selectedFieldLabel}] vào vị trí con trỏ` : ""}
         >
           <Copy className="h-4 w-4" />

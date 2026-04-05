@@ -29,17 +29,17 @@ export function FieldCatalogGroupSection({
     <div className={isCollapsed ? "hidden" : "space-y-3"}>
       {/* Parent group header */}
       <div className="flex items-center gap-2.5 pt-1 pb-0.5">
-        <span className="shrink-0 text-[13px] font-bold tracking-wide text-violet-700 dark:text-violet-400">
+        <span className="shrink-0 text-[13px] font-bold tracking-wide text-amber-700 dark:text-amber-400">
           {node.parent}
         </span>
-        <div className="flex-1 border-t border-violet-200/60 dark:border-violet-500/25" />
+        <div className="flex-1 border-t border-amber-200/60 dark:border-amber-500/25" />
       </div>
 
       {node.children.map((child) => (
         <div key={child.fullPath} className="space-y-2">
           {/* Subgroup toolbar */}
           <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-slate-200/60 dark:border-white/[0.07] bg-slate-50/70 dark:bg-white/[0.04] p-2">
-            <span className="rounded-full bg-violet-100 dark:bg-violet-500/10 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-violet-700 dark:text-violet-400">
+            <span className="rounded-full bg-amber-100 dark:bg-amber-500/10 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-400">
               {child.subgroup || t("mapping.groupPathRoot")}
             </span>
             <div className="flex flex-wrap items-center gap-1.5">
@@ -59,7 +59,7 @@ export function FieldCatalogGroupSection({
               <button
                 type="button"
                 onClick={() => prepareAddFieldForGroup(child.fullPath)}
-                className="inline-flex items-center gap-1 rounded-lg border border-zinc-200 dark:border-white/[0.08] bg-white dark:bg-white/[0.05] px-2 py-1 text-[11px] font-medium text-zinc-600 dark:text-slate-300 transition-colors hover:border-violet-300 hover:bg-violet-50 dark:hover:bg-violet-500/10 hover:text-violet-800 dark:hover:text-violet-400"
+                className="inline-flex items-center gap-1 rounded-lg border border-zinc-200 dark:border-white/[0.08] bg-white dark:bg-white/[0.05] px-2 py-1 text-[11px] font-medium text-zinc-600 dark:text-slate-300 transition-colors hover:border-amber-300 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-800 dark:hover:text-amber-400"
               >
                 <Plus className="h-3 w-3" />
                 {t("mapping.addField")}
@@ -67,7 +67,7 @@ export function FieldCatalogGroupSection({
               <button
                 type="button"
                 onClick={() => openEditGroupModal(child.fullPath)}
-                className="inline-flex items-center gap-1 rounded-lg border border-zinc-200 dark:border-white/[0.08] bg-white dark:bg-white/[0.05] px-2 py-1 text-[11px] font-medium text-zinc-600 dark:text-slate-300 transition-colors hover:border-violet-300 hover:bg-violet-50 dark:hover:bg-violet-500/10 hover:text-violet-800 dark:hover:text-violet-400"
+                className="inline-flex items-center gap-1 rounded-lg border border-zinc-200 dark:border-white/[0.08] bg-white dark:bg-white/[0.05] px-2 py-1 text-[11px] font-medium text-zinc-600 dark:text-slate-300 transition-colors hover:border-amber-300 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-800 dark:hover:text-amber-400"
               >
                 <Pencil className="h-3 w-3" />
                 {t("mapping.editGroup")}

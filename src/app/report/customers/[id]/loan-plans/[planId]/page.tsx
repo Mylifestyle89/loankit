@@ -182,7 +182,7 @@ export default function LoanPlanEditorPage() {
 
   if (loading) return (
     <div className="flex justify-center py-16">
-      <div className="h-6 w-6 animate-spin rounded-full border-2 border-violet-200 border-t-violet-600" />
+      <div className="h-6 w-6 animate-spin rounded-full border-2 border-amber-200 border-t-amber-600" />
     </div>
   );
 
@@ -191,8 +191,8 @@ export default function LoanPlanEditorPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Link href={`/report/customers/${customerId}/loan-plans`} className="inline-flex items-center gap-1 text-sm text-violet-600 dark:text-violet-400 hover:underline"><ArrowLeft className="h-3.5 w-3.5" />Danh sách PA</Link>
-          <h2 className="text-lg font-bold bg-gradient-to-r from-violet-700 to-fuchsia-600 dark:from-violet-400 dark:to-fuchsia-400 bg-clip-text text-transparent">
+          <Link href={`/report/customers/${customerId}/loan-plans`} className="inline-flex items-center gap-1 text-sm text-amber-600 dark:text-amber-400 hover:underline"><ArrowLeft className="h-3.5 w-3.5" />Danh sách PA</Link>
+          <h2 className="text-lg font-bold bg-gradient-to-r from-amber-700 to-orange-500 dark:from-amber-400 dark:to-orange-400 bg-clip-text text-transparent">
             {name || "Phương án"}
           </h2>
         </div>
@@ -203,7 +203,7 @@ export default function LoanPlanEditorPage() {
             type="button"
             onClick={() => xlsxInputRef.current?.click()}
             disabled={analyzing}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-violet-200 dark:border-violet-500/20 bg-white dark:bg-[#1a1a1a] px-3 py-2 text-sm font-medium text-violet-700 dark:text-violet-400 shadow-sm hover:bg-violet-50 dark:hover:bg-violet-500/10 disabled:opacity-60"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-amber-200 dark:border-amber-500/20 bg-white dark:bg-[#1a1a1a] px-3 py-2 text-sm font-medium text-amber-700 dark:text-amber-400 shadow-sm hover:bg-amber-50 dark:hover:bg-amber-500/10 disabled:opacity-60"
           >
             <Sparkles className="h-4 w-4" />
             {analyzing ? "Đang phân tích..." : "AI phân tích XLSX"}
@@ -212,7 +212,7 @@ export default function LoanPlanEditorPage() {
             type="button"
             onClick={handleSave}
             disabled={saving}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-violet-600 to-fuchsia-600 px-4 py-2 text-sm font-medium text-white shadow-sm shadow-violet-500/25 hover:brightness-110 disabled:opacity-60"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-amber-600 to-orange-500 px-4 py-2 text-sm font-medium text-white shadow-sm shadow-amber-500/25 hover:brightness-110 disabled:opacity-60"
           >
             <Save className="h-4 w-4" /> {saving ? "..." : "Lưu"}
           </button>
@@ -265,13 +265,13 @@ export default function LoanPlanEditorPage() {
             </div>
           ))}
           <button type="button" onClick={() => setRevenueItems([...revenueItems, { description: "", unit: "đ", qty: 0, unitPrice: 0, amount: 0 }])}
-            className="inline-flex items-center gap-1 text-xs text-violet-600 hover:underline">+ Thêm dòng doanh thu</button>
+            className="inline-flex items-center gap-1 text-xs text-amber-600 hover:underline">+ Thêm dòng doanh thu</button>
         </div>
       </div>
 
       {/* Financial summary */}
       {financials && (
-        <div className="rounded-2xl border border-violet-200 dark:border-violet-500/20 bg-gradient-to-br from-violet-50 to-fuchsia-50 dark:from-violet-950/20 dark:to-fuchsia-950/10 p-5 shadow-sm">
+        <div className="rounded-2xl border border-amber-200 dark:border-amber-500/20 bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-950/10 p-5 shadow-sm">
           <h3 className="text-sm font-semibold mb-3">Tổng hợp tài chính</h3>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 text-sm">
             <Stat label="Tổng chi phí trực tiếp" value={fmtVND(financials.totalDirectCost)} />

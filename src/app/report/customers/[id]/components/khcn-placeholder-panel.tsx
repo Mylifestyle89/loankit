@@ -58,7 +58,7 @@ export function KhcnPlaceholderPanel() {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="flex items-center gap-2 rounded-lg border border-dashed border-violet-300 dark:border-violet-500/30 px-3 py-2 text-xs font-medium text-violet-600 dark:text-violet-400 hover:bg-violet-50 dark:hover:bg-violet-500/10 transition-colors"
+        className="flex items-center gap-2 rounded-lg border border-dashed border-amber-300 dark:border-amber-500/30 px-3 py-2 text-xs font-medium text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 transition-colors"
       >
         <ClipboardCopy className="h-3.5 w-3.5" />
         Danh sách placeholder ({totalCount})
@@ -67,37 +67,37 @@ export function KhcnPlaceholderPanel() {
   }
 
   return (
-    <div className="rounded-xl border border-violet-200 dark:border-violet-500/20 bg-violet-50/50 dark:bg-violet-950/20 overflow-hidden">
+    <div className="rounded-xl border border-amber-200 dark:border-amber-500/20 bg-amber-50/50 dark:bg-amber-950/20 overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-2.5 bg-violet-100/50 dark:bg-violet-900/20 border-b border-violet-200 dark:border-violet-500/15">
-        <span className="text-xs font-semibold text-violet-700 dark:text-violet-300">
+      <div className="flex items-center justify-between px-4 py-2.5 bg-amber-100/50 dark:bg-amber-900/20 border-b border-amber-200 dark:border-amber-500/15">
+        <span className="text-xs font-semibold text-amber-700 dark:text-amber-300">
           Placeholder tham chiếu ({totalCount})
         </span>
         <button
           type="button"
           onClick={() => setOpen(false)}
-          className="text-xs text-violet-500 hover:text-violet-700 dark:hover:text-violet-300 transition-colors"
+          className="text-xs text-amber-500 hover:text-amber-700 dark:hover:text-amber-300 transition-colors"
         >
           Thu gọn
         </button>
       </div>
 
       {/* Search */}
-      <div className="px-3 py-2 border-b border-violet-200/50 dark:border-violet-500/10">
+      <div className="px-3 py-2 border-b border-amber-200/50 dark:border-amber-500/10">
         <div className="relative">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-violet-400" />
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-amber-400" />
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Tìm placeholder..."
-            className="w-full rounded-md border border-violet-200 dark:border-violet-500/20 bg-white dark:bg-[#1a1a1a] pl-8 pr-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-violet-400"
+            className="w-full rounded-md border border-amber-200 dark:border-amber-500/20 bg-white dark:bg-[#1a1a1a] pl-8 pr-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-amber-400"
           />
         </div>
       </div>
 
       {/* Groups */}
-      <div className="max-h-80 overflow-y-auto divide-y divide-violet-100 dark:divide-violet-500/10">
+      <div className="max-h-80 overflow-y-auto divide-y divide-amber-100 dark:divide-amber-500/10">
         {filtered.map((group) => {
           const isExpanded = expandedGroups.has(group.label) || search.trim().length > 0;
           return (
@@ -105,13 +105,13 @@ export function KhcnPlaceholderPanel() {
               <button
                 type="button"
                 onClick={() => toggleGroup(group.label)}
-                className="flex w-full items-center gap-2 px-3 py-2 text-xs font-medium text-violet-700 dark:text-violet-300 hover:bg-violet-100/50 dark:hover:bg-violet-500/10 transition-colors"
+                className="flex w-full items-center gap-2 px-3 py-2 text-xs font-medium text-amber-700 dark:text-amber-300 hover:bg-amber-100/50 dark:hover:bg-amber-500/10 transition-colors"
               >
                 {isExpanded
                   ? <ChevronDown className="h-3 w-3 shrink-0" />
                   : <ChevronRight className="h-3 w-3 shrink-0" />}
                 <span className="flex-1 text-left">{group.label}</span>
-                <span className="text-violet-400 text-[10px]">{group.items.length}</span>
+                <span className="text-amber-400 text-[10px]">{group.items.length}</span>
               </button>
               {isExpanded && (
                 <div className="flex flex-wrap gap-1.5 px-3 pb-2.5">
@@ -124,7 +124,7 @@ export function KhcnPlaceholderPanel() {
                       className={`inline-flex items-center gap-1 rounded-md border px-2 py-1 text-[11px] font-mono transition-all duration-150 ${
                         copied === item
                           ? "border-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
-                          : "border-violet-200 dark:border-violet-500/20 bg-white dark:bg-[#1a1a1a] text-zinc-700 dark:text-zinc-300 hover:border-violet-400 hover:bg-violet-50 dark:hover:bg-violet-500/10 cursor-pointer"
+                          : "border-amber-200 dark:border-amber-500/20 bg-white dark:bg-[#1a1a1a] text-zinc-700 dark:text-zinc-300 hover:border-amber-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 cursor-pointer"
                       }`}
                     >
                       {copied === item
@@ -134,7 +134,7 @@ export function KhcnPlaceholderPanel() {
                     </button>
                   ))}
                   {group.loop && (
-                    <span className="text-[10px] text-violet-400 self-center ml-1">
+                    <span className="text-[10px] text-amber-400 self-center ml-1">
                       (loop: {group.loop})
                     </span>
                   )}

@@ -115,14 +115,14 @@ export const FieldRow = memo(function FieldRow({
 
     const isReadOnly = valueReadOnly || hasFormula;
     const readOnlyClassName = isReadOnly
-        ? "cursor-not-allowed bg-violet-50/30 dark:bg-white/[0.04] text-zinc-500 hover:border-transparent focus:border-transparent focus:ring-0"
+        ? "cursor-not-allowed bg-amber-50/30 dark:bg-white/[0.04] text-zinc-500 hover:border-transparent focus:border-transparent focus:ring-0"
         : "";
 
     const inputClassName =
-        "h-8 w-full rounded border border-transparent bg-transparent px-2 py-1 text-sm transition-colors placeholder:text-zinc-700 hover:border-zinc-200 focus:border-violet-500 focus:bg-white dark:focus:bg-white/[0.06] focus:outline-none focus:ring-1 focus:ring-violet-500";
+        "h-8 w-full rounded border border-transparent bg-transparent px-2 py-1 text-sm transition-colors placeholder:text-zinc-700 hover:border-zinc-200 focus:border-amber-500 focus:bg-white dark:focus:bg-white/[0.06] focus:outline-none focus:ring-1 focus:ring-amber-500";
 
     const textareaClassName =
-        "min-h-[80px] w-full rounded border border-transparent bg-transparent px-2 py-1.5 font-mono text-sm transition-colors whitespace-pre placeholder:text-zinc-700 hover:border-zinc-200 focus:border-violet-500 focus:bg-white dark:focus:bg-white/[0.06] focus:outline-none focus:ring-1 focus:ring-violet-500";
+        "min-h-[80px] w-full rounded border border-transparent bg-transparent px-2 py-1.5 font-mono text-sm transition-colors whitespace-pre placeholder:text-zinc-700 hover:border-zinc-200 focus:border-amber-500 focus:bg-white dark:focus:bg-white/[0.06] focus:outline-none focus:ring-1 focus:ring-amber-500";
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         if (isReadOnly) return;
@@ -265,10 +265,10 @@ export const FieldRow = memo(function FieldRow({
             data-field-row={field.field_key}
             className={`group min-w-0 grid grid-cols-1 gap-2 border-t border-zinc-100 dark:border-white/[0.06] px-3 py-2 text-sm transition-colors md:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)_minmax(110px,140px)_auto] ${
                 isDragging
-                    ? "bg-violet-50/30 dark:bg-white/[0.06] opacity-80 shadow-md ring-1 ring-zinc-200"
+                    ? "bg-amber-50/30 dark:bg-white/[0.06] opacity-80 shadow-md ring-1 ring-zinc-200"
                     : hasPendingOcr
                     ? "bg-amber-50/60 dark:bg-amber-500/10 hover:bg-amber-50/80 dark:hover:bg-amber-500/15"
-                    : "bg-white dark:bg-transparent hover:bg-violet-50/30 dark:hover:bg-white/[0.04]"
+                    : "bg-white dark:bg-transparent hover:bg-amber-50/30 dark:hover:bg-white/[0.04]"
             }`}
         >
             {/* Col 1: drag handle + label + metadata */}
@@ -278,7 +278,7 @@ export const FieldRow = memo(function FieldRow({
                         type="button"
                         {...attributes}
                         {...listeners}
-                        className="flex h-5 w-5 cursor-grab items-center justify-center rounded text-zinc-700 hover:bg-violet-100 hover:text-violet-900 active:cursor-grabbing"
+                        className="flex h-5 w-5 cursor-grab items-center justify-center rounded text-zinc-700 hover:bg-amber-100 hover:text-amber-900 active:cursor-grabbing"
                         title="Kéo để di chuyển"
                     >
                         <GripVertical className="h-4 w-4" />

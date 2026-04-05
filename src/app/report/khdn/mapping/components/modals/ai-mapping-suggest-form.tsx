@@ -59,14 +59,14 @@ export function SuggestForm({
           onChange={(e) => setHeadersRaw(e.target.value)}
           rows={5}
           placeholder={t("mapping.aiSuggest.headersPlaceholder")}
-          className="w-full rounded-lg border border-slate-200/80 bg-white/80 px-3 py-2 text-sm placeholder:text-slate-400 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500 dark:border-white/[0.08] dark:bg-white/[0.04] dark:text-slate-100 dark:placeholder:text-slate-500"
+          className="w-full rounded-lg border border-slate-200/80 bg-white/80 px-3 py-2 text-sm placeholder:text-slate-400 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500 dark:border-white/[0.08] dark:bg-white/[0.04] dark:text-slate-100 dark:placeholder:text-slate-500"
         />
         <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200">
           <input
             type="checkbox"
             checked={includeGrouping}
             onChange={(e) => setIncludeGrouping(e.target.checked)}
-            className="h-4 w-4 rounded border-slate-300 text-violet-600 focus:ring-violet-500"
+            className="h-4 w-4 rounded border-slate-300 text-amber-600 focus:ring-amber-500"
           />
           {t("mapping.aiSuggest.includeGrouping")}
         </label>
@@ -74,7 +74,7 @@ export function SuggestForm({
           type="button"
           onClick={() => void runSuggestion()}
           disabled={loading}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-violet-600 to-fuchsia-600 px-3 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:brightness-110 disabled:opacity-70"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-amber-600 to-orange-500 px-3 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:brightness-110 disabled:opacity-70"
         >
           <Bot className="h-4 w-4" />
           {loading ? t("mapping.aiSuggest.loading") : t("mapping.aiSuggest.runGemini")}
@@ -88,7 +88,7 @@ export function SuggestForm({
           <span className="text-xs font-semibold text-slate-600 dark:text-slate-300">
             Trích xuất từ Template DOCX
           </span>
-          <label className="flex cursor-pointer items-center gap-1.5 rounded-md border border-slate-200 dark:border-white/[0.10] bg-white dark:bg-white/[0.04] px-2 py-1 text-[11px] font-medium text-slate-600 dark:text-slate-300 hover:border-violet-300 hover:text-violet-600 dark:hover:border-violet-500/40 dark:hover:text-violet-400 transition-colors">
+          <label className="flex cursor-pointer items-center gap-1.5 rounded-md border border-slate-200 dark:border-white/[0.10] bg-white dark:bg-white/[0.04] px-2 py-1 text-[11px] font-medium text-slate-600 dark:text-slate-300 hover:border-amber-300 hover:text-amber-600 dark:hover:border-amber-500/40 dark:hover:text-amber-400 transition-colors">
             <FileText className="h-3 w-3 flex-shrink-0" />
             {docxParsing
               ? "Đang đọc..."
@@ -116,7 +116,7 @@ export function SuggestForm({
               <button
                 type="button"
                 onClick={() => setHeadersRaw(docxFields.join("\n"))}
-                className="flex items-center gap-1 rounded border border-violet-300 dark:border-violet-500/30 bg-violet-50 dark:bg-violet-500/10 px-2 py-0.5 text-[11px] font-medium text-violet-700 dark:text-violet-400 hover:bg-violet-100 dark:hover:bg-violet-500/20 transition-colors"
+                className="flex items-center gap-1 rounded border border-amber-300 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-500/10 px-2 py-0.5 text-[11px] font-medium text-amber-700 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-500/20 transition-colors"
               >
                 <ArrowRight className="h-3 w-3" />
                 Dùng làm Headers
@@ -131,13 +131,13 @@ export function SuggestForm({
                     <div
                       className={`flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs font-medium ${
                         hasMatch
-                          ? "border-violet-400/70 dark:border-violet-400/30 bg-violet-100/60 dark:bg-violet-500/20 text-violet-800 dark:text-violet-300"
-                          : "border-violet-200/70 dark:border-violet-500/20 bg-violet-50/50 dark:bg-violet-500/10 text-violet-700 dark:text-violet-400"
+                          ? "border-amber-400/70 dark:border-amber-400/30 bg-amber-100/60 dark:bg-amber-500/20 text-amber-800 dark:text-amber-300"
+                          : "border-amber-200/70 dark:border-amber-500/20 bg-amber-50/50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400"
                       }`}
                     >
-                      <span className="text-violet-500 dark:text-violet-400 select-none">[</span>
+                      <span className="text-amber-500 dark:text-amber-400 select-none">[</span>
                       <span className="min-w-0 truncate font-sans" title={field}>{field}</span>
-                      <span className="text-violet-500 dark:text-violet-400 select-none">]</span>
+                      <span className="text-amber-500 dark:text-amber-400 select-none">]</span>
                     </div>
                     {hasMatch && (
                       <div className="pl-2 text-[10px] text-slate-500 dark:text-slate-400">
@@ -167,9 +167,9 @@ export function SuggestForm({
                   data-header={header}
                   className={`flex items-center gap-2 rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-shadow ${
                     isMapped
-                      ? "border-violet-200/80 bg-violet-50/60 text-violet-700 dark:border-violet-500/30 dark:bg-violet-500/10 dark:text-violet-400"
+                      ? "border-amber-200/80 bg-amber-50/60 text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-400"
                       : "border-slate-200/80 bg-slate-50/60 text-slate-600 dark:border-white/[0.07] dark:bg-white/[0.04] dark:text-slate-300"
-                  } ${hoveredKey === header ? "shadow-md ring-1 ring-violet-300/60" : ""}`}
+                  } ${hoveredKey === header ? "shadow-md ring-1 ring-amber-300/60" : ""}`}
                   onMouseEnter={() => setHoveredKey(header)}
                   onMouseLeave={() => setHoveredKey(null)}
                 >

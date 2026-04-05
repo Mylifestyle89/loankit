@@ -34,7 +34,7 @@ export const AiResultRow = memo(function AiResultRow({
             type="button"
             onClick={() => onChange(fieldKey, originalValue)}
             title="Khôi phục giá trị AI gốc"
-            className="flex-shrink-0 rounded p-1 text-slate-400 dark:text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-slate-100 dark:hover:bg-white/[0.07] transition-colors"
+            className="flex-shrink-0 rounded p-1 text-slate-400 dark:text-slate-500 hover:text-orange-600 dark:hover:text-orange-400 hover:bg-slate-100 dark:hover:bg-white/[0.07] transition-colors"
           >
             <RotateCcw className="h-3.5 w-3.5" />
           </button>

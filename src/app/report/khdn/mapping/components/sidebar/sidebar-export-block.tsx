@@ -33,11 +33,11 @@ export function SidebarExportBlock({
   onExportXlsx,
 }: ExportBlockProps) {
   const SELECT_CLS =
-    "w-full rounded-lg border border-slate-200/80 dark:border-white/[0.09] bg-white dark:bg-white/[0.05] dark:text-slate-100 px-3 py-2 text-sm font-medium focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-400/30 dark:focus:ring-violet-400/20";
+    "w-full rounded-lg border border-slate-200/80 dark:border-white/[0.09] bg-white dark:bg-white/[0.05] dark:text-slate-100 px-3 py-2 text-sm font-medium focus:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-400/30 dark:focus:ring-amber-400/20";
 
   return (
     <>
-      <div className="space-y-2 rounded-lg border border-slate-200/60 dark:border-white/[0.07] bg-violet-50/50 dark:bg-violet-500/10 p-3">
+      <div className="space-y-2 rounded-lg border border-slate-200/60 dark:border-white/[0.07] bg-amber-50/50 dark:bg-amber-500/10 p-3">
         <p className="text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">Export</p>
 
         <label className="text-xs font-medium text-slate-600 dark:text-slate-300">{t("mapping.export.scopeLabel")}</label>

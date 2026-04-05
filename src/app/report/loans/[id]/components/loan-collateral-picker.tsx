@@ -88,17 +88,17 @@ export function LoanCollateralPicker({ collaterals, initialSelectedIds, onSave }
     <div className="rounded-xl border border-zinc-200 dark:border-white/[0.07] bg-white dark:bg-[#161616] p-4 shadow-sm space-y-3">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Shield className="h-4 w-4 text-violet-600 dark:text-violet-400" />
+          <Shield className="h-4 w-4 text-amber-600 dark:text-amber-400" />
           <h3 className="text-sm font-semibold">Tài sản bảo đảm cho khoản vay</h3>
           <span className="text-xs text-zinc-400">({selectedIds.size}/{collaterals.length})</span>
         </div>
         <div className="flex items-center gap-2">
           <button type="button" onClick={toggleAll}
-            className="text-xs text-violet-600 dark:text-violet-400 hover:underline">
+            className="text-xs text-amber-600 dark:text-amber-400 hover:underline">
             {selectedIds.size === collaterals.length ? "Bỏ chọn tất cả" : "Chọn tất cả"}
           </button>
           <button type="button" onClick={handleSave} disabled={saving || !hasChanged}
-            className="rounded-lg bg-violet-600 px-3 py-1 text-xs font-medium text-white hover:bg-violet-700 disabled:opacity-50 transition-all flex items-center gap-1">
+            className="rounded-lg bg-amber-600 px-3 py-1 text-xs font-medium text-white hover:bg-amber-700 disabled:opacity-50 transition-all flex items-center gap-1">
             {saved ? <><Check className="h-3 w-3" /> Đã lưu</> : saving ? "..." : "Lưu"}
           </button>
         </div>
@@ -124,11 +124,11 @@ export function LoanCollateralPicker({ collaterals, initialSelectedIds, onSave }
               <label key={c.id}
                 className={`flex items-center gap-3 rounded-lg border px-3 py-2 cursor-pointer transition-all ${
                   selectedIds.has(c.id)
-                    ? "border-violet-300 dark:border-violet-500/30 bg-violet-50/50 dark:bg-violet-500/5"
+                    ? "border-amber-300 dark:border-amber-500/30 bg-amber-50/50 dark:bg-amber-500/5"
                     : "border-zinc-100 dark:border-white/[0.06] hover:bg-zinc-50 dark:hover:bg-white/[0.03]"
                 }`}>
                 <input type="checkbox" checked={selectedIds.has(c.id)} onChange={() => toggle(c.id)}
-                  className="h-3.5 w-3.5 rounded border-zinc-300 text-violet-600 focus:ring-violet-500" />
+                  className="h-3.5 w-3.5 rounded border-zinc-300 text-amber-600 focus:ring-amber-500" />
                 <span className="flex-1 min-w-0 truncate text-sm">{c.name}</span>
                 <span className="shrink-0 text-xs tabular-nums text-zinc-500 dark:text-slate-400">
                   {fmtVND(c.total_value)} đ

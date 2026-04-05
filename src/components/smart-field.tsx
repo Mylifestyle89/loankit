@@ -95,7 +95,7 @@ export function SmartField({
           title={hasOptions ? "Quản lý danh sách" : "Tạo danh sách chọn nhanh"}
         >
           {hasOptions
-            ? <ListPlus className="h-3.5 w-3.5 text-violet-500" />
+            ? <ListPlus className="h-3.5 w-3.5 text-amber-500" />
             : <Plus className="h-3.5 w-3.5 text-zinc-400" />}
         </button>
       </div>
@@ -138,13 +138,13 @@ export function SmartField({
               onChange={(e) => setNewLabel(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleAdd()}
               placeholder="Thêm mới..."
-              className="flex-1 rounded-md border border-zinc-200 dark:border-white/[0.10] bg-white dark:bg-white/[0.04] px-2 py-1 text-xs outline-none focus:ring-1 focus:ring-violet-500/40"
+              className="flex-1 rounded-md border border-zinc-200 dark:border-white/[0.10] bg-white dark:bg-white/[0.04] px-2 py-1 text-xs outline-none focus:ring-1 focus:ring-amber-500/40"
             />
             <button
               type="button"
               onClick={handleAdd}
               disabled={adding || !newLabel.trim()}
-              className="rounded-md bg-violet-600 px-2 py-1 text-xs font-medium text-white disabled:opacity-40 hover:brightness-110 transition-all"
+              className="rounded-md bg-amber-600 px-2 py-1 text-xs font-medium text-white disabled:opacity-40 hover:brightness-110 transition-all"
             >
               {adding ? "..." : "Thêm"}
             </button>

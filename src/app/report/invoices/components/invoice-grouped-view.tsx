@@ -79,7 +79,7 @@ export function InvoiceGroupedView({
                 <div className="flex items-center gap-2 min-w-0">
                   {isCollapsed
                     ? <ChevronRight className="h-4 w-4 text-zinc-400 shrink-0" />
-                    : <ChevronDown className="h-4 w-4 text-violet-500 shrink-0" />
+                    : <ChevronDown className="h-4 w-4 text-amber-500 shrink-0" />
                   }
                   <span className="text-sm font-semibold text-zinc-800 dark:text-slate-200 truncate">
                     {g.contractNumber}
@@ -104,7 +104,7 @@ export function InvoiceGroupedView({
                     href={`/report/disbursements/${g.disbursementId}`}
                     onClick={(e) => e.stopPropagation()}
                     title="Quản lý giải ngân"
-                    className="cursor-pointer rounded-lg p-1.5 text-zinc-400 hover:text-violet-600 hover:bg-violet-50 dark:hover:text-violet-400 dark:hover:bg-violet-500/10 transition-colors"
+                    className="cursor-pointer rounded-lg p-1.5 text-zinc-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:text-amber-400 dark:hover:bg-amber-500/10 transition-colors"
                   >
                     <Eye className="h-4 w-4" />
                   </Link>
@@ -115,7 +115,7 @@ export function InvoiceGroupedView({
                 <div className="h-2 rounded-full bg-zinc-100 dark:bg-white/[0.06] overflow-hidden">
                   <div
                     className={`h-full rounded-full transition-all duration-500 ${
-                      isFull ? "bg-emerald-500" : pct > 50 ? "bg-violet-500" : "bg-amber-500"
+                      isFull ? "bg-emerald-500" : pct > 50 ? "bg-amber-500" : "bg-amber-500"
                     }`}
                     style={{ width: `${pct}%` }}
                   />

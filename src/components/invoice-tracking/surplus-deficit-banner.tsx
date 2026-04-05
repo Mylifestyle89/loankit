@@ -17,14 +17,14 @@ export function SurplusDeficitBanner({ disbursementAmount, totalInvoice, diff }:
   return (
     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
       {/* Số tiền giải ngân */}
-      <div className="rounded-xl border border-violet-200 dark:border-violet-500/20 bg-violet-50/50 dark:bg-violet-500/5 p-4">
+      <div className="rounded-xl border border-amber-200 dark:border-amber-500/20 bg-amber-50/50 dark:bg-amber-500/5 p-4">
         <div className="flex items-center gap-2.5">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-violet-100 dark:bg-violet-500/15">
-            <Banknote className="h-4.5 w-4.5 text-violet-600 dark:text-violet-400" />
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-amber-100 dark:bg-amber-500/15">
+            <Banknote className="h-4.5 w-4.5 text-amber-600 dark:text-amber-400" />
           </div>
           <div className="min-w-0">
             <p className="text-xs text-zinc-500 dark:text-slate-400">Số tiền giải ngân</p>
-            <p className="text-sm font-bold tabular-nums text-violet-700 dark:text-violet-300 truncate">{fmt(disbursementAmount)} <span className="text-xs font-medium">VND</span></p>
+            <p className="text-sm font-bold tabular-nums text-amber-700 dark:text-amber-300 truncate">{fmt(disbursementAmount)} <span className="text-xs font-medium">VND</span></p>
           </div>
         </div>
       </div>

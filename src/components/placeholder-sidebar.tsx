@@ -149,7 +149,7 @@ export function PlaceholderSidebar({ fieldCatalog }: Props) {
         type="button"
         onClick={() => setCollapsed(false)}
         title="Mở danh sách placeholder"
-        className="flex h-full w-10 flex-col items-center justify-center border-l border-slate-200/70 bg-slate-50/80 text-slate-500 transition-colors hover:bg-indigo-50 hover:text-indigo-600 dark:border-white/[0.08] dark:bg-[#141414] dark:text-slate-400 dark:hover:bg-indigo-500/10 dark:hover:text-indigo-400"
+        className="flex h-full w-10 flex-col items-center justify-center border-l border-slate-200/70 bg-slate-50/80 text-slate-500 transition-colors hover:bg-orange-50 hover:text-orange-600 dark:border-white/[0.08] dark:bg-[#141414] dark:text-slate-400 dark:hover:bg-orange-500/10 dark:hover:text-orange-400"
       >
         <PanelRightOpen className="h-4 w-4" />
         <span className="mt-2 text-[10px] font-medium [writing-mode:vertical-rl]">Placeholder</span>
@@ -201,7 +201,7 @@ export function PlaceholderSidebar({ fieldCatalog }: Props) {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Tìm placeholder..."
-            className="h-8 w-full rounded-lg border border-slate-200 bg-slate-50/50 pl-8 pr-3 text-xs text-slate-700 placeholder:text-slate-400 focus:border-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-400 dark:border-white/[0.09] dark:bg-white/[0.04] dark:text-slate-200 dark:placeholder:text-slate-500"
+            className="h-8 w-full rounded-lg border border-slate-200 bg-slate-50/50 pl-8 pr-3 text-xs text-slate-700 placeholder:text-slate-400 focus:border-orange-400 focus:outline-none focus:ring-1 focus:ring-orange-400 dark:border-white/[0.09] dark:bg-white/[0.04] dark:text-slate-200 dark:placeholder:text-slate-500"
           />
         </div>
       </div>
@@ -213,7 +213,7 @@ export function PlaceholderSidebar({ fieldCatalog }: Props) {
             type="button"
             onClick={() => setDisplayMode("alias")}
             className={`rounded-md px-2 py-1 text-[11px] font-medium transition-colors ${displayMode === "alias"
-                ? "bg-indigo-600 text-white"
+                ? "bg-orange-600 text-white"
                 : "text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-white/[0.08]"
               }`}
           >
@@ -223,7 +223,7 @@ export function PlaceholderSidebar({ fieldCatalog }: Props) {
             type="button"
             onClick={() => setDisplayMode("technical")}
             className={`rounded-md px-2 py-1 text-[11px] font-medium transition-colors ${displayMode === "technical"
-                ? "bg-indigo-600 text-white"
+                ? "bg-orange-600 text-white"
                 : "text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-white/[0.08]"
               }`}
           >
@@ -234,7 +234,7 @@ export function PlaceholderSidebar({ fieldCatalog }: Props) {
           <button
             type="button"
             onClick={expandAll}
-            className="rounded px-2 py-0.5 text-[11px] font-medium text-indigo-600 transition-colors hover:bg-indigo-50 dark:text-indigo-400 dark:hover:bg-indigo-500/10"
+            className="rounded px-2 py-0.5 text-[11px] font-medium text-orange-600 transition-colors hover:bg-orange-50 dark:text-orange-400 dark:hover:bg-orange-500/10"
           >
             Mở tất cả
           </button>
@@ -292,7 +292,7 @@ export function PlaceholderSidebar({ fieldCatalog }: Props) {
                         type="button"
                         onClick={() => copyPlaceholder(field)}
                         title={`Copy [${placeholderTag}]`}
-                        className="group flex w-full items-center gap-2 px-3 py-1.5 text-left transition-colors hover:bg-indigo-50/60 dark:hover:bg-indigo-500/10"
+                        className="group flex w-full items-center gap-2 px-3 py-1.5 text-left transition-colors hover:bg-orange-50/60 dark:hover:bg-orange-500/10"
                       >
                         <div className="min-w-0 flex-1">
                           <p className="truncate text-xs font-medium text-slate-700 dark:text-slate-200">
@@ -306,7 +306,7 @@ export function PlaceholderSidebar({ fieldCatalog }: Props) {
                           {isCopied ? (
                             <Check className="h-3.5 w-3.5 text-emerald-500" />
                           ) : (
-                            <Copy className="h-3.5 w-3.5 text-slate-300 transition-colors group-hover:text-indigo-500 dark:text-slate-600 dark:group-hover:text-indigo-400" />
+                            <Copy className="h-3.5 w-3.5 text-slate-300 transition-colors group-hover:text-orange-500 dark:text-slate-600 dark:group-hover:text-orange-400" />
                           )}
                         </span>
                       </button>

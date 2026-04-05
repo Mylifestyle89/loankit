@@ -71,8 +71,8 @@ export function OcrReviewModal({
           >
             {/* Header */}
             <div className="flex items-center gap-3 border-b border-slate-200/60 dark:border-white/[0.07] px-6 py-4 flex-shrink-0">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-100 dark:bg-violet-500/15">
-                <ScanLine className="h-4 w-4 text-violet-600 dark:text-violet-400" />
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-100 dark:bg-amber-500/15">
+                <ScanLine className="h-4 w-4 text-amber-600 dark:text-amber-400" />
               </div>
               <div className="flex-1 min-w-0">
                 <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">
@@ -146,7 +146,7 @@ export function OcrReviewModal({
                     <button
                       type="button"
                       onClick={onAcceptAll}
-                      className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-violet-600 to-fuchsia-600 px-4 py-1.5 text-sm font-medium text-white shadow-sm hover:brightness-110 transition-colors"
+                      className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-amber-600 to-orange-500 px-4 py-1.5 text-sm font-medium text-white shadow-sm hover:brightness-110 transition-colors"
                     >
                       <CheckCheck className="h-4 w-4" />
                       Accept All ({pendingCount})
@@ -166,7 +166,7 @@ export function OcrReviewModal({
                     <button
                       type="button"
                       onClick={onAcceptRepeaterAll}
-                      className="inline-flex items-center gap-1.5 rounded-lg bg-violet-600 px-4 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-violet-700 transition-colors"
+                      className="inline-flex items-center gap-1.5 rounded-lg bg-amber-600 px-4 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-amber-700 transition-colors"
                     >
                       <CheckCheck className="h-4 w-4" />
                       Accept Repeater ({pendingRepeaterCount})

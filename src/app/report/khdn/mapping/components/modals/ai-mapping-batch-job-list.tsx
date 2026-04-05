@@ -24,7 +24,7 @@ export function BatchJobList({ autoProcessJob, liveLogs, liveLogEndRef, t }: Bat
       {/* Progress bar */}
       <div className="rounded-lg border border-zinc-200/80 bg-zinc-900/95 p-3 text-zinc-300 dark:border-white/[0.08]">
         <div className="mb-1 flex items-center justify-between">
-          <span className="text-xs font-semibold text-violet-400">
+          <span className="text-xs font-semibold text-amber-400">
             {t("mapping.smartAutoBatch.rootKeyDetected")}: {autoProcessJob.suggested_root_key || "—"}
           </span>
           <span className="text-xs text-zinc-500">
@@ -33,7 +33,7 @@ export function BatchJobList({ autoProcessJob, liveLogs, liveLogEndRef, t }: Bat
         </div>
         <div className="h-2 w-full overflow-hidden rounded bg-zinc-800">
           <div
-            className="h-full bg-violet-500 transition-all duration-300"
+            className="h-full bg-amber-500 transition-all duration-300"
             style={{ width: `${Math.max(0, Math.min(100, autoProcessJob.progress.percent))}%` }}
           />
         </div>
@@ -65,9 +65,9 @@ export function BatchJobList({ autoProcessJob, liveLogs, liveLogEndRef, t }: Bat
                   initial={{ scale: 0.9, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   transition={{ type: "spring", stiffness: 360, damping: 28, delay: idx * 0.04 }}
-                  className="group flex flex-col rounded-xl border border-slate-200/80 bg-white p-3 shadow-sm transition-all hover:border-violet-300 hover:shadow-md hover:shadow-violet-500/10 dark:border-white/[0.07] dark:bg-white/[0.04] dark:hover:border-violet-500/30"
+                  className="group flex flex-col rounded-xl border border-slate-200/80 bg-white p-3 shadow-sm transition-all hover:border-amber-300 hover:shadow-md hover:shadow-amber-500/10 dark:border-white/[0.07] dark:bg-white/[0.04] dark:hover:border-amber-500/30"
                 >
-                  <div className="mb-2 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-violet-100 text-violet-600 group-hover:bg-violet-200/80 dark:bg-violet-500/10 dark:text-violet-400">
+                  <div className="mb-2 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-amber-100 text-amber-600 group-hover:bg-amber-200/80 dark:bg-amber-500/10 dark:text-amber-400">
                     <FileText className="h-5 w-5" aria-hidden />
                   </div>
                   <span className="min-w-0 truncate text-xs font-medium text-slate-800 dark:text-slate-200" title={filePath}>

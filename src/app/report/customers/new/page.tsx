@@ -9,7 +9,7 @@ export default function NewCustomerRedirectPage() {
   useEffect(() => { router.replace("/report/khdn/customers/new"); }, [router]);
   return (
     <div className="flex items-center justify-center py-16">
-      <div className="h-6 w-6 animate-spin rounded-full border-2 border-violet-200 border-t-violet-600" />
+      <div className="h-6 w-6 animate-spin rounded-full border-2 border-amber-200 border-t-amber-600" />
     </div>
   );
 }

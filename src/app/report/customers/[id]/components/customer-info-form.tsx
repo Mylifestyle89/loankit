@@ -10,7 +10,7 @@ import { useLanguage } from "@/components/language-provider";
 import { useGroupVisibility, isFieldVisible } from "@/lib/field-visibility/use-field-visibility";
 
 const inputCls =
-  "mt-1 w-full rounded-md border border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] text-zinc-900 dark:text-slate-100 px-3 py-2 shadow-sm transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40";
+  "mt-1 w-full rounded-md border border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] text-zinc-900 dark:text-slate-100 px-3 py-2 shadow-sm transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/40";
 
 /** Auto-insert "/" separators as user types a date in dd/mm/yyyy format */
 function formatDateInput(raw: string): string {
@@ -93,7 +93,7 @@ export function CustomerInfoForm({
             onClick={() => setInfoSubTab(st.key)}
             className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
               infoSubTab === st.key
-                ? "bg-violet-100 text-violet-700 dark:bg-violet-500/15 dark:text-violet-400"
+                ? "bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-400"
                 : "text-zinc-500 dark:text-slate-400 hover:bg-zinc-100 dark:hover:bg-white/[0.05]"
             }`}
           >
@@ -138,7 +138,7 @@ export function CustomerInfoForm({
             </div>
             {showScanButton && (
               <button type="button" onClick={() => setScannerOpen(true)}
-                className="ml-auto inline-flex items-center gap-1.5 rounded-lg border border-violet-200 dark:border-violet-500/30 bg-violet-50 dark:bg-violet-500/10 px-3 py-1.5 text-xs font-medium text-violet-700 dark:text-violet-400 hover:bg-violet-100 dark:hover:bg-violet-500/20 transition-colors">
+                className="ml-auto inline-flex items-center gap-1.5 rounded-lg border border-amber-200 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-500/10 px-3 py-1.5 text-xs font-medium text-amber-700 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-500/20 transition-colors">
                 📷 Scan tài liệu
               </button>
             )}
@@ -261,7 +261,7 @@ export function CustomerInfoForm({
             <button
               type="submit"
               disabled={saving}
-              className="cursor-pointer rounded-lg bg-gradient-to-r from-violet-600 to-fuchsia-600 px-5 py-2 text-sm font-medium text-white shadow-sm shadow-violet-500/25 transition-all duration-200 hover:shadow-md hover:shadow-violet-500/30 hover:brightness-110 disabled:opacity-60"
+              className="cursor-pointer rounded-lg bg-gradient-to-r from-amber-600 to-orange-500 px-5 py-2 text-sm font-medium text-white shadow-sm shadow-amber-500/25 transition-all duration-200 hover:shadow-md hover:shadow-amber-500/30 hover:brightness-110 disabled:opacity-60"
             >
               {saving ? "Đang lưu..." : "Lưu"}
             </button>

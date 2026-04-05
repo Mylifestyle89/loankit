@@ -43,16 +43,16 @@ export type Props = {
 
 export const chipStyles: Record<ChipVariant, { border: string; text: string; bg: string; icon: string }> = {
   single: {
-    border: "border-violet-200/80 dark:border-violet-500/30",
-    text: "text-violet-800 dark:text-violet-400",
-    bg: "bg-violet-50/60 dark:bg-violet-500/10",
-    icon: "text-violet-600 dark:text-violet-400",
+    border: "border-amber-200/80 dark:border-amber-500/30",
+    text: "text-amber-800 dark:text-amber-400",
+    bg: "bg-amber-50/60 dark:bg-amber-500/10",
+    icon: "text-amber-600 dark:text-amber-400",
   },
   repeater: {
-    border: "border-violet-200/80",
-    text: "text-violet-800",
-    bg: "bg-violet-50/60",
-    icon: "text-violet-600",
+    border: "border-amber-200/80",
+    text: "text-amber-800",
+    bg: "bg-amber-50/60",
+    icon: "text-amber-600",
   },
   root: {
     border: "border-amber-200/80",

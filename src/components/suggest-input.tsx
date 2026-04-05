@@ -41,7 +41,7 @@ export function SuggestInput({ value, onChange, suggestions, placeholder, classN
               type="button"
               // Use onMouseDown (not onClick) to fire before blur closes the dropdown
               onMouseDown={() => { onChange(opt); setOpen(false); }}
-              className="w-full text-left px-3 py-1.5 text-sm hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors"
+              className="w-full text-left px-3 py-1.5 text-sm hover:bg-orange-50 dark:hover:bg-orange-900/20 transition-colors"
             >
               {opt}
             </button>

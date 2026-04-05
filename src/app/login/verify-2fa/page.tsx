@@ -45,7 +45,7 @@ function Verify2FAForm() {
 
   return (
     <div className="relative z-10 w-full max-w-sm rounded-2xl border border-white/10 bg-white/[0.04] p-8 shadow-2xl backdrop-blur-sm">
-      <div className="mx-auto mb-6 flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600 shadow-md">
+      <div className="mx-auto mb-6 flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-orange-600 to-amber-600 shadow-md">
         <ShieldCheck className="h-5 w-5 text-white" />
       </div>
 
@@ -64,7 +64,7 @@ function Verify2FAForm() {
           autoFocus
           value={code}
           onChange={(e) => handleCodeChange(e.target.value)}
-          className="w-full rounded-lg border border-white/10 bg-white/[0.06] px-3 py-3 text-center text-lg font-mono tracking-[0.3em] text-white placeholder-slate-500 outline-none transition focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/30"
+          className="w-full rounded-lg border border-white/10 bg-white/[0.06] px-3 py-3 text-center text-lg font-mono tracking-[0.3em] text-white placeholder-slate-500 outline-none transition focus:border-orange-500/50 focus:ring-1 focus:ring-orange-500/30"
           placeholder={useBackup ? "mã dự phòng" : "000000"}
         />
 
@@ -77,7 +77,7 @@ function Verify2FAForm() {
         <button
           type="submit"
           disabled={loading || (!useBackup && code.length < 6)}
-          className="w-full rounded-lg bg-gradient-to-r from-indigo-600 to-violet-600 py-2.5 text-sm font-medium text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
+          className="w-full rounded-lg bg-gradient-to-r from-orange-600 to-amber-600 py-2.5 text-sm font-medium text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {loading ? "Đang xác minh..." : "Xác minh"}
         </button>

@@ -20,7 +20,7 @@ const MarkdownContent = dynamic(
       },
     ),
   ),
-  { ssr: false, loading: () => <div className="h-6 w-6 animate-spin rounded-full border-2 border-violet-200 border-t-violet-600" /> },
+  { ssr: false, loading: () => <div className="h-6 w-6 animate-spin rounded-full border-2 border-amber-200 border-t-amber-600" /> },
 );
 
 
@@ -84,7 +84,7 @@ export default function GuidePage() {
   }
 
   if (loading) {
-    return <div className="flex items-center justify-center py-16"><div className="h-6 w-6 animate-spin rounded-full border-2 border-violet-200 border-t-violet-600 dark:border-violet-800 dark:border-t-violet-400" /></div>;
+    return <div className="flex items-center justify-center py-16"><div className="h-6 w-6 animate-spin rounded-full border-2 border-amber-200 border-t-amber-600 dark:border-amber-800 dark:border-t-amber-400" /></div>;
   }
 
   if (error) {
@@ -94,13 +94,13 @@ export default function GuidePage() {
   return (
     <section className="space-y-5">
       {/* Header */}
-      <div className="relative overflow-hidden rounded-2xl border border-violet-100 dark:border-violet-500/10 bg-gradient-to-br from-violet-50 via-white to-fuchsia-50 dark:from-violet-950/30 dark:via-[#141414] dark:to-fuchsia-950/20 p-5">
-        <div className="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-violet-200/30 blur-2xl dark:bg-violet-500/10" />
+      <div className="relative overflow-hidden rounded-2xl border border-amber-100 dark:border-amber-500/10 bg-gradient-to-br from-amber-50 via-white to-orange-50 dark:from-amber-950/30 dark:via-[#141414] dark:to-orange-950/20 p-5">
+        <div className="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-amber-200/30 blur-2xl dark:bg-amber-500/10" />
         <div className="relative flex items-start justify-between">
           <div className="flex items-center gap-3">
-            <BookOpen className="h-6 w-6 text-violet-600 dark:text-violet-400" />
+            <BookOpen className="h-6 w-6 text-amber-600 dark:text-amber-400" />
             <div>
-              <h2 className="text-xl font-bold tracking-tight bg-gradient-to-r from-violet-700 to-fuchsia-600 dark:from-violet-400 dark:to-fuchsia-400 bg-clip-text text-transparent">
+              <h2 className="text-xl font-bold tracking-tight bg-gradient-to-r from-amber-700 to-orange-500 dark:from-amber-400 dark:to-orange-400 bg-clip-text text-transparent">
                 {t("nav.guide")}
               </h2>
               <p className="mt-1 text-sm text-zinc-500 dark:text-slate-400">
@@ -110,11 +110,11 @@ export default function GuidePage() {
           </div>
           <div className="flex gap-2">
             <button type="button" onClick={handleDownloadDocx}
-              className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-violet-600 to-fuchsia-600 px-4 py-2 text-sm font-medium text-white shadow-sm shadow-violet-500/25 hover:brightness-110">
+              className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-amber-600 to-orange-500 px-4 py-2 text-sm font-medium text-white shadow-sm shadow-amber-500/25 hover:brightness-110">
               <FileText className="h-4 w-4" /> Tải DOCX
             </button>
             <button type="button" onClick={handleDownloadMarkdown}
-              className="inline-flex items-center gap-2 rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] px-4 py-2 text-sm font-medium shadow-sm hover:border-violet-200 dark:hover:border-violet-500/20">
+              className="inline-flex items-center gap-2 rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] px-4 py-2 text-sm font-medium shadow-sm hover:border-amber-200 dark:hover:border-amber-500/20">
               <Download className="h-4 w-4" /> Tải MD
             </button>
           </div>
@@ -125,8 +125,8 @@ export default function GuidePage() {
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
         {QUICK_LINKS.map(({ icon: Icon, label, desc, anchor }) => (
           <button key={anchor} type="button" onClick={() => scrollToAnchor(anchor)}
-            className="group flex flex-col items-start gap-1.5 rounded-xl border border-zinc-200 dark:border-white/[0.07] bg-white dark:bg-[#1a1a1a] p-3.5 text-left shadow-sm transition-all hover:border-violet-300 dark:hover:border-violet-500/20 hover:shadow-md hover:-translate-y-0.5">
-            <Icon className="h-5 w-5 text-violet-500 dark:text-violet-400 group-hover:text-violet-600 dark:group-hover:text-violet-300 transition-colors" />
+            className="group flex flex-col items-start gap-1.5 rounded-xl border border-zinc-200 dark:border-white/[0.07] bg-white dark:bg-[#1a1a1a] p-3.5 text-left shadow-sm transition-all hover:border-amber-300 dark:hover:border-amber-500/20 hover:shadow-md hover:-translate-y-0.5">
+            <Icon className="h-5 w-5 text-amber-500 dark:text-amber-400 group-hover:text-amber-600 dark:group-hover:text-amber-300 transition-colors" />
             <span className="text-sm font-semibold text-zinc-800 dark:text-slate-200">{label}</span>
             <span className="text-xs text-zinc-500 dark:text-slate-400 leading-snug">{desc}</span>
           </button>
@@ -138,12 +138,12 @@ export default function GuidePage() {
         <div ref={proseRef} className="prose prose-zinc dark:prose-invert max-w-none
           prose-headings:tracking-tight prose-h1:text-2xl prose-h2:text-xl prose-h3:text-lg
           prose-h2:border-b prose-h2:border-zinc-200 prose-h2:dark:border-white/[0.07] prose-h2:pb-2 prose-h2:mt-8
-          prose-a:text-violet-600 prose-a:dark:text-violet-400
+          prose-a:text-amber-600 prose-a:dark:text-amber-400
           prose-strong:text-zinc-800 prose-strong:dark:text-slate-200
-          prose-blockquote:border-violet-300 prose-blockquote:dark:border-violet-500/30
-          prose-code:text-violet-700 prose-code:dark:text-violet-300 prose-code:bg-violet-50 prose-code:dark:bg-violet-500/10 prose-code:px-1 prose-code:rounded
-          prose-li:marker:text-violet-500
-          prose-table:text-sm prose-th:bg-violet-50 prose-th:dark:bg-violet-500/10 prose-th:font-semibold prose-td:py-2">
+          prose-blockquote:border-amber-300 prose-blockquote:dark:border-amber-500/30
+          prose-code:text-amber-700 prose-code:dark:text-amber-300 prose-code:bg-amber-50 prose-code:dark:bg-amber-500/10 prose-code:px-1 prose-code:rounded
+          prose-li:marker:text-amber-500
+          prose-table:text-sm prose-th:bg-amber-50 prose-th:dark:bg-amber-500/10 prose-th:font-semibold prose-td:py-2">
           <MarkdownContent content={content} />
         </div>
       </div>

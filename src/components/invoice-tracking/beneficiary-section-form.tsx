@@ -72,7 +72,7 @@ export function BeneficiarySection({
   return (
     <div className={sectionCls}>
       <div className="flex items-center justify-between mb-3">
-        <button type="button" onClick={() => setCollapsed(!collapsed)} className="cursor-pointer flex items-center gap-1 text-sm font-semibold rounded-md px-1.5 py-0.5 -ml-1.5 hover:bg-zinc-100 dark:hover:bg-white/[0.06] transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40">
+        <button type="button" onClick={() => setCollapsed(!collapsed)} className="cursor-pointer flex items-center gap-1 text-sm font-semibold rounded-md px-1.5 py-0.5 -ml-1.5 hover:bg-zinc-100 dark:hover:bg-white/[0.06] transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/40">
           {collapsed ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
           Đơn vị thụ hưởng #{index + 1}
           {line.name && <span className="font-normal text-zinc-500 dark:text-slate-400 ml-1">— {line.name}</span>}
@@ -96,7 +96,7 @@ export function BeneficiarySection({
                 <div className="absolute z-10 mt-1 w-full max-h-32 overflow-auto rounded-md border border-zinc-200 dark:border-white/[0.1] bg-white dark:bg-[#1a1a1a] shadow-lg">
                   {filteredSaved.map((s) => (
                     <button key={s.id} type="button" onMouseDown={() => { onSelectSaved(s); setShowSearch(false); }}
-                      className="cursor-pointer w-full text-left px-3 py-1.5 text-sm hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors">
+                      className="cursor-pointer w-full text-left px-3 py-1.5 text-sm hover:bg-orange-50 dark:hover:bg-orange-900/20 transition-colors">
                       <span className="font-medium">{s.name}</span>
                       {s.accountNumber && <span className="text-xs text-zinc-400 ml-2">{s.accountNumber}</span>}
                     </button>
@@ -173,7 +173,7 @@ export function BeneficiarySection({
                   </button>
                 </div>
               ))}
-              <button type="button" onClick={onAddInvoice} className="cursor-pointer flex items-center gap-1 text-xs text-indigo-500 hover:text-indigo-600 transition-colors duration-150 mt-1">
+              <button type="button" onClick={onAddInvoice} className="cursor-pointer flex items-center gap-1 text-xs text-orange-500 hover:text-orange-600 transition-colors duration-150 mt-1">
                 <Plus className="h-3.5 w-3.5" /> Thêm hóa đơn
               </button>
             </div>
@@ -206,7 +206,7 @@ export function BeneficiarySection({
                   </button>
                 </div>
               ))}
-              <button type="button" onClick={onAddInvoice} className="cursor-pointer flex items-center gap-1 text-xs text-indigo-500 hover:text-indigo-600 transition-colors duration-150 mt-1">
+              <button type="button" onClick={onAddInvoice} className="cursor-pointer flex items-center gap-1 text-xs text-orange-500 hover:text-orange-600 transition-colors duration-150 mt-1">
                 <Plus className="h-3.5 w-3.5" /> Thêm mặt hàng
               </button>
             </div>

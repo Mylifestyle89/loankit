@@ -100,7 +100,7 @@ export function TemplatePickerModal({
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Tìm mẫu dữ liệu..."
                 autoFocus
-                className="w-full rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-zinc-50 dark:bg-white/[0.04] pl-9 pr-3 py-2 text-sm text-zinc-900 dark:text-slate-100 placeholder:text-zinc-400 dark:placeholder:text-slate-500 focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-400/30"
+                className="w-full rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-zinc-50 dark:bg-white/[0.04] pl-9 pr-3 py-2 text-sm text-zinc-900 dark:text-slate-100 placeholder:text-zinc-400 dark:placeholder:text-slate-500 focus:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-400/30"
               />
             </div>
           </div>
@@ -193,12 +193,12 @@ function TemplateRow({ name, isSelected, onClick }: { name: string; isSelected: 
       onClick={onClick}
       className={`flex w-full items-center rounded-lg px-3 py-2.5 text-left text-sm transition-colors ${
         isSelected
-          ? "bg-violet-50 dark:bg-violet-500/15 text-violet-700 dark:text-violet-300 font-medium"
+          ? "bg-amber-50 dark:bg-amber-500/15 text-amber-700 dark:text-amber-300 font-medium"
           : "text-zinc-700 dark:text-slate-200 hover:bg-zinc-50 dark:hover:bg-white/[0.05]"
       }`}
     >
       <span className="truncate">{name}</span>
-      {isSelected && <span className="ml-auto text-xs text-violet-500 dark:text-violet-400">Đang dùng</span>}
+      {isSelected && <span className="ml-auto text-xs text-amber-500 dark:text-amber-400">Đang dùng</span>}
     </button>
   );
 }

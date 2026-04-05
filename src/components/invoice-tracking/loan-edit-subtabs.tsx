@@ -5,7 +5,7 @@ import { fmtNumber, parseNumber } from "@/lib/invoice-tracking-format-helpers";
 import { SmartField } from "@/components/smart-field";
 
 const inputCls =
-  "mt-1 w-full rounded-md border border-zinc-300 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] px-3 py-2 text-sm transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40 focus-visible:border-violet-400";
+  "mt-1 w-full rounded-md border border-zinc-300 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] px-3 py-2 text-sm transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/40 focus-visible:border-amber-400";
 const labelCls = "text-xs font-medium text-zinc-600 dark:text-slate-400";
 
 type Fields = Record<string, string>;
@@ -104,7 +104,7 @@ export function LoanCapitalTab({ fields, setFields }: { fields: Fields; setField
         <Field label="Vay nơi khác" name="other_loan" fields={fields} setFields={setFields} type="number" />
         <Field label="Vốn đối ứng bằng TS khác" name="other_asset_equity" fields={fields} setFields={setFields} type="number" />
       </div>
-      <div className="rounded-md bg-violet-50 dark:bg-violet-500/10 px-3 py-2 text-xs text-violet-700 dark:text-violet-300">
+      <div className="rounded-md bg-amber-50 dark:bg-amber-500/10 px-3 py-2 text-xs text-amber-700 dark:text-amber-300">
         Tỷ lệ vốn đối ứng: <strong>{counterpartRatio}%</strong>
       </div>
     </div>

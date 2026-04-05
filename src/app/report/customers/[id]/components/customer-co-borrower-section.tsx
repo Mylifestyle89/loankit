@@ -87,7 +87,7 @@ function CoBorrowerForm({
   }
 
   return (
-    <div className="rounded-xl border border-violet-200 dark:border-violet-500/20 bg-violet-50/30 dark:bg-violet-500/5 p-4 space-y-3">
+    <div className="rounded-xl border border-amber-200 dark:border-amber-500/20 bg-amber-50/30 dark:bg-amber-500/5 p-4 space-y-3">
       <div className="grid grid-cols-2 gap-3">
         {FIELDS.map((f) => (
           <label key={f.key} className="block">
@@ -100,7 +100,7 @@ function CoBorrowerForm({
       </div>
       {error && <p className="text-xs text-red-600 dark:text-red-400">{error}</p>}
       <div className="flex gap-2 pt-1">
-        <button type="button" onClick={handleSave} disabled={saving} className={`${btnCls} bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white shadow-sm`}>
+        <button type="button" onClick={handleSave} disabled={saving} className={`${btnCls} bg-gradient-to-r from-amber-600 to-orange-500 text-white shadow-sm`}>
           {saving ? "..." : initial ? "Cập nhật" : "Thêm"}
         </button>
         <button type="button" onClick={onCancel} className={`${btnCls} border border-zinc-200 dark:border-white/[0.09]`}>
@@ -181,7 +181,7 @@ function CoBorrowerRow({
       {/* Header: Name + actions */}
       <div className="flex items-center justify-between px-4 py-3 bg-zinc-50/80 dark:bg-white/[0.02]">
         <div className="flex items-center gap-3">
-          <div className="flex items-center justify-center w-8 h-8 rounded-full bg-violet-100 dark:bg-violet-500/15 text-violet-600 dark:text-violet-400 text-xs font-bold">
+          <div className="flex items-center justify-center w-8 h-8 rounded-full bg-amber-100 dark:bg-amber-500/15 text-amber-600 dark:text-amber-400 text-xs font-bold">
             {item.full_name?.charAt(0)?.toUpperCase() ?? "?"}
           </div>
           <div>
@@ -231,7 +231,7 @@ export function CustomerCoBorrowerSection({ customerId }: { customerId: string }
   if (loading) {
     return (
       <div className="flex justify-center py-8">
-        <div className="h-5 w-5 animate-spin rounded-full border-2 border-violet-200 border-t-violet-600" />
+        <div className="h-5 w-5 animate-spin rounded-full border-2 border-amber-200 border-t-amber-600" />
       </div>
     );
   }
@@ -243,11 +243,11 @@ export function CustomerCoBorrowerSection({ customerId }: { customerId: string }
         <h3 className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">Người đồng vay ({items.length})</h3>
         <div className="flex gap-2">
           <button type="button" onClick={() => setScannerOpen(true)}
-            className={`${btnCls} inline-flex items-center gap-1.5 border border-violet-200 dark:border-violet-500/30 bg-violet-50 dark:bg-violet-500/10 text-violet-700 dark:text-violet-400 hover:bg-violet-100`}>
+            className={`${btnCls} inline-flex items-center gap-1.5 border border-amber-200 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 hover:bg-amber-100`}>
             📷 Scan CCCD
           </button>
           <button type="button" onClick={() => { setScanPrefill(undefined); setShowForm(true); }}
-            className={`${btnCls} inline-flex items-center gap-1.5 bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white shadow-sm shadow-violet-500/25 hover:brightness-110`}>
+            className={`${btnCls} inline-flex items-center gap-1.5 bg-gradient-to-r from-amber-600 to-orange-500 text-white shadow-sm shadow-amber-500/25 hover:brightness-110`}>
             <Plus className="h-3.5 w-3.5" /> Thêm
           </button>
         </div>

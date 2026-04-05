@@ -312,9 +312,9 @@ export function useMappingPageLogic() {
       const row = document.querySelector<HTMLElement>(`[data-field-row="${CSS.escape(focusKey)}"]`);
       if (!row) return;
       row.scrollIntoView({ behavior: "smooth", block: "center" });
-      row.classList.add("ring-2", "ring-violet-500", "ring-offset-1", "bg-violet-50/50", "dark:bg-violet-500/10");
+      row.classList.add("ring-2", "ring-amber-500", "ring-offset-1", "bg-amber-50/50", "dark:bg-amber-500/10");
       setTimeout(() => {
-        row.classList.remove("ring-2", "ring-violet-500", "ring-offset-1", "bg-violet-50/50", "dark:bg-violet-500/10");
+        row.classList.remove("ring-2", "ring-amber-500", "ring-offset-1", "bg-amber-50/50", "dark:bg-amber-500/10");
       }, 3000);
     }, 500);
     return () => clearTimeout(timer);

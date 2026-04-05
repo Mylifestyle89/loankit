@@ -25,8 +25,8 @@ export function LoanDisbursementSummaryCards({ summary }: Props) {
   return (
     <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
       <div className="flex items-center gap-3 rounded-xl border border-zinc-200 dark:border-white/[0.07] bg-white dark:bg-[#161616] p-3.5 shadow-sm">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-100 dark:bg-violet-500/15">
-          <Banknote className="h-5 w-5 text-violet-600 dark:text-violet-400" />
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-100 dark:bg-amber-500/15">
+          <Banknote className="h-5 w-5 text-amber-600 dark:text-amber-400" />
         </div>
         <div>
           <p className="text-xs text-zinc-400 dark:text-slate-500">{t("disbursements.totalDisbursed") ?? "Tổng giải ngân"}</p>
@@ -52,8 +52,8 @@ export function LoanDisbursementSummaryCards({ summary }: Props) {
         </div>
       </div>
       <div className="flex items-center gap-3 rounded-xl border border-zinc-200 dark:border-white/[0.07] bg-white dark:bg-[#161616] p-3.5 shadow-sm">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-fuchsia-100 dark:bg-fuchsia-500/15">
-          <CheckCircle className="h-5 w-5 text-fuchsia-600 dark:text-fuchsia-400" />
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-orange-100 dark:bg-orange-400/15">
+          <CheckCircle className="h-5 w-5 text-orange-500 dark:text-orange-400" />
         </div>
         <div>
           <p className="text-xs text-zinc-400 dark:text-slate-500">{t("disbursements.completed") ?? "Đã hoàn thành"}</p>

@@ -62,7 +62,7 @@ export function XlsxSampleDropdown() {
           <div className="max-h-64 overflow-y-auto p-1">
             {loading ? (
               <div className="flex justify-center py-4">
-                <div className="h-4 w-4 animate-spin rounded-full border-2 border-violet-200 border-t-violet-600" />
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-amber-200 border-t-amber-600" />
               </div>
             ) : files.length === 0 ? (
               <p className="px-3 py-3 text-xs text-zinc-400">Chưa có mẫu nào</p>

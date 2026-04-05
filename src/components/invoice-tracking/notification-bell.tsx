@@ -40,7 +40,7 @@ export function NotificationBell({ expanded }: { expanded: boolean }) {
         ref={btnRef}
         type="button"
         onClick={handleClick}
-        className={`flex w-full items-center rounded-lg py-1.5 text-xs font-medium text-zinc-400 transition-all duration-150 cursor-pointer hover:bg-slate-100/70 hover:text-zinc-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/50 dark:text-slate-500 dark:hover:bg-white/[0.06] dark:hover:text-slate-300 ${
+        className={`flex w-full items-center rounded-lg py-1.5 text-xs font-medium text-zinc-400 transition-all duration-150 cursor-pointer hover:bg-slate-100/70 hover:text-zinc-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500/50 dark:text-slate-500 dark:hover:bg-white/[0.06] dark:hover:text-slate-300 ${
           expanded ? "gap-2.5 px-2.5 justify-start" : "justify-center px-0"
         }`}
       >

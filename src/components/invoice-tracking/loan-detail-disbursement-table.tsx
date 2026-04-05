@@ -48,7 +48,7 @@ function DisbursementActions({ d, onEdit, onReport, t, rowSpan }: {
     <td className="px-4 py-2 align-middle" rowSpan={rowSpan}>
       <div className="flex items-center gap-1">
         <button type="button" onClick={() => onEdit(d.id)} title={t("common.edit") ?? "Sửa"}
-          className="cursor-pointer rounded p-1.5 text-zinc-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:text-indigo-400 dark:hover:bg-indigo-900/20 transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/50">
+          className="cursor-pointer rounded p-1.5 text-zinc-400 hover:text-orange-600 hover:bg-orange-50 dark:hover:text-orange-400 dark:hover:bg-orange-900/20 transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500/50">
           <Pencil className="h-4 w-4" />
         </button>
         <button type="button" onClick={() => onReport(d.id)} title={t("disbursements.generateReport") ?? "Tạo báo cáo"}
@@ -56,7 +56,7 @@ function DisbursementActions({ d, onEdit, onReport, t, rowSpan }: {
           <FileText className="h-4 w-4" />
         </button>
         <Link href={`/report/disbursements/${d.id}`} title={t("common.view") ?? "Xem"}
-          className="cursor-pointer rounded p-1.5 text-zinc-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:text-emerald-400 dark:hover:bg-emerald-900/20 transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/50">
+          className="cursor-pointer rounded p-1.5 text-zinc-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:text-emerald-400 dark:hover:bg-emerald-900/20 transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500/50">
           <Eye className="h-4 w-4" />
         </Link>
       </div>
@@ -83,7 +83,7 @@ export function DisbursementTable({ disbursements, loading, t, onEdit, onReport,
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
         <thead>
-          <tr className="border-b border-zinc-200 dark:border-white/[0.07] bg-violet-50/50 dark:bg-white/[0.05] text-left">
+          <tr className="border-b border-zinc-200 dark:border-white/[0.07] bg-amber-50/50 dark:bg-white/[0.05] text-left">
             <th className="px-4 py-2 font-semibold">{t("disbursements.date")}</th>
             <th className="px-4 py-2 font-semibold">{t("disbursements.amount")}</th>
             <th className="px-4 py-2 font-semibold">{t("disbursements.beneficiary")}</th>
@@ -97,7 +97,7 @@ export function DisbursementTable({ disbursements, loading, t, onEdit, onReport,
             const lines = d.beneficiaryLines;
             const rowSpan = Math.max(lines.length, 1);
             return lines.length === 0 ? (
-              <tr key={d.id} className="border-t border-zinc-200 dark:border-white/[0.07] transition-colors duration-150 hover:bg-violet-50/50 dark:hover:bg-white/[0.04]">
+              <tr key={d.id} className="border-t border-zinc-200 dark:border-white/[0.07] transition-colors duration-150 hover:bg-amber-50/50 dark:hover:bg-white/[0.04]">
                 <td className="px-4 py-2">{fmtDate(d.disbursementDate)}</td>
                 <td className="px-4 py-2 font-medium tabular-nums">{fmt(d.amount)}</td>
                 <td className="px-4 py-2 text-zinc-400 dark:text-slate-500">—</td>
@@ -112,7 +112,7 @@ export function DisbursementTable({ disbursements, loading, t, onEdit, onReport,
               </tr>
             ) : (
               lines.map((b, i) => (
-                <tr key={`${d.id}-${i}`} className={`${i === 0 ? "border-t border-zinc-200 dark:border-white/[0.07]" : ""} transition-colors duration-150 hover:bg-violet-50/50 dark:hover:bg-white/[0.04]`}>
+                <tr key={`${d.id}-${i}`} className={`${i === 0 ? "border-t border-zinc-200 dark:border-white/[0.07]" : ""} transition-colors duration-150 hover:bg-amber-50/50 dark:hover:bg-white/[0.04]`}>
                   {i === 0 && (
                     <>
                       <td className="px-4 py-2 align-middle" rowSpan={rowSpan}>{fmtDate(d.disbursementDate)}</td>
@@ -147,7 +147,7 @@ export function DisbursementTable({ disbursements, loading, t, onEdit, onReport,
                         <button type="button"
                           onClick={() => onAddInvoice({ disbursementId: d.id, lineId: b.id, name: b.beneficiaryName, amount: b.amount })}
                           title="Bổ sung hóa đơn"
-                          className="cursor-pointer rounded p-1 text-zinc-400 hover:text-violet-600 hover:bg-violet-50/50 dark:hover:text-violet-400 dark:hover:bg-violet-900/20 transition-colors">
+                          className="cursor-pointer rounded p-1 text-zinc-400 hover:text-amber-600 hover:bg-amber-50/50 dark:hover:text-amber-400 dark:hover:bg-amber-900/20 transition-colors">
                           <Plus className="h-3.5 w-3.5" />
                         </button>
                       )}

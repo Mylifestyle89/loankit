@@ -153,7 +153,7 @@ function LoanRow({ loan }: { loan: Loan }) {
           <div className="flex items-center gap-4">
             <Link
               href={`/report/loans/${loan.id}`}
-              className="inline-flex items-center text-xs text-violet-600 dark:text-violet-400 hover:underline"
+              className="inline-flex items-center text-xs text-amber-600 dark:text-amber-400 hover:underline"
             >
               Xem chi tiết khoản vay →
             </Link>
@@ -177,7 +177,7 @@ export function CustomerLoansSection({ loans, customerId }: { loans: Loan[]; cus
         </h3>
         <Link
           href={addLoanHref}
-          className="rounded-lg px-4 py-2 text-sm font-medium inline-flex items-center gap-1.5 bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white shadow-sm shadow-violet-500/25 hover:brightness-110 transition-all duration-150"
+          className="rounded-lg px-4 py-2 text-sm font-medium inline-flex items-center gap-1.5 bg-gradient-to-r from-amber-600 to-orange-500 text-white shadow-sm shadow-amber-500/25 hover:brightness-110 transition-all duration-150"
         >
           <Plus className="h-3.5 w-3.5" /> Thêm khoản vay
         </Link>

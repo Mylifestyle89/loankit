@@ -101,8 +101,8 @@ export default function LoanPlansListPage() {
     <section className="space-y-5">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Link href={`/report/customers/${customerId}`} className="inline-flex items-center gap-1 text-sm text-violet-600 dark:text-violet-400 hover:underline"><ArrowLeft className="h-3.5 w-3.5" />Khách hàng</Link>
-          <h2 className="text-lg font-bold bg-gradient-to-r from-violet-700 to-fuchsia-600 dark:from-violet-400 dark:to-fuchsia-400 bg-clip-text text-transparent">
+          <Link href={`/report/customers/${customerId}`} className="inline-flex items-center gap-1 text-sm text-amber-600 dark:text-amber-400 hover:underline"><ArrowLeft className="h-3.5 w-3.5" />Khách hàng</Link>
+          <h2 className="text-lg font-bold bg-gradient-to-r from-amber-700 to-orange-500 dark:from-amber-400 dark:to-orange-400 bg-clip-text text-transparent">
             Phương án vay vốn
           </h2>
         </div>
@@ -123,7 +123,7 @@ export default function LoanPlansListPage() {
           </button>
           <Link
             href={`/report/customers/${customerId}/loan-plans/new`}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-violet-600 to-fuchsia-600 px-4 py-2 text-sm font-medium text-white shadow-sm shadow-violet-500/25 hover:brightness-110"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-amber-600 to-orange-500 px-4 py-2 text-sm font-medium text-white shadow-sm shadow-amber-500/25 hover:brightness-110"
           >
             <Plus className="h-4 w-4" /> Tạo PA mới
           </Link>
@@ -132,7 +132,7 @@ export default function LoanPlansListPage() {
 
       {loading ? (
         <div className="flex justify-center py-12">
-          <div className="h-6 w-6 animate-spin rounded-full border-2 border-violet-200 border-t-violet-600" />
+          <div className="h-6 w-6 animate-spin rounded-full border-2 border-amber-200 border-t-amber-600" />
         </div>
       ) : plans.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-zinc-300 dark:border-white/[0.08] py-12 text-center">
@@ -147,7 +147,7 @@ export default function LoanPlansListPage() {
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
-                      <FileText className="h-4 w-4 text-violet-500 shrink-0" />
+                      <FileText className="h-4 w-4 text-amber-500 shrink-0" />
                       <h3 className="truncate font-semibold">{p.name || "Phương án chưa đặt tên"}</h3>
                       <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ring-1 ${STATUS_STYLES[p.status] ?? STATUS_STYLES.draft}`}>
                         {p.status === "approved" ? "Đã duyệt" : "Nháp"}
@@ -163,7 +163,7 @@ export default function LoanPlansListPage() {
                 <div className="mt-3 flex items-center gap-2 border-t border-zinc-100 dark:border-white/[0.05] pt-3">
                   <Link
                     href={`/report/customers/${customerId}/loan-plans/${p.id}`}
-                    className="inline-flex items-center gap-1 rounded-lg bg-violet-50 dark:bg-violet-500/10 px-3 py-1.5 text-xs font-medium text-violet-700 dark:text-violet-400 hover:bg-violet-100"
+                    className="inline-flex items-center gap-1 rounded-lg bg-amber-50 dark:bg-amber-500/10 px-3 py-1.5 text-xs font-medium text-amber-700 dark:text-amber-400 hover:bg-amber-100"
                   >
                     Chỉnh sửa →
                   </Link>

@@ -39,7 +39,7 @@ export function CustomerBranchStaffSection() {
   if (loading) {
     return (
       <div className="flex justify-center py-8">
-        <div className="h-5 w-5 animate-spin rounded-full border-2 border-violet-200 border-t-violet-600" />
+        <div className="h-5 w-5 animate-spin rounded-full border-2 border-amber-200 border-t-amber-600" />
       </div>
     );
   }
@@ -60,7 +60,7 @@ export function CustomerBranchStaffSection() {
             onClick={() => setSubTab(st.key)}
             className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
               subTab === st.key
-                ? "bg-violet-100 text-violet-700 dark:bg-violet-500/15 dark:text-violet-400"
+                ? "bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-400"
                 : "text-zinc-500 dark:text-slate-400 hover:bg-zinc-100 dark:hover:bg-white/[0.05]"
             }`}
           >

@@ -60,7 +60,7 @@ export function TemplateFolderBrowser({ onOpenEditor, editorAvailable, onUploadV
   if (loading) {
     return (
       <div className="flex items-center justify-center py-8">
-        <div className="h-5 w-5 animate-spin rounded-full border-2 border-violet-200 border-t-violet-600 dark:border-violet-800 dark:border-t-violet-400" />
+        <div className="h-5 w-5 animate-spin rounded-full border-2 border-amber-200 border-t-amber-600 dark:border-amber-800 dark:border-t-amber-400" />
       </div>
     );
   }
@@ -74,11 +74,11 @@ export function TemplateFolderBrowser({ onOpenEditor, editorAvailable, onUploadV
         </div>
         <div className="flex items-center gap-2">
           {onUploadValidate && (
-            <button type="button" onClick={onUploadValidate} className="rounded-lg bg-gradient-to-r from-violet-600 to-fuchsia-600 px-3 py-1.5 text-xs font-medium text-white shadow-sm shadow-violet-500/25 hover:brightness-110 transition-all">
+            <button type="button" onClick={onUploadValidate} className="rounded-lg bg-gradient-to-r from-amber-600 to-orange-500 px-3 py-1.5 text-xs font-medium text-white shadow-sm shadow-amber-500/25 hover:brightness-110 transition-all">
               Upload &amp; Validate
             </button>
           )}
-          <button type="button" onClick={() => void fetchTree()} className="rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] px-3 py-1.5 text-xs shadow-sm hover:border-violet-200 dark:hover:border-violet-500/20 transition-all">
+          <button type="button" onClick={() => void fetchTree()} className="rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] px-3 py-1.5 text-xs shadow-sm hover:border-amber-200 dark:hover:border-amber-500/20 transition-all">
             Làm mới
           </button>
         </div>
@@ -113,10 +113,10 @@ function FolderRow({ node, depth, expanded, onToggle, onRefresh, onOpenEditor, e
         type="button"
         onClick={() => onToggle(node.path)}
         style={{ paddingLeft: `${12 + indent}px` }}
-        className="flex w-full items-center gap-2 py-2 pr-3 text-left text-sm font-medium hover:bg-violet-50/60 dark:hover:bg-violet-950/20 transition-colors"
+        className="flex w-full items-center gap-2 py-2 pr-3 text-left text-sm font-medium hover:bg-amber-50/60 dark:hover:bg-amber-950/20 transition-colors"
       >
         <span className="text-xs text-zinc-400 dark:text-slate-500">{isExpanded ? "▼" : "▶"}</span>
-        <span className="text-violet-700 dark:text-violet-400">📁</span>
+        <span className="text-amber-700 dark:text-amber-400">📁</span>
         <span className="truncate flex-1">{node.name}</span>
         <span className="shrink-0 rounded-full bg-zinc-200/70 dark:bg-white/[0.08] px-2 py-0.5 text-xs text-zinc-500 dark:text-slate-400">
           {totalFiles}

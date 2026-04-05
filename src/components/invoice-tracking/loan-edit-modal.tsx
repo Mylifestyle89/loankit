@@ -43,7 +43,7 @@ type Props = {
 };
 
 const inputCls =
-  "mt-1 w-full rounded-md border border-zinc-300 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] px-3 py-2 text-sm transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40 focus-visible:border-violet-400";
+  "mt-1 w-full rounded-md border border-zinc-300 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] px-3 py-2 text-sm transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/40 focus-visible:border-amber-400";
 const labelCls = "text-xs font-medium text-zinc-600 dark:text-slate-400";
 
 function formatInterestRatePercentInput(raw: number | null | undefined): string {
@@ -185,12 +185,12 @@ export function LoanEditModal({ loan, customerId, onClose, onUpdated }: Props) {
           <div className="flex items-center gap-2">
             {customerId && (
               <button type="button" onClick={handleSyncFromPlan} disabled={syncing}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-violet-200 dark:border-violet-500/20 bg-violet-50 dark:bg-violet-500/10 px-3 py-1.5 text-xs font-medium text-violet-700 dark:text-violet-400 hover:bg-violet-100 disabled:opacity-50">
+                className="inline-flex items-center gap-1.5 rounded-lg border border-amber-200 dark:border-amber-500/20 bg-amber-50 dark:bg-amber-500/10 px-3 py-1.5 text-xs font-medium text-amber-700 dark:text-amber-400 hover:bg-amber-100 disabled:opacity-50">
                 <RefreshCw className={`h-3.5 w-3.5 ${syncing ? "animate-spin" : ""}`} />
                 {syncing ? "Đang đồng bộ..." : "Đồng bộ từ PA"}
               </button>
             )}
-            <button onClick={onClose} className="cursor-pointer rounded-lg p-1.5 text-zinc-400 transition-colors duration-150 hover:bg-zinc-100 dark:hover:bg-white/[0.06] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40">
+            <button onClick={onClose} className="cursor-pointer rounded-lg p-1.5 text-zinc-400 transition-colors duration-150 hover:bg-zinc-100 dark:hover:bg-white/[0.06] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/40">
               <X className="h-5 w-5" />
             </button>
           </div>
@@ -200,7 +200,7 @@ export function LoanEditModal({ loan, customerId, onClose, onUpdated }: Props) {
         <div className="flex border-b border-zinc-200 dark:border-white/[0.07] px-6">
           {["Thông tin cơ bản", "Điều kiện cho vay", "Nguồn vốn & VĐƯ", "Hiệu quả & XH"].map((label, i) => (
             <button key={i} type="button" onClick={() => setActiveSubtab(i)}
-              className={`cursor-pointer px-3 py-2.5 text-xs font-medium transition-colors duration-150 border-b-2 -mb-px ${activeSubtab === i ? "border-violet-500 text-violet-600 dark:text-violet-400" : "border-transparent text-zinc-500 dark:text-slate-400 hover:text-zinc-700 dark:hover:text-slate-300"}`}>
+              className={`cursor-pointer px-3 py-2.5 text-xs font-medium transition-colors duration-150 border-b-2 -mb-px ${activeSubtab === i ? "border-amber-500 text-amber-600 dark:text-amber-400" : "border-transparent text-zinc-500 dark:text-slate-400 hover:text-zinc-700 dark:hover:text-slate-300"}`}>
               {label}
             </button>
           ))}
@@ -275,10 +275,10 @@ export function LoanEditModal({ loan, customerId, onClose, onUpdated }: Props) {
           {activeSubtab === 3 && <LoanEfficiencyTab fields={extFields} setFields={setExtFields} />}
 
           <div className="flex justify-end gap-3 pt-2">
-            <button type="button" onClick={onClose} className="cursor-pointer rounded-lg px-4 py-2 text-sm text-zinc-500 dark:text-slate-400 transition-colors duration-150 hover:bg-zinc-100 dark:hover:bg-white/[0.06] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40">
+            <button type="button" onClick={onClose} className="cursor-pointer rounded-lg px-4 py-2 text-sm text-zinc-500 dark:text-slate-400 transition-colors duration-150 hover:bg-zinc-100 dark:hover:bg-white/[0.06] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/40">
               {t("common.cancel")}
             </button>
-            <button type="submit" disabled={saving} className="cursor-pointer rounded-lg bg-gradient-to-r from-violet-600 to-fuchsia-600 px-4 py-2 text-sm font-medium text-white transition-all duration-150 hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40">
+            <button type="submit" disabled={saving} className="cursor-pointer rounded-lg bg-gradient-to-r from-amber-600 to-orange-500 px-4 py-2 text-sm font-medium text-white transition-all duration-150 hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/40">
               {saving ? t("loans.loading") : t("common.save")}
             </button>
           </div>

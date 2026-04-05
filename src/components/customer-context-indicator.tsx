@@ -14,17 +14,17 @@ export function CustomerContextIndicator({ expanded }: { expanded: boolean }) {
 
   return (
     <div
-      className={`mx-1.5 mb-1 rounded-lg border border-violet-200 dark:border-violet-500/20
-        bg-violet-50 dark:bg-violet-500/10 ${expanded ? "px-2.5 py-2" : "py-2 px-1"}`}
+      className={`mx-1.5 mb-1 rounded-lg border border-amber-200 dark:border-amber-500/20
+        bg-amber-50 dark:bg-amber-500/10 ${expanded ? "px-2.5 py-2" : "py-2 px-1"}`}
     >
       {expanded ? (
         <div className="flex items-center gap-2">
-          <User className="h-3.5 w-3.5 shrink-0 text-violet-600 dark:text-violet-400" />
+          <User className="h-3.5 w-3.5 shrink-0 text-amber-600 dark:text-amber-400" />
           <div className="min-w-0 flex-1">
-            <p className="truncate text-xs font-medium text-violet-700 dark:text-violet-300">
+            <p className="truncate text-xs font-medium text-amber-700 dark:text-amber-300">
               {customer.customer_name}
             </p>
-            <p className="truncate text-[10px] text-violet-500 dark:text-violet-400/70">
+            <p className="truncate text-[10px] text-amber-500 dark:text-amber-400/70">
               {customer.customer_code}
             </p>
           </div>
@@ -32,14 +32,14 @@ export function CustomerContextIndicator({ expanded }: { expanded: boolean }) {
             type="button"
             onClick={() => clear("")}
             title="Bỏ chọn khách hàng"
-            className="shrink-0 rounded p-0.5 hover:bg-violet-200 dark:hover:bg-violet-500/20 transition-colors"
+            className="shrink-0 rounded p-0.5 hover:bg-amber-200 dark:hover:bg-amber-500/20 transition-colors"
           >
-            <X className="h-3 w-3 text-violet-500" />
+            <X className="h-3 w-3 text-amber-500" />
           </button>
         </div>
       ) : (
         <div className="flex justify-center" title={customer.customer_name}>
-          <User className="h-4 w-4 text-violet-600 dark:text-violet-400" />
+          <User className="h-4 w-4 text-amber-600 dark:text-amber-400" />
         </div>
       )}
     </div>

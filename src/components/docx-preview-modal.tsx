@@ -14,7 +14,7 @@ const EigenpalDocxEditor = dynamic(
     ssr: false,
     loading: () => (
       <div className="flex items-center justify-center py-20">
-        <div className="h-6 w-6 animate-spin rounded-full border-2 border-violet-200 border-t-violet-600" />
+        <div className="h-6 w-6 animate-spin rounded-full border-2 border-amber-200 border-t-amber-600" />
       </div>
     ),
   },
@@ -31,7 +31,7 @@ function PreviewFallback({ onDownload }: { onDownload: () => void }) {
       <button
         type="button"
         onClick={onDownload}
-        className="flex items-center gap-1.5 rounded-md bg-gradient-to-r from-violet-600 to-fuchsia-600 px-4 py-1.5 text-sm font-medium text-white hover:brightness-110 transition-colors shadow-sm"
+        className="flex items-center gap-1.5 rounded-md bg-gradient-to-r from-amber-600 to-orange-500 px-4 py-1.5 text-sm font-medium text-white hover:brightness-110 transition-colors shadow-sm"
       >
         <Download className="h-4 w-4" />
         Xuất file DOCX
@@ -76,7 +76,7 @@ export function DocxPreviewModal({ documentBuffer, fileName, onClose, onDownload
             <button
               type="button"
               onClick={onClose}
-              className="flex items-center gap-1.5 rounded-md border border-zinc-200 px-3 py-1.5 text-sm hover:bg-violet-50/30 transition-colors"
+              className="flex items-center gap-1.5 rounded-md border border-zinc-200 px-3 py-1.5 text-sm hover:bg-amber-50/30 transition-colors"
             >
               <X className="h-4 w-4" />
               Đóng
@@ -84,7 +84,7 @@ export function DocxPreviewModal({ documentBuffer, fileName, onClose, onDownload
             <button
               type="button"
               onClick={onDownload}
-              className="flex items-center gap-1.5 rounded-md bg-gradient-to-r from-violet-600 to-fuchsia-600 px-4 py-1.5 text-sm font-medium text-white hover:brightness-110 transition-colors shadow-sm"
+              className="flex items-center gap-1.5 rounded-md bg-gradient-to-r from-amber-600 to-orange-500 px-4 py-1.5 text-sm font-medium text-white hover:brightness-110 transition-colors shadow-sm"
             >
               <Download className="h-4 w-4" />
               Xuất file DOCX

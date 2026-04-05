@@ -165,7 +165,7 @@ export function SuggestTab({
                     type="checkbox"
                     checked={showVietnameseAlias}
                     onChange={(e) => setShowVietnameseAlias(e.target.checked)}
-                    className="h-3.5 w-3.5 rounded border-slate-300 text-violet-600 focus:ring-violet-500"
+                    className="h-3.5 w-3.5 rounded border-slate-300 text-amber-600 focus:ring-amber-500"
                   />
                   Alias Việt
                 </label>
@@ -204,7 +204,7 @@ export function SuggestTab({
 
       {/* Review table — hiện sau khi user bấm "Chấp nhận gợi ý" */}
       {showReview && (
-        <div className="border-t border-violet-200/50 px-4 py-3 dark:border-white/[0.07]">
+        <div className="border-t border-amber-200/50 px-4 py-3 dark:border-white/[0.07]">
           <AiSuggestReviewTable
             items={buildReviewItems(suggestion, fieldCatalog)}
             onConfirm={handleReviewConfirm}
@@ -227,7 +227,7 @@ export function SuggestTab({
             type="button"
             onClick={acceptSuggestion}
             disabled={matchedCount === 0}
-            className="rounded-lg bg-gradient-to-r from-violet-600 to-fuchsia-600 px-3 py-1.5 text-sm text-white shadow-sm shadow-violet-500/25 transition-colors hover:brightness-110 disabled:opacity-60"
+            className="rounded-lg bg-gradient-to-r from-amber-600 to-orange-500 px-3 py-1.5 text-sm text-white shadow-sm shadow-amber-500/25 transition-colors hover:brightness-110 disabled:opacity-60"
           >
             {t("mapping.aiSuggest.accept")}
           </button>

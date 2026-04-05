@@ -85,7 +85,7 @@ function CreditForm({
   }
 
   return (
-    <div className="rounded-xl border border-violet-200 dark:border-violet-500/20 bg-violet-50/30 dark:bg-violet-500/5 p-4 space-y-3">
+    <div className="rounded-xl border border-amber-200 dark:border-amber-500/20 bg-amber-50/30 dark:bg-amber-500/5 p-4 space-y-3">
       <div className="grid grid-cols-2 gap-3">
         {fields.map((f) => (
           <label key={f.key} className="block">
@@ -110,7 +110,7 @@ function CreditForm({
       </div>
       {error && <p className="text-xs text-red-600 dark:text-red-400">{error}</p>}
       <div className="flex gap-2 pt-1">
-        <button type="button" onClick={handleSave} disabled={saving} className={`${btnCls} bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white shadow-sm`}>
+        <button type="button" onClick={handleSave} disabled={saving} className={`${btnCls} bg-gradient-to-r from-amber-600 to-orange-500 text-white shadow-sm`}>
           {saving ? "..." : initial ? "Cập nhật" : "Thêm"}
         </button>
         <button type="button" onClick={onCancel} className={`${btnCls} border border-zinc-200 dark:border-white/[0.09]`}>
@@ -183,7 +183,7 @@ function CreditRow({
             <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">{titleValue}</p>
             <div className="flex items-center gap-2 mt-0.5">
               {debtGroup && (
-                <span className="text-[11px] px-1.5 py-0.5 rounded bg-violet-50 dark:bg-violet-500/10 text-violet-700 dark:text-violet-400">
+                <span className="text-[11px] px-1.5 py-0.5 rounded bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400">
                   {debtGroup}
                 </span>
               )}
@@ -252,7 +252,7 @@ function CreditList({
   if (loading) {
     return (
       <div className="flex justify-center py-8">
-        <div className="h-5 w-5 animate-spin rounded-full border-2 border-violet-200 border-t-violet-600" />
+        <div className="h-5 w-5 animate-spin rounded-full border-2 border-amber-200 border-t-amber-600" />
       </div>
     );
   }
@@ -267,7 +267,7 @@ function CreditList({
         <button
           type="button"
           onClick={() => setShowForm(true)}
-          className={`${btnCls} inline-flex items-center gap-1.5 bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white shadow-sm shadow-violet-500/25 hover:brightness-110`}
+          className={`${btnCls} inline-flex items-center gap-1.5 bg-gradient-to-r from-amber-600 to-orange-500 text-white shadow-sm shadow-amber-500/25 hover:brightness-110`}
         >
           <Plus className="h-3.5 w-3.5" /> Thêm
         </button>
@@ -317,7 +317,7 @@ export function CustomerCreditInfoSection({ customerId }: { customerId: string }
             onClick={() => setSubTab(st.key)}
             className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
               subTab === st.key
-                ? "bg-violet-100 text-violet-700 dark:bg-violet-500/15 dark:text-violet-400"
+                ? "bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-400"
                 : "text-zinc-500 dark:text-slate-400 hover:bg-zinc-100 dark:hover:bg-white/[0.05]"
             }`}
           >

@@ -47,7 +47,7 @@ export function CustomerTable({
   onToggleType?: (id: string, currentType: string) => void;
   t: (k: string) => string;
 }) {
-  const thCls = "cursor-pointer select-none px-4 py-3 text-left text-xs font-semibold text-zinc-500 dark:text-slate-400 transition-colors hover:text-violet-600 dark:hover:text-violet-400";
+  const thCls = "cursor-pointer select-none px-4 py-3 text-left text-xs font-semibold text-zinc-500 dark:text-slate-400 transition-colors hover:text-amber-600 dark:hover:text-amber-400";
   const tdCls = "px-4 py-3 text-sm";
 
   return (
@@ -77,12 +77,12 @@ export function CustomerTable({
                   key={c.id}
                   className={`transition-colors duration-150 ${
                     isSelected
-                      ? "bg-violet-50/50 dark:bg-violet-500/5"
+                      ? "bg-amber-50/50 dark:bg-amber-500/5"
                       : "hover:bg-zinc-50 dark:hover:bg-white/[0.02]"
                   }`}
                 >
                   <td className={tdCls}>
-                    <Link href={`${basePath}/${c.id}`} className="font-medium text-zinc-900 dark:text-white hover:text-violet-600 dark:hover:text-violet-400 transition-colors">
+                    <Link href={`${basePath}/${c.id}`} className="font-medium text-zinc-900 dark:text-white hover:text-amber-600 dark:hover:text-amber-400 transition-colors">
                       {c.customer_name}
                     </Link>
                   </td>
@@ -108,8 +108,8 @@ export function CustomerTable({
                           onClick={() => onSelect(c.id)}
                           className={`cursor-pointer inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-medium transition-colors duration-150 ${
                             isSelected
-                              ? "bg-violet-600 text-white hover:bg-violet-700"
-                              : "text-zinc-500 dark:text-slate-400 hover:bg-violet-50 dark:hover:bg-violet-500/10 hover:text-violet-700 dark:hover:text-violet-400"
+                              ? "bg-amber-600 text-white hover:bg-amber-700"
+                              : "text-zinc-500 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400"
                           }`}
                         >
                           {isSelected ? <><Check className="h-3 w-3" /> Chọn</> : "Chọn"}

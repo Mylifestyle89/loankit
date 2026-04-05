@@ -69,7 +69,7 @@ export function OwnerRow({ owner, index, onChange, onRemove }: {
 
 // Input class without w-full for use inside flex containers
 export const flexInputCls =
-  "rounded-md border border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] text-zinc-900 dark:text-slate-100 px-3 py-1.5 text-sm shadow-sm transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40";
+  "rounded-md border border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] text-zinc-900 dark:text-slate-100 px-3 py-1.5 text-sm shadow-sm transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/40";
 
 /* ── Amendment row (Văn bản sửa đổi) ── */
 export function AmendmentRow({ amendment, index, onChange, onRemove }: {
@@ -161,8 +161,8 @@ export function LandTypeRows({ props, setProps }: {
               onClick={() => handleRoundingChange(o.value)}
               className={`px-2.5 py-1 text-[10px] font-medium transition-colors ${
                 rounding === o.value
-                  ? "bg-violet-600 text-white"
-                  : "bg-white dark:bg-[#1a1a1a] text-zinc-500 dark:text-zinc-400 hover:bg-violet-50 dark:hover:bg-violet-500/10"
+                  ? "bg-amber-600 text-white"
+                  : "bg-white dark:bg-[#1a1a1a] text-zinc-500 dark:text-zinc-400 hover:bg-amber-50 dark:hover:bg-amber-500/10"
               }`}
             >
               {o.label}

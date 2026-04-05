@@ -68,14 +68,14 @@ export function InvoiceTable({ invoices, onMarkPaid, onDelete, onSupplement, sel
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
         <thead>
-          <tr className="border-b border-zinc-200 dark:border-white/[0.07] bg-violet-50/50 dark:bg-white/[0.05] text-left">
+          <tr className="border-b border-zinc-200 dark:border-white/[0.07] bg-amber-50/50 dark:bg-white/[0.05] text-left">
             {selectable && (
               <th className="pl-4 pr-1 py-2.5 w-8">
                 <input
                   type="checkbox"
                   checked={allSelected}
                   onChange={() => onToggleSelectAll?.()}
-                  className="h-4 w-4 rounded border-zinc-300 text-violet-600 focus:ring-violet-500 cursor-pointer"
+                  className="h-4 w-4 rounded border-zinc-300 text-amber-600 focus:ring-amber-500 cursor-pointer"
                   title="Chọn tất cả"
                 />
               </th>
@@ -93,7 +93,7 @@ export function InvoiceTable({ invoices, onMarkPaid, onDelete, onSupplement, sel
           {invoices.map((inv) => (
             <tr
               key={inv.id}
-              className={`border-t border-zinc-200 dark:border-white/[0.07] transition-colors duration-150 hover:bg-violet-50/50 dark:hover:bg-white/[0.04] ${
+              className={`border-t border-zinc-200 dark:border-white/[0.07] transition-colors duration-150 hover:bg-amber-50/50 dark:hover:bg-white/[0.04] ${
                 isDueSoon(inv.dueDate) && inv.status === "pending"
                   ? "bg-yellow-50 dark:bg-yellow-500/5"
                   : ""
@@ -106,7 +106,7 @@ export function InvoiceTable({ invoices, onMarkPaid, onDelete, onSupplement, sel
                       type="checkbox"
                       checked={selectedIds?.has(inv.id) ?? false}
                       onChange={() => onToggleSelect?.(inv.id)}
-                      className="h-4 w-4 rounded border-zinc-300 text-violet-600 focus:ring-violet-500 cursor-pointer"
+                      className="h-4 w-4 rounded border-zinc-300 text-amber-600 focus:ring-amber-500 cursor-pointer"
                     />
                   ) : (
                     <input
@@ -157,7 +157,7 @@ export function InvoiceTable({ invoices, onMarkPaid, onDelete, onSupplement, sel
                     <button
                       type="button"
                       onClick={() => onSupplement(inv)}
-                      className="cursor-pointer rounded border border-violet-300 dark:border-violet-500/30 px-2 py-1 text-xs text-violet-700 dark:text-violet-400 transition-colors duration-150 hover:bg-violet-50 dark:hover:bg-violet-500/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/50"
+                      className="cursor-pointer rounded border border-amber-300 dark:border-amber-500/30 px-2 py-1 text-xs text-amber-700 dark:text-amber-400 transition-colors duration-150 hover:bg-amber-50 dark:hover:bg-amber-500/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/50"
                     >
                       Bổ sung
                     </button>

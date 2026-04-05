@@ -131,7 +131,7 @@ export function AddFieldModal({
                     <button
                         type="button"
                         onClick={onClose}
-                        className="rounded-md border border-zinc-200 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-violet-50/30"
+                        className="rounded-md border border-zinc-200 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-amber-50/30"
                     >
                         Hủy
                     </button>
@@ -144,7 +144,7 @@ export function AddFieldModal({
                                 type: newField.type as "string" | "number" | "percent" | "date" | "table",
                             })
                         }
-                        className="flex items-center gap-2 rounded-md bg-gradient-to-r from-violet-600 to-fuchsia-600 px-4 py-2 text-sm font-medium text-white hover:brightness-110"
+                        className="flex items-center gap-2 rounded-md bg-gradient-to-r from-amber-600 to-orange-500 px-4 py-2 text-sm font-medium text-white hover:brightness-110"
                     >
                         <Plus className="h-4 w-4" />
                         {t("mapping.addField")}

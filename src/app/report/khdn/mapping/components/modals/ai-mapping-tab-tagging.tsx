@@ -23,10 +23,10 @@ export function TaggingTab({ headersRaw, setHeadersRaw, tagging, t }: TaggingTab
         <span className="block text-xs font-medium text-slate-700 dark:text-slate-200">
           {t("autoTagging.uploadLabel")}
         </span>
-        <div className="rounded-lg border-2 border-dashed border-violet-300/80 bg-white/60 px-3 py-3 transition-colors hover:border-violet-400 dark:border-violet-500/30 dark:bg-white/[0.04]">
+        <div className="rounded-lg border-2 border-dashed border-amber-300/80 bg-white/60 px-3 py-3 transition-colors hover:border-amber-400 dark:border-amber-500/30 dark:bg-white/[0.04]">
           <label className="flex cursor-pointer items-center gap-2">
-            <Upload className="h-4 w-4 flex-shrink-0 text-violet-500" />
-            <span className="text-xs font-medium text-violet-600">{t("autoTagging.chooseFile")}</span>
+            <Upload className="h-4 w-4 flex-shrink-0 text-amber-500" />
+            <span className="text-xs font-medium text-amber-600">{t("autoTagging.chooseFile")}</span>
             <input
               type="file"
               accept=".docx,.doc"
@@ -56,7 +56,7 @@ export function TaggingTab({ headersRaw, setHeadersRaw, tagging, t }: TaggingTab
           onChange={(e) => setHeadersRaw(e.target.value)}
           rows={4}
           placeholder={t("autoTagging.headersPlaceholder")}
-          className="w-full rounded-lg border border-slate-200/80 bg-white/80 px-3 py-2 text-sm placeholder:text-slate-400 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500 dark:border-white/[0.08] dark:bg-white/[0.04] dark:text-slate-100 dark:placeholder:text-slate-500"
+          className="w-full rounded-lg border border-slate-200/80 bg-white/80 px-3 py-2 text-sm placeholder:text-slate-400 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500 dark:border-white/[0.08] dark:bg-white/[0.04] dark:text-slate-100 dark:placeholder:text-slate-500"
         />
       </div>
 
@@ -71,7 +71,7 @@ export function TaggingTab({ headersRaw, setHeadersRaw, tagging, t }: TaggingTab
             name="tag-format"
             checked={tagging.format === "square"}
             onChange={() => tagging.setFormat("square")}
-            className="h-3.5 w-3.5 border-slate-300 text-violet-600 focus:ring-violet-500"
+            className="h-3.5 w-3.5 border-slate-300 text-amber-600 focus:ring-amber-500"
           />
           {t("autoTagging.formatSquare")}
         </label>
@@ -81,7 +81,7 @@ export function TaggingTab({ headersRaw, setHeadersRaw, tagging, t }: TaggingTab
             name="tag-format"
             checked={tagging.format === "curly"}
             onChange={() => tagging.setFormat("curly")}
-            className="h-3.5 w-3.5 border-slate-300 text-violet-600 focus:ring-violet-500"
+            className="h-3.5 w-3.5 border-slate-300 text-amber-600 focus:ring-amber-500"
           />
           {t("autoTagging.formatCurly")}
         </label>
@@ -92,7 +92,7 @@ export function TaggingTab({ headersRaw, setHeadersRaw, tagging, t }: TaggingTab
         type="button"
         onClick={() => void tagging.analyzeDocument(headersRaw)}
         disabled={tagging.analyzing}
-        className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-violet-600 to-fuchsia-600 px-3 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:brightness-110 disabled:opacity-70"
+        className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-amber-600 to-orange-500 px-3 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:brightness-110 disabled:opacity-70"
       >
         <Tags className="h-4 w-4" />
         {tagging.analyzing ? t("autoTagging.analyzing") : t("autoTagging.analyze")}
@@ -111,7 +111,7 @@ export function TaggingTab({ headersRaw, setHeadersRaw, tagging, t }: TaggingTab
               <button
                 type="button"
                 onClick={() => tagging.toggleAll(true)}
-                className="text-[11px] font-medium text-violet-600 hover:underline dark:text-violet-400"
+                className="text-[11px] font-medium text-amber-600 hover:underline dark:text-amber-400"
               >
                 {t("autoTagging.selectAll")}
               </button>
@@ -153,7 +153,7 @@ export function TaggingTab({ headersRaw, setHeadersRaw, tagging, t }: TaggingTab
                   transition={{ delay: idx * 0.03 }}
                   className={`flex cursor-pointer items-start gap-3 rounded-xl border p-3 transition-all ${
                     tagging.accepted[idx]
-                      ? "border-violet-200/80 bg-violet-50/40 shadow-sm dark:border-violet-500/30 dark:bg-violet-500/10"
+                      ? "border-amber-200/80 bg-amber-50/40 shadow-sm dark:border-amber-500/30 dark:bg-amber-500/10"
                       : "border-slate-200/60 bg-white/30 dark:border-white/[0.07] dark:bg-white/[0.04]"
                   }`}
                 >
@@ -161,7 +161,7 @@ export function TaggingTab({ headersRaw, setHeadersRaw, tagging, t }: TaggingTab
                     type="checkbox"
                     checked={tagging.accepted[idx] ?? false}
                     onChange={() => tagging.toggleSuggestion(idx)}
-                    className="mt-0.5 h-4 w-4 flex-shrink-0 rounded border-slate-300 text-violet-600 focus:ring-violet-500"
+                    className="mt-0.5 h-4 w-4 flex-shrink-0 rounded border-slate-300 text-amber-600 focus:ring-amber-500"
                   />
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
@@ -172,7 +172,7 @@ export function TaggingTab({ headersRaw, setHeadersRaw, tagging, t }: TaggingTab
                         &ldquo;{sg.originalText.length > 50 ? sg.originalText.slice(0, 50) + "..." : sg.originalText}&rdquo;
                       </span>
                       <ArrowRight className="h-3 w-3 flex-shrink-0 text-slate-400 dark:text-slate-500" />
-                      <span className="truncate rounded-md bg-violet-50 dark:bg-violet-500/10 px-2 py-0.5 text-xs font-mono font-medium text-violet-700 dark:text-violet-400">
+                      <span className="truncate rounded-md bg-amber-50 dark:bg-amber-500/10 px-2 py-0.5 text-xs font-mono font-medium text-amber-700 dark:text-amber-400">
                         {tag}
                       </span>
                     </div>
@@ -191,7 +191,7 @@ export function TaggingTab({ headersRaw, setHeadersRaw, tagging, t }: TaggingTab
               type="button"
               onClick={() => void tagging.applyTags()}
               disabled={tagging.applying || tagging.accepted.every((a) => !a)}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-violet-600 to-fuchsia-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition-all hover:brightness-110 disabled:opacity-60"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-amber-600 to-orange-500 px-4 py-2 text-sm font-medium text-white shadow-sm transition-all hover:brightness-110 disabled:opacity-60"
             >
               <FileText className="h-4 w-4" />
               {tagging.applying ? t("autoTagging.creating") : t("autoTagging.createTemplate")}

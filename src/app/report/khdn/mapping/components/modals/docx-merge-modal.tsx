@@ -139,7 +139,7 @@ export function DocxMergeModal({ isOpen, onClose }: DocxMergeModalProps) {
               {/* Header */}
               <div className="flex items-center justify-between border-b border-slate-200 dark:border-white/[0.07] px-6 py-4">
                 <div className="flex items-center gap-2">
-                  <span className="inline-flex h-7 w-7 items-center justify-center rounded-lg border border-violet-300/50 bg-gradient-to-br from-violet-600 to-fuchsia-600 text-white shadow-sm">
+                  <span className="inline-flex h-7 w-7 items-center justify-center rounded-lg border border-amber-300/50 bg-gradient-to-br from-amber-600 to-orange-500 text-white shadow-sm">
                     <FileText className="h-3.5 w-3.5" />
                   </span>
                   <h3 className="text-base font-semibold text-slate-800 dark:text-slate-200">
@@ -178,7 +178,7 @@ export function DocxMergeModal({ isOpen, onClose }: DocxMergeModalProps) {
                     value={mergeState.outputName}
                     onChange={(e) => dispatchMerge({ type: "SET_OUTPUT_NAME", name: e.target.value })}
                     placeholder="merged-template"
-                    className="rounded-lg border border-slate-200/80 dark:border-white/[0.09] bg-white dark:bg-white/[0.05] dark:text-slate-100 px-3 py-2 text-sm focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-400/30 dark:focus:ring-violet-400/20"
+                    className="rounded-lg border border-slate-200/80 dark:border-white/[0.09] bg-white dark:bg-white/[0.05] dark:text-slate-100 px-3 py-2 text-sm focus:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-400/30 dark:focus:ring-amber-400/20"
                   />
                 </label>
 
@@ -188,7 +188,7 @@ export function DocxMergeModal({ isOpen, onClose }: DocxMergeModalProps) {
                     type="checkbox"
                     checked={mergeState.withPageBreak}
                     onChange={(e) => dispatchMerge({ type: "SET_PAGE_BREAK", value: e.target.checked })}
-                    className="rounded border-slate-300 text-violet-600 focus:ring-violet-500"
+                    className="rounded border-slate-300 text-amber-600 focus:ring-amber-500"
                   />
                   Chèn ngắt trang giữa các file
                 </label>
@@ -222,7 +222,7 @@ export function DocxMergeModal({ isOpen, onClose }: DocxMergeModalProps) {
                     type="button"
                     onClick={() => void runMergeDocx()}
                     disabled={mergeState.merging || mergeState.files.length < 2}
-                    className="rounded-lg bg-gradient-to-r from-violet-600 to-fuchsia-600 px-4 py-2 text-sm font-medium text-white transition-all hover:brightness-110 shadow-sm shadow-violet-500/25 disabled:opacity-50"
+                    className="rounded-lg bg-gradient-to-r from-amber-600 to-orange-500 px-4 py-2 text-sm font-medium text-white transition-all hover:brightness-110 shadow-sm shadow-amber-500/25 disabled:opacity-50"
                   >
                     {mergeState.merging ? "Đang nối..." : "Nối DOCX và tải về"}
                   </button>

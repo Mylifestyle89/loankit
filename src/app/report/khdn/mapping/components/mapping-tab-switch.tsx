@@ -10,14 +10,14 @@ export function MappingTabSwitch({ t, activeTab, setActiveTab }: MappingTabSwitc
       <button
         type="button"
         onClick={() => setActiveTab("visual")}
-        className={`rounded-md px-3 py-1.5 text-sm ${activeTab === "visual" ? "bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white" : "border border-zinc-200 hover:bg-violet-50/30"}`}
+        className={`rounded-md px-3 py-1.5 text-sm ${activeTab === "visual" ? "bg-gradient-to-r from-amber-600 to-orange-500 text-white" : "border border-zinc-200 hover:bg-amber-50/30"}`}
       >
         {t("mapping.tab.visual")}
       </button>
       <button
         type="button"
         onClick={() => setActiveTab("advanced")}
-        className={`rounded-md px-3 py-1.5 text-sm ${activeTab === "advanced" ? "bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white" : "border border-zinc-200 hover:bg-violet-50/30"}`}
+        className={`rounded-md px-3 py-1.5 text-sm ${activeTab === "advanced" ? "bg-gradient-to-r from-amber-600 to-orange-500 text-white" : "border border-zinc-200 hover:bg-amber-50/30"}`}
       >
         {t("mapping.tab.advanced")}
       </button>

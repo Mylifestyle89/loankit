@@ -22,9 +22,9 @@ type ImportRow = { name: string; accountNumber: string; bankName: string };
 const thCls = "px-3 py-2 text-left text-xs font-semibold text-zinc-500 dark:text-slate-400";
 const tdCls = "px-3 py-1.5";
 const inputCls =
-  "w-full rounded border border-zinc-300 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] px-2 py-1.5 text-sm transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40";
+  "w-full rounded border border-zinc-300 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] px-2 py-1.5 text-sm transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/40";
 const btnCls =
-  "cursor-pointer rounded-lg px-3 py-1.5 text-sm transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40";
+  "cursor-pointer rounded-lg px-3 py-1.5 text-sm transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/40";
 
 export function BeneficiaryModal({ loanId, contractNumber, onClose }: Props) {
   const { t } = useLanguage();
@@ -170,7 +170,7 @@ export function BeneficiaryModal({ loanId, contractNumber, onClose }: Props) {
 
         {/* Toolbar */}
         <div className="flex items-center gap-2 px-6 py-3 border-b border-zinc-200 dark:border-white/[0.07]">
-          <button type="button" onClick={() => fileRef.current?.click()} className={`${btnCls} border border-zinc-200 dark:border-white/[0.09] hover:bg-violet-50/50 dark:hover:bg-white/[0.06] flex items-center gap-1.5`}>
+          <button type="button" onClick={() => fileRef.current?.click()} className={`${btnCls} border border-zinc-200 dark:border-white/[0.09] hover:bg-amber-50/50 dark:hover:bg-white/[0.06] flex items-center gap-1.5`}>
             <Upload className="h-3.5 w-3.5" /> {t("beneficiaries.importExcel") ?? "Import Excel"}
           </button>
           <input ref={fileRef} type="file" accept=".xlsx,.xls" onChange={handleFileChange} className="hidden" />
@@ -233,7 +233,7 @@ export function BeneficiaryModal({ loanId, contractNumber, onClose }: Props) {
               </thead>
               <tbody>
                 {rows.map((r) => (
-                  <tr key={r.id} className="border-t border-zinc-200 dark:border-white/[0.07] hover:bg-violet-50/30 dark:hover:bg-white/[0.04] transition-colors duration-150">
+                  <tr key={r.id} className="border-t border-zinc-200 dark:border-white/[0.07] hover:bg-amber-50/30 dark:hover:bg-white/[0.04] transition-colors duration-150">
                     <td className={tdCls}>{r.name}</td>
                     <td className={tdCls}>{r.accountNumber || "—"}</td>
                     <td className={tdCls}>{r.bankName || "—"}</td>
@@ -259,7 +259,7 @@ export function BeneficiaryModal({ loanId, contractNumber, onClose }: Props) {
                       onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleAddRow(); } }} />
                   </td>
                   <td className={tdCls}>
-                    <button type="button" onClick={handleAddRow} disabled={saving || !newName.trim()} className="cursor-pointer rounded p-1 text-violet-500 hover:text-violet-600 disabled:opacity-30 transition-colors duration-150">
+                    <button type="button" onClick={handleAddRow} disabled={saving || !newName.trim()} className="cursor-pointer rounded p-1 text-amber-500 hover:text-amber-600 disabled:opacity-30 transition-colors duration-150">
                       <Plus className="h-4 w-4" />
                     </button>
                   </td>

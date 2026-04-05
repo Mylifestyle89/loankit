@@ -188,10 +188,10 @@ export default function InvoicesOverviewPage() {
   return (
     <section className="space-y-5">
       {/* Header with gradient accent */}
-      <div className="relative overflow-hidden rounded-2xl border border-violet-100 dark:border-violet-500/10 bg-gradient-to-br from-violet-50 via-white to-fuchsia-50 dark:from-violet-950/30 dark:via-[#141414] dark:to-fuchsia-950/20 p-5">
-        <div className="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-violet-200/30 blur-2xl dark:bg-violet-500/10" />
+      <div className="relative overflow-hidden rounded-2xl border border-amber-100 dark:border-amber-500/10 bg-gradient-to-br from-amber-50 via-white to-orange-50 dark:from-amber-950/30 dark:via-[#141414] dark:to-orange-950/20 p-5">
+        <div className="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-amber-200/30 blur-2xl dark:bg-amber-500/10" />
         <div className="relative">
-          <h2 className="text-xl font-bold tracking-tight bg-gradient-to-r from-violet-700 to-fuchsia-600 dark:from-violet-400 dark:to-fuchsia-400 bg-clip-text text-transparent">
+          <h2 className="text-xl font-bold tracking-tight bg-gradient-to-r from-amber-700 to-orange-500 dark:from-amber-400 dark:to-orange-400 bg-clip-text text-transparent">
             {t("invoices.title")}
           </h2>
           <p className="mt-1 text-sm text-zinc-500 dark:text-slate-400">{t("invoices.desc")}</p>
@@ -228,13 +228,13 @@ export default function InvoicesOverviewPage() {
               <p className="font-semibold tabular-nums text-red-700 dark:text-red-300">{totalOverdue}</p>
             </div>
           </div>
-          <div className="flex items-center gap-2.5 rounded-xl border border-violet-200/60 dark:border-violet-500/15 bg-white/60 dark:bg-white/[0.04] p-3">
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-violet-100 dark:bg-violet-500/15">
-              <Banknote className="h-4 w-4 text-violet-600 dark:text-violet-400" />
+          <div className="flex items-center gap-2.5 rounded-xl border border-amber-200/60 dark:border-amber-500/15 bg-white/60 dark:bg-white/[0.04] p-3">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-100 dark:bg-amber-500/15">
+              <Banknote className="h-4 w-4 text-amber-600 dark:text-amber-400" />
             </div>
             <div>
               <p className="text-xs text-zinc-400 dark:text-slate-500">{t("invoices.totalAmount")}</p>
-              <p className="font-semibold tabular-nums bg-gradient-to-r from-violet-700 to-fuchsia-600 dark:from-violet-400 dark:to-fuchsia-400 bg-clip-text text-transparent">{fmt(totalAmount)} VND</p>
+              <p className="font-semibold tabular-nums bg-gradient-to-r from-amber-700 to-orange-500 dark:from-amber-400 dark:to-orange-400 bg-clip-text text-transparent">{fmt(totalAmount)} VND</p>
             </div>
           </div>
         </div>
@@ -269,7 +269,7 @@ export default function InvoicesOverviewPage() {
       {loading ? (
         <div className="rounded-2xl border border-zinc-200 dark:border-white/[0.07] bg-white dark:bg-[#161616] shadow-sm overflow-hidden">
           <div className="flex items-center justify-center py-12">
-            <div className="h-6 w-6 animate-spin rounded-full border-2 border-violet-200 border-t-violet-600 dark:border-violet-800 dark:border-t-violet-400" />
+            <div className="h-6 w-6 animate-spin rounded-full border-2 border-amber-200 border-t-amber-600 dark:border-amber-800 dark:border-t-amber-400" />
           </div>
         </div>
       ) : groupBy === "disbursement" ? (

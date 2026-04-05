@@ -169,7 +169,7 @@ export function DisbursementReportModal({ loanId, disbursementId, onClose }: Pro
             type="button"
             onClick={handleGenerate}
             disabled={generating}
-            className="cursor-pointer flex items-center gap-2 rounded-lg bg-gradient-to-r from-violet-600 to-fuchsia-600 px-4 py-2 text-sm font-medium text-white hover:brightness-110 disabled:opacity-50 transition-all"
+            className="cursor-pointer flex items-center gap-2 rounded-lg bg-gradient-to-r from-amber-600 to-orange-500 px-4 py-2 text-sm font-medium text-white hover:brightness-110 disabled:opacity-50 transition-all"
           >
             {generating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
             {generating ? "Đang tạo..." : (t("disbursements.generateReport") ?? "Tạo báo cáo")}
@@ -189,7 +189,7 @@ export function DisbursementReportModal({ loanId, disbursementId, onClose }: Pro
                 key={tmpl.key}
                 className={`cursor-pointer flex items-center gap-3 rounded-lg border p-3 transition-colors ${
                   selectedTemplate === tmpl.key
-                    ? "border-violet-500 bg-violet-50/30 dark:bg-violet-900/20 dark:border-violet-500/60"
+                    ? "border-amber-500 bg-amber-50/30 dark:bg-amber-900/20 dark:border-amber-500/60"
                     : "border-zinc-200 dark:border-white/10 hover:border-zinc-300 dark:hover:border-white/20"
                 }`}
               >
@@ -199,7 +199,7 @@ export function DisbursementReportModal({ loanId, disbursementId, onClose }: Pro
                   value={tmpl.key}
                   checked={selectedTemplate === tmpl.key}
                   onChange={() => setSelectedTemplate(tmpl.key)}
-                  className="accent-violet-600"
+                  className="accent-amber-600"
                 />
                 <div>
                   <div className="text-sm font-medium text-zinc-800 dark:text-slate-200">{tmpl.label}</div>
@@ -225,7 +225,7 @@ export function DisbursementReportModal({ loanId, disbursementId, onClose }: Pro
                     value={overrides[field.key] ?? ""}
                     onChange={(e) => handleOverrideChange(field.key, e.target.value, field.type === "currency")}
                     placeholder={field.placeholder}
-                    className="w-full rounded-md border border-zinc-200 dark:border-white/10 bg-white dark:bg-[#1a1a1a] px-3 py-1.5 text-sm text-zinc-800 dark:text-slate-200 placeholder:text-zinc-400 dark:placeholder:text-slate-500 focus:border-violet-400 focus:outline-none focus:ring-1 focus:ring-violet-500/40"
+                    className="w-full rounded-md border border-zinc-200 dark:border-white/10 bg-white dark:bg-[#1a1a1a] px-3 py-1.5 text-sm text-zinc-800 dark:text-slate-200 placeholder:text-zinc-400 dark:placeholder:text-slate-500 focus:border-amber-400 focus:outline-none focus:ring-1 focus:ring-amber-500/40"
                   />
                 </div>
               ))}
