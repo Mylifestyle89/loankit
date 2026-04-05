@@ -3,6 +3,7 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 
 import { LanguageProvider } from "@/components/language-provider";
 import { ThemeProvider } from "@/components/theme-provider";
+import { DownloadToastContainer } from "@/components/ui/download-toast-container";
 import "./globals.css";
 
 // Fallback fonts for offline/restricted environments
@@ -50,6 +51,7 @@ export default function RootLayout({
       <body className="antialiased">
         <ThemeProvider>
           <LanguageProvider>{children}</LanguageProvider>
+          <DownloadToastContainer />
         </ThemeProvider>
         <SpeedInsights />
       </body>

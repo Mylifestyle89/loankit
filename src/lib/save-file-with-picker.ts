@@ -1,3 +1,5 @@
+import { useDownloadToastStore, triggerAnchorDownload } from "@/lib/download-toast-store";
+
 // File System Access API types (Chrome/Edge only, not in lib.dom yet)
 declare global {
   interface Window {
@@ -13,6 +15,8 @@ declare global {
  * Uses File System Access API (showSaveFilePicker) when available — lets user
  * choose save location. Falls back to traditional <a download> for browsers
  * that don't support it (Firefox, Safari, mobile).
+ *
+ * Shows a Chrome-style toast notification on successful download.
  */
 export async function saveFileWithPicker(blob: Blob, suggestedName: string): Promise<void> {
   // Try native file picker (Chrome/Edge desktop)
@@ -34,9 +38,10 @@ export async function saveFileWithPicker(blob: Blob, suggestedName: string): Pro
       const writable = await handle.createWritable();
       await writable.write(blob);
       await writable.close();
+      useDownloadToastStore.getState().add(suggestedName, blob);
       return;
     } catch (err) {
-      // Any picker error (cancel, permission, etc.) — never fall through to avoid double download
+      // User cancelled picker — no toast, no fallback
       if (!(err instanceof DOMException && err.name === "AbortError")) {
         console.warn("[saveFileWithPicker] picker error:", err);
       }
@@ -44,15 +49,6 @@ export async function saveFileWithPicker(blob: Blob, suggestedName: string): Pro
     }
   }
 
-  // Fallback: traditional download (Firefox, Safari, mobile)
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = suggestedName;
-  document.body.appendChild(a);
-  a.click();
-  setTimeout(() => {
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  }, 100);
+  triggerAnchorDownload(blob, suggestedName);
+  useDownloadToastStore.getState().add(suggestedName, blob);
 }
