@@ -272,23 +272,32 @@ export function CollateralForm({ customerId, initial, onSaved, onCancel }: {
                 <div className="mt-3">
                   <div className="flex items-center justify-between mb-2">
                     <h5 className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">Định giá nhà ở</h5>
-                    <select
-                      value={props.house_rounding ?? "0"}
-                      onChange={(e) => {
-                        const prec = Number(e.target.value) || 0;
-                        setProps((p) => {
-                          const next: Record<string, string> = { ...p, house_rounding: e.target.value };
-                          const area = parseFloat((next.house_appraisal_area ?? "0").replace(/,/g, ".")) || 0;
-                          const price = Number((next.house_unit_price ?? "0").replace(/\./g, "")) || 0;
-                          const raw = area && price ? Math.round(area * price) : 0;
-                          next.house_appraisal_value = raw ? String(prec > 0 ? roundDown(raw, prec) : raw) : "";
-                          return next;
-                        });
-                      }}
-                      className={`${inputCls} w-36 text-[11px]`}
-                    >
-                      {ROUNDING_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-                    </select>
+                    <div className="flex rounded-lg border border-zinc-200 dark:border-white/[0.09] overflow-hidden">
+                      {ROUNDING_OPTIONS.map((o) => (
+                        <button
+                          key={o.value}
+                          type="button"
+                          onClick={() => {
+                            const prec = Number(o.value) || 0;
+                            setProps((p) => {
+                              const next: Record<string, string> = { ...p, house_rounding: o.value };
+                              const area = parseFloat((next.house_appraisal_area ?? "0").replace(/,/g, ".")) || 0;
+                              const price = Number((next.house_unit_price ?? "0").replace(/\./g, "")) || 0;
+                              const raw = area && price ? Math.round(area * price) : 0;
+                              next.house_appraisal_value = raw ? String(prec > 0 ? roundDown(raw, prec) : raw) : "";
+                              return next;
+                            });
+                          }}
+                          className={`px-2.5 py-1 text-[10px] font-medium transition-colors ${
+                            (props.house_rounding ?? "0") === o.value
+                              ? "bg-violet-600 text-white"
+                              : "bg-white dark:bg-[#1a1a1a] text-zinc-500 dark:text-zinc-400 hover:bg-violet-50 dark:hover:bg-violet-500/10"
+                          }`}
+                        >
+                          {o.label}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                   <div className="grid grid-cols-3 gap-2">
                     <label className="block">

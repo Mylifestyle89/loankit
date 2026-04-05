@@ -153,13 +153,22 @@ export function LandTypeRows({ props, setProps }: {
     <div className="space-y-2">
       <div className="flex items-center justify-between">
         <h5 className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">Chi tiết giá trị đất</h5>
-        <select
-          value={rounding}
-          onChange={(e) => handleRoundingChange(e.target.value)}
-          className={`${inputCls} w-36 text-[11px]`}
-        >
-          {ROUNDING_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-        </select>
+        <div className="flex rounded-lg border border-zinc-200 dark:border-white/[0.09] overflow-hidden">
+          {ROUNDING_OPTIONS.map((o) => (
+            <button
+              key={o.value}
+              type="button"
+              onClick={() => handleRoundingChange(o.value)}
+              className={`px-2.5 py-1 text-[10px] font-medium transition-colors ${
+                rounding === o.value
+                  ? "bg-violet-600 text-white"
+                  : "bg-white dark:bg-[#1a1a1a] text-zinc-500 dark:text-zinc-400 hover:bg-violet-50 dark:hover:bg-violet-500/10"
+              }`}
+            >
+              {o.label}
+            </button>
+          ))}
+        </div>
       </div>
       <div className="grid grid-cols-[1fr_6rem_7rem_8rem] gap-2 items-end">
         <span className="text-[10px] text-zinc-400 font-medium">Loại đất</span>
