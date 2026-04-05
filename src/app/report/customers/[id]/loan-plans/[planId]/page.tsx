@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft, Save, Sparkles } from "lucide-react";
+import { ArrowLeft, Plus, Save, Sparkles, Trash2 } from "lucide-react";
 
 import { CostItemsTable, type CostItem } from "./cost-items-table";
 import { NumericInput } from "./numeric-input";
@@ -251,21 +251,59 @@ export default function LoanPlanEditorPage() {
         <CostItemsTable items={costItems} onChange={setCostItems} />
       </div>
 
-      {/* Revenue items */}
+      {/* Revenue items — table layout matching cost items */}
       <div className="rounded-2xl border border-zinc-200 dark:border-white/[0.07] bg-white dark:bg-[#161616] p-5 shadow-sm">
         <h3 className="text-sm font-semibold mb-3">Doanh thu dự kiến</h3>
-        <div className="space-y-2">
-          {revenueItems.map((r, idx) => (
-            <div key={idx} className="grid grid-cols-[1fr_4rem_5rem_5rem_auto] gap-2 text-sm">
-              <input className={inputCls} value={r.description} onChange={(e) => updateRevenue(idx, "description", e.target.value)} placeholder="Mô tả" />
-              <input className={inputCls} value={r.unit ?? ""} onChange={(e) => updateRevenue(idx, "unit", e.target.value)} placeholder="ĐVT" />
-              <NumericInput className={inputCls} value={r.qty} onChange={(n) => updateRevenue(idx, "qty", String(n))} placeholder="SL" />
-              <NumericInput className={inputCls} value={r.unitPrice} onChange={(n) => updateRevenue(idx, "unitPrice", String(n))} placeholder="ĐG" />
-              <div className="flex items-center text-right tabular-nums font-medium text-sm">{r.amount.toLocaleString("vi-VN")}</div>
-            </div>
-          ))}
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse text-sm">
+            <thead>
+              <tr className="bg-zinc-50 dark:bg-white/[0.03] text-xs text-zinc-500">
+                <th className="px-2 py-1.5 border border-zinc-200 dark:border-white/[0.07] text-left w-[30%]">Hạng mục</th>
+                <th className="px-2 py-1.5 border border-zinc-200 dark:border-white/[0.07] text-center w-[10%]">ĐVT</th>
+                <th className="px-2 py-1.5 border border-zinc-200 dark:border-white/[0.07] text-right w-[15%]">Số lượng</th>
+                <th className="px-2 py-1.5 border border-zinc-200 dark:border-white/[0.07] text-right w-[20%]">Đơn giá</th>
+                <th className="px-2 py-1.5 border border-zinc-200 dark:border-white/[0.07] text-right w-[20%]">Thành tiền</th>
+                <th className="px-2 py-1.5 border border-zinc-200 dark:border-white/[0.07] w-[5%]" />
+              </tr>
+            </thead>
+            <tbody>
+              {revenueItems.map((r, idx) => (
+                <tr key={idx} className="hover:bg-amber-50/30 dark:hover:bg-amber-500/5">
+                  <td className="px-2 py-1.5 border border-zinc-200 dark:border-white/[0.07]">
+                    <input className="w-full bg-transparent outline-none text-sm" value={r.description} onChange={(e) => updateRevenue(idx, "description", e.target.value)} placeholder="Mô tả" />
+                  </td>
+                  <td className="px-2 py-1.5 border border-zinc-200 dark:border-white/[0.07] text-center">
+                    <input className="w-full bg-transparent outline-none text-center text-sm" value={r.unit ?? ""} onChange={(e) => updateRevenue(idx, "unit", e.target.value)} placeholder="kg" />
+                  </td>
+                  <td className="px-2 py-1.5 border border-zinc-200 dark:border-white/[0.07]">
+                    <NumericInput className="w-full bg-transparent outline-none text-right tabular-nums" value={r.qty} onChange={(n) => updateRevenue(idx, "qty", String(n))} placeholder="0" />
+                  </td>
+                  <td className="px-2 py-1.5 border border-zinc-200 dark:border-white/[0.07]">
+                    <NumericInput className="w-full bg-transparent outline-none text-right tabular-nums" value={r.unitPrice} onChange={(n) => updateRevenue(idx, "unitPrice", String(n))} placeholder="0" />
+                  </td>
+                  <td className="px-2 py-1.5 border border-zinc-200 dark:border-white/[0.07] text-right tabular-nums font-medium">
+                    {r.amount.toLocaleString("vi-VN")}
+                  </td>
+                  <td className="px-2 py-1.5 border border-zinc-200 dark:border-white/[0.07] text-center">
+                    <button type="button" onClick={() => setRevenueItems(revenueItems.filter((_, i) => i !== idx))} className="text-zinc-400 hover:text-red-500">
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+            <tfoot>
+              <tr className="bg-zinc-50 dark:bg-white/[0.03] font-semibold">
+                <td colSpan={4} className="px-2 py-1.5 border border-zinc-200 dark:border-white/[0.07] text-right text-sm">Tổng doanh thu</td>
+                <td className="px-2 py-1.5 border border-zinc-200 dark:border-white/[0.07] text-right tabular-nums text-sm">{revenueItems.reduce((s, r) => s + r.amount, 0).toLocaleString("vi-VN")}</td>
+                <td className="px-2 py-1.5 border border-zinc-200 dark:border-white/[0.07]" />
+              </tr>
+            </tfoot>
+          </table>
           <button type="button" onClick={() => setRevenueItems([...revenueItems, { description: "", unit: "đ", qty: 0, unitPrice: 0, amount: 0 }])}
-            className="inline-flex items-center gap-1 text-xs text-amber-600 hover:underline">+ Thêm dòng doanh thu</button>
+            className="mt-2 inline-flex items-center gap-1 rounded-lg border border-dashed border-zinc-300 dark:border-white/[0.1] px-3 py-1.5 text-xs text-zinc-500 hover:border-amber-300 hover:text-amber-600">
+            <Plus className="h-3 w-3" /> Thêm dòng doanh thu
+          </button>
         </div>
       </div>
 
