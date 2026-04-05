@@ -35,7 +35,7 @@ export type ValidationReport = {
 
 // ── Constants ──
 
-const VALID_METHODS = new Set(["tung_lan", "han_muc", "trung_dai", "tieu_dung"]);
+const VALID_METHODS = new Set(["tung_lan", "han_muc", "trung_dai", "tieu_dung", "cam_co"]);
 const VALID_CATEGORIES = new Set(Object.keys(DOC_CATEGORY_LABELS));
 
 /** Tags that are docxtemplater internal or dynamic — skip validation */

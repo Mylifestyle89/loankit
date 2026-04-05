@@ -47,7 +47,7 @@ function sanitizeRevenueItems(items: RevenueItem[]): RevenueItem[] {
   });
 }
 
-/** Extended trung_dai fields merged into financials_json */
+/** Extended fields merged into financials_json (trung_dai + tiêu dùng) */
 const EXTENDED_FINANCIAL_KEYS = [
   "depreciation_years", "asset_unit_price", "land_area_sau",
   "preferential_rate", "term_months", "construction_contract_no",
@@ -55,6 +55,7 @@ const EXTENDED_FINANCIAL_KEYS = [
   "legal_assessment", "market_input", "market_output",
   "labor_capability", "machinery_capability", "other_factors",
   "turnover_analysis",
+  "income_source_type",
 ] as const;
 
 function recalcFinancials(

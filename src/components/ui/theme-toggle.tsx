@@ -12,8 +12,6 @@ type ThemeToggleProps = {
 export function ThemeToggle({ expanded = false }: ThemeToggleProps) {
   const { resolvedTheme, setTheme } = useTheme();
 
-  // ThemeProvider starts with theme="system" (resolves to "light") on both
-  // server and client, so no hydration mismatch — no mounted guard needed.
   const isDark = resolvedTheme === "dark";
 
   return (

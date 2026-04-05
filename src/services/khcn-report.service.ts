@@ -5,14 +5,7 @@
 import { docxEngine } from "@/lib/docx-engine";
 import { fmtDateCompact } from "@/lib/report/report-date-utils";
 
-import {
-  buildKhcnReportData,
-  cloneSectionsForAssets,
-  CATEGORY_TO_PREFIX,
-  CATEGORY_TO_COLLATERAL_TYPE,
-  KHCN_TEMPLATES,
-  ASSET_CATEGORY_KEYS,
-} from "./khcn-report-data-builder";
+import { buildKhcnReportData } from "./khcn-report-data-builder";
 import {
   KHCN_DISBURSEMENT_TEMPLATES,
   type KhcnDisbursementTemplateKey,
@@ -31,26 +24,9 @@ export async function generateKhcnReport(
   overrides?: Record<string, string>,
 ): Promise<KhcnReportResult> {
   const data = await buildKhcnReportData(customerId, loanId, overrides);
-
-  const templateEntry = KHCN_TEMPLATES.find((t) => t.path === templatePath);
-  const category = templateEntry?.category;
-  const isAssetTemplate = category ? ASSET_CATEGORY_KEYS.has(category) : false;
-  const prefix = category ? CATEGORY_TO_PREFIX[category] : undefined;
-  const collateralType = category ? CATEGORY_TO_COLLATERAL_TYPE[category] : undefined;
-
   flattenUncPlaceholders(data, overrides);
 
-  const collaterals = data.TSBD as Array<{ "Loại TSBĐ": string }> | undefined;
-  const noClone = templateEntry?.noClone === true;
-  const count =
-    isAssetTemplate && prefix && collateralType && collaterals && !noClone
-      ? collaterals.filter((c) => c["Loại TSBĐ"] === collateralType).length
-      : 0;
-
-  const buffer = await docxEngine.generateDocxBuffer(templatePath, data, {
-    preProcessZip:
-      count > 1 && prefix ? (zip) => cloneSectionsForAssets(zip, prefix, count) : undefined,
-  });
+  const buffer = await docxEngine.generateDocxBuffer(templatePath, data);
 
   const customerName = String(data["Tên khách hàng"] ?? "KHCN");
   const filename = `${customerName}_${templateLabel}_${fmtDateCompact(new Date())}.docx`;

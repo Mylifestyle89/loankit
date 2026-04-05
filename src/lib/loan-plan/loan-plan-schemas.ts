@@ -18,14 +18,17 @@ export const revenueItemSchema = z.object({
 });
 
 export const LOAN_METHODS = ["tung_lan", "han_muc", "trung_dai", "tieu_dung"] as const;
+export const INCOME_SOURCE_TYPES = ["salary", "rental", "agriculture", "business"] as const;
 
 export const loanMethodEnum = z.enum(LOAN_METHODS);
+export const incomeSourceEnum = z.enum(INCOME_SOURCE_TYPES);
 
 export const createPlanSchema = z.object({
   customerId: z.string().min(1),
   templateId: z.string().optional(),
   name: z.string().optional(),
   loan_method: loanMethodEnum.optional(),
+  income_source_type: incomeSourceEnum.optional(),
   cost_items: z.array(costItemSchema).optional(),
   revenue_items: z.array(revenueItemSchema).optional(),
   loanAmount: z.number().optional(),

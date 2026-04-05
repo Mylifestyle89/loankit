@@ -24,6 +24,21 @@ export const METHOD_SHORT_LABELS: Record<string, string> = {
   cam_co: "Cầm cố",
 };
 
+/** Income source type options for tiêu dùng loans */
+export const INCOME_SOURCE_OPTIONS = [
+  { value: "salary", label: "Lương" },
+  { value: "rental", label: "Cho thuê nhà/mặt bằng" },
+  { value: "agriculture", label: "Nông nghiệp" },
+  { value: "business", label: "Kinh doanh" },
+] as const;
+
+export const INCOME_SOURCE_LABELS: Record<string, string> = {
+  salary: "Lương",
+  rental: "Cho thuê nhà/mặt bằng",
+  agriculture: "Nông nghiệp",
+  business: "Kinh doanh",
+};
+
 export const CATEGORY_LABELS: Record<string, string> = {
   nong_nghiep: "Nông nghiệp",
   kinh_doanh: "Kinh doanh",

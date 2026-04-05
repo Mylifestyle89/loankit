@@ -26,6 +26,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   // Start with "system" so server and first client render always match.
   // localStorage is read in useEffect (client-only) to avoid hydration mismatch.
   const [theme, setThemeState] = useState<Theme>("system");
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     const saved = window.localStorage.getItem("app_theme") as Theme | null;
@@ -33,9 +34,12 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setThemeState(saved);
     }
+    setMounted(true);
   }, []);
 
-  const resolvedTheme = resolveTheme(theme);
+  // Before mount, always resolve to "light" to match server render.
+  // After mount, resolve using actual system preference.
+  const resolvedTheme = mounted ? resolveTheme(theme) : "light";
 
   useEffect(() => {
     const root = document.documentElement;

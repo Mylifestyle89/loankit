@@ -3,9 +3,6 @@
  * Covers: customer info, branch/staff, loans, collaterals, co-borrowers,
  * credit info, related persons, loan plans.
  */
-import { cloneSectionsForAssets, CATEGORY_TO_PREFIX, CATEGORY_TO_COLLATERAL_TYPE } from "@/lib/docx-section-cloner";
-import { KHCN_TEMPLATES } from "@/lib/loan-plan/khcn-template-registry";
-import { ASSET_CATEGORY_KEYS } from "@/lib/loan-plan/khcn-asset-template-registry";
 import { numberToVietnameseWords } from "@/lib/number-to-vietnamese-words";
 import { fmtDate, today } from "@/lib/report/report-date-utils";
 import { fmtN } from "@/lib/report/format-number-vn";
@@ -267,5 +264,3 @@ export async function buildKhcnReportData(
   return data;
 }
 
-// Re-export cloning helpers used by generateKhcnReport in khcn-report.service.ts
-export { cloneSectionsForAssets, CATEGORY_TO_PREFIX, CATEGORY_TO_COLLATERAL_TYPE, KHCN_TEMPLATES, ASSET_CATEGORY_KEYS };

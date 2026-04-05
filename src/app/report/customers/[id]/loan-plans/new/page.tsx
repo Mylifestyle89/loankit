@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import { ArrowLeft } from "lucide-react";
 
 import { inputCls } from "@/components/invoice-tracking/form-styles";
-import { METHOD_OPTIONS, CATEGORY_LABELS } from "@/lib/loan-plan/loan-plan-constants";
+import { METHOD_OPTIONS, CATEGORY_LABELS, INCOME_SOURCE_OPTIONS } from "@/lib/loan-plan/loan-plan-constants";
 import { SmartField } from "@/components/smart-field";
 
 type Template = { id: string; name: string; category: string; description: string | null };
@@ -18,6 +18,7 @@ export default function NewLoanPlanPage() {
   const [selectedTemplate, setSelectedTemplate] = useState<string>("");
   const [name, setName] = useState("");
   const [loanMethod, setLoanMethod] = useState("tung_lan");
+  const [incomeSourceType, setIncomeSourceType] = useState("");
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState("");
 
@@ -44,6 +45,7 @@ export default function NewLoanPlanPage() {
         templateId: selectedTemplate || undefined,
         name: name.trim() || undefined,
         loan_method: loanMethod,
+        income_source_type: loanMethod === "tieu_dung" && incomeSourceType ? incomeSourceType : undefined,
       }),
     });
     const data = await res.json();
@@ -76,6 +78,15 @@ export default function NewLoanPlanPage() {
               {METHOD_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
             </select>
           </label>
+          {loanMethod === "tieu_dung" && (
+            <label className="block">
+              <span className="text-sm font-medium">Nguồn trả nợ</span>
+              <select value={incomeSourceType} onChange={(e) => setIncomeSourceType(e.target.value)} className={`mt-1 ${inputCls}`}>
+                <option value="">-- Chọn nguồn trả nợ --</option>
+                {INCOME_SOURCE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+              </select>
+            </label>
+          )}
         </div>
 
         {/* Template picker */}

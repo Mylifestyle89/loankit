@@ -30,6 +30,11 @@ export function buildLoanExtendedData(
     collateralValue?: number | null; securedObligation?: number | null;
     prior_contract_number?: string | null; prior_contract_date?: string | null;
     prior_outstanding?: number | null;
+    // Tiêu dùng fields
+    monthly_salary?: number | null; annual_salary?: number | null;
+    business_income?: number | null; other_income_detail?: string | null;
+    early_repayment_fee?: string | null; collateral_ratio?: string | null;
+    agribank_outstanding?: number | null; workplace?: string | null;
   },
   data: Data,
 ) {
@@ -103,6 +108,16 @@ export function buildLoanExtendedData(
     : "";
   data["HĐTD.Tổng nghĩa vụ bảo đảm tối đa"] = fmtN(loan.securedObligation);
   data["HĐTD.Tổng Nghĩa vụ bảo đảm tối đa"] = fmtN(loan.securedObligation);
+
+  // Tiêu dùng: thu nhập & phí
+  data["HĐTD.Tiền lương hàng tháng"] = fmtN(loan.monthly_salary);
+  data["HĐTD.Tổng thu nhập từ lương"] = fmtN(loan.annual_salary);
+  data["HĐTD.Tổng thu nhập từ SXKD"] = fmtN(loan.business_income);
+  data["HĐTD.Cụ thể về thu nhập khác"] = loan.other_income_detail ?? "";
+  data["HĐTD.Phí trả nợ trước hạn"] = loan.early_repayment_fee ?? "";
+  data["HĐTD.Tỷ lệ % bảo đảm"] = loan.collateral_ratio ?? "";
+  data["HĐTD.Dư nợ tại Agribank"] = fmtN(loan.agribank_outstanding);
+  data["HĐTD.Nơi công tác"] = loan.workplace ?? "";
 
   // Dư nợ tín dụng — populated separately from credit info
   data["HĐTD.Dư nợ của KH và NLQ tại Agribank"] = "";
