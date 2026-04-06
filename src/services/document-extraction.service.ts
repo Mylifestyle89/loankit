@@ -216,7 +216,7 @@ async function extractViaGemini(
   const prompt = buildExtractionPrompt(documentText, fields);
 
   const genAI = new GoogleGenerativeAI(apiKey);
-  const geminiModel = genAI.getGenerativeModel({ model }, { apiVersion: "v1" });
+  const geminiModel = genAI.getGenerativeModel({ model }, { apiVersion: "v1beta" });
 
   let text: string;
   const generatePromise = geminiModel.generateContent({

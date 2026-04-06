@@ -109,7 +109,7 @@ const EMPTY_RESULT: ExtractionResult = { customer: {}, loans: [], collaterals: [
 export async function extractCustomerDataFromText(documentText: string): Promise<ExtractionResult> {
   const { apiKey, model } = resolveAiProvider({ defaultGeminiModel: "gemini-1.5-flash" });
   const genAI = new GoogleGenerativeAI(apiKey);
-  const geminiModel = genAI.getGenerativeModel({ model }, { apiVersion: "v1" });
+  const geminiModel = genAI.getGenerativeModel({ model }, { apiVersion: "v1beta" });
 
   const prompt = `${EXTRACTION_PROMPT}\n${truncateText(documentText)}\n---`;
 

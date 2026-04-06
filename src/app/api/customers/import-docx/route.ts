@@ -57,19 +57,24 @@ export async function POST(request: NextRequest) {
     const settled = await Promise.allSettled(extractionPromises);
     const results: ExtractionResult[] = [];
     const sources: string[] = [];
+    const errors: string[] = [];
 
     for (const s of settled) {
       if (s.status === "fulfilled" && s.value) {
         results.push(s.value.extracted);
         sources.push(s.value.source);
+      } else if (s.status === "rejected") {
+        const msg = s.reason instanceof Error ? s.reason.message : String(s.reason);
+        console.error("[import-docx] File extraction failed:", msg);
+        errors.push(msg);
       }
     }
 
     if (results.length === 0) {
-      return NextResponse.json(
-        { ok: false, error: "Không trích xuất được nội dung từ các file." },
-        { status: 400 },
-      );
+      const detail = errors.length > 0
+        ? `Trích xuất thất bại: ${errors[0]}`
+        : "Không trích xuất được nội dung từ các file.";
+      return NextResponse.json({ ok: false, error: detail }, { status: 400 });
     }
 
     const merged = mergeExtractionResults(results);
