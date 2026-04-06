@@ -110,10 +110,11 @@ export function LoanEditModal({ loan, customerId, onClose, onUpdated }: Props) {
       if (fin.purpose) setPurpose(fin.purpose);
 
       // Tab 3: Nguồn vốn & VĐƯ
-      // KHCN rule: Tổng nhu cầu vốn = Tổng chi phí trực tiếp từ PA.
+      // Nhu cầu vốn trên 1 vòng quay = Tổng CPTT / Vòng quay vốn
       const directCost = Number(fin.totalDirectCost) || 0;
+      const turnover = Number(fin.turnoverCycles) || 1;
       const syncedLoanAmount = Number(fin.loanAmount) || 0;
-      const need = directCost;
+      const need = Math.round(directCost / turnover);
       const equity = Number(fin.counterpartCapital ?? (need - syncedLoanAmount));
 
       // Tab 4: Hiệu quả
