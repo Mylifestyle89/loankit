@@ -1,11 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { Settings, Database, UserCog, Package } from "lucide-react";
+import { Settings, Database, UserCog, Package, FileSearch } from "lucide-react";
 import { useLanguage } from "@/components/language-provider";
 import { authClient } from "@/lib/auth-client";
 import { DataManagementTab } from "./data-management-tab";
 import { LoanProductsTab } from "./loan-products-tab";
+import { TemplateSearchReplaceTab } from "./template-search-replace-tab";
 import { AccountSettingsTab } from "../users/account-settings-tab";
 import { AdminUsersTab } from "../users/admin-users-tab";
 
@@ -13,11 +14,12 @@ export default function SystemOperationsPage() {
   const { t } = useLanguage();
   const { data: session } = authClient.useSession();
   const isAdmin = session?.user?.role === "admin";
-  const [activeTab, setActiveTab] = useState<"data" | "products" | "account" | "admin">("data");
+  const [activeTab, setActiveTab] = useState<"data" | "products" | "templates" | "account" | "admin">("data");
 
   const tabs = [
     { key: "data" as const, label: t("systemOps.title"), icon: Database },
     { key: "products" as const, label: "Sản phẩm tín dụng", icon: Package },
+    { key: "templates" as const, label: "Tìm & Thay thế mẫu", icon: FileSearch },
     { key: "account" as const, label: t("auth.account"), icon: UserCog },
     ...(isAdmin ? [{ key: "admin" as const, label: t("auth.users"), icon: Settings }] : []),
   ];
@@ -59,6 +61,11 @@ export default function SystemOperationsPage() {
       {/* Tab content */}
       {activeTab === "data" && <DataManagementTab />}
       {activeTab === "products" && <LoanProductsTab />}
+      {activeTab === "templates" && (
+        <div className="rounded-2xl border border-zinc-200 dark:border-white/[0.07] bg-white dark:bg-[#161616] shadow-sm p-5">
+          <TemplateSearchReplaceTab />
+        </div>
+      )}
       {activeTab === "account" && (
         <div className="rounded-2xl border border-zinc-200 dark:border-white/[0.07] bg-white dark:bg-[#161616] shadow-sm p-5">
           <AccountSettingsTab />
