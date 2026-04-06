@@ -1,5 +1,7 @@
 "use client";
 
+import { Banknote, FileText, Shield, Wallet } from "lucide-react";
+
 type KhcnProfileCardProps = {
   customer: {
     customer_name: string;
@@ -20,93 +22,84 @@ type KhcnProfileCardProps = {
   };
 };
 
-function formatVND(amount: number): string {
-  return new Intl.NumberFormat("vi-VN").format(amount);
+function fmtVND(n: number): string {
+  return new Intl.NumberFormat("vi-VN").format(n) + "đ";
 }
 
-/** Color for debt group badge: 1=green, 2=yellow, 3-5=red */
-function debtGroupColor(group: string | null) {
-  if (!group) return "text-zinc-500 bg-zinc-100 dark:bg-zinc-800 dark:text-zinc-400";
+function debtGroupStyle(group: string | null) {
   const n = Number(group);
-  if (n <= 1) return "text-emerald-700 bg-emerald-50 dark:bg-emerald-500/10 dark:text-emerald-400";
-  if (n === 2) return "text-amber-700 bg-amber-50 dark:bg-amber-500/10 dark:text-amber-400";
-  return "text-red-700 bg-red-50 dark:bg-red-500/10 dark:text-red-400";
-}
-
-/** Check if maturity date is within 30 days */
-function isNearMaturity(isoDate: string | null): boolean {
-  if (!isoDate) return false;
-  const diff = new Date(isoDate).getTime() - Date.now();
-  return diff > 0 && diff < 30 * 24 * 60 * 60 * 1000;
-}
-
-function formatDate(isoDate: string | null): string {
-  if (!isoDate) return "—";
-  return new Date(isoDate).toLocaleDateString("vi-VN");
+  if (!group || n <= 1) return { bg: "bg-emerald-100 dark:bg-emerald-500/10", icon: "text-emerald-600 dark:text-emerald-400", text: "text-emerald-700 dark:text-emerald-400" };
+  if (n === 2) return { bg: "bg-amber-100 dark:bg-amber-500/10", icon: "text-amber-600 dark:text-amber-400", text: "text-amber-700 dark:text-amber-400" };
+  return { bg: "bg-red-100 dark:bg-red-500/10", icon: "text-red-600 dark:text-red-400", text: "text-red-700 dark:text-red-400" };
 }
 
 export function KhcnProfileCard({ customer, summary }: KhcnProfileCardProps) {
+  const dg = debtGroupStyle(summary.debtGroup);
+
   return (
-    <div className="rounded-xl border border-zinc-200 dark:border-white/[0.07] bg-white dark:bg-[#161616] p-4 shadow-sm space-y-3">
-      {/* Row 1: Identity info */}
-      <div className="flex flex-wrap items-center gap-x-5 gap-y-1">
-        <h3 className="text-base font-bold text-zinc-900 dark:text-slate-100">
-          {customer.customer_name}
-        </h3>
-        <InfoChip label="CIF" value={customer.customer_code} />
-        {customer.cccd && <InfoChip label="CCCD" value={customer.cccd} />}
-        {customer.phone && <InfoChip label="SĐT" value={customer.phone} />}
+    <div className="rounded-xl border border-zinc-200 dark:border-white/[0.07] bg-white dark:bg-[#161616] shadow-sm overflow-hidden">
+      {/* Header */}
+      <div className="p-4 pb-3">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+          <h3 className="text-base font-bold text-zinc-900 dark:text-slate-100">{customer.customer_name}</h3>
+          <span className="inline-flex items-center rounded-full bg-amber-50 dark:bg-amber-500/10 px-2.5 py-0.5 text-xs font-medium text-amber-700 dark:text-amber-400 ring-1 ring-amber-500/20">
+            {customer.customer_code}
+          </span>
+        </div>
+        <div className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-0.5 text-sm text-zinc-500 dark:text-slate-400">
+          {customer.cccd && <span>CCCD: <span className="text-zinc-700 dark:text-slate-300">{customer.cccd}</span></span>}
+          {customer.phone && <span>SĐT: <span className="text-zinc-700 dark:text-slate-300">{customer.phone}</span></span>}
+        </div>
+        {customer.address && (
+          <p className="mt-1 text-sm text-zinc-500 dark:text-slate-400">{customer.address}</p>
+        )}
       </div>
 
-      {/* Row 2: Address */}
-      {customer.address && (
-        <p className="text-sm text-zinc-500 dark:text-slate-400">{customer.address}</p>
-      )}
-
-      {/* Row 3: Key stats */}
-      <div className="flex flex-wrap gap-3">
-        <StatBadge label="Khoản vay" value={`${summary.activeLoans}/${summary.totalLoans}`} sub="hoạt động" />
-        <StatBadge label="Tổng vay HĐ" value={`${formatVND(summary.outstandingBalance)} đ`} />
-        <StatBadge
+      {/* Stats grid */}
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-px bg-zinc-100 dark:bg-white/[0.05] border-t border-zinc-100 dark:border-white/[0.05]">
+        <StatCell
+          icon={<FileText className="h-4 w-4 text-amber-500" />}
+          label="Khoản vay"
+          value={`${summary.activeLoans}/${summary.totalLoans}`}
+          sub="hoạt động"
+        />
+        <StatCell
+          icon={<Banknote className="h-4 w-4 text-orange-500" />}
+          label="Tổng dư nợ"
+          value={fmtVND(summary.outstandingBalance)}
+        />
+        <StatCell
+          icon={<Wallet className={`h-4 w-4 ${dg.icon}`} />}
           label="Nhóm nợ"
-          value={summary.debtGroup ?? "—"}
-          className={debtGroupColor(summary.debtGroup)}
+          value={summary.debtGroup ? `Nhóm ${summary.debtGroup}` : "—"}
+          valueClass={dg.text}
         />
-        <StatBadge
-          label="Hạn đáo"
-          value={formatDate(summary.nearestMaturity)}
-          className={isNearMaturity(summary.nearestMaturity) ? "text-red-700 bg-red-50 dark:bg-red-500/10 dark:text-red-400" : undefined}
+        <StatCell
+          icon={<Shield className="h-4 w-4 text-blue-500" />}
+          label="Tổng TSBĐ"
+          value={summary.totalCollateralValue > 0 ? fmtVND(summary.totalCollateralValue) : "—"}
         />
-        <StatBadge
-          label="Đồng vay"
-          value={summary.coBorrowerCount > 0 ? "Có" : "Không"}
-          className={summary.coBorrowerCount > 0 ? "text-blue-700 bg-blue-50 dark:bg-blue-500/10 dark:text-blue-400" : undefined}
+        <StatCell
+          icon={<Shield className="h-4 w-4 text-amber-500" />}
+          label="Tổng NVBĐ"
+          value={summary.totalObligation > 0 ? fmtVND(summary.totalObligation) : "—"}
         />
-        {summary.totalCollateralValue > 0 && (
-          <StatBadge label="Tổng TSBĐ" value={`${formatVND(summary.totalCollateralValue)} đ`} />
-        )}
-        {summary.totalObligation > 0 && (
-          <StatBadge label="Tổng NVBĐ" value={`${formatVND(summary.totalObligation)} đ`} />
-        )}
       </div>
     </div>
   );
 }
 
-function InfoChip({ label, value }: { label: string; value: string }) {
+function StatCell({ icon, label, value, sub, valueClass }: {
+  icon: React.ReactNode; label: string; value: string; sub?: string; valueClass?: string;
+}) {
   return (
-    <span className="text-sm text-zinc-600 dark:text-slate-300">
-      <span className="text-zinc-400 dark:text-slate-500">{label}:</span> {value}
-    </span>
-  );
-}
-
-function StatBadge({ label, value, sub, className }: { label: string; value: string; sub?: string; className?: string }) {
-  return (
-    <div className={`rounded-lg border border-zinc-200/60 dark:border-white/[0.06] px-3 py-1.5 text-sm ${className ?? "bg-zinc-50 dark:bg-white/[0.04] text-zinc-700 dark:text-slate-300"}`}>
-      <span className="text-xs text-zinc-400 dark:text-slate-500">{label}</span>
-      <div className="font-semibold tabular-nums">{value}</div>
-      {sub && <span className="text-[10px] text-zinc-400 dark:text-slate-500">{sub}</span>}
+    <div className="bg-white dark:bg-[#161616] px-4 py-3">
+      <div className="flex items-center gap-2 mb-1">
+        {icon}
+        <span className="text-[11px] text-zinc-400 dark:text-slate-500">{label}</span>
+      </div>
+      <p className={`text-sm font-semibold tabular-nums ${valueClass ?? "text-zinc-800 dark:text-slate-200"}`}>{value}</p>
+      {sub && <p className="text-[10px] text-zinc-400 dark:text-slate-500">{sub}</p>}
     </div>
   );
 }
