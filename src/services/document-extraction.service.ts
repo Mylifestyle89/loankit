@@ -212,27 +212,25 @@ async function extractViaGemini(
   const apiKey = process.env.GEMINI_API_KEY ?? process.env.GOOGLE_API_KEY;
   if (!apiKey) throw new ValidationError("GEMINI_API_KEY/GOOGLE_API_KEY is not configured.");
 
-  const model = process.env.GEMINI_MODEL ?? "gemini-1.5-flash";
+  const model = process.env.GEMINI_MODEL ?? "gemini-2.0-flash";
   const prompt = buildExtractionPrompt(documentText, fields);
 
   const genAI = new GoogleGenerativeAI(apiKey);
-  const geminiModel = genAI.getGenerativeModel({ model }, { apiVersion: "v1beta" });
+  const geminiModel = genAI.getGenerativeModel({ model });
 
   let text: string;
   const generatePromise = geminiModel.generateContent({
-    generationConfig: {
-      temperature: 0,
-      // Structured Output — enforce field schema at API level
-      responseMimeType: "application/json",
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      responseSchema: buildGeminiResponseSchema(fields) as any,
-    },
+    generationConfig: { temperature: 0 },
     contents: [{ role: "user", parts: [{ text: prompt }] }],
   });
 
   try {
     const result = await withTimeout(generatePromise, API_CALL_TIMEOUT_MS, "Gemini extraction");
     text = result.response.text().trim();
+    // Strip markdown code fences if present
+    if (text.startsWith("```")) {
+      text = text.replace(/^```(?:json)?\s*/, "").replace(/\s*```$/, "");
+    }
   } catch (error) {
     throw new SystemError("Gemini document extraction failed.", error);
   }

@@ -107,21 +107,23 @@ const EMPTY_RESULT: ExtractionResult = { customer: {}, loans: [], collaterals: [
 
 /** Send document text to Gemini and get structured customer data back */
 export async function extractCustomerDataFromText(documentText: string): Promise<ExtractionResult> {
-  const { apiKey, model } = resolveAiProvider({ defaultGeminiModel: "gemini-1.5-flash" });
+  const { apiKey, model } = resolveAiProvider({ defaultGeminiModel: "gemini-2.0-flash" });
   const genAI = new GoogleGenerativeAI(apiKey);
-  const geminiModel = genAI.getGenerativeModel({ model }, { apiVersion: "v1beta" });
+  const geminiModel = genAI.getGenerativeModel({ model });
 
   const prompt = `${EXTRACTION_PROMPT}\n${truncateText(documentText)}\n---`;
 
   const result = await geminiModel.generateContent({
-    generationConfig: {
-      temperature: 0,
-      responseMimeType: "application/json",
-    },
+    generationConfig: { temperature: 0 },
     contents: [{ role: "user", parts: [{ text: prompt }] }],
   });
 
-  const text = result.response.text().trim();
+  // Parse JSON from response — prompt instructs JSON-only output
+  let text = result.response.text().trim();
+  // Strip markdown code fences if present
+  if (text.startsWith("```")) {
+    text = text.replace(/^```(?:json)?\s*/, "").replace(/\s*```$/, "");
+  }
   if (!text) return EMPTY_RESULT;
 
   let parsed: ExtractionResult;
