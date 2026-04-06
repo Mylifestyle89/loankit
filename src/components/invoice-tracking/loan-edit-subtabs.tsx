@@ -94,7 +94,7 @@ export function LoanCapitalTab({ fields, setFields }: { fields: Fields; setField
   return (
     <div className="space-y-3">
       <div className="grid grid-cols-2 gap-3">
-        <Field label="Tổng nhu cầu vốn" name="total_capital_need" fields={fields} setFields={setFields} type="number" />
+        <Field label="Nhu cầu vốn trên 1 vòng quay" name="total_capital_need" fields={fields} setFields={setFields} type="number" />
         <Field label="Vốn đối ứng" name="equity_amount" fields={fields} setFields={setFields} type="number" />
         <Field label="Vốn bằng tiền" name="cash_equity" fields={fields} setFields={setFields} type="number" />
         <label className="block">
