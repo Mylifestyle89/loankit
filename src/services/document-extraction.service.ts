@@ -212,7 +212,7 @@ async function extractViaGemini(
   const apiKey = process.env.GEMINI_API_KEY ?? process.env.GOOGLE_API_KEY;
   if (!apiKey) throw new ValidationError("GEMINI_API_KEY/GOOGLE_API_KEY is not configured.");
 
-  const model = process.env.GEMINI_MODEL ?? "gemini-2.0-flash";
+  const model = process.env.GEMINI_MODEL ?? "gemini-2.5-flash";
   const prompt = buildExtractionPrompt(documentText, fields);
 
   const genAI = new GoogleGenerativeAI(apiKey);

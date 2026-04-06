@@ -26,7 +26,7 @@ export function resolveAiProvider(opts?: {
   defaultGeminiModel?: string;
 }): ResolvedAiProvider {
   const defaultOpenAiModel = opts?.defaultOpenAiModel ?? "gpt-4o-mini";
-  const defaultGeminiModel = opts?.defaultGeminiModel ?? "gemini-1.5-flash";
+  const defaultGeminiModel = opts?.defaultGeminiModel ?? "gemini-2.5-flash";
 
   const explicit = (process.env.AI_MAPPING_PROVIDER ?? "").toLowerCase();
 

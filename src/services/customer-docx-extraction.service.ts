@@ -107,7 +107,7 @@ const EMPTY_RESULT: ExtractionResult = { customer: {}, loans: [], collaterals: [
 
 /** Send document text to Gemini and get structured customer data back */
 export async function extractCustomerDataFromText(documentText: string): Promise<ExtractionResult> {
-  const { apiKey, model } = resolveAiProvider({ defaultGeminiModel: "gemini-2.0-flash" });
+  const { apiKey, model } = resolveAiProvider({ defaultGeminiModel: "gemini-2.5-flash" });
   const genAI = new GoogleGenerativeAI(apiKey);
   const geminiModel = genAI.getGenerativeModel({ model });
 
