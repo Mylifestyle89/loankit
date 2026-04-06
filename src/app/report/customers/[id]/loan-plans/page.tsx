@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowLeft, Plus, FileText, Trash2, Sparkles } from "lucide-react";
 import { useXlsxLoanPlanImport } from "@/lib/hooks/use-xlsx-loan-plan-import";
@@ -31,7 +31,7 @@ function fmtVND(n: number) { return fmtDisplay(n) + "đ"; }
 
 export default function LoanPlansListPage() {
   const { id: customerId } = useParams() as { id: string };
-  const router = useRouter();
+
   const [plans, setPlans] = useState<LoanPlan[]>([]);
   const [loading, setLoading] = useState(true);
   const xlsxImport = useXlsxLoanPlanImport(customerId);
@@ -102,7 +102,7 @@ export default function LoanPlansListPage() {
     <section className="space-y-5">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <button type="button" onClick={() => router.back()} className="inline-flex items-center gap-1 text-sm text-amber-600 dark:text-amber-400 hover:underline cursor-pointer"><ArrowLeft className="h-3.5 w-3.5" />Quay lại</button>
+          <Link href={`/report/customers/${customerId}`} className="inline-flex items-center gap-1 text-sm text-amber-600 dark:text-amber-400 hover:underline"><ArrowLeft className="h-3.5 w-3.5" />Quay lại</Link>
           <h2 className="text-lg font-bold bg-gradient-to-r from-amber-700 to-orange-500 dark:from-amber-400 dark:to-orange-400 bg-clip-text text-transparent">
             Phương án vay vốn
           </h2>
