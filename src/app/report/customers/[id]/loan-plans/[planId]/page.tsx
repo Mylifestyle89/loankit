@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft, Plus, Save, Sparkles, Trash2 } from "lucide-react";
+import { ArrowLeft, FileSignature, Plus, Save, Sparkles, Trash2 } from "lucide-react";
 
 import { CostItemsTable, type CostItem } from "./cost-items-table";
 import { NumericInput } from "./numeric-input";
@@ -216,6 +216,12 @@ export default function LoanPlanEditorPage() {
           >
             <Save className="h-4 w-4" /> {saving ? "..." : "Lưu"}
           </button>
+          <Link
+            href={`/report/loans/new?customerId=${customerId}&planId=${planId}`}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-amber-300 dark:border-amber-500/30 px-4 py-2 text-sm font-medium text-amber-700 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 transition-colors"
+          >
+            <FileSignature className="h-4 w-4" /> Tạo HĐTD
+          </Link>
         </div>
       </div>
 
@@ -335,7 +341,7 @@ export default function LoanPlanEditorPage() {
         <div className="rounded-2xl border border-zinc-200 dark:border-white/[0.07] bg-white dark:bg-[#161616] p-5 shadow-sm">
           <h3 className="text-sm font-semibold mb-3">Nhu cầu vốn vay</h3>
           <div className="text-sm space-y-1.5">
-            <TreeRow level={0} label="Nhu cầu vốn vay"
+            <TreeRow level={0} label="Nhu cầu vốn trên 1 vòng quay"
               sub={loanMethod === "trung_dai" ? "= Tổng giá trị tài sản" : "= Tổng CPTT / Vòng quay vốn"}
               value={fmtVND(financials.loanNeed)} bold />
             {loanMethod === "trung_dai" ? (
@@ -346,9 +352,9 @@ export default function LoanPlanEditorPage() {
             </>)}
             <div className="border-t border-dashed border-zinc-200 dark:border-white/10 my-2" />
             <TreeRow level={1} label="Số tiền vay" value={fmtVND(financials.loanAmount)} />
-            <TreeRow level={1} label="Vốn đối ứng" sub="= Nhu cầu vốn vay − Số tiền vay" value={fmtVND(financials.counterpartCapital)} color={financials.counterpartCapital < 0 ? "red" : undefined} />
+            <TreeRow level={1} label="Vốn đối ứng" sub="= Nhu cầu vốn trên 1 vòng quay − Số tiền vay" value={fmtVND(financials.counterpartCapital)} color={financials.counterpartCapital < 0 ? "red" : undefined} />
             <div className="border-t border-dashed border-zinc-200 dark:border-white/10 my-2" />
-            <TreeRow level={0} label="Tỷ lệ vốn tự có" sub="= Vốn đối ứng / Nhu cầu vốn vay" value={financials.loanNeed ? ((financials.counterpartCapital / financials.loanNeed) * 100).toFixed(1) + "%" : "—"} bold />
+            <TreeRow level={0} label="Tỷ lệ vốn tự có" sub="= Vốn đối ứng / Nhu cầu vốn trên 1 vòng quay" value={financials.loanNeed ? ((financials.counterpartCapital / financials.loanNeed) * 100).toFixed(1) + "%" : "—"} bold />
             <TreeRow level={0} label="Tỷ lệ LN/Vốn đối ứng" sub="= (LN / Vòng quay vốn) / Vốn đối ứng" value={financials.counterpartCapital ? (((financials.profit / (financials.turnoverCycles || 1)) / financials.counterpartCapital) * 100).toFixed(1) + "%" : "—"} bold />
           </div>
         </div>

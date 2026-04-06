@@ -34,6 +34,23 @@ function NewLoanForm() {
     });
   }, []);
 
+  // Auto-prefill from loan plan if planId is provided
+  useEffect(() => {
+    const planId = searchParams.get("planId");
+    if (!planId) return;
+    fetch(`/api/loan-plans/${planId}`).then((r) => r.json()).then((d) => {
+      if (!d.ok) return;
+      const plan = d.plan;
+      const fin = JSON.parse(plan.financials_json || "{}");
+      if (fin.loanAmount && !loanAmount) setLoanAmount(fmtNumber(String(fin.loanAmount)));
+      if (fin.interestRate && !interestRate) {
+        const rate = fin.interestRate < 1 ? fin.interestRate * 100 : fin.interestRate;
+        setInterestRate(String(rate));
+      }
+      if (plan.name && !purpose) setPurpose(plan.name);
+    }).catch(() => {});
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setSaving(true);
