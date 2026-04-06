@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Download, LayoutGrid, List, Plus, Search, Upload, Users, X } from "lucide-react";
+import { Download, FileText, LayoutGrid, List, Plus, Search, Upload, Users, X } from "lucide-react";
 
 import { useLanguage } from "@/components/language-provider";
 import { useCustomerStore } from "@/stores/use-customer-store";
 import { CustomerExportModal } from "@/app/report/customers/components/customer-export-modal";
 import { handleCustomerImport } from "@/app/report/customers/components/customer-import-handler";
+import { CustomerDocxImportModal } from "./customer-docx-import-modal";
 
 import { SkeletonTable, SkeletonCards } from "./customer-list-skeleton";
 import { CustomerTable, type Customer, type SortKey } from "./customer-list-table";
@@ -32,6 +33,7 @@ export function CustomerListView({ customerType, basePath, showSelect = false }:
   const [success, setSuccess] = useState("");
   const [importing, setImporting] = useState(false);
   const [exportModalOpen, setExportModalOpen] = useState(false);
+  const [docxImportOpen, setDocxImportOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<"table" | "card">("table");
@@ -208,6 +210,9 @@ export function CustomerListView({ customerType, basePath, showSelect = false }:
           <Upload className="h-4 w-4" />
           {importing ? "Đang import..." : "Nhập Dữ Liệu (JSON/XLSX/BK)"}
         </button>
+        <button type="button" onClick={() => setDocxImportOpen(true)} className="cursor-pointer inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] px-3 py-2 text-sm shadow-sm transition-all duration-150 hover:border-amber-200 dark:hover:border-amber-500/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/40">
+          <FileText className="h-4 w-4" /> Import từ DOCX
+        </button>
       </div>
 
       {/* Customer list */}
@@ -259,6 +264,15 @@ export function CustomerListView({ customerType, basePath, showSelect = false }:
 
       {exportModalOpen && (
         <CustomerExportModal customers={customers} onClose={() => setExportModalOpen(false)} onError={setError} />
+      )}
+
+      {docxImportOpen && (
+        <CustomerDocxImportModal
+          open={docxImportOpen}
+          onClose={() => setDocxImportOpen(false)}
+          onSuccess={() => { void loadCustomers(); setSuccess("Import từ DOCX thành công!"); }}
+          basePath={basePath}
+        />
       )}
     </section>
   );
