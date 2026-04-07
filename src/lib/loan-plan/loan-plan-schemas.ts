@@ -41,8 +41,11 @@ export const createPlanSchema = z.object({
   land_area_sau: z.number().optional(),
   preferential_rate: z.number().optional(),
   term_months: z.number().optional(),
+  repayment_frequency: z.number().optional(),
+  principal_rounding: z.enum(["none", "up_100k", "down_100k"]).optional(),
   construction_contract_no: z.string().optional(),
   construction_contract_date: z.string().optional(),
+  farmAddress: z.string().optional(),
   // Đánh giá tín dụng
   legal_assessment: z.string().optional(),
   market_input: z.string().optional(),
@@ -51,6 +54,20 @@ export const createPlanSchema = z.object({
   machinery_capability: z.string().optional(),
   other_factors: z.string().optional(),
   turnover_analysis: z.string().optional(),
+  // Tiêu dùng
+  tieu_dung_subtype: z.enum(["xay_sua_nha", "mua_dat", "mua_xe", "mua_sam"]).optional(),
+  loan_capital_need: z.number().optional(),
+  earner1_title: z.enum(["Ông", "Bà"]).optional(),
+  earner1_name: z.string().optional(),
+  earner1_workplace: z.string().optional(),
+  earner1_monthly_income: z.number().optional(),
+  earner2_title: z.enum(["Ông", "Bà"]).optional(),
+  earner2_name: z.string().optional(),
+  earner2_workplace: z.string().optional(),
+  earner2_monthly_income: z.number().optional(),
+  living_expenses_period: z.number().optional(),
+  avg_other_loan_rate: z.number().optional(),
+  other_costs_period: z.number().optional(),
 });
 
 export const updatePlanSchema = createPlanSchema.omit({ customerId: true });
