@@ -169,6 +169,7 @@ export async function buildKhcnReportData(
           address: bl.address,
           accountNumber: bl.accountNumber,
           bankName: bl.bankName,
+          amount: bl.amount,
         })),
       );
     } else {

@@ -41,9 +41,11 @@ export function mergeKhcnPriorContractAliases(data: Record<string, unknown>): vo
 export function flattenUncPlaceholders(
   data: Record<string, unknown>,
   overrides?: Record<string, string>,
+  lineIndex = 0,
 ): void {
   if (!Array.isArray(data.UNC) || data.UNC.length === 0) return;
-  const b = data.UNC[0] as Record<string, unknown>;
+  const b = data.UNC[lineIndex] as Record<string, unknown> | undefined;
+  if (!b) return;
   data["UNC.STT"] = b["STT"] ?? 1;
   data["UNC.Khách hàng thụ hưởng"] = b["Khách hàng thụ hưởng"] ?? "";
   // Alias tên cũ trong một số mẫu / panel tham chiếu

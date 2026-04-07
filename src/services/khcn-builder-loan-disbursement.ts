@@ -176,20 +176,23 @@ export function buildDisbursementExtendedData(
 export function buildBeneficiaryLoopData(
   beneficiaries: Array<{
     name: string; address?: string | null; accountNumber?: string | null; bankName?: string | null;
+    amount?: number | null;
   }>,
 ) {
-  return beneficiaries.map((b, i) => ({
-    STT: i + 1,
-    "Khách hàng thụ hưởng": b.name,
-    "Địa chỉ": b.address ?? "",
-    "Số tài khoản": b.accountNumber ?? "",
-    "Nơi mở tài khoản": b.bankName ?? "",
-    // Extended fields from templates
-    "Số tiền": "", // Filled from disbursement line or override
-    "ST bằng chữ": "",
-    "Nội dung": "",
-    "CMND": "",
-    "Ngày cấp": "",
-    "Nơi cấp": "",
-  }));
+  return beneficiaries.map((b, i) => {
+    const amount = b.amount ?? 0;
+    return {
+      STT: i + 1,
+      "Khách hàng thụ hưởng": b.name,
+      "Địa chỉ": b.address ?? "",
+      "Số tài khoản": b.accountNumber ?? "",
+      "Nơi mở tài khoản": b.bankName ?? "",
+      "Số tiền": amount ? fmtN(amount) : "",
+      "ST bằng chữ": amount ? numberToVietnameseWords(amount) : "",
+      "Nội dung": "",
+      "CMND": "",
+      "Ngày cấp": "",
+      "Nơi cấp": "",
+    };
+  });
 }
