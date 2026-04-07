@@ -7,13 +7,27 @@ import { type Data, parseOwners, buildOwnerFields, emitIndexedFields, emitFlatFi
 
 // ── Helper: extract movable collateral fields ──
 
+/** Add `ĐS.{key}` alias for every key in obj — for templates using prefixed
+ *  placeholders like [ĐS.Nhãn hiệu] inside [#ĐS] loop. Without aliases,
+ *  docxtemplater (no angularParser) falls back to top-level scope and shows
+ *  same value across all loop iterations. */
+function withDsAliases<T extends Record<string, unknown>>(obj: T): T & Record<string, unknown> {
+  const out: Record<string, unknown> = { ...obj };
+  for (const [k, v] of Object.entries(obj)) {
+    if (k === "STT") continue;
+    out[`ĐS.${k}`] = v;
+  }
+  return out as T & Record<string, unknown>;
+}
+
 function extractMovableFields(
   col: { name: string; total_value?: number | null; obligation?: number | null; properties_json: string },
   index: number,
 ) {
   const p = JSON.parse(col.properties_json || "{}");
   const owners = parseOwners(p._owners);
-  return {
+  const o1 = owners[0] ?? {};
+  const fields = {
     STT: index + 1,
     "Tên TSBĐ": col.name,
     "Nhãn hiệu": p.brand ?? p.nhan_hieu ?? "",
@@ -48,8 +62,14 @@ function extractMovableFields(
     "Mua bảo hiểm TSBĐ": p.insurance_status ?? p.insurance ?? "",
     "Số tiền bảo hiểm": fmtN(p.insurance_amount),
     "Thời điểm gia hạn BH": p.insurance_renewal_date ?? "",
+    // Common collateral metadata (shared with QSDĐ template — same field names)
+    "Tình trạng sử dụng TS": p.asset_usage_status ?? p.asset_condition ?? "",
+    "Tên chủ sở hữu TS": o1.name ?? p.owner_name ?? "",
+    "Khái quát về lợi thế": p.advantage_summary ?? p.advantage ?? "",
+    "Thời hạn sử dụng": p.usage_term ?? p.remaining_life ?? p.thoi_han_su_dung ?? "",
     ...buildOwnerFields(owners),
   };
+  return withDsAliases(fields);
 }
 
 // ── Collateral type-specific: ĐS (Động sản) ──
