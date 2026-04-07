@@ -11,7 +11,7 @@
 
 import { inputCls } from "@/components/invoice-tracking/form-styles";
 import type { TieuDungSubtype, EarnerTitle } from "@/lib/loan-plan/loan-plan-types";
-import { formatPeriodLabel } from "@/lib/loan-plan/loan-plan-calculator";
+import { formatPeriodLabel, roundPrincipal, type PrincipalRounding } from "@/lib/loan-plan/loan-plan-calculator";
 import { NumericInput } from "./numeric-input";
 import { fmtVND, formatPercentInputFromRate, parsePercentInputToRate } from "./loan-plan-editor-utils";
 
@@ -54,6 +54,9 @@ type Props = {
   onAvgOtherLoanRateChange: (v: number) => void;
   otherCostsPeriod: number;
   onOtherCostsPeriodChange: (v: number) => void;
+
+  principalRounding: PrincipalRounding;
+  onPrincipalRoundingChange: (v: PrincipalRounding) => void;
 };
 
 export function LoanPlanTieuDungSection(props: Props) {
@@ -67,6 +70,7 @@ export function LoanPlanTieuDungSection(props: Props) {
     livingExpensesPeriod, onLivingExpensesPeriodChange,
     avgOtherLoanRate, onAvgOtherLoanRateChange,
     otherCostsPeriod, onOtherCostsPeriodChange,
+    principalRounding, onPrincipalRoundingChange,
   } = props;
 
   // ── Derived preview values (dynamic theo kỳ hạn trả gốc) ──
@@ -80,7 +84,14 @@ export function LoanPlanTieuDungSection(props: Props) {
   const totalPeriods = repaymentFrequency > 0 && termMonths > 0
     ? Math.ceil(termMonths / repaymentFrequency)
     : 0;
-  const perPeriod = totalPeriods > 0 ? Math.round(loanAmount / totalPeriods) : 0;
+  // Apply rounding: kỳ thường giống nhau, kỳ cuối auto-adjust để tổng = loanAmount
+  const perPeriod = totalPeriods > 0
+    ? roundPrincipal(loanAmount / totalPeriods, principalRounding)
+    : 0;
+  const lastPeriodAmount = totalPeriods > 0
+    ? loanAmount - perPeriod * (totalPeriods - 1)
+    : 0;
+  const hasRoundingDiff = totalPeriods > 1 && lastPeriodAmount !== perPeriod;
   const remaining = available - perPeriod;
   const insufficientIncome = available > 0 && perPeriod > available;
 
@@ -160,7 +171,7 @@ export function LoanPlanTieuDungSection(props: Props) {
         <p className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">
           Chi phí bình quân {periodLabel}
         </p>
-        <div className="grid gap-3 sm:grid-cols-3">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <label className="block">
             <span className="text-xs text-zinc-500">Chi phí sinh hoạt {periodLabel}</span>
             <NumericInput value={livingExpensesPeriod} onChange={onLivingExpensesPeriodChange} className={inputCls} placeholder="VD: 24,000,000" />
@@ -179,6 +190,18 @@ export function LoanPlanTieuDungSection(props: Props) {
           <label className="block">
             <span className="text-xs text-zinc-500">Chi phí khác {periodLabel}</span>
             <NumericInput value={otherCostsPeriod} onChange={onOtherCostsPeriodChange} className={inputCls} placeholder="VD: 0" />
+          </label>
+          <label className="block">
+            <span className="text-xs text-zinc-500">Làm tròn gốc trả</span>
+            <select
+              value={principalRounding}
+              onChange={(e) => onPrincipalRoundingChange(e.target.value as PrincipalRounding)}
+              className={inputCls}
+            >
+              <option value="none">Không làm tròn</option>
+              <option value="up_100k">Làm tròn lên 100.000đ</option>
+              <option value="down_100k">Làm tròn xuống 100.000đ</option>
+            </select>
           </label>
         </div>
       </div>
@@ -207,6 +230,12 @@ export function LoanPlanTieuDungSection(props: Props) {
                   <span className="text-zinc-500">Mỗi kỳ trả gốc ({totalPeriods} kỳ):</span>
                   <span className="font-semibold tabular-nums">{fmtVND(perPeriod)}</span>
                 </div>
+                {hasRoundingDiff && (
+                  <div className="col-span-2 flex justify-between text-xs text-zinc-400">
+                    <span>└─ Kỳ cuối (kỳ {totalPeriods}):</span>
+                    <span className="tabular-nums">{fmtVND(lastPeriodAmount)}</span>
+                  </div>
+                )}
                 <div className="col-span-2 flex justify-between">
                   <span className="text-zinc-500">Còn lại sau khi trả:</span>
                   <span className={`font-semibold tabular-nums ${remaining < 0 ? "text-red-600" : ""}`}>{fmtVND(remaining)}</span>

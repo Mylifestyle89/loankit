@@ -112,7 +112,7 @@ export function formatPeriodLabel(months: number): string {
  */
 export type PrincipalRounding = "none" | "up_100k" | "down_100k";
 
-function roundPrincipal(value: number, mode: PrincipalRounding): number {
+export function roundPrincipal(value: number, mode: PrincipalRounding): number {
   if (mode === "up_100k") return Math.ceil(value / 100_000) * 100_000;
   if (mode === "down_100k") return Math.floor(value / 100_000) * 100_000;
   return Math.round(value);

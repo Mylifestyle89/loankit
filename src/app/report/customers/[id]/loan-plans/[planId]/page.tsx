@@ -193,6 +193,7 @@ export default function LoanPlanEditorPage() {
           ...(loanMethod === "tieu_dung" ? {
             term_months: termMonths,
             repayment_frequency: repaymentFrequency,
+            principal_rounding: principalRounding,
             loan_capital_need: loanCapitalNeed,
             tieu_dung_subtype: tieuDungSubtype || undefined,
             earner1_title: earner1Title,
@@ -329,6 +330,7 @@ export default function LoanPlanEditorPage() {
           livingExpensesPeriod={livingExpensesPeriod} onLivingExpensesPeriodChange={setLivingExpensesPeriod}
           avgOtherLoanRate={avgOtherLoanRate} onAvgOtherLoanRateChange={setAvgOtherLoanRate}
           otherCostsPeriod={otherCostsPeriod} onOtherCostsPeriodChange={setOtherCostsPeriod}
+          principalRounding={principalRounding} onPrincipalRoundingChange={setPrincipalRounding}
         />
       )}
 

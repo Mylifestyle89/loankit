@@ -11,7 +11,7 @@
  */
 
 import { numberToVietnameseWords } from "@/lib/number-to-vietnamese-words";
-import { formatPeriodLabel } from "@/lib/loan-plan/loan-plan-calculator";
+import { formatPeriodLabel, roundPrincipal, type PrincipalRounding } from "@/lib/loan-plan/loan-plan-calculator";
 import { fmtN } from "@/lib/report/format-number-vn";
 
 type Data = Record<string, unknown>;
@@ -81,7 +81,15 @@ export function buildTieuDungLoanPlanData(fin: Fin, data: Data): void {
 
   const termMonths = num(fin.term_months);
   const totalPeriods = termMonths > 0 ? Math.ceil(termMonths / periodMonths) : 0;
-  const perPeriod = totalPeriods > 0 ? Math.round(loanAmt / totalPeriods) : 0;
+  const rounding: PrincipalRounding = (fin.principal_rounding === "up_100k" || fin.principal_rounding === "down_100k")
+    ? fin.principal_rounding : "none";
+  const perPeriod = totalPeriods > 0
+    ? roundPrincipal(loanAmt / totalPeriods, rounding)
+    : 0;
+  // Kỳ cuối auto-adjust để tổng = loanAmount
+  const lastPeriodAmount = totalPeriods > 0
+    ? loanAmt - perPeriod * (totalPeriods - 1)
+    : 0;
   const remaining = available - perPeriod;
 
   const hasEarner2 = !!(str(fin.earner2_name) && income2 > 0);
@@ -129,6 +137,8 @@ export function buildTieuDungLoanPlanData(fin: Fin, data: Data): void {
   data["PA.Số kỳ trả gốc"] = totalPeriods > 0 ? String(totalPeriods) : "";
   data["PA.Số tiền trả gốc mỗi kỳ"] = fmtN(perPeriod);
   data["PA.Số tiền trả gốc mỗi kỳ bằng chữ"] = perPeriod > 0 ? numberToVietnameseWords(perPeriod) : "";
+  data["PA.Số tiền trả gốc kỳ cuối"] = fmtN(lastPeriodAmount);
+  data["PA.Số tiền trả gốc kỳ cuối bằng chữ"] = lastPeriodAmount > 0 ? numberToVietnameseWords(lastPeriodAmount) : "";
   data["PA.Thu nhập còn lại"] = fmtN(remaining);
 
   // ── Individual earner fields (for templates with direct access) ──
