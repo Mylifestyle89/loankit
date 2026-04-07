@@ -58,7 +58,7 @@ export function AdminUsersTab() {
     <div className="mx-auto max-w-3xl">
       <div className="mb-5 flex items-center justify-end">
         <button type="button" onClick={() => setShowCreateForm(!showCreateForm)}
-          className="flex items-center gap-1.5 rounded-lg bg-orange-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-orange-700">
+          className="flex items-center gap-1.5 rounded-lg bg-brand-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-brand-600">
           <UserPlus className="h-3.5 w-3.5" />
           {showCreateForm ? "Cancel" : "Create User"}
         </button>
@@ -68,7 +68,7 @@ export function AdminUsersTab() {
 
       {loading ? (
         <div className="flex justify-center py-12">
-          <Loader2 className="h-6 w-6 animate-spin text-orange-500" />
+          <Loader2 className="h-6 w-6 animate-spin text-brand-500" />
         </div>
       ) : (
         <div className="overflow-hidden rounded-xl border border-slate-200 dark:border-white/[0.08]">
@@ -113,9 +113,9 @@ function UserRow({ user, currentUserId, onUpdated }: { user: UserRecord; current
 
   const roleBadgeClass =
     user.role === "admin"
-      ? "bg-orange-100 text-orange-700 dark:bg-orange-500/20 dark:text-orange-300"
+      ? "bg-brand-100 text-brand-600 dark:bg-brand-500/20 dark:text-brand-300"
       : user.role === "editor"
-        ? "bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300"
+        ? "bg-brand-100 text-brand-600 dark:bg-brand-500/20 dark:text-brand-300"
         : "bg-slate-100 text-slate-600 dark:bg-white/[0.06] dark:text-slate-400";
 
   return (
@@ -133,7 +133,7 @@ function UserRow({ user, currentUserId, onUpdated }: { user: UserRecord; current
           {!isSelf && (
             <div className="flex items-center justify-end gap-1">
               <button type="button" onClick={toggleRole}
-                className="rounded px-2 py-1 text-[10px] font-medium text-orange-600 hover:bg-orange-50 dark:text-orange-400 dark:hover:bg-orange-500/10">
+                className="rounded px-2 py-1 text-[10px] font-medium text-brand-500 hover:bg-brand-100 dark:text-brand-400 dark:hover:bg-brand-1000/10">
                 {user.role === "admin" ? "→ editor" : user.role === "editor" ? "→ viewer" : "→ admin"}
               </button>
               <button type="button" onClick={() => setEditing(!editing)}
@@ -174,7 +174,7 @@ function CreateUserForm({ onCreated }: { onCreated: () => void }) {
     onCreated();
   }
 
-  const inputClass = "w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-zinc-900 outline-none focus:border-orange-400 dark:border-white/[0.10] dark:bg-white/[0.04] dark:text-slate-100";
+  const inputClass = "w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-zinc-900 outline-none focus:border-brand-400 dark:border-white/[0.10] dark:bg-white/[0.04] dark:text-slate-100";
 
   return (
     <form onSubmit={handleSubmit} className="mb-6 rounded-xl border border-slate-200 bg-white p-5 dark:border-white/[0.08] dark:bg-white/[0.02]">
@@ -201,7 +201,7 @@ function CreateUserForm({ onCreated }: { onCreated: () => void }) {
         </div>
       </div>
       {error && <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-xs text-red-600 dark:bg-red-500/10 dark:text-red-400">{error}</p>}
-      <button type="submit" disabled={loading} className="mt-4 rounded-lg bg-orange-600 px-4 py-2 text-xs font-medium text-white hover:bg-orange-700 disabled:opacity-50">
+      <button type="submit" disabled={loading} className="mt-4 rounded-lg bg-brand-500 px-4 py-2 text-xs font-medium text-white hover:bg-brand-600 disabled:opacity-50">
         {loading ? "Creating..." : "Create User"}
       </button>
     </form>

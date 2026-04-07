@@ -69,7 +69,7 @@ export const FieldCatalogBoard = memo(function FieldCatalogBoard({
                             type="button"
                             onClick={() => toggleParentCollapse(node.parent)}
                             title={node.parent}
-                            className="inline-flex flex-1 min-w-0 items-center gap-1 rounded-lg border border-amber-200 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-500/10 px-2 py-1 text-[11px] font-medium text-amber-800 dark:text-amber-400 transition-colors hover:bg-amber-100 dark:hover:bg-amber-500/20"
+                            className="inline-flex flex-1 min-w-0 items-center gap-1 rounded-lg border border-brand-200 dark:border-brand-500/30 bg-brand-100 dark:bg-brand-500/10 px-2 py-1 text-[11px] font-medium text-brand-700 dark:text-brand-400 transition-colors hover:bg-brand-100 dark:hover:bg-brand-500/20"
                           >
                             {collapsedParentGroups.includes(node.parent)
                               ? <ChevronDown className="h-3 w-3 shrink-0" />
@@ -79,7 +79,7 @@ export const FieldCatalogBoard = memo(function FieldCatalogBoard({
                           <button
                             type="button"
                             onClick={() => openCreateSubgroupModal(node.parent)}
-                            className="shrink-0 rounded-md border border-zinc-200 dark:border-white/[0.08] bg-white dark:bg-white/[0.05] p-1.5 text-zinc-500 dark:text-slate-400 transition-colors hover:border-amber-300 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400"
+                            className="shrink-0 rounded-md border border-zinc-200 dark:border-white/[0.08] bg-white dark:bg-white/[0.05] p-1.5 text-zinc-500 dark:text-slate-400 transition-colors hover:border-brand-300 hover:bg-brand-50 dark:hover:bg-brand-500/10 hover:text-brand-600 dark:hover:text-brand-400"
                             title={t("mapping.addSubgroup")}
                           >
                             <Plus className="h-3 w-3" />
@@ -105,8 +105,8 @@ export const FieldCatalogBoard = memo(function FieldCatalogBoard({
             className="group relative hidden w-3 shrink-0 cursor-col-resize items-center justify-center bg-transparent outline-none md:flex"
             aria-label="Resize panels"
           >
-            <div className="h-full w-px rounded-full bg-slate-200/70 transition-colors group-hover:bg-amber-300/80 group-focus-visible:bg-amber-400 group-data-[resize-handle-state=drag]:bg-amber-500" />
-            <div className="pointer-events-none absolute inset-y-0 left-1/2 w-2 -translate-x-1/2 rounded-full bg-amber-100/0 transition-colors group-hover:bg-amber-100/70 group-focus-visible:bg-amber-100/80 group-data-[resize-handle-state=drag]:bg-amber-200/80" />
+            <div className="h-full w-px rounded-full bg-slate-200/70 transition-colors group-hover:bg-brand-300/80 group-focus-visible:bg-brand-400 group-data-[resize-handle-state=drag]:bg-brand-500" />
+            <div className="pointer-events-none absolute inset-y-0 left-1/2 w-2 -translate-x-1/2 rounded-full bg-brand-100/0 transition-colors group-hover:bg-brand-100/70 group-focus-visible:bg-brand-100/80 group-data-[resize-handle-state=drag]:bg-brand-200/80" />
           </Separator>
 
           {/* Right column: Field rows */}
@@ -131,7 +131,7 @@ export const FieldCatalogBoard = memo(function FieldCatalogBoard({
                       <button
                         type="button"
                         onClick={onOpenAddFieldModal}
-                        className="flex flex-shrink-0 items-center gap-1.5 rounded-lg bg-gradient-to-r from-amber-600 to-orange-500 px-4 py-2 text-sm text-white shadow-sm shadow-amber-500/25 transition-all duration-200 hover:shadow-md hover:shadow-amber-500/30 hover:brightness-110"
+                        className="flex flex-shrink-0 items-center gap-1.5 rounded-lg bg-brand-500 px-4 py-2 text-sm text-white shadow-sm shadow-brand-500/25 transition-all duration-200 hover:shadow-md hover:shadow-brand-500/30 hover:brightness-110"
                       >
                         <Plus className="h-4 w-4" />
                         Thêm trường dữ liệu (Field)

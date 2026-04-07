@@ -23,7 +23,7 @@ import { METHOD_LABELS } from "@/lib/loan-plan/loan-plan-constants";
 type Financials = { totalCost: number; revenue: number; profit: number; loanAmount: number };
 
 const STATUS_STYLES: Record<string, string> = {
-  draft: "bg-amber-50 text-amber-700 ring-amber-500/20 dark:bg-amber-500/10 dark:text-amber-400",
+  draft: "bg-brand-50 text-brand-600 ring-brand-500/20 dark:bg-brand-500/10 dark:text-brand-400",
   approved: "bg-emerald-50 text-emerald-700 ring-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-400",
 };
 
@@ -102,8 +102,8 @@ export default function LoanPlansListPage() {
     <section className="space-y-5">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Link href={`/report/customers/${customerId}`} className="inline-flex items-center gap-1 text-sm text-amber-600 dark:text-amber-400 hover:underline"><ArrowLeft className="h-3.5 w-3.5" />Quay lại</Link>
-          <h2 className="text-lg font-bold bg-gradient-to-r from-amber-700 to-orange-500 dark:from-amber-400 dark:to-orange-400 bg-clip-text text-transparent">
+          <Link href={`/report/customers/${customerId}`} className="inline-flex items-center gap-1 text-sm text-brand-500 dark:text-brand-400 hover:underline"><ArrowLeft className="h-3.5 w-3.5" />Quay lại</Link>
+          <h2 className="text-lg font-bold text-brand-600 dark:text-brand-400">
             Phương án vay vốn
           </h2>
         </div>
@@ -117,14 +117,14 @@ export default function LoanPlansListPage() {
             type="button"
             disabled={aiAnalyzing}
             onClick={() => aiInputRef.current?.click()}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-amber-200 dark:border-amber-500/20 bg-amber-50 dark:bg-amber-500/10 px-3 py-2 text-sm font-medium text-amber-700 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-500/20 disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-brand-200 dark:border-brand-500/20 bg-brand-100 dark:bg-brand-500/10 px-3 py-2 text-sm font-medium text-brand-600 dark:text-brand-400 hover:bg-brand-100 dark:hover:bg-brand-500/20 disabled:opacity-50"
           >
             <Sparkles className="h-4 w-4" />
             {aiAnalyzing ? "AI đang phân tích..." : "Phân tích AI"}
           </button>
           <Link
             href={`/report/customers/${customerId}/loan-plans/new`}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-amber-600 to-orange-500 px-4 py-2 text-sm font-medium text-white shadow-sm shadow-amber-500/25 hover:brightness-110"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-brand-500 px-4 py-2 text-sm font-medium text-white shadow-sm shadow-brand-500/25 hover:brightness-110"
           >
             <Plus className="h-4 w-4" /> Tạo PA mới
           </Link>
@@ -133,7 +133,7 @@ export default function LoanPlansListPage() {
 
       {loading ? (
         <div className="flex justify-center py-12">
-          <div className="h-6 w-6 animate-spin rounded-full border-2 border-amber-200 border-t-amber-600" />
+          <div className="h-6 w-6 animate-spin rounded-full border-2 border-brand-200 border-t-brand-500" />
         </div>
       ) : plans.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-zinc-300 dark:border-white/[0.08] py-12 text-center">
@@ -148,7 +148,7 @@ export default function LoanPlansListPage() {
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
-                      <FileText className="h-4 w-4 text-amber-500 shrink-0" />
+                      <FileText className="h-4 w-4 text-brand-500 shrink-0" />
                       <h3 className="truncate font-semibold">{p.name || "Phương án chưa đặt tên"}</h3>
                       <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ring-1 ${STATUS_STYLES[p.status] ?? STATUS_STYLES.draft}`}>
                         {p.status === "approved" ? "Đã duyệt" : "Nháp"}
@@ -164,7 +164,7 @@ export default function LoanPlansListPage() {
                 <div className="mt-3 flex items-center gap-2 border-t border-zinc-100 dark:border-white/[0.05] pt-3">
                   <Link
                     href={`/report/customers/${customerId}/loan-plans/${p.id}`}
-                    className="inline-flex items-center gap-1 rounded-lg bg-amber-50 dark:bg-amber-500/10 px-3 py-1.5 text-xs font-medium text-amber-700 dark:text-amber-400 hover:bg-amber-100"
+                    className="inline-flex items-center gap-1 rounded-lg bg-brand-100 dark:bg-brand-500/10 px-3 py-1.5 text-xs font-medium text-brand-600 dark:text-brand-400 hover:bg-brand-100"
                   >
                     Chỉnh sửa →
                   </Link>
@@ -184,7 +184,7 @@ export default function LoanPlansListPage() {
 
       {/* AI analyze error */}
       {aiError && (
-        <div className="rounded-lg bg-amber-50 dark:bg-amber-500/10 p-3 text-sm text-amber-700 dark:text-amber-400">
+        <div className="rounded-lg bg-brand-100 dark:bg-brand-500/10 p-3 text-sm text-brand-600 dark:text-brand-400">
           {aiError}
           <button type="button" onClick={() => setAiError(null)} className="ml-2 underline">Đóng</button>
         </div>

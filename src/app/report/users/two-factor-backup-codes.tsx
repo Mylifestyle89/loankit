@@ -20,7 +20,7 @@ export function TwoFactorBackupCodes({ codes, onDone }: { codes: string[]; onDon
 
   return (
     <div className="space-y-3">
-      <p className="text-xs font-medium text-amber-600 dark:text-amber-400">
+      <p className="text-xs font-medium text-brand-500 dark:text-brand-400">
         ⚠ Lưu mã dự phòng — mỗi mã chỉ dùng được 1 lần. Không thể xem lại sau khi đóng.
       </p>
       <div className="grid grid-cols-2 gap-1.5 rounded-lg bg-slate-50 p-3 font-mono text-xs dark:bg-white/[0.04]">
@@ -36,7 +36,7 @@ export function TwoFactorBackupCodes({ codes, onDone }: { codes: string[]; onDon
           <Download className="h-3 w-3" /> Tải xuống
         </button>
       </div>
-      <button type="button" onClick={onDone} className="w-full rounded-lg bg-orange-600 px-4 py-2 text-xs font-medium text-white hover:bg-orange-700">
+      <button type="button" onClick={onDone} className="w-full rounded-lg bg-brand-500 px-4 py-2 text-xs font-medium text-white hover:bg-brand-600">
         Hoàn tất
       </button>
     </div>

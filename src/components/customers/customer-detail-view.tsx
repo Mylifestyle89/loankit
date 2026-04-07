@@ -232,7 +232,7 @@ export function CustomerDetailView({ customerType, basePath }: CustomerDetailVie
   if (loading) {
     return (
       <div className="flex items-center justify-center py-16">
-        <div className="h-6 w-6 animate-spin rounded-full border-2 border-amber-200 border-t-amber-600 dark:border-amber-800 dark:border-t-amber-400" />
+        <div className="h-6 w-6 animate-spin rounded-full border-2 border-brand-200 border-t-brand-500 dark:border-brand-700 dark:border-t-brand-400" />
       </div>
     );
   }
@@ -243,12 +243,12 @@ export function CustomerDetailView({ customerType, basePath }: CustomerDetailVie
       <div className="flex items-center gap-4">
         <Link
           href={basePath}
-          className="inline-flex items-center gap-1 rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] px-3 py-1.5 text-sm shadow-sm transition-all duration-150 hover:border-amber-200 dark:hover:border-amber-500/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/40"
+          className="inline-flex items-center gap-1 rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] px-3 py-1.5 text-sm shadow-sm transition-all duration-150 hover:border-brand-200 dark:hover:border-brand-500/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40"
         >
           <ArrowLeft className="h-4 w-4" />
           {isIndividual ? "Danh sách KHCN" : t("customers.title")}
         </Link>
-        <h2 className="text-lg font-bold tracking-tight bg-gradient-to-r from-amber-700 to-orange-500 dark:from-amber-400 dark:to-orange-400 bg-clip-text text-transparent">
+        <h2 className="text-lg font-bold tracking-tight text-brand-600 dark:text-brand-400">
           {customer?.customer_name ?? t("customers.edit")}
         </h2>
       </div>
@@ -271,7 +271,7 @@ export function CustomerDetailView({ customerType, basePath }: CustomerDetailVie
             onClick={() => setActiveTab(tab.key)}
             className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
               activeTab === tab.key
-                ? "border-amber-600 text-amber-700 dark:border-amber-400 dark:text-amber-400"
+                ? "border-brand-500 text-brand-600 dark:border-brand-400 dark:text-brand-400"
                 : "border-transparent text-zinc-500 dark:text-slate-400 hover:text-zinc-700 dark:hover:text-slate-300"
             }`}
           >
@@ -320,7 +320,7 @@ export function CustomerDetailView({ customerType, basePath }: CustomerDetailVie
                 onClick={() => setLoansCreditSubTab(st.key)}
                 className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
                   loansCreditSubTab === st.key
-                    ? "bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-400"
+                    ? "bg-brand-100 text-brand-600 dark:bg-brand-500/15 dark:text-brand-400"
                     : "text-zinc-500 dark:text-slate-400 hover:bg-zinc-100 dark:hover:bg-white/[0.05]"
                 }`}
               >

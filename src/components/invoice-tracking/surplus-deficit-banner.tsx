@@ -17,14 +17,14 @@ export function SurplusDeficitBanner({ disbursementAmount, totalInvoice, diff }:
   return (
     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
       {/* Số tiền giải ngân */}
-      <div className="rounded-xl border border-amber-200 dark:border-amber-500/20 bg-amber-50/50 dark:bg-amber-500/5 p-4">
+      <div className="rounded-xl border border-brand-200 dark:border-brand-500/20 bg-brand-50/50 dark:bg-brand-500/5 p-4">
         <div className="flex items-center gap-2.5">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-amber-100 dark:bg-amber-500/15">
-            <Banknote className="h-4.5 w-4.5 text-amber-600 dark:text-amber-400" />
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-100 dark:bg-brand-500/15">
+            <Banknote className="h-4.5 w-4.5 text-brand-500 dark:text-brand-400" />
           </div>
           <div className="min-w-0">
             <p className="text-xs text-zinc-500 dark:text-slate-400">Số tiền giải ngân</p>
-            <p className="text-sm font-bold tabular-nums text-amber-700 dark:text-amber-300 truncate">{fmt(disbursementAmount)} <span className="text-xs font-medium">VND</span></p>
+            <p className="text-sm font-bold tabular-nums text-brand-600 dark:text-brand-300 truncate">{fmt(disbursementAmount)} <span className="text-xs font-medium">VND</span></p>
           </div>
         </div>
       </div>
@@ -33,18 +33,18 @@ export function SurplusDeficitBanner({ disbursementAmount, totalInvoice, diff }:
       <div className={`rounded-xl border p-4 ${
         isFullyCovered
           ? "border-emerald-200 dark:border-emerald-500/20 bg-emerald-50/50 dark:bg-emerald-500/5"
-          : "border-amber-200 dark:border-amber-500/20 bg-amber-50/50 dark:bg-amber-500/5"
+          : "border-brand-200 dark:border-brand-500/20 bg-brand-50/50 dark:bg-brand-500/5"
       }`}>
         <div className="flex items-center gap-2.5">
           <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${
             isFullyCovered
               ? "bg-emerald-100 dark:bg-emerald-500/15"
-              : "bg-amber-100 dark:bg-amber-500/15"
+              : "bg-brand-100 dark:bg-brand-500/15"
           }`}>
             <FileCheck className={`h-4.5 w-4.5 ${
               isFullyCovered
                 ? "text-emerald-600 dark:text-emerald-400"
-                : "text-amber-600 dark:text-amber-400"
+                : "text-brand-500 dark:text-brand-400"
             }`} />
           </div>
           <div className="min-w-0">
@@ -52,7 +52,7 @@ export function SurplusDeficitBanner({ disbursementAmount, totalInvoice, diff }:
             <p className={`text-sm font-bold tabular-nums truncate ${
               isFullyCovered
                 ? "text-emerald-700 dark:text-emerald-300"
-                : "text-amber-700 dark:text-amber-300"
+                : "text-brand-600 dark:text-brand-300"
             }`}>{fmt(totalInvoice)} <span className="text-xs font-medium">VND</span></p>
           </div>
         </div>

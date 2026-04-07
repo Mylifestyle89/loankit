@@ -70,7 +70,7 @@ export function CustomerCollateralSection({ customerId }: { customerId: string }
   if (loading) {
     return (
       <div className="flex justify-center py-8">
-        <div className="h-5 w-5 animate-spin rounded-full border-2 border-amber-200 border-t-amber-600" />
+        <div className="h-5 w-5 animate-spin rounded-full border-2 border-brand-200 border-t-brand-500" />
       </div>
     );
   }
@@ -82,11 +82,11 @@ export function CustomerCollateralSection({ customerId }: { customerId: string }
           <h3 className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">Tài sản bảo đảm ({items.length})</h3>
           <div className="flex gap-2">
             <button type="button" onClick={() => setScannerOpen(true)}
-              className={`${btnCls} inline-flex items-center gap-1.5 border border-amber-200 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 hover:bg-amber-100`}>
+              className={`${btnCls} inline-flex items-center gap-1.5 border border-brand-200 dark:border-brand-500/30 bg-brand-100 dark:bg-brand-500/10 text-brand-600 dark:text-brand-400 hover:bg-brand-100`}>
               📷 Scan giấy tờ TS
             </button>
             <button type="button" onClick={() => { setScanPrefill(undefined); setShowForm(true); }}
-              className={`${btnCls} inline-flex items-center gap-1.5 bg-gradient-to-r from-amber-600 to-orange-500 text-white shadow-sm shadow-amber-500/25 hover:brightness-110`}>
+              className={`${btnCls} inline-flex items-center gap-1.5 bg-brand-500 text-white shadow-sm shadow-brand-500/25 hover:brightness-110`}>
               <Plus className="h-3.5 w-3.5" /> Thêm TSBĐ
             </button>
           </div>

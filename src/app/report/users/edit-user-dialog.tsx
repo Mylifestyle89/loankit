@@ -51,7 +51,7 @@ export function EditUserDialog({ userId, currentEmail, userName, onClose, onUpda
   }
 
   const inputClass =
-    "w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-zinc-900 outline-none focus:border-orange-400 dark:border-white/[0.10] dark:bg-white/[0.04] dark:text-slate-100";
+    "w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-zinc-900 outline-none focus:border-brand-400 dark:border-white/[0.10] dark:bg-white/[0.04] dark:text-slate-100";
 
   return (
     <tr>
@@ -87,7 +87,7 @@ export function EditUserDialog({ userId, currentEmail, userName, onClose, onUpda
           )}
 
           <button type="submit" disabled={loading}
-            className="rounded-lg bg-orange-600 px-4 py-1.5 text-xs font-medium text-white hover:bg-orange-700 disabled:opacity-50">
+            className="rounded-lg bg-brand-500 px-4 py-1.5 text-xs font-medium text-white hover:bg-brand-600 disabled:opacity-50">
             {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Save Changes"}
           </button>
         </form>

@@ -11,7 +11,7 @@ import { DropdownOptionsProvider } from "@/lib/hooks/dropdown-options-context";
 import { useGroupVisibility } from "@/lib/field-visibility/use-field-visibility";
 
 const inputCls =
-  "mt-1 w-full rounded-md border border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] text-zinc-900 dark:text-slate-100 px-3 py-2 shadow-sm transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/40";
+  "mt-1 w-full rounded-md border border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] text-zinc-900 dark:text-slate-100 px-3 py-2 shadow-sm transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40";
 
 type CustomerNewFormProps = {
   customerType: "corporate" | "individual";
@@ -91,12 +91,12 @@ export function CustomerNewForm({ customerType, basePath }: CustomerNewFormProps
       <div className="flex items-center gap-4">
         <Link
           href={basePath}
-          className="inline-flex items-center gap-1 rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] px-3 py-1.5 text-sm shadow-sm transition-all duration-150 hover:border-amber-200 dark:hover:border-amber-500/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/40"
+          className="inline-flex items-center gap-1 rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] px-3 py-1.5 text-sm shadow-sm transition-all duration-150 hover:border-brand-200 dark:hover:border-brand-500/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40"
         >
           <ArrowLeft className="h-4 w-4" />
           {typeLabel}
         </Link>
-        <h2 className="text-lg font-bold tracking-tight bg-gradient-to-r from-amber-700 to-orange-500 dark:from-amber-400 dark:to-orange-400 bg-clip-text text-transparent">{t("customers.add")}</h2>
+        <h2 className="text-lg font-bold tracking-tight text-brand-600 dark:text-brand-400">{t("customers.add")}</h2>
       </div>
       {error ? <p role="alert" className="text-sm text-red-600 dark:text-red-400">{error}</p> : null}
       <DropdownOptionsProvider prefix="customer.">
@@ -106,7 +106,7 @@ export function CustomerNewForm({ customerType, basePath }: CustomerNewFormProps
         >
           {/* Type indicator (read-only) */}
           <div className="flex gap-2">
-            <span className="rounded-lg px-4 py-2 text-sm font-medium bg-amber-100 text-amber-700 ring-1 ring-amber-500/30 dark:bg-amber-500/15 dark:text-amber-400">
+            <span className="rounded-lg px-4 py-2 text-sm font-medium bg-brand-100 text-brand-600 ring-1 ring-brand-500/30 dark:bg-brand-500/15 dark:text-brand-400">
               {typeLabel}
             </span>
           </div>
@@ -176,13 +176,13 @@ export function CustomerNewForm({ customerType, basePath }: CustomerNewFormProps
             <button
               type="submit"
               disabled={saving}
-              className="rounded-lg bg-gradient-to-r from-amber-600 to-orange-500 px-5 py-2 text-sm font-medium text-white shadow-sm shadow-amber-500/25 transition-all duration-200 hover:shadow-md hover:shadow-amber-500/30 hover:brightness-110 disabled:opacity-60"
+              className="rounded-lg bg-brand-500 px-5 py-2 text-sm font-medium text-white shadow-sm shadow-brand-500/25 transition-all duration-200 hover:shadow-md hover:shadow-brand-500/30 hover:brightness-110 disabled:opacity-60"
             >
               {saving ? "..." : t("customers.add")}
             </button>
             <Link
               href={basePath}
-              className="rounded-lg border border-zinc-200 dark:border-white/[0.09] px-4 py-2 text-sm dark:text-slate-300 shadow-sm transition-all duration-150 hover:border-amber-200 dark:hover:border-amber-500/20"
+              className="rounded-lg border border-zinc-200 dark:border-white/[0.09] px-4 py-2 text-sm dark:text-slate-300 shadow-sm transition-all duration-150 hover:border-brand-200 dark:hover:border-brand-500/20"
             >
               Hủy
             </Link>

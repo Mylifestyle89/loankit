@@ -34,8 +34,8 @@ export function CustomerCard({
     <div
       className={`group relative rounded-xl border bg-white dark:bg-[#161616] shadow-sm transition-all duration-200 hover:shadow-md animate-[fadeSlideIn_0.3s_ease-out_both] ${
         isSelected
-          ? "border-amber-400 dark:border-amber-500/40 ring-1 ring-amber-300 dark:ring-amber-500/20"
-          : "border-zinc-200 dark:border-white/[0.07] hover:border-amber-200 dark:hover:border-amber-500/20"
+          ? "border-brand-400 dark:border-brand-500/40 ring-1 ring-brand-300 dark:ring-brand-500/20"
+          : "border-zinc-200 dark:border-white/[0.07] hover:border-brand-200 dark:hover:border-brand-500/20"
       }`}
       style={{ animationDelay: `${index * 50}ms` }}
     >
@@ -43,7 +43,7 @@ export function CustomerCard({
       <div className="p-4 pb-3">
         <div className="flex items-center gap-2.5">
           <h3 className="truncate font-semibold text-zinc-900 dark:text-white">{c.customer_name}</h3>
-          <span className="shrink-0 inline-flex items-center rounded-full bg-amber-50 dark:bg-amber-500/10 px-2 py-0.5 text-[11px] font-medium text-amber-700 dark:text-amber-400 ring-1 ring-amber-500/20">
+          <span className="shrink-0 inline-flex items-center rounded-full bg-brand-100 dark:bg-brand-500/10 px-2 py-0.5 text-[11px] font-medium text-brand-600 dark:text-brand-400 ring-1 ring-brand-500/20">
             {c.customer_code}
           </span>
         </div>
@@ -53,8 +53,8 @@ export function CustomerCard({
       {/* Stats */}
       <div className="mx-4 grid grid-cols-2 gap-3 rounded-lg bg-zinc-50 dark:bg-white/[0.03] p-3">
         <div className="flex items-center gap-2">
-          <div className="flex h-7 w-7 items-center justify-center rounded-md bg-amber-100 dark:bg-amber-500/10">
-            <FileText className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" />
+          <div className="flex h-7 w-7 items-center justify-center rounded-md bg-brand-100 dark:bg-brand-500/10">
+            <FileText className="h-3.5 w-3.5 text-brand-500 dark:text-brand-400" />
           </div>
           <div>
             <p className="text-[10px] text-zinc-400 dark:text-slate-500">Khoản vay</p>
@@ -62,8 +62,8 @@ export function CustomerCard({
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <div className="flex h-7 w-7 items-center justify-center rounded-md bg-orange-100 dark:bg-orange-500/10">
-            <Banknote className="h-3.5 w-3.5 text-orange-600 dark:text-orange-400" />
+          <div className="flex h-7 w-7 items-center justify-center rounded-md bg-brand-100 dark:bg-brand-500/10">
+            <Banknote className="h-3.5 w-3.5 text-brand-500 dark:text-brand-400" />
           </div>
           <div>
             <p className="text-[10px] text-zinc-400 dark:text-slate-500">Tổng dư nợ</p>
@@ -74,11 +74,11 @@ export function CustomerCard({
 
       {/* Actions */}
       <div className="flex items-center gap-2 p-4 pt-3">
-        <Link href={`${basePath}/${c.id}`} className="cursor-pointer inline-flex items-center gap-1 rounded-lg bg-amber-50 dark:bg-amber-500/10 px-3 py-1.5 text-xs font-medium text-amber-700 dark:text-amber-400 transition-colors hover:bg-amber-100 dark:hover:bg-amber-500/20">
+        <Link href={`${basePath}/${c.id}`} className="cursor-pointer inline-flex items-center gap-1 rounded-lg bg-brand-100 dark:bg-brand-500/10 px-3 py-1.5 text-xs font-medium text-brand-600 dark:text-brand-400 transition-colors hover:bg-brand-100 dark:hover:bg-brand-500/20">
           {t("customers.edit")} <ArrowRight className="h-3 w-3" />
         </Link>
         {showSelect && (
-          <button type="button" onClick={onSelect} className={`cursor-pointer inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${isSelected ? "bg-amber-600 text-white hover:bg-amber-700" : "bg-zinc-100 dark:bg-white/[0.06] text-zinc-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400"}`}>
+          <button type="button" onClick={onSelect} className={`cursor-pointer inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${isSelected ? "bg-brand-500 text-white hover:bg-brand-600" : "bg-zinc-100 dark:bg-white/[0.06] text-zinc-600 dark:text-slate-400 hover:bg-brand-50 dark:hover:bg-brand-500/10 hover:text-brand-600 dark:hover:text-brand-400"}`}>
             {isSelected ? <><Check className="h-3 w-3" /> Đang chọn</> : "Chọn KH"}
           </button>
         )}

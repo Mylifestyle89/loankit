@@ -12,12 +12,12 @@ export function CoverageProgressBar({
 }) {
   const percent = total > 0 ? Math.round((filled / total) * 100) : 0;
   const colorClass =
-    percent >= 80 ? "bg-emerald-500" : percent >= 50 ? "bg-amber-500" : "bg-red-500";
+    percent >= 80 ? "bg-emerald-500" : percent >= 50 ? "bg-brand-500" : "bg-red-500";
   const textClass =
     percent >= 80
       ? "text-emerald-600 dark:text-emerald-400"
       : percent >= 50
-        ? "text-amber-600 dark:text-amber-400"
+        ? "text-brand-500 dark:text-brand-400"
         : "text-red-600 dark:text-red-400";
 
   return (

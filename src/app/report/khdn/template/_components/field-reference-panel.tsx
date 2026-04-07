@@ -68,7 +68,7 @@ export function FieldReferencePanel(props: Props) {
         <select
           value={props.selectedFieldTemplateId}
           onChange={(e) => props.onFieldTemplateChange(e.target.value)}
-          className="min-w-48 rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] dark:text-slate-100 px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/40"
+          className="min-w-48 rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] dark:text-slate-100 px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40"
         >
           {props.fieldTemplates.map((t) => (
             <option key={t.id} value={t.id}>{t.name}</option>
@@ -81,7 +81,7 @@ export function FieldReferencePanel(props: Props) {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Tìm field..."
-            className="w-full rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] dark:text-slate-100 pl-9 pr-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/40"
+            className="w-full rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] dark:text-slate-100 pl-9 pr-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40"
           />
         </div>
         <span className="self-center text-xs text-zinc-400 dark:text-slate-500">{totalFields} field</span>
@@ -97,7 +97,7 @@ export function FieldReferencePanel(props: Props) {
               <button
                 type="button"
                 onClick={() => toggleGroup(group)}
-                className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm font-medium hover:bg-amber-50/60 dark:hover:bg-amber-950/20 transition-colors"
+                className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm font-medium hover:bg-brand-50/60 dark:hover:bg-brand-900/20 transition-colors"
               >
                 <span className="text-xs text-zinc-400">{isCollapsed ? "▶" : "▼"}</span>
                 <span className="flex-1 truncate">{group}</span>
@@ -105,7 +105,7 @@ export function FieldReferencePanel(props: Props) {
               </button>
               {!isCollapsed && fields.map((field) => (
                 <div key={field.field_key} className="flex items-center gap-2 py-1.5 pl-8 pr-3 hover:bg-zinc-100/70 dark:hover:bg-white/[0.03] transition-colors group">
-                  <code className="shrink-0 rounded bg-amber-100 dark:bg-amber-500/10 px-1.5 py-0.5 text-xs font-mono text-amber-700 dark:text-amber-400">
+                  <code className="shrink-0 rounded bg-brand-100 dark:bg-brand-500/10 px-1.5 py-0.5 text-xs font-mono text-brand-600 dark:text-brand-400">
                     [{field.field_key}]
                   </code>
                   <span className="flex-1 truncate text-sm text-zinc-600 dark:text-slate-400">{field.label_vi}</span>

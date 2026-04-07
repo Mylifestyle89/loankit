@@ -77,7 +77,7 @@ function CustomerCard({
   }
 
   const borderColor = isSelected
-    ? "border-amber-400 dark:border-amber-500/50 ring-2 ring-amber-500/20"
+    ? "border-brand-400 dark:border-brand-500/50 ring-2 ring-brand-500/20"
     : "border-zinc-200 dark:border-white/[0.07]";
 
   return (
@@ -86,7 +86,7 @@ function CustomerCard({
       tabIndex={0}
       onClick={() => onSelect(isSelected ? "" : c.customerId)}
       onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onSelect(isSelected ? "" : c.customerId); } }}
-      className={`cursor-pointer text-left rounded-xl border ${borderColor} bg-white dark:bg-[#161616] p-4 shadow-sm transition-all duration-200 hover:shadow-md hover:border-amber-200 dark:hover:border-amber-500/20`}
+      className={`cursor-pointer text-left rounded-xl border ${borderColor} bg-white dark:bg-[#161616] p-4 shadow-sm transition-all duration-200 hover:shadow-md hover:border-brand-200 dark:hover:border-brand-500/20`}
     >
       <div className="flex items-start justify-between">
         <p className="font-semibold text-sm truncate">{c.customerName}</p>
@@ -112,11 +112,11 @@ function CustomerCard({
               value={emailValue}
               onChange={(e) => setEmailValue(e.target.value)}
               placeholder="email@example.com"
-              className="flex-1 rounded border border-zinc-300 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] px-2 py-1 text-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-amber-500/50"
+              className="flex-1 rounded border border-zinc-300 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] px-2 py-1 text-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-brand-500/50"
               onKeyDown={(e) => { if (e.key === "Enter") void saveEmail(); if (e.key === "Escape") setEditingEmail(false); }}
             />
             <button type="button" onClick={() => void saveEmail()} disabled={saving}
-              className="cursor-pointer rounded bg-amber-500 px-2 py-1 text-xs text-white hover:bg-amber-600 disabled:opacity-50">
+              className="cursor-pointer rounded bg-brand-500 px-2 py-1 text-xs text-white hover:bg-brand-500 disabled:opacity-50">
               {saving ? "..." : "Lưu"}
             </button>
             <button type="button" onClick={() => setEditingEmail(false)}
@@ -128,7 +128,7 @@ function CustomerCard({
           <button
             type="button"
             onClick={() => setEditingEmail(true)}
-            className="cursor-pointer text-xs text-amber-600 dark:text-amber-400 hover:underline"
+            className="cursor-pointer text-xs text-brand-500 dark:text-brand-400 hover:underline"
           >
             {c.customerEmail ? `✉ ${c.customerEmail}` : "+ Thêm email"}
           </button>

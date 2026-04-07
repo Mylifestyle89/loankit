@@ -14,7 +14,7 @@ const EigenpalDocxEditor = dynamic(
     ssr: false,
     loading: () => (
       <div className="flex items-center justify-center py-20">
-        <div className="h-6 w-6 animate-spin rounded-full border-2 border-amber-200 border-t-amber-600" />
+        <div className="h-6 w-6 animate-spin rounded-full border-2 border-brand-200 border-t-brand-500" />
       </div>
     ),
   },
@@ -24,14 +24,14 @@ const EigenpalDocxEditor = dynamic(
 function PreviewFallback({ onDownload }: { onDownload: () => void }) {
   return (
     <div className="flex flex-col items-center justify-center gap-4 p-10 text-center">
-      <AlertTriangle className="h-10 w-10 text-amber-500" />
+      <AlertTriangle className="h-10 w-10 text-brand-500" />
       <p className="text-sm text-zinc-600 dark:text-slate-400">
         Không thể xem trước văn bản này. Vui lòng tải về để kiểm tra.
       </p>
       <button
         type="button"
         onClick={onDownload}
-        className="flex items-center gap-1.5 rounded-md bg-gradient-to-r from-amber-600 to-orange-500 px-4 py-1.5 text-sm font-medium text-white hover:brightness-110 transition-colors shadow-sm"
+        className="flex items-center gap-1.5 rounded-md bg-brand-500 px-4 py-1.5 text-sm font-medium text-white hover:brightness-110 transition-colors shadow-sm"
       >
         <Download className="h-4 w-4" />
         Xuất file DOCX
@@ -76,7 +76,7 @@ export function DocxPreviewModal({ documentBuffer, fileName, onClose, onDownload
             <button
               type="button"
               onClick={onClose}
-              className="flex items-center gap-1.5 rounded-md border border-zinc-200 px-3 py-1.5 text-sm hover:bg-amber-50/30 transition-colors"
+              className="flex items-center gap-1.5 rounded-md border border-zinc-200 px-3 py-1.5 text-sm hover:bg-brand-50/30 transition-colors"
             >
               <X className="h-4 w-4" />
               Đóng
@@ -84,7 +84,7 @@ export function DocxPreviewModal({ documentBuffer, fileName, onClose, onDownload
             <button
               type="button"
               onClick={onDownload}
-              className="flex items-center gap-1.5 rounded-md bg-gradient-to-r from-amber-600 to-orange-500 px-4 py-1.5 text-sm font-medium text-white hover:brightness-110 transition-colors shadow-sm"
+              className="flex items-center gap-1.5 rounded-md bg-brand-500 px-4 py-1.5 text-sm font-medium text-white hover:brightness-110 transition-colors shadow-sm"
             >
               <Download className="h-4 w-4" />
               Xuất file DOCX

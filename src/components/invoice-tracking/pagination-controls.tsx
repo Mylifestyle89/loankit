@@ -28,7 +28,7 @@ export function PaginationControls({ page, pageSize, total, onPageChange }: Prop
           type="button"
           disabled={page <= 1}
           onClick={() => onPageChange(page - 1)}
-          className="cursor-pointer rounded-md border border-zinc-300 dark:border-white/[0.09] p-1.5 transition-colors duration-150 hover:bg-zinc-100 dark:hover:bg-white/[0.06] disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/40"
+          className="cursor-pointer rounded-md border border-zinc-300 dark:border-white/[0.09] p-1.5 transition-colors duration-150 hover:bg-zinc-100 dark:hover:bg-white/[0.06] disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40"
         >
           <ChevronLeft className="h-4 w-4" />
         </button>
@@ -39,7 +39,7 @@ export function PaginationControls({ page, pageSize, total, onPageChange }: Prop
           type="button"
           disabled={page >= totalPages}
           onClick={() => onPageChange(page + 1)}
-          className="cursor-pointer rounded-md border border-zinc-300 dark:border-white/[0.09] p-1.5 transition-colors duration-150 hover:bg-zinc-100 dark:hover:bg-white/[0.06] disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/40"
+          className="cursor-pointer rounded-md border border-zinc-300 dark:border-white/[0.09] p-1.5 transition-colors duration-150 hover:bg-zinc-100 dark:hover:bg-white/[0.06] disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40"
         >
           <ChevronRight className="h-4 w-4" />
         </button>

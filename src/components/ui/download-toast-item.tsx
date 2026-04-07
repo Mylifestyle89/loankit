@@ -49,7 +49,7 @@ export function DownloadToastItem({ item, onRemove }: Props) {
       <button
         type="button"
         onClick={() => openDownloadedFile(item)}
-        className="shrink-0 rounded-md p-1.5 text-zinc-400 transition-colors hover:bg-amber-50 hover:text-amber-600 dark:hover:bg-amber-500/10 dark:hover:text-amber-400"
+        className="shrink-0 rounded-md p-1.5 text-zinc-400 transition-colors hover:bg-brand-50 hover:text-brand-500 dark:hover:bg-brand-500/10 dark:hover:text-brand-400"
         title="Tải lại"
       >
         <Download className="h-3.5 w-3.5" />

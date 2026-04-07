@@ -165,7 +165,7 @@ export function SuggestTab({
                     type="checkbox"
                     checked={showVietnameseAlias}
                     onChange={(e) => setShowVietnameseAlias(e.target.checked)}
-                    className="h-3.5 w-3.5 rounded border-slate-300 text-amber-600 focus:ring-amber-500"
+                    className="h-3.5 w-3.5 rounded border-slate-300 text-brand-500 focus:ring-brand-500"
                   />
                   Alias Việt
                 </label>
@@ -191,7 +191,7 @@ export function SuggestTab({
                 </div>
               )}
               {grouping ? (
-                <div className="rounded-lg border border-amber-200/80 bg-amber-50/60 px-3 py-2 text-xs font-medium text-amber-800">
+                <div className="rounded-lg border border-brand-200/80 bg-brand-50/60 px-3 py-2 text-xs font-medium text-brand-700">
                   {t("mapping.aiSuggest.groupingResult")
                     .replace("{groupKey}", grouping.groupKey)
                     .replace("{repeatKey}", grouping.repeatKey)}
@@ -204,7 +204,7 @@ export function SuggestTab({
 
       {/* Review table — hiện sau khi user bấm "Chấp nhận gợi ý" */}
       {showReview && (
-        <div className="border-t border-amber-200/50 px-4 py-3 dark:border-white/[0.07]">
+        <div className="border-t border-brand-200/50 px-4 py-3 dark:border-white/[0.07]">
           <AiSuggestReviewTable
             items={buildReviewItems(suggestion, fieldCatalog)}
             onConfirm={handleReviewConfirm}
@@ -227,7 +227,7 @@ export function SuggestTab({
             type="button"
             onClick={acceptSuggestion}
             disabled={matchedCount === 0}
-            className="rounded-lg bg-gradient-to-r from-amber-600 to-orange-500 px-3 py-1.5 text-sm text-white shadow-sm shadow-amber-500/25 transition-colors hover:brightness-110 disabled:opacity-60"
+            className="rounded-lg bg-brand-500 px-3 py-1.5 text-sm text-white shadow-sm shadow-brand-500/25 transition-colors hover:brightness-110 disabled:opacity-60"
           >
             {t("mapping.aiSuggest.accept")}
           </button>

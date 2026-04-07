@@ -11,9 +11,9 @@ const QRCode = dynamic(() => import("react-qr-code"), { ssr: false });
 type Step = "idle" | "qr" | "verify" | "backup" | "disabling";
 
 const inputClass =
-  "w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-zinc-900 outline-none focus:border-orange-400 dark:border-white/[0.10] dark:bg-white/[0.04] dark:text-slate-100";
+  "w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-zinc-900 outline-none focus:border-brand-400 dark:border-white/[0.10] dark:bg-white/[0.04] dark:text-slate-100";
 const btnClass =
-  "w-full rounded-lg bg-orange-600 px-4 py-2 text-xs font-medium text-white hover:bg-orange-700 disabled:opacity-50";
+  "w-full rounded-lg bg-brand-500 px-4 py-2 text-xs font-medium text-white hover:bg-brand-600 disabled:opacity-50";
 
 export function TwoFactorSetupCard({ enabled }: { enabled: boolean }) {
   const [step, setStep] = useState<Step>("idle");

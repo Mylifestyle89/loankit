@@ -40,7 +40,7 @@ export function TemplateSearchReplaceTab() {
     finally { setLoading(false); }
   }
 
-  const inputCls = "w-full rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] px-3 py-2.5 text-sm shadow-sm transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/40";
+  const inputCls = "w-full rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] px-3 py-2.5 text-sm shadow-sm transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40";
 
   return (
     <div className="space-y-4">
@@ -61,12 +61,12 @@ export function TemplateSearchReplaceTab() {
 
       <div className="flex gap-2">
         <button type="button" onClick={() => handleAction("search")} disabled={loading}
-          className="cursor-pointer inline-flex items-center gap-1.5 rounded-lg border border-amber-300 dark:border-amber-500/30 px-4 py-2 text-sm font-medium text-amber-700 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 transition-colors disabled:opacity-50">
+          className="cursor-pointer inline-flex items-center gap-1.5 rounded-lg border border-brand-300 dark:border-brand-500/30 px-4 py-2 text-sm font-medium text-brand-600 dark:text-brand-400 hover:bg-brand-50 dark:hover:bg-brand-500/10 transition-colors disabled:opacity-50">
           {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Search className="h-3.5 w-3.5" />}
           Tìm kiếm
         </button>
         <button type="button" onClick={() => handleAction("replace")} disabled={loading || !replace.trim()}
-          className="cursor-pointer inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-amber-600 to-orange-500 px-4 py-2 text-sm font-medium text-white shadow-sm shadow-amber-500/25 hover:brightness-110 transition-all disabled:opacity-50">
+          className="cursor-pointer inline-flex items-center gap-1.5 rounded-lg bg-brand-500 px-4 py-2 text-sm font-medium text-white shadow-sm shadow-brand-500/25 hover:brightness-110 transition-all disabled:opacity-50">
           {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Replace className="h-3.5 w-3.5" />}
           Thay thế tất cả
         </button>
@@ -78,7 +78,7 @@ export function TemplateSearchReplaceTab() {
         <div className="space-y-3">
           <div className="flex gap-4 text-sm">
             <span className="text-zinc-500">Đã quét: <strong>{response.totalFiles}</strong> files</span>
-            <span className="text-zinc-500">Tìm thấy: <strong className="text-amber-600">{response.totalMatches}</strong> chỗ trong <strong>{response.matchedFiles}</strong> files</span>
+            <span className="text-zinc-500">Tìm thấy: <strong className="text-brand-500">{response.totalMatches}</strong> chỗ trong <strong>{response.matchedFiles}</strong> files</span>
             {response.mode === "replace" && <span className="text-emerald-600 font-medium">Đã thay thế xong</span>}
           </div>
 
@@ -95,10 +95,10 @@ export function TemplateSearchReplaceTab() {
                   {response.results.map((r) => (
                     <tr key={r.file} className="border-t border-zinc-100 dark:border-white/[0.05]">
                       <td className="px-3 py-2 flex items-center gap-2">
-                        <FileText className="h-3.5 w-3.5 text-amber-400 shrink-0" />
+                        <FileText className="h-3.5 w-3.5 text-brand-400 shrink-0" />
                         <span className="truncate text-zinc-700 dark:text-slate-300">{r.file}</span>
                       </td>
-                      <td className="px-3 py-2 text-right tabular-nums font-medium text-amber-600">{r.matches}</td>
+                      <td className="px-3 py-2 text-right tabular-nums font-medium text-brand-500">{r.matches}</td>
                     </tr>
                   ))}
                 </tbody>

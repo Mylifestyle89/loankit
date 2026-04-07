@@ -8,10 +8,10 @@ export default function LoginLayout({ children }: { children: React.ReactNode })
     >
       {/* Branding */}
       <div className="relative z-10 mb-8 text-center animate-[fadeIn_0.8s_ease-out]">
-        <h1 className="text-4xl font-bold tracking-tight text-white drop-shadow-[0_2px_8px_rgba(200,80,0,0.4)]">
+        <h1 className="text-4xl font-bold tracking-tight text-white drop-shadow-[0_4px_16px_rgba(122,58,35,0.6)] drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)]">
           Loankit
         </h1>
-        <p className="mt-2 text-xs tracking-[0.25em] text-white/80 uppercase drop-shadow-[0_1px_3px_rgba(0,0,0,0.2)]">Simple. Powerful. Yours.</p>
+        <p className="mt-2 text-xs tracking-[0.25em] text-white/70 uppercase drop-shadow-[0_1px_3px_rgba(0,0,0,0.25)]">Simple. Powerful. Yours.</p>
       </div>
 
       {/* Form */}
@@ -20,7 +20,7 @@ export default function LoginLayout({ children }: { children: React.ReactNode })
       </div>
 
       {/* Version footer */}
-      <p className="relative z-10 mt-8 text-[10px] text-orange-800/50 animate-[fadeIn_1.2s_ease-out]">Loankit v0.2</p>
+      <p className="relative z-10 mt-8 text-[10px] text-brand-700/50 animate-[fadeIn_1.2s_ease-out]">Loankit v0.2</p>
 
       {/* Keyframes */}
       <style>{`

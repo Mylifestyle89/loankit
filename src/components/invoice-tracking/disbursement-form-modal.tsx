@@ -351,7 +351,7 @@ export function DisbursementFormModal({ loanId, loanAmount = 0, editDisbursement
               </label>
             </div>
             {loanAmount > 0 && totalOutstanding > loanAmount && (
-              <p className="mt-2 text-xs text-amber-600 dark:text-amber-400">Tổng dư nợ vượt hạn mức vay ({fmtDisplay(loanAmount)})</p>
+              <p className="mt-2 text-xs text-brand-500 dark:text-brand-400">Tổng dư nợ vượt hạn mức vay ({fmtDisplay(loanAmount)})</p>
             )}
             <div className="grid grid-cols-2 gap-3 mt-3">
               <label className="block">
@@ -427,7 +427,7 @@ export function DisbursementFormModal({ loanId, loanAmount = 0, editDisbursement
             />
           ))}
 
-          <button type="button" onClick={addBeneficiary} className="cursor-pointer flex items-center gap-1.5 rounded-lg border border-dashed border-zinc-200 dark:border-white/[0.12] px-3 py-2 text-sm text-zinc-500 dark:text-slate-400 hover:bg-amber-50/30 dark:hover:bg-white/[0.04] transition-colors duration-150 w-full justify-center">
+          <button type="button" onClick={addBeneficiary} className="cursor-pointer flex items-center gap-1.5 rounded-lg border border-dashed border-zinc-200 dark:border-white/[0.12] px-3 py-2 text-sm text-zinc-500 dark:text-slate-400 hover:bg-brand-50/30 dark:hover:bg-white/[0.04] transition-colors duration-150 w-full justify-center">
             <Plus className="h-4 w-4" /> Thêm đơn vị thụ hưởng
           </button>
 
@@ -444,7 +444,7 @@ export function DisbursementFormModal({ loanId, loanAmount = 0, editDisbursement
           <button type="button" onClick={onClose} className="cursor-pointer rounded-lg px-4 py-2 text-sm text-zinc-500 dark:text-slate-400 hover:bg-zinc-100 dark:hover:bg-white/[0.06]">
             {t("common.cancel") ?? "Hủy"}
           </button>
-          <button type="submit" form="disb-form" disabled={saving} className="cursor-pointer rounded-lg bg-gradient-to-r from-amber-600 to-orange-500 px-4 py-2 text-sm font-medium text-white hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed">
+          <button type="submit" form="disb-form" disabled={saving} className="cursor-pointer rounded-lg bg-brand-500 px-4 py-2 text-sm font-medium text-white hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed">
             {saving ? "Đang lưu..." : (t("common.save") ?? "Lưu")}
           </button>
         </div>

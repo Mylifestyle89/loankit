@@ -25,21 +25,21 @@ export function LoanDetailHeader({ loan, onEditLoan, onOpenBeneficiaryModal }: P
   const { t } = useLanguage();
 
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-amber-100 dark:border-amber-500/10 bg-gradient-to-br from-amber-50 via-white to-orange-50 dark:from-amber-950/30 dark:via-[#141414] dark:to-orange-950/20 p-5">
-      <div className="absolute -right-12 -top-12 h-40 w-40 rounded-full bg-amber-200/30 blur-3xl dark:bg-amber-500/10" />
+    <div className="relative overflow-hidden rounded-2xl border border-brand-100 dark:border-brand-500/10 bg-gradient-to-br from-brand-50 via-white to-brand-100 dark:from-brand-950/30 dark:via-[#242220] dark:to-brand-900/20 p-5">
+      <div className="absolute -right-12 -top-12 h-40 w-40 rounded-full bg-brand-200/30 blur-3xl dark:bg-brand-500/10" />
       <div className="relative">
         {/* Top row: back + title + actions */}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
           <div className="flex items-start gap-3 min-w-0">
             <Link
               href={loan.customer?.id ? `/report/customers/${loan.customer.id}?tab=loans` : "/report/loans"}
-              className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/80 dark:bg-white/[0.06] border border-zinc-200 dark:border-white/[0.08] text-zinc-500 dark:text-slate-400 transition-colors hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-600 dark:hover:text-amber-400"
+              className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/80 dark:bg-white/[0.06] border border-zinc-200 dark:border-white/[0.08] text-zinc-500 dark:text-slate-400 transition-colors hover:bg-brand-50 dark:hover:bg-brand-500/10 hover:text-brand-500 dark:hover:text-brand-400"
             >
               <ArrowLeft className="h-4 w-4" />
             </Link>
             <div className="min-w-0">
               <div className="flex items-center gap-2.5">
-                <h2 className="truncate text-xl font-bold tracking-tight bg-gradient-to-r from-amber-700 to-orange-500 dark:from-amber-400 dark:to-orange-400 bg-clip-text text-transparent">
+                <h2 className="truncate text-xl font-bold tracking-tight text-brand-600 dark:text-brand-400">
                   {loan.contractNumber}
                 </h2>
                 <LoanStatusBadge status={loan.status} />
@@ -51,14 +51,14 @@ export function LoanDetailHeader({ loan, onEditLoan, onOpenBeneficiaryModal }: P
             <button
               type="button"
               onClick={onEditLoan}
-              className="rounded-lg bg-gradient-to-r from-amber-600 to-orange-500 px-4 py-1.5 text-xs font-medium text-white shadow-sm shadow-amber-500/25 transition-all hover:shadow-md hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/40"
+              className="rounded-lg bg-brand-500 px-4 py-1.5 text-xs font-medium text-white shadow-sm shadow-brand-500/25 transition-all hover:shadow-md hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40"
             >
               Thông tin hợp đồng tín dụng
             </button>
             {loan.customer?.id && (
               <Link
                 href={`/report/customers/${loan.customer.id}/loan-plans`}
-                className="rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-white/80 dark:bg-white/[0.05] px-3 py-1.5 text-xs font-medium text-orange-500 dark:text-orange-400 transition-colors hover:bg-orange-50 dark:hover:bg-orange-400/10"
+                className="rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-white/80 dark:bg-white/[0.05] px-3 py-1.5 text-xs font-medium text-brand-500 dark:text-brand-400 transition-colors hover:bg-brand-100 dark:hover:bg-brand-400/10"
               >
                 Phương án vay vốn
               </Link>
@@ -66,7 +66,7 @@ export function LoanDetailHeader({ loan, onEditLoan, onOpenBeneficiaryModal }: P
             <button
               type="button"
               onClick={onOpenBeneficiaryModal}
-              className="rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-white/80 dark:bg-white/[0.05] px-3 py-1.5 text-xs font-medium text-zinc-600 dark:text-slate-300 transition-colors hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400"
+              className="rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-white/80 dark:bg-white/[0.05] px-3 py-1.5 text-xs font-medium text-zinc-600 dark:text-slate-300 transition-colors hover:bg-brand-50 dark:hover:bg-brand-500/10 hover:text-brand-600 dark:hover:text-brand-400"
             >
               {t("beneficiaries.title") ?? "Đơn vị thụ hưởng"}
             </button>

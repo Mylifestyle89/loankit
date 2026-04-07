@@ -45,11 +45,11 @@ export default function Home() {
               <div className="absolute inset-0 w-1/3 bg-gradient-to-r from-transparent via-white/[0.06] to-transparent [animation:landing-shimmer_6s_ease-in-out_infinite]" />
             </div>
             <div className="relative z-10 flex w-full flex-col items-center justify-center px-8 py-16 sm:py-20 lg:py-28 text-center">
-              <p className="mb-4 text-xs font-semibold uppercase tracking-[0.3em] text-orange-400/80">Loan Documents Creator</p>
+              <p className="mb-4 text-xs font-semibold uppercase tracking-[0.3em] text-brand-400/80">Loan Documents Creator</p>
               <h1 className="bg-gradient-to-b from-white via-slate-100 to-slate-400 bg-clip-text text-5xl font-bold tracking-tight text-transparent sm:text-6xl lg:text-7xl xl:text-8xl">
                 Simple. Powerful.
                 <br />
-                <span className="bg-gradient-to-r from-orange-400 via-amber-400 to-orange-400 bg-clip-text">Yours.</span>
+                <span className="bg-gradient-to-r from-brand-400 via-brand-500 to-brand-400 bg-clip-text">Yours.</span>
               </h1>
               <p className="mt-6 max-w-md text-base font-medium text-slate-300/70">
                 Nền tảng tạo hồ sơ vay thế hệ mới
@@ -70,10 +70,10 @@ export default function Home() {
 
           {/* Mobile layout — no card, full-bleed content */}
           <div className="flex sm:hidden flex-col items-center justify-center text-center">
-            <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.3em] text-orange-400/80">Loan Documents Creator</p>
+            <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.3em] text-brand-400/80">Loan Documents Creator</p>
             <h1 className="bg-gradient-to-b from-white via-slate-100 to-slate-400 bg-clip-text text-4xl font-bold tracking-tight text-transparent">
               Simple.<br />Powerful.<br />
-              <span className="bg-gradient-to-r from-orange-400 via-amber-400 to-orange-400 bg-clip-text">Yours.</span>
+              <span className="bg-gradient-to-r from-brand-400 via-brand-500 to-brand-400 bg-clip-text">Yours.</span>
             </h1>
             <p className="mt-4 max-w-xs text-sm font-medium text-slate-300/70">
               Nền tảng tạo hồ sơ vay thế hệ mới

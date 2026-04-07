@@ -40,7 +40,7 @@ export function DeleteConfirmModal({
           value={typedName}
           onChange={(e) => setTypedName(e.target.value)}
           placeholder="Nhập lại tên để xác nhận"
-          className="mt-3 h-10 w-full rounded-xl border border-slate-200/60 bg-slate-50/50 px-3 text-sm text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 dark:border-white/[0.08] dark:bg-white/[0.04] dark:text-slate-100"
+          className="mt-3 h-10 w-full rounded-xl border border-slate-200/60 bg-slate-50/50 px-3 text-sm text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 dark:border-white/[0.08] dark:bg-white/[0.04] dark:text-slate-100"
         />
         <div className="mt-4 flex items-center justify-end gap-2">
           <button

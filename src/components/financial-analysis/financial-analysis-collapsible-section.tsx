@@ -51,7 +51,7 @@ export function CollapsibleSection({
         <span>{title}</span>
         <div className="flex items-center gap-2">
           {badge && (
-            <span className="rounded-full bg-amber-100 dark:bg-amber-500/15 px-2 py-0.5 text-[10px] font-semibold text-amber-600 dark:text-amber-400">
+            <span className="rounded-full bg-brand-100 dark:bg-brand-500/15 px-2 py-0.5 text-[10px] font-semibold text-brand-500 dark:text-brand-400">
               {badge}
             </span>
           )}

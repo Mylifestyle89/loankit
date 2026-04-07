@@ -34,7 +34,7 @@ export const AiResultRow = memo(function AiResultRow({
             type="button"
             onClick={() => onChange(fieldKey, originalValue)}
             title="Khôi phục giá trị AI gốc"
-            className="flex-shrink-0 rounded p-1 text-slate-400 dark:text-slate-500 hover:text-orange-600 dark:hover:text-orange-400 hover:bg-slate-100 dark:hover:bg-white/[0.07] transition-colors"
+            className="flex-shrink-0 rounded p-1 text-slate-400 dark:text-slate-500 hover:text-brand-500 dark:hover:text-brand-400 hover:bg-slate-100 dark:hover:bg-white/[0.07] transition-colors"
           >
             <RotateCcw className="h-3.5 w-3.5" />
           </button>
@@ -47,7 +47,7 @@ export const AiResultRow = memo(function AiResultRow({
         className="w-full resize-y rounded-lg border border-slate-200 dark:border-white/[0.09] bg-white dark:bg-white/[0.05] px-3 py-2 text-sm text-slate-800 dark:text-slate-100 focus:border-emerald-400 focus:outline-none focus:ring-1 focus:ring-emerald-400/30"
       />
       {isDirty && (
-        <p className="text-[10px] text-amber-500 dark:text-amber-400">
+        <p className="text-[10px] text-brand-500 dark:text-brand-400">
           ● Đã chỉnh sửa
         </p>
       )}

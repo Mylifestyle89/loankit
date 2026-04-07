@@ -29,7 +29,7 @@ function fmtVND(n: number): string {
 function debtGroupStyle(group: string | null) {
   const n = Number(group);
   if (!group || n <= 1) return { bg: "bg-emerald-100 dark:bg-emerald-500/10", icon: "text-emerald-600 dark:text-emerald-400", text: "text-emerald-700 dark:text-emerald-400" };
-  if (n === 2) return { bg: "bg-amber-100 dark:bg-amber-500/10", icon: "text-amber-600 dark:text-amber-400", text: "text-amber-700 dark:text-amber-400" };
+  if (n === 2) return { bg: "bg-brand-100 dark:bg-brand-500/10", icon: "text-brand-500 dark:text-brand-400", text: "text-brand-600 dark:text-brand-400" };
   return { bg: "bg-red-100 dark:bg-red-500/10", icon: "text-red-600 dark:text-red-400", text: "text-red-700 dark:text-red-400" };
 }
 
@@ -42,7 +42,7 @@ export function KhcnProfileCard({ customer, summary }: KhcnProfileCardProps) {
       <div className="p-4 pb-3">
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
           <h3 className="text-base font-bold text-zinc-900 dark:text-slate-100">{customer.customer_name}</h3>
-          <span className="inline-flex items-center rounded-full bg-amber-50 dark:bg-amber-500/10 px-2.5 py-0.5 text-xs font-medium text-amber-700 dark:text-amber-400 ring-1 ring-amber-500/20">
+          <span className="inline-flex items-center rounded-full bg-brand-100 dark:bg-brand-500/10 px-2.5 py-0.5 text-xs font-medium text-brand-600 dark:text-brand-400 ring-1 ring-brand-500/20">
             {customer.customer_code}
           </span>
         </div>
@@ -58,13 +58,13 @@ export function KhcnProfileCard({ customer, summary }: KhcnProfileCardProps) {
       {/* Stats grid */}
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-px bg-zinc-100 dark:bg-white/[0.05] border-t border-zinc-100 dark:border-white/[0.05]">
         <StatCell
-          icon={<FileText className="h-4 w-4 text-amber-500" />}
+          icon={<FileText className="h-4 w-4 text-brand-500" />}
           label="Khoản vay"
           value={`${summary.activeLoans}/${summary.totalLoans}`}
           sub="hoạt động"
         />
         <StatCell
-          icon={<Banknote className="h-4 w-4 text-orange-500" />}
+          icon={<Banknote className="h-4 w-4 text-brand-500" />}
           label="Tổng dư nợ"
           value={fmtVND(summary.outstandingBalance)}
         />
@@ -80,7 +80,7 @@ export function KhcnProfileCard({ customer, summary }: KhcnProfileCardProps) {
           value={summary.totalCollateralValue > 0 ? fmtVND(summary.totalCollateralValue) : "—"}
         />
         <StatCell
-          icon={<Shield className="h-4 w-4 text-amber-500" />}
+          icon={<Shield className="h-4 w-4 text-brand-500" />}
           label="Tổng NVBĐ"
           value={summary.totalObligation > 0 ? fmtVND(summary.totalObligation) : "—"}
         />

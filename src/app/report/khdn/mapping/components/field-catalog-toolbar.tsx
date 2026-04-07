@@ -24,7 +24,7 @@ export function FieldCatalogToolbar({
         type="button"
         onClick={collapseAllGroups}
         disabled={parentGroups.length === 0 || collapsedParentGroups.length === parentGroups.length}
-        className="rounded-md border border-zinc-200 dark:border-white/[0.08] bg-white dark:bg-white/[0.05] p-1 text-zinc-500 dark:text-slate-400 transition-colors hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:border-amber-300 hover:text-amber-600 dark:hover:text-amber-400 disabled:opacity-30"
+        className="rounded-md border border-zinc-200 dark:border-white/[0.08] bg-white dark:bg-white/[0.05] p-1 text-zinc-500 dark:text-slate-400 transition-colors hover:bg-brand-50 dark:hover:bg-brand-500/10 hover:border-brand-300 hover:text-brand-500 dark:hover:text-brand-400 disabled:opacity-30"
         title={t("mapping.collapseAllGroups")}
       >
         <ChevronsUp className="h-3 w-3" />
@@ -33,7 +33,7 @@ export function FieldCatalogToolbar({
         type="button"
         onClick={expandAllGroups}
         disabled={collapsedParentGroups.length === 0}
-        className="rounded-md border border-zinc-200 dark:border-white/[0.08] bg-white dark:bg-white/[0.05] p-1 text-zinc-500 dark:text-slate-400 transition-colors hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:border-amber-300 hover:text-amber-600 dark:hover:text-amber-400 disabled:opacity-30"
+        className="rounded-md border border-zinc-200 dark:border-white/[0.08] bg-white dark:bg-white/[0.05] p-1 text-zinc-500 dark:text-slate-400 transition-colors hover:bg-brand-50 dark:hover:bg-brand-500/10 hover:border-brand-300 hover:text-brand-500 dark:hover:text-brand-400 disabled:opacity-30"
         title={t("mapping.expandAllGroups")}
       >
         <ChevronsDown className="h-3 w-3" />

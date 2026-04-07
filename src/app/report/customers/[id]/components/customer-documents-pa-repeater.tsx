@@ -113,7 +113,7 @@ export function DocumentPARepeater({
       <button
         type="button"
         onClick={handleAdd}
-        className="inline-flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400 hover:underline"
+        className="inline-flex items-center gap-1 text-xs text-brand-500 dark:text-brand-400 hover:underline"
       >
         <Plus className="h-3 w-3" /> Thêm tài liệu PA
       </button>

@@ -50,7 +50,7 @@ export function NotificationPanel({ style }: { style?: React.CSSProperties }) {
         <span className="text-sm font-semibold">{t("notifications.title")}</span>
         <button
           onClick={() => void markAllRead()}
-          className="cursor-pointer text-xs text-orange-600 dark:text-orange-400 rounded px-1.5 py-0.5 hover:bg-orange-50 dark:hover:bg-orange-500/10 transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500/50"
+          className="cursor-pointer text-xs text-brand-500 dark:text-brand-400 rounded px-1.5 py-0.5 hover:bg-brand-100 dark:hover:bg-brand-1000/10 transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/50"
         >
           {t("notifications.markAllRead")}
         </button>
@@ -69,7 +69,7 @@ export function NotificationPanel({ style }: { style?: React.CSSProperties }) {
                 key={n.id}
                 onClick={() => handleClick(n)}
                 className={`flex w-full items-start gap-3 px-4 py-3 text-left cursor-pointer transition-colors duration-150 hover:bg-slate-50 dark:hover:bg-white/[0.04] ${
-                  !n.readAt ? "bg-orange-50/50 dark:bg-orange-500/5" : ""
+                  !n.readAt ? "bg-brand-50/50 dark:bg-brand-500/5" : ""
                 }`}
               >
                 <Icon className="mt-0.5 h-4 w-4 shrink-0 text-zinc-400 dark:text-slate-500" />

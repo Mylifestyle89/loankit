@@ -12,7 +12,7 @@ export function AccountSettingsTab() {
   if (isPending) {
     return (
       <div className="flex justify-center py-12">
-        <Loader2 className="h-6 w-6 animate-spin text-orange-500" />
+        <Loader2 className="h-6 w-6 animate-spin text-brand-500" />
       </div>
     );
   }
@@ -22,15 +22,15 @@ export function AccountSettingsTab() {
   const { user } = session;
   const roleBadgeClass =
     user.role === "admin"
-      ? "bg-orange-100 text-orange-700 dark:bg-orange-500/20 dark:text-orange-300"
+      ? "bg-brand-100 text-brand-600 dark:bg-brand-500/20 dark:text-brand-300"
       : user.role === "editor"
-        ? "bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300"
+        ? "bg-brand-100 text-brand-600 dark:bg-brand-500/20 dark:text-brand-300"
         : "bg-slate-100 text-slate-600 dark:bg-white/[0.06] dark:text-slate-400";
 
   return (
     <div className="mx-auto max-w-lg">
       <div className="mb-5 flex items-center gap-2">
-        <User className="h-4 w-4 text-orange-600 dark:text-orange-400" />
+        <User className="h-4 w-4 text-brand-500 dark:text-brand-400" />
         <span className="text-sm font-medium text-zinc-700 dark:text-slate-300">{user.name}</span>
         <span className={`ml-auto rounded-full px-2 py-0.5 text-[10px] font-semibold ${roleBadgeClass}`}>
           {user.role}
@@ -133,7 +133,7 @@ function ChangePasswordForm() {
 
 // Shared UI helpers
 const inputClass =
-  "flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-zinc-900 outline-none focus:border-orange-400 dark:border-white/[0.10] dark:bg-white/[0.04] dark:text-slate-100";
+  "flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-zinc-900 outline-none focus:border-brand-400 dark:border-white/[0.10] dark:bg-white/[0.04] dark:text-slate-100";
 
 function FormCard({ icon, title, children }: { icon: React.ReactNode; title: string; children: React.ReactNode }) {
   return (
@@ -149,7 +149,7 @@ function FormCard({ icon, title, children }: { icon: React.ReactNode; title: str
 function SubmitBtn({ loading, disabled, label = "Save" }: { loading: boolean; disabled: boolean; label?: string }) {
   return (
     <button type="submit" disabled={loading || disabled}
-      className="shrink-0 rounded-lg bg-orange-600 px-4 py-2 text-xs font-medium text-white hover:bg-orange-700 disabled:opacity-50">
+      className="shrink-0 rounded-lg bg-brand-500 px-4 py-2 text-xs font-medium text-white hover:bg-brand-600 disabled:opacity-50">
       {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : label}
     </button>
   );

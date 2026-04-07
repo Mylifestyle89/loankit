@@ -120,7 +120,7 @@ export function TemplateValidationReportModal({ report, fileName, onSave, onClos
                 <tbody>
                   {report.unknown.map((u) => (
                     <tr key={u.placeholder} className="border-b border-zinc-50 dark:border-white/[0.03]">
-                      <td className="py-1 pr-3 font-mono text-xs text-amber-700 dark:text-amber-400">[{u.placeholder}]</td>
+                      <td className="py-1 pr-3 font-mono text-xs text-brand-600 dark:text-brand-400">[{u.placeholder}]</td>
                       <td className="py-1">
                         {u.suggestions.length > 0 ? (
                           <div className="flex flex-wrap gap-1">
@@ -171,17 +171,17 @@ export function TemplateValidationReportModal({ report, fileName, onSave, onClos
               value={savePath}
               onChange={(e) => setSavePath(e.target.value)}
               placeholder="report_assets/template.docx"
-              className="flex-1 rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/40"
+              className="flex-1 rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40"
             />
             <button
               type="button" onClick={handleSave} disabled={saving || !savePath}
-              className="rounded-lg bg-gradient-to-r from-amber-600 to-orange-500 px-5 py-2 text-sm font-medium text-white shadow-sm shadow-amber-500/25 hover:brightness-110 disabled:opacity-50"
+              className="rounded-lg bg-brand-500 px-5 py-2 text-sm font-medium text-white shadow-sm shadow-brand-500/25 hover:brightness-110 disabled:opacity-50"
             >
               {saving ? "Đang lưu..." : "Lưu"}
             </button>
             <button
               type="button" onClick={onClose}
-              className="rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] px-4 py-2 text-sm shadow-sm hover:border-amber-200 dark:hover:border-amber-500/20"
+              className="rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] px-4 py-2 text-sm shadow-sm hover:border-brand-200 dark:hover:border-brand-500/20"
             >
               Hủy
             </button>
@@ -199,7 +199,7 @@ type BadgeColor = "emerald" | "amber" | "blue";
 function StatBadge({ color, count, label }: { color: BadgeColor; count: number; label: string }) {
   const colorMap: Record<string, string> = {
     emerald: "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400",
-    amber: "bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400",
+    amber: "bg-brand-100 text-brand-600 dark:bg-brand-900/40 dark:text-brand-400",
     blue: "bg-blue-100 text-blue-700 dark:bg-blue-950/40 dark:text-blue-400",
   };
   return (
@@ -214,7 +214,7 @@ function CollapsibleSection({ title, color, expanded, onToggle, children }: {
 }) {
   const borderMap: Record<string, string> = {
     emerald: "border-emerald-200 dark:border-emerald-500/20",
-    amber: "border-amber-200 dark:border-amber-500/20",
+    amber: "border-brand-200 dark:border-brand-500/20",
     blue: "border-blue-200 dark:border-blue-500/20",
   };
   return (
@@ -239,7 +239,7 @@ function SuggestionChip({ label }: { label: string }) {
   return (
     <button
       type="button" onClick={handleCopy}
-      className="rounded-md bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-500/20 px-2 py-0.5 text-xs text-amber-700 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-900/40 transition-colors"
+      className="rounded-md bg-brand-50 dark:bg-brand-900/30 border border-brand-200 dark:border-brand-500/20 px-2 py-0.5 text-xs text-brand-600 dark:text-brand-400 hover:bg-brand-100 dark:hover:bg-brand-800/40 transition-colors"
     >
       {copied ? "Copied!" : label}
     </button>

@@ -4,21 +4,21 @@
 /* ── Dark mode: apply when <html> has class="dark" ── */
 @custom-variant dark (&:is(.dark *));
 
-/* ── Semantic design tokens ── */
+/* ── Semantic design tokens (Claude-inspired warm palette) ── */
 :root {
-  --bg-base: #fafafa;
+  --bg-base: #FAF8F5;
   --surface: #ffffff;
-  --surface-2: #f8fafc;
-  --surface-3: #f1f5f9;
-  --surface-overlay: rgb(255 255 255 / 0.80);
-  --surface-inset: #f8fafc;
-  --border-sub: rgb(226 232 240 / 0.6);
-  --border-str: rgb(226 232 240 / 0.8);
-  --border-strong: rgb(226 232 240 / 1.0);
-  --text-1: #0f172a;
-  --text-2: #64748b;
-  --glow: 0 0 20px rgb(99 102 241 / 0.2);
-  --glow-lg: 0 0 32px rgb(99 102 241 / 0.25);
+  --surface-2: #F7F5F0;
+  --surface-3: #F0EDE6;
+  --surface-overlay: rgb(255 255 255 / 0.85);
+  --surface-inset: #F4F1EB;
+  --border-sub: rgb(196 186 168 / 0.35);
+  --border-str: rgb(196 186 168 / 0.50);
+  --border-strong: rgb(196 186 168 / 0.70);
+  --text-1: #1a1a1a;
+  --text-2: #78716c;
+  --glow: 0 0 20px rgb(218 119 86 / 0.15);
+  --glow-lg: 0 0 32px rgb(218 119 86 / 0.20);
 
   /* Type scale (14px base for SaaS UI) */
   --text-xs: 0.75rem;
@@ -47,26 +47,20 @@
 
 html.dark {
   color-scheme: dark;
-  /* native controls dark */
-  --bg-base: #0a0a0a;
-  /* neutral black      */
-  --surface: #141414;
-  /* card / panel       */
-  --surface-2: #1a1a1a;
-  /* elevated surface   */
-  --surface-3: #1e1e1e;
-  --surface-overlay: rgb(20 20 20 / 0.85);
-  --surface-inset: #0e0e0e;
-  --border-sub: rgb(255 255 255 / 0.10);
-  --border-str: rgb(255 255 255 / 0.15);
-  --border-strong: rgb(255 255 255 / 0.20);
-  --text-1: #e2e8f0;
-  /* slate-200         */
-  --text-2: #64748b;
-  /* slate-500         */
-  --glow: 0 0 12px rgb(99 102 241 / 0.15);
-  /* subtle in dark    */
-  --glow-lg: 0 0 20px rgb(99 102 241 / 0.20);
+  /* Warm dark — Claude-inspired earthy black */
+  --bg-base: #1A1816;
+  --surface: #242220;
+  --surface-2: #2E2B28;
+  --surface-3: #383330;
+  --surface-overlay: rgb(36 34 32 / 0.85);
+  --surface-inset: #18161480;
+  --border-sub: rgb(255 248 240 / 0.08);
+  --border-str: rgb(255 248 240 / 0.12);
+  --border-strong: rgb(255 248 240 / 0.18);
+  --text-1: #F4F1EB;
+  --text-2: #A8A29E;
+  --glow: 0 0 12px rgb(218 119 86 / 0.18);
+  --glow-lg: 0 0 20px rgb(218 119 86 / 0.25);
 }
 
 @theme inline {
@@ -75,6 +69,32 @@ html.dark {
   --font-sans: var(--font-inter);
   --font-heading: var(--font-geist-sans, var(--font-inter));
   --font-mono: var(--font-geist-mono);
+
+  /* ── Brand: Claude-inspired pastel terracotta scale ── */
+  --color-brand-50: #FAF8F5;   /* page bg */
+  --color-brand-100: #F4F1EB;  /* surface/card bg (Pampas) */
+  --color-brand-200: #E8E1D6;  /* hover bg, input bg */
+  --color-brand-300: #D4C9B5;  /* light borders */
+  --color-brand-400: #B1A592;  /* muted text, placeholders (Cloudy) */
+  --color-brand-500: #DA7756;  /* primary accent (Terra Cotta) */
+  --color-brand-600: #C15F3C;  /* hover/pressed (Crail) */
+  --color-brand-700: #A34E30;  /* active/focus */
+  --color-brand-800: #7A3A23;  /* dark accent */
+  --color-brand-900: #4A2316;  /* dark heading */
+  --color-brand-950: #2D150D;  /* deep dark */
+
+  /* ── Warm neutrals (stone scale) — replaces cool zinc/slate gradually ── */
+  --color-stone-50: #FAF8F5;
+  --color-stone-100: #F4F1EB;
+  --color-stone-200: #E8E1D6;
+  --color-stone-300: #D4C9B5;
+  --color-stone-400: #B1A592;
+  --color-stone-500: #8B8278;
+  --color-stone-600: #6B635A;
+  --color-stone-700: #4D4640;
+  --color-stone-800: #2E2B28;
+  --color-stone-900: #1A1816;
+  --color-stone-950: #0E0D0C;
 
   /* Digital Premium 2025 – Electric Indigo (WCAG AA) */
   --color-indigo-50: #eef2ff;

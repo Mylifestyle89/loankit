@@ -72,20 +72,20 @@ export function ConfiguredTemplatesTab({
       <div className="mt-3 flex flex-wrap items-center gap-3">
         {/* Template selector */}
         <select value={activeTemplateId} onChange={(e) => onActiveTemplateChange(e.target.value)} aria-label={t("template.editor.title")}
-          className="rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] dark:text-slate-100 px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/40">
+          className="rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] dark:text-slate-100 px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40">
           {templates.map((tpl) => <option key={tpl.id} value={tpl.id}>{tpl.template_name} {tpl.active ? `(${t("template.active")})` : ""}</option>)}
         </select>
         {/* Action buttons */}
         <button type="button" onClick={onOpenDocx} disabled={!profileDocxPath}
-          className="rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] px-4 py-2 text-sm shadow-sm hover:border-amber-200 dark:hover:border-amber-500/20 disabled:opacity-50">
+          className="rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] px-4 py-2 text-sm shadow-sm hover:border-brand-200 dark:hover:border-brand-500/20 disabled:opacity-50">
           {t("template.editor.openDocx")}
         </button>
         <button type="button" onClick={onOpenEditor} disabled={!profileDocxPath || openingEditor}
-          className="rounded-lg bg-gradient-to-r from-amber-600 to-orange-500 px-4 py-2 text-sm font-medium text-white shadow-sm shadow-amber-500/25 hover:brightness-110 disabled:opacity-50">
+          className="rounded-lg bg-brand-500 px-4 py-2 text-sm font-medium text-white shadow-sm shadow-brand-500/25 hover:brightness-110 disabled:opacity-50">
           {openingEditor ? t("template.editor.modal.loading") : t("template.editor.openEditor")}
         </button>
         <button type="button" onClick={onOpenLocal} disabled={openingEditor}
-          className="rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] px-4 py-2 text-sm shadow-sm hover:border-amber-200 dark:hover:border-amber-500/20 disabled:opacity-50">
+          className="rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] px-4 py-2 text-sm shadow-sm hover:border-brand-200 dark:hover:border-brand-500/20 disabled:opacity-50">
           {openingEditor ? "Đang mở..." : "Chọn file từ máy"}
         </button>
         <button type="button" onClick={onRemoveTemplate} disabled={removing || !activeTemplateId}

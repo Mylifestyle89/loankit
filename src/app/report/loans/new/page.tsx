@@ -89,15 +89,15 @@ function NewLoanForm() {
     }
   }
 
-  const inputCls = "mt-1 w-full rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] px-3 py-2 text-sm shadow-sm transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/40";
+  const inputCls = "mt-1 w-full rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] px-3 py-2 text-sm shadow-sm transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40";
   const labelCls = "text-xs font-medium text-zinc-600 dark:text-slate-400";
 
   return (
     <section className="max-w-xl space-y-5">
-      <div className="relative overflow-hidden rounded-2xl border border-amber-100 dark:border-amber-500/10 bg-gradient-to-br from-amber-50 via-white to-orange-50 dark:from-amber-950/30 dark:via-[#141414] dark:to-orange-950/20 p-5">
-        <div className="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-amber-200/30 blur-2xl dark:bg-amber-500/10" />
+      <div className="relative overflow-hidden rounded-2xl border border-brand-100 dark:border-brand-500/10 bg-gradient-to-br from-brand-50 via-white to-brand-100 dark:from-brand-950/30 dark:via-[#242220] dark:to-brand-900/20 p-5">
+        <div className="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-brand-200/30 blur-2xl dark:bg-brand-500/10" />
         <div className="relative">
-          <h2 className="text-xl font-bold tracking-tight bg-gradient-to-r from-amber-700 to-orange-500 dark:from-amber-400 dark:to-orange-400 bg-clip-text text-transparent">{t("loans.add")}</h2>
+          <h2 className="text-xl font-bold tracking-tight text-brand-600 dark:text-brand-400">{t("loans.add")}</h2>
           {error && <p className="mt-2 text-sm text-red-600 dark:text-red-400">{error}</p>}
         </div>
       </div>
@@ -172,10 +172,10 @@ function NewLoanForm() {
           <textarea value={purpose} onChange={(e) => setPurpose(e.target.value)} rows={2} className={inputCls} />
         </label>
         <div className="flex justify-end gap-3 pt-2">
-          <button type="button" onClick={() => router.back()} className="cursor-pointer rounded-lg border border-zinc-200 dark:border-white/[0.09] px-4 py-2 text-sm text-zinc-600 dark:text-slate-400 shadow-sm transition-all duration-150 hover:border-amber-200 dark:hover:border-amber-500/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/40">
+          <button type="button" onClick={() => router.back()} className="cursor-pointer rounded-lg border border-zinc-200 dark:border-white/[0.09] px-4 py-2 text-sm text-zinc-600 dark:text-slate-400 shadow-sm transition-all duration-150 hover:border-brand-200 dark:hover:border-brand-500/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40">
             {t("common.cancel")}
           </button>
-          <button type="submit" disabled={saving} className="cursor-pointer rounded-lg bg-gradient-to-r from-amber-600 to-orange-500 px-5 py-2 text-sm font-medium text-white shadow-sm shadow-amber-500/25 transition-all duration-200 hover:shadow-md hover:shadow-amber-500/30 hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/50">
+          <button type="submit" disabled={saving} className="cursor-pointer rounded-lg bg-brand-500 px-5 py-2 text-sm font-medium text-white shadow-sm shadow-brand-500/25 transition-all duration-200 hover:shadow-md hover:shadow-brand-500/30 hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/50">
             {saving ? t("loans.loading") : t("common.save")}
           </button>
         </div>

@@ -95,14 +95,14 @@ export function LoanProductsTab() {
     <div className="rounded-2xl border border-zinc-200 dark:border-white/[0.07] bg-white dark:bg-[#161616] shadow-sm p-5 space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-sm font-bold text-zinc-700 dark:text-slate-200">Sản phẩm tín dụng</h2>
-        <button type="button" onClick={startCreate} className="inline-flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400 hover:underline">
+        <button type="button" onClick={startCreate} className="inline-flex items-center gap-1 text-xs text-brand-500 dark:text-brand-400 hover:underline">
           <Plus className="h-3 w-3" /> Thêm sản phẩm
         </button>
       </div>
 
       {loading ? (
         <div className="flex justify-center py-8">
-          <div className="h-5 w-5 animate-spin rounded-full border-2 border-amber-200 border-t-amber-600" />
+          <div className="h-5 w-5 animate-spin rounded-full border-2 border-brand-200 border-t-brand-500" />
         </div>
       ) : (
         <div className="overflow-x-auto">
@@ -120,7 +120,7 @@ export function LoanProductsTab() {
             <tbody>
               {items.map((p) => (
                 <tr key={p.id} className="border-b border-zinc-50 dark:border-white/[0.03] hover:bg-zinc-50/50 dark:hover:bg-white/[0.02]">
-                  <td className="py-2 pr-3 font-mono text-amber-600 dark:text-amber-400">{p.code}</td>
+                  <td className="py-2 pr-3 font-mono text-brand-500 dark:text-brand-400">{p.code}</td>
                   <td className="py-2 pr-3">{p.name}</td>
                   <td className="py-2 pr-3">{typeLabel(p.customer_type)}</td>
                   <td className="py-2 pr-3">{methodLabel(p.loan_method)}</td>
@@ -130,7 +130,7 @@ export function LoanProductsTab() {
                     </span>
                   </td>
                   <td className="py-2 text-right">
-                    <button type="button" onClick={() => startEdit(p)} className="p-1 rounded hover:bg-amber-50 dark:hover:bg-amber-500/10">
+                    <button type="button" onClick={() => startEdit(p)} className="p-1 rounded hover:bg-brand-50 dark:hover:bg-brand-500/10">
                       <Pencil className="h-3 w-3 text-zinc-400" />
                     </button>
                     <button type="button" onClick={() => handleDelete(p.id)} className="p-1 rounded hover:bg-red-50 dark:hover:bg-red-500/10 ml-1">
@@ -146,8 +146,8 @@ export function LoanProductsTab() {
 
       {/* Create / Edit form */}
       {(creating || editId) && (
-        <div className="rounded-lg border border-amber-200 dark:border-amber-500/20 bg-amber-50/50 dark:bg-amber-500/5 p-4 space-y-3">
-          <h3 className="text-xs font-semibold text-amber-700 dark:text-amber-400">
+        <div className="rounded-lg border border-brand-200 dark:border-brand-500/20 bg-brand-50/50 dark:bg-brand-500/5 p-4 space-y-3">
+          <h3 className="text-xs font-semibold text-brand-600 dark:text-brand-400">
             {creating ? "Thêm sản phẩm mới" : "Chỉnh sửa sản phẩm"}
           </h3>
           <div className="grid grid-cols-2 gap-3">
@@ -184,7 +184,7 @@ export function LoanProductsTab() {
           </div>
           <div className="flex gap-2">
             <button type="button" onClick={handleSave} disabled={saving || !form.code.trim() || !form.name.trim()}
-              className="inline-flex items-center gap-1 rounded-lg bg-amber-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-amber-700 disabled:opacity-50">
+              className="inline-flex items-center gap-1 rounded-lg bg-brand-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-brand-600 disabled:opacity-50">
               <Save className="h-3 w-3" /> {saving ? "Đang lưu..." : "Lưu"}
             </button>
             <button type="button" onClick={cancel} className="inline-flex items-center gap-1 rounded-lg border border-zinc-200 dark:border-white/[0.09] px-3 py-1.5 text-xs hover:bg-zinc-50 dark:hover:bg-white/[0.04]">

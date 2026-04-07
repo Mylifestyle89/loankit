@@ -41,7 +41,7 @@ function LoginForm() {
   }
 
   return (
-    <div className="relative z-10 w-full max-w-md rounded-2xl border border-white/30 bg-white/20 p-10 shadow-2xl backdrop-blur-xl">
+    <div className="relative z-10 w-full max-w-md rounded-2xl border border-white/40 bg-white/30 p-10 shadow-2xl backdrop-blur-xl">
       <h2 className="mb-6 text-center text-lg font-semibold text-white">
         {t("login.title")}
       </h2>
@@ -58,7 +58,7 @@ function LoginForm() {
             autoComplete="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full rounded-lg border border-white/20 bg-white/90 px-3 py-2.5 text-sm text-zinc-800 placeholder-zinc-400 outline-none transition focus:border-orange-400 focus:ring-2 focus:ring-orange-400/30"
+            className="w-full rounded-lg border border-white/20 bg-white/90 px-3 py-2.5 text-sm text-zinc-800 placeholder-zinc-400 outline-none transition focus:border-brand-400 focus:ring-2 focus:ring-brand-400/30"
             placeholder="admin@company.com"
           />
         </div>
@@ -74,7 +74,7 @@ function LoginForm() {
             autoComplete="current-password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full rounded-lg border border-white/20 bg-white/90 px-3 py-2.5 text-sm text-zinc-800 placeholder-zinc-400 outline-none transition focus:border-orange-400 focus:ring-2 focus:ring-orange-400/30"
+            className="w-full rounded-lg border border-white/20 bg-white/90 px-3 py-2.5 text-sm text-zinc-800 placeholder-zinc-400 outline-none transition focus:border-brand-400 focus:ring-2 focus:ring-brand-400/30"
             placeholder="••••••••"
           />
         </div>
@@ -88,7 +88,7 @@ function LoginForm() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full rounded-lg bg-gradient-to-r from-orange-600 to-amber-500 py-2.5 text-sm font-semibold text-white shadow-lg shadow-orange-500/25 transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
+          className="w-full rounded-lg bg-gradient-to-r from-brand-500 to-brand-500 py-2.5 text-sm font-semibold text-white shadow-lg shadow-brand-500/25 transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {loading ? t("login.signingIn") : t("login.submit")}
         </button>

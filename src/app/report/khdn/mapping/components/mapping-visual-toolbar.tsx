@@ -103,7 +103,7 @@ export function MappingVisualToolbar({
         <input
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full md:w-72 rounded-lg border border-zinc-300 dark:border-white/[0.10] px-3 py-1.5 text-sm text-zinc-900 dark:text-slate-100 dark:bg-white/[0.05] placeholder:text-zinc-500 dark:placeholder:text-slate-400 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500/40"
+          className="w-full md:w-72 rounded-lg border border-zinc-300 dark:border-white/[0.10] px-3 py-1.5 text-sm text-zinc-900 dark:text-slate-100 dark:bg-white/[0.05] placeholder:text-zinc-500 dark:placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500/40"
           placeholder={t("mapping.searchPlaceholder")}
         />
         <label className="inline-flex items-center gap-2 rounded-lg border border-zinc-300 dark:border-white/[0.10] bg-white dark:bg-[#141414]/90 px-3 py-1.5 text-xs text-zinc-700 dark:text-slate-200">
@@ -111,7 +111,7 @@ export function MappingVisualToolbar({
             type="checkbox"
             checked={showUnmappedOnly}
             onChange={(e) => setShowUnmappedOnly(e.target.checked)}
-            className="h-3.5 w-3.5 rounded border-zinc-300 dark:border-white/[0.10] text-amber-600 focus:ring-amber-500/40"
+            className="h-3.5 w-3.5 rounded border-zinc-300 dark:border-white/[0.10] text-brand-500 focus:ring-brand-500/40"
           />
           Chưa mapping
         </label>
@@ -120,7 +120,7 @@ export function MappingVisualToolbar({
             type="checkbox"
             checked={showTechnicalKeys}
             onChange={(e) => setShowTechnicalKeys(e.target.checked)}
-            className="h-3.5 w-3.5 rounded border-zinc-300 dark:border-white/[0.10] text-amber-600 focus:ring-amber-500/40"
+            className="h-3.5 w-3.5 rounded border-zinc-300 dark:border-white/[0.10] text-brand-500 focus:ring-brand-500/40"
           />
           Technical keys
         </label>

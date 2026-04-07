@@ -260,7 +260,7 @@ export function CustomerDocxImportModal({ open, onClose, onSuccess, basePath }: 
               onClick={() => inputRef.current?.click()}
               onDragOver={(e) => e.preventDefault()}
               onDrop={(e) => { e.preventDefault(); addFiles(e.dataTransfer.files); }}
-              className="flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-zinc-300 dark:border-white/15 p-8 cursor-pointer hover:border-amber-400 transition-colors"
+              className="flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-zinc-300 dark:border-white/15 p-8 cursor-pointer hover:border-brand-400 transition-colors"
             >
               <Upload className="h-8 w-8 text-zinc-400" />
               <span className="text-sm text-zinc-500">Kéo thả hoặc nhấn để chọn file .docx (tối đa {MAX_FILES} file)</span>
@@ -274,7 +274,7 @@ export function CustomerDocxImportModal({ open, onClose, onSuccess, basePath }: 
                 <div className="flex flex-wrap gap-2">
                   {files.map((f, i) => (
                     <div key={i} className="flex items-center gap-2 rounded-lg border border-zinc-200 dark:border-white/10 px-3 py-1.5 text-xs">
-                      <FileText className="h-3.5 w-3.5 text-amber-500" />
+                      <FileText className="h-3.5 w-3.5 text-brand-500" />
                       <span className="truncate max-w-[200px]">{f.name}</span>
                       <button type="button" onClick={() => removeFile(i)}
                         className="text-zinc-400 hover:text-red-500 cursor-pointer">
@@ -284,7 +284,7 @@ export function CustomerDocxImportModal({ open, onClose, onSuccess, basePath }: 
                   ))}
                 </div>
                 <button type="button" onClick={handleExtract}
-                  className="w-full rounded-lg bg-gradient-to-r from-amber-600 to-orange-500 px-5 py-2.5 text-sm font-medium text-white shadow-sm hover:brightness-110 cursor-pointer">
+                  className="w-full rounded-lg bg-brand-500 px-5 py-2.5 text-sm font-medium text-white shadow-sm hover:brightness-110 cursor-pointer">
                   Trích xuất thông tin ({files.length} file)
                 </button>
               </div>
@@ -297,7 +297,7 @@ export function CustomerDocxImportModal({ open, onClose, onSuccess, basePath }: 
         {/* ── Processing step ── */}
         {step === "processing" && (
           <div className="flex flex-col items-center gap-3 py-10">
-            <Loader2 className="h-8 w-8 animate-spin text-amber-500" />
+            <Loader2 className="h-8 w-8 animate-spin text-brand-500" />
             <span className="text-sm text-zinc-500">AI đang trích xuất từ {files.length} file...</span>
             <span className="text-xs text-zinc-400">Có thể mất 10-30 giây</span>
           </div>
@@ -341,7 +341,7 @@ export function CustomerDocxImportModal({ open, onClose, onSuccess, basePath }: 
                 Thử lại
               </button>
               <button type="button" onClick={handleSubmit} disabled={submitting}
-                className="flex-1 inline-flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-amber-600 to-orange-500 px-5 py-2 text-sm font-medium text-white shadow-sm hover:brightness-110 disabled:opacity-50 cursor-pointer">
+                className="flex-1 inline-flex items-center justify-center gap-2 rounded-lg bg-brand-500 px-5 py-2 text-sm font-medium text-white shadow-sm hover:brightness-110 disabled:opacity-50 cursor-pointer">
                 {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
                 {submitting ? "Đang tạo..." : "Tạo khách hàng"}
               </button>
@@ -378,7 +378,7 @@ function FieldSection({ title, labels, data, onChange }: {
             <input
               value={String(data[key] ?? "")}
               onChange={(e) => onChange(key, e.target.value)}
-              className="flex-1 rounded-md border border-zinc-200 dark:border-white/10 bg-white dark:bg-[#1a1a1a] px-3 py-1.5 text-sm outline-none focus:border-amber-300 dark:focus:border-amber-500/30"
+              className="flex-1 rounded-md border border-zinc-200 dark:border-white/10 bg-white dark:bg-[#1a1a1a] px-3 py-1.5 text-sm outline-none focus:border-brand-300 dark:focus:border-brand-500/30"
             />
           </label>
         ))}

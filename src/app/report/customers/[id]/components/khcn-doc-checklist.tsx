@@ -170,8 +170,8 @@ export function KhcnDocChecklist({
                 onClick={() => setMethod(o.value)}
                 className={`px-3 py-1.5 text-xs font-medium transition-colors ${
                   method === o.value
-                    ? "bg-amber-600 text-white"
-                    : "bg-white dark:bg-[#1a1a1a] text-zinc-600 dark:text-zinc-400 hover:bg-amber-50 dark:hover:bg-amber-500/10"
+                    ? "bg-brand-500 text-white"
+                    : "bg-white dark:bg-[#1a1a1a] text-zinc-600 dark:text-zinc-400 hover:bg-brand-50 dark:hover:bg-brand-500/10"
                 }`}
               >
                 {o.label}
@@ -180,7 +180,7 @@ export function KhcnDocChecklist({
           </div>
         </div>
         <div className="text-xs text-zinc-500">
-          <span className="font-semibold text-amber-600">{checked.size}</span>/{totalDocs} hoàn thành
+          <span className="font-semibold text-brand-500">{checked.size}</span>/{totalDocs} hoàn thành
         </div>
       </div>
 
@@ -191,7 +191,7 @@ export function KhcnDocChecklist({
           <select
             value={selectedLoanId}
             onChange={(e) => setSelectedLoanId(e.target.value)}
-            className="rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] px-3 py-1.5 text-xs font-medium text-zinc-700 dark:text-zinc-300 focus:outline-none focus:ring-2 focus:ring-amber-500/40"
+            className="rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] px-3 py-1.5 text-xs font-medium text-zinc-700 dark:text-zinc-300 focus:outline-none focus:ring-2 focus:ring-brand-500/40"
           >
             {loans.map((l) => (
               <option key={l.id} value={l.id}>
@@ -211,8 +211,8 @@ export function KhcnDocChecklist({
             onClick={() => setTab(t.key)}
             className={`px-4 py-1.5 text-xs font-medium transition-colors ${
               tab === t.key
-                ? "bg-amber-600 text-white"
-                : "bg-white dark:bg-[#1a1a1a] text-zinc-600 dark:text-zinc-400 hover:bg-amber-50 dark:hover:bg-amber-500/10"
+                ? "bg-brand-500 text-white"
+                : "bg-white dark:bg-[#1a1a1a] text-zinc-600 dark:text-zinc-400 hover:bg-brand-50 dark:hover:bg-brand-500/10"
             }`}
           >
             {t.label}
@@ -223,14 +223,14 @@ export function KhcnDocChecklist({
       {/* Progress bar */}
       <div className="h-1.5 rounded-full bg-zinc-100 dark:bg-white/[0.05] overflow-hidden">
         <div
-          className="h-full rounded-full bg-gradient-to-r from-amber-500 to-orange-400 transition-all duration-300"
+          className="h-full rounded-full bg-gradient-to-r from-brand-500 to-brand-400 transition-all duration-300"
           style={{ width: totalDocs > 0 ? `${(checked.size / totalDocs) * 100}%` : "0%" }}
         />
       </div>
 
       {loading ? (
         <div className="flex justify-center py-8">
-          <div className="h-5 w-5 animate-spin rounded-full border-2 border-amber-200 border-t-amber-600" />
+          <div className="h-5 w-5 animate-spin rounded-full border-2 border-brand-200 border-t-brand-500" />
         </div>
       ) : (
         <div className="space-y-4">
@@ -255,30 +255,30 @@ export function KhcnDocChecklist({
                         className={`flex h-5 w-5 shrink-0 items-center justify-center rounded border transition-colors ${
                           isChecked
                             ? "border-emerald-500 bg-emerald-500 text-white"
-                            : "border-zinc-300 dark:border-white/[0.15] hover:border-amber-400"
+                            : "border-zinc-300 dark:border-white/[0.15] hover:border-brand-400"
                         }`}
                       >
                         {isChecked && <Check className="h-3 w-3" />}
                       </button>
-                      <FileText className="h-4 w-4 shrink-0 text-amber-400" />
+                      <FileText className="h-4 w-4 shrink-0 text-brand-400" />
                       <span className={`flex-1 text-sm ${isChecked ? "text-zinc-400 line-through" : ""}`}>{t.name}</span>
                       {customerId && (
                         <button
                           type="button"
                           onClick={() => handleGenerate(t.path, t.name)}
                           disabled={generating === t.path}
-                          className="shrink-0 rounded-md p-1.5 text-orange-400 hover:bg-orange-50 hover:text-orange-600 dark:hover:bg-orange-400/10 transition-colors"
+                          className="shrink-0 rounded-md p-1.5 text-brand-400 hover:bg-brand-100 hover:text-brand-500 dark:hover:bg-brand-400/10 transition-colors"
                           title="Tạo báo cáo"
                         >
                           {generating === t.path
-                            ? <div className="h-3.5 w-3.5 animate-spin rounded-full border border-orange-300 border-t-orange-500" />
+                            ? <div className="h-3.5 w-3.5 animate-spin rounded-full border border-brand-300 border-t-brand-500" />
                             : <Sparkles className="h-3.5 w-3.5" />}
                         </button>
                       )}
                       <button
                         type="button"
                         onClick={() => handleDownload(t.path)}
-                        className="shrink-0 rounded-md p-1.5 text-zinc-400 hover:bg-amber-50 hover:text-amber-600 dark:hover:bg-amber-500/10 transition-colors"
+                        className="shrink-0 rounded-md p-1.5 text-zinc-400 hover:bg-brand-50 hover:text-brand-500 dark:hover:bg-brand-500/10 transition-colors"
                         title="Tải mẫu gốc"
                       >
                         <Download className="h-3.5 w-3.5" />

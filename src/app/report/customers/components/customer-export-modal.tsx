@@ -64,14 +64,14 @@ export function CustomerExportModal({ customers, onClose, onError }: Props) {
     }
   }
 
-  const checkboxCls = "rounded border-zinc-300 h-4 w-4 text-amber-600 focus-visible:ring-amber-500/40 cursor-pointer";
+  const checkboxCls = "rounded border-zinc-300 h-4 w-4 text-brand-500 focus-visible:ring-brand-500/40 cursor-pointer";
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
       <div className="w-full max-w-3xl rounded-2xl bg-white dark:bg-[#161616] shadow-xl flex flex-col h-[80vh]">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-zinc-100 dark:border-white/[0.07] px-6 py-4">
-          <h3 className="text-lg font-semibold bg-gradient-to-r from-amber-700 to-orange-500 dark:from-amber-400 dark:to-orange-400 bg-clip-text text-transparent">
+          <h3 className="text-lg font-semibold text-brand-600 dark:text-brand-400">
             Tùy chọn xuất dữ liệu
           </h3>
           <button onClick={onClose} className="rounded-lg p-1.5 text-zinc-400 dark:text-slate-500 hover:bg-zinc-100 dark:hover:bg-white/[0.06] transition-colors">
@@ -92,7 +92,7 @@ export function CustomerExportModal({ customers, onClose, onError }: Props) {
                   onClick={() => setExportFormat(fmt)}
                   className={`px-3 py-1.5 text-sm font-medium transition-colors ${
                     exportFormat === fmt
-                      ? "bg-amber-600 text-white"
+                      ? "bg-brand-500 text-white"
                       : "bg-white dark:bg-[#1a1a1a] text-zinc-600 dark:text-slate-400 hover:bg-zinc-50 dark:hover:bg-white/[0.04]"
                   }`}
                 >
@@ -112,18 +112,18 @@ export function CustomerExportModal({ customers, onClose, onError }: Props) {
         <div className="flex-1 overflow-y-auto px-6 py-4 grid grid-cols-2 gap-8">
           {/* Customers column */}
           <div className="flex flex-col h-full border border-zinc-200 dark:border-white/[0.08] rounded-xl overflow-hidden">
-            <div className="bg-amber-50 dark:bg-amber-500/5 px-4 py-2 font-medium flex justify-between items-center border-b border-zinc-200 dark:border-white/[0.07]">
+            <div className="bg-brand-50 dark:bg-brand-500/5 px-4 py-2 font-medium flex justify-between items-center border-b border-zinc-200 dark:border-white/[0.07]">
               <span>Khách hàng ({selectedCustomers.size}/{customers.length})</span>
               <button
                 onClick={() => setSelectedCustomers(selectedCustomers.size === customers.length ? new Set() : new Set(customers.map((c) => c.id)))}
-                className="text-xs text-amber-600 dark:text-amber-400 hover:underline"
+                className="text-xs text-brand-500 dark:text-brand-400 hover:underline"
               >
                 {selectedCustomers.size === customers.length ? "Bỏ chọn tất cả" : "Chọn tất cả"}
               </button>
             </div>
             <div className="flex-1 overflow-y-auto p-2">
               {customers.map((c) => (
-                <label key={c.id} className="flex items-center gap-3 p-2 hover:bg-amber-50 dark:hover:bg-white/[0.04] rounded-lg cursor-pointer transition-colors">
+                <label key={c.id} className="flex items-center gap-3 p-2 hover:bg-brand-50 dark:hover:bg-white/[0.04] rounded-lg cursor-pointer transition-colors">
                   <input
                     type="checkbox"
                     checked={selectedCustomers.has(c.id)}
@@ -147,18 +147,18 @@ export function CustomerExportModal({ customers, onClose, onError }: Props) {
 
           {/* Templates column */}
           <div className="flex flex-col h-full border border-zinc-200 dark:border-white/[0.08] rounded-xl overflow-hidden">
-            <div className="bg-amber-50 dark:bg-amber-500/5 px-4 py-2 font-medium flex justify-between items-center border-b border-zinc-200 dark:border-white/[0.07]">
+            <div className="bg-brand-50 dark:bg-brand-500/5 px-4 py-2 font-medium flex justify-between items-center border-b border-zinc-200 dark:border-white/[0.07]">
               <span>Mẫu Dữ Liệu ({selectedTemplates.size}/{allTemplates.length})</span>
               <button
                 onClick={() => setSelectedTemplates(selectedTemplates.size === allTemplates.length ? new Set() : new Set(allTemplates.map((t) => t.id)))}
-                className="text-xs text-amber-600 dark:text-amber-400 hover:underline"
+                className="text-xs text-brand-500 dark:text-brand-400 hover:underline"
               >
                 {selectedTemplates.size === allTemplates.length ? "Bỏ chọn tất cả" : "Chọn tất cả"}
               </button>
             </div>
             <div className="flex-1 overflow-y-auto p-2">
               {allTemplates.map((t) => (
-                <label key={t.id} className="flex items-center gap-3 p-2 hover:bg-amber-50 dark:hover:bg-white/[0.04] rounded-lg cursor-pointer transition-colors">
+                <label key={t.id} className="flex items-center gap-3 p-2 hover:bg-brand-50 dark:hover:bg-white/[0.04] rounded-lg cursor-pointer transition-colors">
                   <input
                     type="checkbox"
                     checked={selectedTemplates.has(t.id)}
@@ -186,7 +186,7 @@ export function CustomerExportModal({ customers, onClose, onError }: Props) {
           <button
             onClick={handleExport}
             disabled={exporting || (selectedCustomers.size === 0 && selectedTemplates.size === 0)}
-            className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-amber-600 to-orange-500 px-6 py-2 text-sm font-medium text-white shadow-sm shadow-amber-500/25 hover:shadow-md hover:shadow-amber-500/30 hover:brightness-110 disabled:opacity-50 transition-all duration-200"
+            className="flex items-center gap-2 rounded-lg bg-brand-500 px-6 py-2 text-sm font-medium text-white shadow-sm shadow-brand-500/25 hover:shadow-md hover:shadow-brand-500/30 hover:brightness-110 disabled:opacity-50 transition-all duration-200"
           >
             {exporting ? "Đang xử lý..." : `Xuất File ${exportFormat.toUpperCase()}`}
             <Download className="h-4 w-4" />

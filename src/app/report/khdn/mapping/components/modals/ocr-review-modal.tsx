@@ -71,8 +71,8 @@ export function OcrReviewModal({
           >
             {/* Header */}
             <div className="flex items-center gap-3 border-b border-slate-200/60 dark:border-white/[0.07] px-6 py-4 flex-shrink-0">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-100 dark:bg-amber-500/15">
-                <ScanLine className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-100 dark:bg-brand-500/15">
+                <ScanLine className="h-4 w-4 text-brand-500 dark:text-brand-400" />
               </div>
               <div className="flex-1 min-w-0">
                 <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">
@@ -97,7 +97,7 @@ export function OcrReviewModal({
                     </>
                   )}
                   {pendingCount > 0 && (
-                    <span className="rounded-full border border-amber-300 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold text-amber-700 dark:text-amber-400">
+                    <span className="rounded-full border border-brand-300 dark:border-brand-500/30 bg-brand-100 dark:bg-brand-500/10 px-2 py-0.5 text-[10px] font-semibold text-brand-600 dark:text-brand-400">
                       {pendingCount} chờ xác nhận / {total}
                     </span>
                   )}
@@ -146,7 +146,7 @@ export function OcrReviewModal({
                     <button
                       type="button"
                       onClick={onAcceptAll}
-                      className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-amber-600 to-orange-500 px-4 py-1.5 text-sm font-medium text-white shadow-sm hover:brightness-110 transition-colors"
+                      className="inline-flex items-center gap-1.5 rounded-lg bg-brand-500 px-4 py-1.5 text-sm font-medium text-white shadow-sm hover:brightness-110 transition-colors"
                     >
                       <CheckCheck className="h-4 w-4" />
                       Accept All ({pendingCount})
@@ -166,7 +166,7 @@ export function OcrReviewModal({
                     <button
                       type="button"
                       onClick={onAcceptRepeaterAll}
-                      className="inline-flex items-center gap-1.5 rounded-lg bg-amber-600 px-4 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-amber-700 transition-colors"
+                      className="inline-flex items-center gap-1.5 rounded-lg bg-brand-500 px-4 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-brand-600 transition-colors"
                     >
                       <CheckCheck className="h-4 w-4" />
                       Accept Repeater ({pendingRepeaterCount})

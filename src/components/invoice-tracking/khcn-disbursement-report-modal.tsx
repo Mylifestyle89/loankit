@@ -55,7 +55,7 @@ export function KhcnDisbursementReportModal({ loanId, disbursementId, onClose }:
             key={key}
             className={`flex cursor-pointer items-center gap-3 rounded-lg border p-3 transition ${
               selectedKey === key
-                ? "border-amber-500 bg-amber-50/30 dark:bg-amber-900/20"
+                ? "border-brand-500 bg-brand-50/30 dark:bg-brand-800/20"
                 : "border-zinc-200 hover:border-zinc-300 dark:border-slate-600"
             }`}
           >
@@ -64,7 +64,7 @@ export function KhcnDisbursementReportModal({ loanId, disbursementId, onClose }:
               name="khcn-template"
               checked={selectedKey === key}
               onChange={() => setSelectedKey(key)}
-              className="accent-amber-600"
+              className="accent-brand-500"
             />
             <span className="text-sm font-medium">{tpl.label}</span>
           </label>
@@ -84,7 +84,7 @@ export function KhcnDisbursementReportModal({ loanId, disbursementId, onClose }:
             type="button"
             onClick={handleGenerate}
             disabled={generating}
-            className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-amber-600 to-orange-500 px-4 py-2 text-sm font-medium text-white hover:brightness-110 disabled:opacity-50 transition-all"
+            className="flex items-center gap-2 rounded-lg bg-brand-500 px-4 py-2 text-sm font-medium text-white hover:brightness-110 disabled:opacity-50 transition-all"
           >
             {generating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
             {generating ? "Đang tạo..." : "Xem trước & Tải xuống"}

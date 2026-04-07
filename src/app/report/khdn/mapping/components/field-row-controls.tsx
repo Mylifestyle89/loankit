@@ -46,7 +46,7 @@ export function FieldRowControls({
           onKeyDown={(e) => navigateField(e, "type")}
           data-field-col="type"
           aria-label={`Kiểu dữ liệu cho ${field.label_vi}`}
-          className="cursor-pointer h-8 w-full rounded border border-transparent bg-transparent px-1.5 py-1 text-sm text-zinc-800 dark:text-slate-200 transition-colors hover:border-zinc-200 focus:border-amber-500 focus:bg-white dark:focus:bg-white/[0.06] focus:outline-none focus:ring-1 focus:ring-amber-500"
+          className="cursor-pointer h-8 w-full rounded border border-transparent bg-transparent px-1.5 py-1 text-sm text-zinc-800 dark:text-slate-200 transition-colors hover:border-zinc-200 focus:border-brand-500 focus:bg-white dark:focus:bg-white/[0.06] focus:outline-none focus:ring-1 focus:ring-brand-500"
         >
           <option value="string">{typeLabels.string}</option>
           <option value="number">{typeLabels.number}</option>
@@ -62,7 +62,7 @@ export function FieldRowControls({
           <button
             type="button"
             onClick={onOpenFormula}
-            className={`rounded p-1 ${hasFormula ? "bg-amber-100 text-amber-800" : "text-zinc-700 hover:bg-amber-100 hover:text-amber-900"}`}
+            className={`rounded p-1 ${hasFormula ? "bg-brand-100 text-brand-700" : "text-zinc-700 hover:bg-brand-100 hover:text-brand-800"}`}
             title={hasFormula ? "Sửa công thức" : "Nhập công thức"}
           >
             <FunctionSquare className="h-3.5 w-3.5" />
@@ -71,7 +71,7 @@ export function FieldRowControls({
         <button
           type="button"
           onClick={() => onOpenChangeGroupModal(field.field_key)}
-          className="rounded p-1 text-zinc-700 hover:bg-amber-100 hover:text-amber-900"
+          className="rounded p-1 text-zinc-700 hover:bg-brand-100 hover:text-brand-800"
           title={changeGroupTitle}
         >
           <Pencil className="h-3.5 w-3.5" />

@@ -56,7 +56,7 @@ export function FinancialAnalysisQualitativeStep({ qualitative, onQualitativeCha
       </p>
 
       {analysisFields.length === 0 && (
-        <div className="rounded-lg border border-amber-200 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-500/10 px-4 py-3 text-sm text-amber-700 dark:text-amber-400">
+        <div className="rounded-lg border border-brand-200 dark:border-brand-500/30 bg-brand-100 dark:bg-brand-500/10 px-4 py-3 text-sm text-brand-600 dark:text-brand-400">
           ⚠️ Không có field nào có{" "}
           <code className="font-mono text-xs">analysis_prompt</code>{" "}
           trong field catalog. Hãy thêm{" "}

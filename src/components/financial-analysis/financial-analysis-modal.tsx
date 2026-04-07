@@ -352,7 +352,7 @@ export function FinancialAnalysisModal({
                   </p>
                 )}
                 {editedCount > 0 && (
-                  <span className="rounded-full bg-amber-50 dark:bg-amber-500/10 px-2 py-0.5 text-[11px] font-medium text-amber-700 dark:text-amber-400">
+                  <span className="rounded-full bg-brand-100 dark:bg-brand-500/10 px-2 py-0.5 text-[11px] font-medium text-brand-600 dark:text-brand-400">
                     {editedCount} field đã chỉnh sửa
                   </span>
                 )}

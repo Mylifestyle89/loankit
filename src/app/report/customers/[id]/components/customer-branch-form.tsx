@@ -75,7 +75,7 @@ export function BranchForm({
   }
 
   return (
-    <div className="rounded-xl border border-amber-200 dark:border-amber-500/20 bg-amber-50/30 dark:bg-amber-500/5 p-4 space-y-3">
+    <div className="rounded-xl border border-brand-200 dark:border-brand-500/20 bg-brand-50/30 dark:bg-brand-500/5 p-4 space-y-3">
       <div className="grid grid-cols-2 gap-3">
         {BRANCH_FIELDS.map((f) => (
           <label key={f.key} className="block">
@@ -92,7 +92,7 @@ export function BranchForm({
       </div>
       {error && <p className="text-xs text-red-600 dark:text-red-400">{error}</p>}
       <div className="flex gap-2 pt-1">
-        <button type="button" onClick={handleSave} disabled={saving} className={`${btnCls} bg-gradient-to-r from-amber-600 to-orange-500 text-white shadow-sm`}>
+        <button type="button" onClick={handleSave} disabled={saving} className={`${btnCls} bg-brand-500 text-white shadow-sm`}>
           {saving ? "..." : initial ? "Cập nhật" : "Thêm"}
         </button>
         <button type="button" onClick={onCancel} className={`${btnCls} border border-zinc-200 dark:border-white/[0.09]`}>
@@ -146,15 +146,15 @@ export function BranchCard({
     <div
       className={`border rounded-lg p-4 transition-colors cursor-pointer ${
         isActive
-          ? "border-amber-400 dark:border-amber-500/40 bg-amber-50/50 dark:bg-amber-500/10 ring-1 ring-amber-400/30"
-          : "border-zinc-200 dark:border-white/[0.07] hover:border-amber-200 dark:hover:border-amber-500/20"
+          ? "border-brand-400 dark:border-brand-500/40 bg-brand-50/50 dark:bg-brand-500/10 ring-1 ring-brand-400/30"
+          : "border-zinc-200 dark:border-white/[0.07] hover:border-brand-200 dark:hover:border-brand-500/20"
       }`}
       onClick={onSelect}
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1">
           <div className="flex items-center gap-2 mb-2">
-            {isActive && <Check className="h-4 w-4 text-amber-600 dark:text-amber-400" />}
+            {isActive && <Check className="h-4 w-4 text-brand-500 dark:text-brand-400" />}
             <span className="text-sm font-semibold">{item.name}</span>
             {item.branch_code && <span className="text-xs text-zinc-400">({item.branch_code})</span>}
           </div>

@@ -138,7 +138,7 @@ export function CustomerPickerModal({ isOpen, onClose, onSelect, customerTypeFil
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Tìm theo tên hoặc mã KH..."
                 autoFocus
-                className="w-full rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-zinc-50 dark:bg-white/[0.04] pl-9 pr-3 py-2 text-sm text-zinc-900 dark:text-slate-100 placeholder:text-zinc-400 dark:placeholder:text-slate-500 focus:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-400/30"
+                className="w-full rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-zinc-50 dark:bg-white/[0.04] pl-9 pr-3 py-2 text-sm text-zinc-900 dark:text-slate-100 placeholder:text-zinc-400 dark:placeholder:text-slate-500 focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-400/30"
               />
             </div>
           </div>
@@ -156,7 +156,7 @@ export function CustomerPickerModal({ isOpen, onClose, onSelect, customerTypeFil
                     onClick={() => onSelect(c.id)}
                     className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm transition-colors ${
                       c.id === selectedCustomerId
-                        ? "bg-amber-50 dark:bg-amber-500/15 text-amber-700 dark:text-amber-300 font-medium"
+                        ? "bg-brand-50 dark:bg-brand-500/15 text-brand-600 dark:text-brand-300 font-medium"
                         : "text-zinc-700 dark:text-slate-200 hover:bg-zinc-50 dark:hover:bg-white/[0.05]"
                     }`}
                   >
@@ -174,7 +174,7 @@ export function CustomerPickerModal({ isOpen, onClose, onSelect, customerTypeFil
               <button
                 type="button"
                 onClick={() => setShowCreateForm(true)}
-                className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-zinc-300 dark:border-white/[0.12] px-4 py-2.5 text-sm font-medium text-zinc-600 dark:text-slate-300 transition-colors hover:border-amber-400 hover:text-amber-600 dark:hover:text-amber-400"
+                className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-zinc-300 dark:border-white/[0.12] px-4 py-2.5 text-sm font-medium text-zinc-600 dark:text-slate-300 transition-colors hover:border-brand-400 hover:text-brand-500 dark:hover:text-brand-400"
               >
                 <Plus className="h-4 w-4" />
                 Tạo khách hàng mới
@@ -189,7 +189,7 @@ export function CustomerPickerModal({ isOpen, onClose, onSelect, customerTypeFil
                       onChange={(e) => setNewCode(e.target.value)}
                       maxLength={50}
                       placeholder="VD: KH001"
-                      className="w-full rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-zinc-50 dark:bg-white/[0.04] px-3 py-2 text-sm text-zinc-900 dark:text-slate-100 focus:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-400/30"
+                      className="w-full rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-zinc-50 dark:bg-white/[0.04] px-3 py-2 text-sm text-zinc-900 dark:text-slate-100 focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-400/30"
                     />
                   </div>
                   <div>
@@ -199,7 +199,7 @@ export function CustomerPickerModal({ isOpen, onClose, onSelect, customerTypeFil
                       onChange={(e) => setNewName(e.target.value)}
                       maxLength={200}
                       placeholder="VD: Công ty ABC"
-                      className="w-full rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-zinc-50 dark:bg-white/[0.04] px-3 py-2 text-sm text-zinc-900 dark:text-slate-100 focus:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-400/30"
+                      className="w-full rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-zinc-50 dark:bg-white/[0.04] px-3 py-2 text-sm text-zinc-900 dark:text-slate-100 focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-400/30"
                     />
                   </div>
                 </div>
@@ -210,7 +210,7 @@ export function CustomerPickerModal({ isOpen, onClose, onSelect, customerTypeFil
                     onChange={(e) => setNewAddress(e.target.value)}
                     maxLength={500}
                     placeholder="Tùy chọn"
-                    className="w-full rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-zinc-50 dark:bg-white/[0.04] px-3 py-2 text-sm text-zinc-900 dark:text-slate-100 focus:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-400/30"
+                    className="w-full rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-zinc-50 dark:bg-white/[0.04] px-3 py-2 text-sm text-zinc-900 dark:text-slate-100 focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-400/30"
                   />
                 </div>
                 {createError && <p className="text-xs text-rose-600 dark:text-rose-400">{createError}</p>}
@@ -226,7 +226,7 @@ export function CustomerPickerModal({ isOpen, onClose, onSelect, customerTypeFil
                     type="button"
                     onClick={() => void handleCreate()}
                     disabled={creating || !newCode.trim() || !newName.trim()}
-                    className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-amber-600 to-orange-500 px-4 py-2 text-sm font-medium text-white shadow-sm shadow-amber-500/25 transition-all hover:brightness-110 disabled:opacity-60"
+                    className="flex items-center gap-2 rounded-lg bg-brand-500 px-4 py-2 text-sm font-medium text-white shadow-sm shadow-brand-500/25 transition-all hover:brightness-110 disabled:opacity-60"
                   >
                     {creating && <Loader2 className="h-4 w-4 animate-spin" />}
                     Tạo & Chọn

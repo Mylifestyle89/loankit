@@ -83,7 +83,7 @@ export default function DisbursementDetailPage() {
 
   if (loading) return (
     <div className="flex items-center justify-center py-16">
-      <div className="h-6 w-6 animate-spin rounded-full border-2 border-amber-200 border-t-amber-600 dark:border-amber-800 dark:border-t-amber-400" />
+      <div className="h-6 w-6 animate-spin rounded-full border-2 border-brand-200 border-t-brand-500 dark:border-brand-700 dark:border-t-brand-400" />
     </div>
   );
   if (error || !disbursement) return <p className="p-6 text-sm text-red-600 dark:text-red-400">{error || "Not found"}</p>;
@@ -91,30 +91,30 @@ export default function DisbursementDetailPage() {
   return (
     <section className="space-y-5">
       {/* Hero card with gradient */}
-      <div className="relative overflow-hidden rounded-2xl border border-amber-100 dark:border-amber-500/10 bg-gradient-to-br from-amber-50 via-white to-orange-50 dark:from-amber-950/30 dark:via-[#141414] dark:to-orange-950/20 p-5">
-        <div className="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-amber-200/30 blur-2xl dark:bg-amber-500/10" />
+      <div className="relative overflow-hidden rounded-2xl border border-brand-100 dark:border-brand-500/10 bg-gradient-to-br from-brand-50 via-white to-brand-100 dark:from-brand-950/30 dark:via-[#242220] dark:to-brand-900/20 p-5">
+        <div className="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-brand-200/30 blur-2xl dark:bg-brand-500/10" />
         <div className="relative">
           {/* Breadcrumb */}
           <div className="flex items-center gap-2 text-sm text-zinc-400 dark:text-slate-500 mb-3">
-            <Link href="/report/loans" className="inline-flex items-center gap-1 hover:text-amber-600 dark:hover:text-amber-400 transition-colors duration-150">
+            <Link href="/report/loans" className="inline-flex items-center gap-1 hover:text-brand-500 dark:hover:text-brand-400 transition-colors duration-150">
               <ArrowLeft className="h-3 w-3" />
               {t("nav.loans")}
             </Link>
             <span>/</span>
-            <Link href={`/report/loans/${disbursement.loan.id}`} className="hover:text-amber-600 dark:hover:text-amber-400 transition-colors duration-150">{disbursement.loan.contractNumber}</Link>
+            <Link href={`/report/loans/${disbursement.loan.id}`} className="hover:text-brand-500 dark:hover:text-brand-400 transition-colors duration-150">{disbursement.loan.contractNumber}</Link>
             <span>/</span>
             <span className="text-zinc-700 dark:text-slate-200">{t("disbursements.title")}</span>
           </div>
 
-          <h2 className="text-xl font-bold tracking-tight bg-gradient-to-r from-amber-700 to-orange-500 dark:from-amber-400 dark:to-orange-400 bg-clip-text text-transparent">
+          <h2 className="text-xl font-bold tracking-tight text-brand-600 dark:text-brand-400">
             {disbursement.loan.customer.customer_name}
           </h2>
 
           {/* Detail stats */}
           <div className="mt-3 flex flex-wrap items-center gap-5 text-sm">
             <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-100 dark:bg-amber-500/15">
-                <Banknote className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-100 dark:bg-brand-500/15">
+                <Banknote className="h-4 w-4 text-brand-500 dark:text-brand-400" />
               </div>
               <div>
                 <p className="text-xs text-zinc-400 dark:text-slate-500">{t("disbursements.amount")}</p>
@@ -122,8 +122,8 @@ export default function DisbursementDetailPage() {
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-orange-100 dark:bg-orange-400/15">
-                <Calendar className="h-4 w-4 text-orange-500 dark:text-orange-400" />
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-100 dark:bg-brand-400/15">
+                <Calendar className="h-4 w-4 text-brand-500 dark:text-brand-400" />
               </div>
               <div>
                 <p className="text-xs text-zinc-400 dark:text-slate-500">{t("disbursements.date")}</p>
@@ -146,7 +146,7 @@ export default function DisbursementDetailPage() {
         <button
           type="button"
           onClick={() => setShowModal(true)}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-amber-600 to-orange-500 px-4 py-2 text-sm font-medium text-white shadow-sm shadow-amber-500/25 transition-all duration-200 hover:shadow-md hover:shadow-amber-500/30 hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/50"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-brand-500 px-4 py-2 text-sm font-medium text-white shadow-sm shadow-brand-500/25 transition-all duration-200 hover:shadow-md hover:shadow-brand-500/30 hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/50"
         >
           <Plus className="h-4 w-4" />
           {t("invoices.add")}

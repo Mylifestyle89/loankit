@@ -54,7 +54,7 @@ export function CostItemsTable({
         </thead>
         <tbody>
           {items.map((item, idx) => (
-            <tr key={idx} className="hover:bg-amber-50/30 dark:hover:bg-amber-500/5">
+            <tr key={idx} className="hover:bg-brand-50/30 dark:hover:bg-brand-500/5">
               <td className={cellCls}>
                 <input className="w-full bg-transparent outline-none" value={item.name} onChange={(e) => updateItem(idx, "name", e.target.value)} placeholder="Tên hạng mục" />
               </td>
@@ -89,7 +89,7 @@ export function CostItemsTable({
       <button
         type="button"
         onClick={addRow}
-        className="mt-2 inline-flex items-center gap-1 rounded-lg border border-dashed border-zinc-300 dark:border-white/[0.1] px-3 py-1.5 text-xs text-zinc-500 hover:border-amber-300 hover:text-amber-600"
+        className="mt-2 inline-flex items-center gap-1 rounded-lg border border-dashed border-zinc-300 dark:border-white/[0.1] px-3 py-1.5 text-xs text-zinc-500 hover:border-brand-300 hover:text-brand-500"
       >
         <Plus className="h-3 w-3" /> Thêm hạng mục
       </button>

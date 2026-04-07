@@ -10,14 +10,14 @@ export default function LanguageToggle() {
       <button
         type="button"
         onClick={() => setLocale("vi")}
-        className={`rounded px-2 py-1 ${locale === "vi" ? "bg-gradient-to-r from-amber-600 to-orange-500 text-white" : "text-zinc-700 hover:bg-amber-50"}`}
+        className={`rounded px-2 py-1 ${locale === "vi" ? "bg-brand-500 text-white" : "text-zinc-700 hover:bg-brand-50"}`}
       >
         {t("lang.vi")}
       </button>
       <button
         type="button"
         onClick={() => setLocale("en")}
-        className={`rounded px-2 py-1 ${locale === "en" ? "bg-gradient-to-r from-amber-600 to-orange-500 text-white" : "text-zinc-700 hover:bg-amber-50"}`}
+        className={`rounded px-2 py-1 ${locale === "en" ? "bg-brand-500 text-white" : "text-zinc-700 hover:bg-brand-50"}`}
       >
         {t("lang.en")}
       </button>

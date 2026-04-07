@@ -24,7 +24,7 @@ export function SkeletonCards() {
         <div key={i} className="rounded-xl border border-zinc-200 dark:border-white/[0.07] bg-white dark:bg-[#161616] p-4 animate-pulse" style={{ animationDelay: `${i * 100}ms` }}>
           <div className="flex items-center gap-2.5">
             <div className="h-5 w-40 rounded bg-zinc-200 dark:bg-white/[0.08]" />
-            <div className="h-5 w-16 rounded-full bg-amber-100 dark:bg-amber-500/10" />
+            <div className="h-5 w-16 rounded-full bg-brand-100 dark:bg-brand-500/10" />
           </div>
           <div className="mt-2 h-4 w-64 rounded bg-zinc-100 dark:bg-white/[0.05]" />
           <div className="mt-3 border-t border-zinc-100 dark:border-white/[0.05] pt-3 flex gap-2">

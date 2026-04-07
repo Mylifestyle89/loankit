@@ -143,7 +143,7 @@ export default function LoanDetailPage() {
 
   if (loading) return (
     <div className="flex items-center justify-center py-16">
-      <div className="h-6 w-6 animate-spin rounded-full border-2 border-amber-200 border-t-amber-600 dark:border-amber-800 dark:border-t-amber-400" />
+      <div className="h-6 w-6 animate-spin rounded-full border-2 border-brand-200 border-t-brand-500 dark:border-brand-700 dark:border-t-brand-400" />
     </div>
   );
   if (error || !loan) return <p className="p-6 text-sm text-red-700 dark:text-red-400">{error || "Not found"}</p>;
@@ -184,12 +184,12 @@ export default function LoanDetailPage() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder={t("disbursements.searchPlaceholder") ?? "Tìm kiếm mô tả..."}
-          className="flex-1 min-w-[200px] rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] px-3 py-2 text-sm shadow-sm transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/40"
+          className="flex-1 min-w-[200px] rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] px-3 py-2 text-sm shadow-sm transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40"
         />
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="cursor-pointer rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] px-3 py-2 text-sm shadow-sm transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/40"
+          className="cursor-pointer rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] px-3 py-2 text-sm shadow-sm transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40"
         >
           <option value="">{t("invoices.all") ?? "Tất cả"}</option>
           <option value="active">{t("disbursements.active") ?? "Đang hoạt động"}</option>
@@ -199,7 +199,7 @@ export default function LoanDetailPage() {
         <button
           type="button"
           onClick={() => setShowModal(true)}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-amber-600 to-orange-500 px-4 py-2 text-sm font-medium text-white shadow-sm shadow-amber-500/25 transition-all hover:shadow-md hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/50"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-brand-500 px-4 py-2 text-sm font-medium text-white shadow-sm shadow-brand-500/25 transition-all hover:shadow-md hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/50"
         >
           {t("disbursements.add")}
         </button>

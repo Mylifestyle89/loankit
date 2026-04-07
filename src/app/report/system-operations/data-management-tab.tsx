@@ -151,14 +151,14 @@ export function DataManagementTab() {
         {/* Export */}
         <div className="rounded-2xl border border-zinc-200 dark:border-white/[0.07] bg-white dark:bg-[#161616] p-6 shadow-sm">
           <div className="flex items-center gap-2.5 mb-4">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-amber-100 dark:bg-amber-500/15">
-              <Download className="h-4.5 w-4.5 text-amber-600 dark:text-amber-400" />
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-100 dark:bg-brand-500/15">
+              <Download className="h-4.5 w-4.5 text-brand-500 dark:text-brand-400" />
             </div>
             <h2 className="text-lg font-bold tracking-tight">{t("systemOps.exportSection")}</h2>
           </div>
           <div className="space-y-3">
             <button onClick={handleQuickExport} disabled={exporting}
-              className="w-full rounded-lg bg-gradient-to-r from-amber-600 to-orange-500 text-white font-medium py-3 px-4 shadow-sm shadow-amber-500/25 transition-all duration-200 hover:shadow-md hover:shadow-amber-500/30 hover:brightness-110 disabled:opacity-50 flex items-center justify-center gap-2">
+              className="w-full rounded-lg bg-brand-500 text-white font-medium py-3 px-4 shadow-sm shadow-brand-500/25 transition-all duration-200 hover:shadow-md hover:shadow-brand-500/30 hover:brightness-110 disabled:opacity-50 flex items-center justify-center gap-2">
               <Download className="h-4 w-4" />
               {exporting ? "Đang xuất..." : t("systemOps.quickExport")}
             </button>
@@ -220,7 +220,7 @@ export function DataManagementTab() {
                 {t("systemOps.importPreview.cancel")}
               </button>
               <button onClick={handleConfirmImport} disabled={importing}
-                className="flex-1 rounded-lg bg-gradient-to-r from-amber-600 to-orange-500 text-white font-medium py-2 px-4 shadow-sm shadow-amber-500/25 transition-all duration-200 hover:shadow-md hover:shadow-amber-500/30 hover:brightness-110 disabled:opacity-50">
+                className="flex-1 rounded-lg bg-brand-500 text-white font-medium py-2 px-4 shadow-sm shadow-brand-500/25 transition-all duration-200 hover:shadow-md hover:shadow-brand-500/30 hover:brightness-110 disabled:opacity-50">
                 {importing ? "Đang nhập..." : t("systemOps.importPreview.import")}
               </button>
             </div>

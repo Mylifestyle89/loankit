@@ -48,7 +48,7 @@ function FieldSection({
               {f.status === "no-data" ? (
                 <Link
                   href={`/report/khdn/mapping?focus=${encodeURIComponent(f.fieldKey)}`}
-                  className="flex items-center gap-2 rounded-md px-2 py-1 text-xs text-amber-700 dark:text-amber-400 transition-colors hover:bg-amber-50 dark:hover:bg-amber-500/10"
+                  className="flex items-center gap-2 rounded-md px-2 py-1 text-xs text-brand-600 dark:text-brand-400 transition-colors hover:bg-brand-50 dark:hover:bg-brand-500/10"
                   title={`Nhấn để điền field: ${f.fieldKey}`}
                 >
                   <span className="truncate">{f.label}</span>
@@ -105,7 +105,7 @@ export function FieldCoveragePanel({ placeholders }: FieldCoveragePanelProps) {
           title="Chưa điền"
           icon={<AlertCircle className="h-3 w-3" />}
           fields={validation.noData}
-          colorClass="text-amber-700 dark:text-amber-400"
+          colorClass="text-brand-600 dark:text-brand-400"
           defaultOpen={true}
         />
         <FieldSection
