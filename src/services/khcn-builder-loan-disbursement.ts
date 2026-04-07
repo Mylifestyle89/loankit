@@ -181,15 +181,30 @@ export function buildBeneficiaryLoopData(
 ) {
   return beneficiaries.map((b, i) => {
     const amount = b.amount ?? 0;
+    const amountStr = amount ? fmtN(amount) : "";
+    const amountWords = amount ? numberToVietnameseWords(amount) : "";
+    // Emit both bare and "UNC.*" prefixed keys so templates can use either
+    // [Số tiền] or [UNC.Số tiền] inside loop (docxtemplater treats dot as literal
+    // when angularParser is disabled — so parent-scope fallback would leak top-level
+    // UNC.Số tiền across all rows if loop items don't shadow it).
     return {
       STT: i + 1,
       "Khách hàng thụ hưởng": b.name,
+      "UNC.Khách hàng thụ hưởng": b.name,
+      "UNC.Tên người nhận": b.name,
       "Địa chỉ": b.address ?? "",
+      "UNC.Địa chỉ": b.address ?? "",
       "Số tài khoản": b.accountNumber ?? "",
+      "UNC.Số tài khoản": b.accountNumber ?? "",
       "Nơi mở tài khoản": b.bankName ?? "",
-      "Số tiền": amount ? fmtN(amount) : "",
-      "ST bằng chữ": amount ? numberToVietnameseWords(amount) : "",
+      "UNC.Nơi mở tài khoản": b.bankName ?? "",
+      "UNC.Ngân hàng": b.bankName ?? "",
+      "Số tiền": amountStr,
+      "UNC.Số tiền": amountStr,
+      "ST bằng chữ": amountWords,
+      "UNC.ST bằng chữ": amountWords,
       "Nội dung": "",
+      "UNC.Nội dung": "",
       "CMND": "",
       "Ngày cấp": "",
       "Nơi cấp": "",

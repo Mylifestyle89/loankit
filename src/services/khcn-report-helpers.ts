@@ -54,11 +54,12 @@ export function flattenUncPlaceholders(
   data["UNC.Số tài khoản"] = b["Số tài khoản"] ?? "";
   data["UNC.Nơi mở tài khoản"] = b["Nơi mở tài khoản"] ?? "";
   data["UNC.Ngân hàng"] = data["UNC.Nơi mở tài khoản"];
-  const uncAmount = overrides?.["UNC.Số tiền"] || data["GN.Số tiền nhận nợ"] || b["Số tiền"] || "";
+  // Per-beneficiary amount takes precedence over GN total (so multi-UNC loop shows per-line)
+  const uncAmount = overrides?.["UNC.Số tiền"] || b["Số tiền"] || data["GN.Số tiền nhận nợ"] || "";
   data["UNC.Số tiền"] = fmtN(uncAmount);
   // Parse raw number for bằng chữ — strip VN thousands separators first
   const rawUnc = Number(String(uncAmount).replace(/\./g, "").replace(/,/g, "."));
-  data["UNC.ST bằng chữ"] = overrides?.["UNC.ST bằng chữ"] || (Number.isFinite(rawUnc) && rawUnc > 0 ? numberToVietnameseWords(rawUnc) : "");
+  data["UNC.ST bằng chữ"] = overrides?.["UNC.ST bằng chữ"] || (b["ST bằng chữ"] as string) || (Number.isFinite(rawUnc) && rawUnc > 0 ? numberToVietnameseWords(rawUnc) : "");
   data["UNC.Nội dung"] = b["Nội dung"] ?? overrides?.["UNC.Nội dung"] ?? "";
 
   // Indexed UNC.Mặt hàng N / Số lượng N / Đơn giá N / Thành tiền N (backward compat)
