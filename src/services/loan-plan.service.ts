@@ -56,6 +56,11 @@ const EXTENDED_FINANCIAL_KEYS = [
   "labor_capability", "machinery_capability", "other_factors",
   "turnover_analysis",
   "income_source_type",
+  // Tiêu dùng
+  "tieu_dung_subtype",
+  "earner1_title", "earner1_name", "earner1_workplace", "earner1_monthly_income",
+  "earner2_title", "earner2_name", "earner2_workplace", "earner2_monthly_income",
+  "living_expenses_3m", "avg_other_loan_rate", "other_costs_3m",
 ] as const;
 
 function recalcFinancials(

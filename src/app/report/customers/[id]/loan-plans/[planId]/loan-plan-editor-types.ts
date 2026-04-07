@@ -1,6 +1,7 @@
 // Types for loan plan editor page
 
-export type { RevenueItem } from "@/lib/loan-plan/loan-plan-types";
+export type { RevenueItem, TieuDungSubtype, EarnerTitle } from "@/lib/loan-plan/loan-plan-types";
+import type { TieuDungSubtype, EarnerTitle } from "@/lib/loan-plan/loan-plan-types";
 
 export type Financials = {
   totalDirectCost: number;
@@ -23,6 +24,19 @@ export type Financials = {
   term_months?: number;
   repayment_frequency?: number;
   principal_rounding?: "none" | "up_100k" | "down_100k";
+  // Tiêu dùng
+  tieu_dung_subtype?: TieuDungSubtype;
+  earner1_title?: EarnerTitle;
+  earner1_name?: string;
+  earner1_workplace?: string;
+  earner1_monthly_income?: number;
+  earner2_title?: EarnerTitle;
+  earner2_name?: string;
+  earner2_workplace?: string;
+  earner2_monthly_income?: number;
+  living_expenses_3m?: number;
+  avg_other_loan_rate?: number;
+  other_costs_3m?: number;
   construction_contract_no?: string;
   construction_contract_date?: string;
   farmAddress?: string;

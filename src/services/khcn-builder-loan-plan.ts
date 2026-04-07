@@ -4,6 +4,7 @@
 import { numberToVietnameseWords } from "@/lib/number-to-vietnamese-words";
 import { fmtN } from "@/lib/report/format-number-vn";
 import { calcDepreciation, calcRepaymentSchedule } from "@/lib/loan-plan/loan-plan-calculator";
+import { buildTieuDungLoanPlanData } from "./khcn-builder-loan-plan-tieu-dung";
 
 type Data = Record<string, unknown>;
 
@@ -13,6 +14,7 @@ export function buildLoanPlanExtendedData(
   plan: {
     name: string; financials_json: string;
     cost_items_json: string; revenue_items_json: string;
+    loan_method?: string;
   } | null,
   data: Data,
 ) {
@@ -21,6 +23,14 @@ export function buildLoanPlanExtendedData(
   let financials: Record<string, unknown>;
   try { financials = JSON.parse(plan.financials_json || "{}"); }
   catch { return; }
+
+  // Consumer loan — delegate to tiêu dùng builder and skip SXKD logic
+  if (plan.loan_method === "tieu_dung") {
+    buildTieuDungLoanPlanData(financials, data);
+    data["PA.Số tiền vay bằng chữ"] = financials.loanAmount
+      ? numberToVietnameseWords(financials.loanAmount as number) : "";
+    return;
+  }
 
   // Extended PA flat fields
   data["PA.Mục đích vay"] = financials.purpose ?? "";

@@ -95,6 +95,24 @@ export type LoanPlanFinancialsExtended = LoanPlanFinancials & {
   repayment_frequency?: number;        // Kỳ hạn trả gốc (tháng): 1, 3, 6, 12
   principal_rounding?: "none" | "up_100k" | "down_100k"; // Làm tròn gốc mỗi kỳ (kỳ cuối tự điều chỉnh)
   farmAddress?: string;                // Địa chỉ đất NN
+
+  // ── Tiêu dùng (consumer loan) fields ──
+  /** Mục đích vay tiêu dùng: xây/sửa nhà, mua đất ở, mua xe. "mua_sam" scope riêng. */
+  tieu_dung_subtype?: TieuDungSubtype;
+  // Người trả nợ 1 (KH)
+  earner1_title?: EarnerTitle;
+  earner1_name?: string;
+  earner1_workplace?: string;
+  earner1_monthly_income?: number;
+  // Người trả nợ 2 (vợ/chồng — optional)
+  earner2_title?: EarnerTitle;
+  earner2_name?: string;
+  earner2_workplace?: string;
+  earner2_monthly_income?: number;
+  // Chi phí bình quân 3 tháng
+  living_expenses_3m?: number;         // Chi phí sinh hoạt 3 tháng
+  avg_other_loan_rate?: number;        // Lãi suất BQ (dùng ước tính chi phí lãi của khoản vay này)
+  other_costs_3m?: number;             // Chi phí khác 3 tháng (các khoản vay khác, ...)
 };
 
 export type RepaymentRow = {
@@ -112,4 +130,10 @@ export type RepaymentRow = {
 export type RepaymentFrequency = 1 | 3 | 6 | 12;
 
 export type LoanMethod = "tung_lan" | "han_muc" | "trung_dai" | "tieu_dung";
+
+/** Mục đích vay tiêu dùng. "mua_sam" (mua sắm vật dụng) hiện chưa implement — scope riêng. */
+export type TieuDungSubtype = "xay_sua_nha" | "mua_dat" | "mua_xe" | "mua_sam";
+
+/** Danh xưng người trả nợ */
+export type EarnerTitle = "Ông" | "Bà";
 export type LoanPlanStatus = "draft" | "approved";

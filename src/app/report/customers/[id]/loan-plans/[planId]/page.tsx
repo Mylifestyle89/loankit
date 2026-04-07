@@ -9,12 +9,13 @@ import { CostItemsTable, type CostItem } from "./cost-items-table";
 import { NumericInput } from "./numeric-input";
 import { inputCls } from "@/components/invoice-tracking/form-styles";
 import { SmartField } from "@/components/smart-field";
-import { type Financials, type RevenueItem } from "./loan-plan-editor-types";
+import { type Financials, type RevenueItem, type TieuDungSubtype, type EarnerTitle } from "./loan-plan-editor-types";
 import { fmtVND, formatPercentInputFromRate, parsePercentInputToRate } from "./loan-plan-editor-utils";
 import { TreeRow, Stat } from "./loan-plan-financial-display";
 import { RepaymentScheduleTable } from "./loan-plan-repayment-schedule-table";
 import { CreditAssessmentSection } from "./loan-plan-credit-assessment-section";
 import { LoanPlanInfoGrid, LoanPlanTrungDaiSection } from "./loan-plan-form-sections";
+import { LoanPlanTieuDungSection } from "./loan-plan-tieu-dung-section";
 
 export default function LoanPlanEditorPage() {
   const { id: customerId, planId } = useParams() as { id: string; planId: string };
@@ -42,6 +43,19 @@ export default function LoanPlanEditorPage() {
   const [constructionContractDate, setConstructionContractDate] = useState("");
   // Common SXKD fields
   const [farmAddress, setFarmAddress] = useState("");
+  // Tiêu dùng fields
+  const [tieuDungSubtype, setTieuDungSubtype] = useState<TieuDungSubtype | "">("");
+  const [earner1Title, setEarner1Title] = useState<EarnerTitle>("Ông");
+  const [earner1Name, setEarner1Name] = useState("");
+  const [earner1Workplace, setEarner1Workplace] = useState("");
+  const [earner1Income, setEarner1Income] = useState(0);
+  const [earner2Title, setEarner2Title] = useState<EarnerTitle>("Bà");
+  const [earner2Name, setEarner2Name] = useState("");
+  const [earner2Workplace, setEarner2Workplace] = useState("");
+  const [earner2Income, setEarner2Income] = useState(0);
+  const [livingExpenses3m, setLivingExpenses3m] = useState(0);
+  const [avgOtherLoanRate, setAvgOtherLoanRate] = useState(0);
+  const [otherCosts3m, setOtherCosts3m] = useState(0);
   // Đánh giá tín dụng
   const [legalAssessment, setLegalAssessment] = useState("");
   const [marketInput, setMarketInput] = useState("");
@@ -104,6 +118,19 @@ export default function LoanPlanEditorPage() {
       setConstructionContractNo(fin.construction_contract_no ?? "");
       setConstructionContractDate(fin.construction_contract_date ?? "");
       setFarmAddress(fin.farmAddress ?? "");
+      // Tiêu dùng
+      setTieuDungSubtype(fin.tieu_dung_subtype ?? "");
+      setEarner1Title(fin.earner1_title ?? "Ông");
+      setEarner1Name(fin.earner1_name ?? "");
+      setEarner1Workplace(fin.earner1_workplace ?? "");
+      setEarner1Income(fin.earner1_monthly_income ?? 0);
+      setEarner2Title(fin.earner2_title ?? "Bà");
+      setEarner2Name(fin.earner2_name ?? "");
+      setEarner2Workplace(fin.earner2_workplace ?? "");
+      setEarner2Income(fin.earner2_monthly_income ?? 0);
+      setLivingExpenses3m(fin.living_expenses_3m ?? 0);
+      setAvgOtherLoanRate(fin.avg_other_loan_rate ?? 0);
+      setOtherCosts3m(fin.other_costs_3m ?? 0);
       // Đánh giá tín dụng
       setLegalAssessment(fin.legal_assessment ?? "");
       setMarketInput(fin.market_input ?? "");
@@ -160,6 +187,22 @@ export default function LoanPlanEditorPage() {
             principal_rounding: principalRounding,
             construction_contract_no: constructionContractNo,
             construction_contract_date: constructionContractDate,
+          } : {}),
+          ...(loanMethod === "tieu_dung" ? {
+            term_months: termMonths,
+            repayment_frequency: repaymentFrequency,
+            tieu_dung_subtype: tieuDungSubtype || undefined,
+            earner1_title: earner1Title,
+            earner1_name: earner1Name,
+            earner1_workplace: earner1Workplace,
+            earner1_monthly_income: earner1Income,
+            earner2_title: earner2Title,
+            earner2_name: earner2Name,
+            earner2_workplace: earner2Workplace,
+            earner2_monthly_income: earner2Income,
+            living_expenses_3m: livingExpenses3m,
+            avg_other_loan_rate: avgOtherLoanRate,
+            other_costs_3m: otherCosts3m,
           } : {}),
           // Đánh giá tín dụng
           legal_assessment: legalAssessment, market_input: marketInput, market_output: marketOutput,
@@ -260,13 +303,57 @@ export default function LoanPlanEditorPage() {
         />
       )}
 
-      {/* Cost items */}
-      <div className="rounded-2xl border border-zinc-200 dark:border-white/[0.07] bg-white dark:bg-[#161616] p-5 shadow-sm">
-        <h3 className="text-sm font-semibold mb-3">Chi phí trực tiếp</h3>
-        <CostItemsTable items={costItems} onChange={setCostItems} />
-      </div>
+      {/* ── Tiêu dùng: Nguồn thu nhập + Chi phí + Preview ── */}
+      {loanMethod === "tieu_dung" && (
+        <LoanPlanTieuDungSection
+          loanAmount={loanAmount}
+          termMonths={termMonths}
+          repaymentFrequency={repaymentFrequency}
+          subtype={tieuDungSubtype}
+          onSubtypeChange={setTieuDungSubtype}
+          earner1Title={earner1Title} onEarner1TitleChange={setEarner1Title}
+          earner1Name={earner1Name} onEarner1NameChange={setEarner1Name}
+          earner1Workplace={earner1Workplace} onEarner1WorkplaceChange={setEarner1Workplace}
+          earner1Income={earner1Income} onEarner1IncomeChange={setEarner1Income}
+          earner2Title={earner2Title} onEarner2TitleChange={setEarner2Title}
+          earner2Name={earner2Name} onEarner2NameChange={setEarner2Name}
+          earner2Workplace={earner2Workplace} onEarner2WorkplaceChange={setEarner2Workplace}
+          earner2Income={earner2Income} onEarner2IncomeChange={setEarner2Income}
+          livingExpenses3m={livingExpenses3m} onLivingExpenses3mChange={setLivingExpenses3m}
+          avgOtherLoanRate={avgOtherLoanRate} onAvgOtherLoanRateChange={setAvgOtherLoanRate}
+          otherCosts3m={otherCosts3m} onOtherCosts3mChange={setOtherCosts3m}
+        />
+      )}
 
-      {/* Revenue items — table layout matching cost items */}
+      {/* Thời hạn vay + kỳ hạn trả (áp dụng cho tiêu dùng — trung_dai đã có trong section riêng) */}
+      {loanMethod === "tieu_dung" && (
+        <div className="grid gap-4 sm:grid-cols-2 rounded-2xl border border-zinc-200 dark:border-white/[0.07] bg-white dark:bg-[#161616] p-5 shadow-sm">
+          <label className="block">
+            <span className="text-xs font-medium text-zinc-500">Thời hạn vay (tháng)</span>
+            <input type="number" value={termMonths || ""} onChange={(e) => setTermMonths(Number(e.target.value) || 0)} className={inputCls} placeholder="VD: 48" />
+          </label>
+          <label className="block">
+            <span className="text-xs font-medium text-zinc-500">Kỳ hạn trả gốc</span>
+            <select value={repaymentFrequency || 12} onChange={(e) => setRepaymentFrequency(Number(e.target.value))} className={inputCls}>
+              <option value={1}>Hàng tháng</option>
+              <option value={3}>Hàng quý</option>
+              <option value={6}>6 tháng/lần</option>
+              <option value={12}>Hàng năm</option>
+            </select>
+          </label>
+        </div>
+      )}
+
+      {/* Cost items — hide for tieu_dung (consumer loan has its own expense inputs) */}
+      {loanMethod !== "tieu_dung" && (
+        <div className="rounded-2xl border border-zinc-200 dark:border-white/[0.07] bg-white dark:bg-[#161616] p-5 shadow-sm">
+          <h3 className="text-sm font-semibold mb-3">Chi phí trực tiếp</h3>
+          <CostItemsTable items={costItems} onChange={setCostItems} />
+        </div>
+      )}
+
+      {/* Revenue items — hide for tieu_dung */}
+      {loanMethod !== "tieu_dung" && (
       <div className="rounded-2xl border border-zinc-200 dark:border-white/[0.07] bg-white dark:bg-[#161616] p-5 shadow-sm">
         <h3 className="text-sm font-semibold mb-3">Doanh thu dự kiến</h3>
         <div className="overflow-x-auto">
@@ -321,9 +408,10 @@ export default function LoanPlanEditorPage() {
           </button>
         </div>
       </div>
+      )}
 
-      {/* Financial summary */}
-      {financials && (
+      {/* Financial summary — hide for tieu_dung (uses its own preview card) */}
+      {financials && loanMethod !== "tieu_dung" && (
         <div className="rounded-2xl border border-brand-200 dark:border-brand-500/20 bg-gradient-to-br from-brand-50 to-brand-50 dark:from-brand-900/20 dark:to-brand-900/10 p-5 shadow-sm">
           <h3 className="text-sm font-semibold mb-3">Tổng hợp tài chính</h3>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 text-sm">
