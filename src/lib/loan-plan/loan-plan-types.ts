@@ -109,10 +109,10 @@ export type LoanPlanFinancialsExtended = LoanPlanFinancials & {
   earner2_name?: string;
   earner2_workplace?: string;
   earner2_monthly_income?: number;
-  // Chi phí bình quân 3 tháng
-  living_expenses_3m?: number;         // Chi phí sinh hoạt 3 tháng
+  // Chi phí bình quân 1 kỳ (kỳ = repayment_frequency tháng — dynamic)
+  living_expenses_period?: number;     // Chi phí sinh hoạt mỗi kỳ
   avg_other_loan_rate?: number;        // Lãi suất BQ (dùng ước tính chi phí lãi của khoản vay này)
-  other_costs_3m?: number;             // Chi phí khác 3 tháng (các khoản vay khác, ...)
+  other_costs_period?: number;         // Chi phí khác mỗi kỳ (các khoản vay khác, ...)
 };
 
 export type RepaymentRow = {

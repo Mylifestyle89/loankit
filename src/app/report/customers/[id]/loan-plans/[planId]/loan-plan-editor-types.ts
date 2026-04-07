@@ -34,9 +34,9 @@ export type Financials = {
   earner2_name?: string;
   earner2_workplace?: string;
   earner2_monthly_income?: number;
-  living_expenses_3m?: number;
+  living_expenses_period?: number;
   avg_other_loan_rate?: number;
-  other_costs_3m?: number;
+  other_costs_period?: number;
   construction_contract_no?: string;
   construction_contract_date?: string;
   farmAddress?: string;

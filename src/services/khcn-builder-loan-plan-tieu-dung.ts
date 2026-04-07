@@ -11,6 +11,7 @@
  */
 
 import { numberToVietnameseWords } from "@/lib/number-to-vietnamese-words";
+import { formatPeriodLabel } from "@/lib/loan-plan/loan-plan-calculator";
 import { fmtN } from "@/lib/report/format-number-vn";
 
 type Data = Record<string, unknown>;
@@ -62,21 +63,24 @@ export function buildTieuDungLoanPlanData(fin: Fin, data: Data): void {
   const loanAmt = num(fin.loanAmount);
   if (loanAmt <= 0) return;
 
+  // Period = repayment_frequency tháng. Default 1 (hàng tháng) khi rỗng.
+  const periodMonths = num(fin.repayment_frequency) || 1;
+  const periodLabel = formatPeriodLabel(periodMonths);
+
   const income1 = num(fin.earner1_monthly_income);
   const income2 = num(fin.earner2_monthly_income);
-  const totalIncome3m = (income1 + income2) * 3;
+  const totalIncomePeriod = (income1 + income2) * periodMonths;
 
   const avgRate = num(fin.avg_other_loan_rate);
-  const livingExpenses3m = num(fin.living_expenses_3m);
-  const otherCosts3m = num(fin.other_costs_3m);
-  const interestCost3m = Math.round(loanAmt * avgRate * 3 / 12);
-  const totalExpenses3m = livingExpenses3m + interestCost3m + otherCosts3m;
+  const livingExpensesPeriod = num(fin.living_expenses_period);
+  const otherCostsPeriod = num(fin.other_costs_period);
+  const interestCostPeriod = Math.round(loanAmt * avgRate * periodMonths / 12);
+  const totalExpensesPeriod = livingExpensesPeriod + interestCostPeriod + otherCostsPeriod;
 
-  const available = totalIncome3m - totalExpenses3m;
+  const available = totalIncomePeriod - totalExpensesPeriod;
 
   const termMonths = num(fin.term_months);
-  const repaymentFreq = num(fin.repayment_frequency) || 12;
-  const totalPeriods = termMonths > 0 ? Math.ceil(termMonths / repaymentFreq) : 0;
+  const totalPeriods = termMonths > 0 ? Math.ceil(termMonths / periodMonths) : 0;
   const perPeriod = totalPeriods > 0 ? Math.round(loanAmt / totalPeriods) : 0;
   const remaining = available - perPeriod;
 
@@ -88,22 +92,26 @@ export function buildTieuDungLoanPlanData(fin: Fin, data: Data): void {
   data["PA.Mô tả người trả nợ"] = hasEarner2 ? "vợ chồng khách hàng" : "khách hàng";
   data["PA.Mục đích tiêu dùng"] = subtype ? (SUBTYPE_LABELS[subtype] ?? subtype) : "";
 
-  // ── Numeric placeholders ──
-  data["PA.Tổng thu nhập 3 tháng"] = fmtN(totalIncome3m);
-  data["PA.Tổng thu nhập 3 tháng bằng chữ"] = totalIncome3m > 0 ? numberToVietnameseWords(totalIncome3m) : "";
-  data["PA.Tổng chi phí 3 tháng"] = fmtN(totalExpenses3m);
-  data["PA.Chi phí sinh hoạt 3 tháng"] = fmtN(livingExpenses3m);
+  // ── Period info ──
+  data["PA.Số tháng kỳ"] = String(periodMonths);
+  data["PA.Kỳ text"] = periodLabel;
+  data["PA.Kỳ hạn trả gốc text"] = `${periodMonths} tháng/kỳ`;
+  data["PA.Thời hạn vay text"] = termMonths > 0 ? `${termMonths} tháng` : "";
+
+  // ── Numeric placeholders (period-aware names) ──
+  data["PA.Tổng thu nhập kỳ"] = fmtN(totalIncomePeriod);
+  data["PA.Tổng thu nhập kỳ bằng chữ"] = totalIncomePeriod > 0 ? numberToVietnameseWords(totalIncomePeriod) : "";
+  data["PA.Tổng chi phí kỳ"] = fmtN(totalExpensesPeriod);
+  data["PA.Chi phí sinh hoạt kỳ"] = fmtN(livingExpensesPeriod);
   data["PA.Lãi suất vay khác"] = formatRatePercent(avgRate);
-  data["PA.Chi phí lãi vay 3 tháng"] = fmtN(interestCost3m);
-  data["PA.Chi phí khác 3 tháng"] = fmtN(otherCosts3m);
+  data["PA.Chi phí lãi vay kỳ"] = fmtN(interestCostPeriod);
+  data["PA.Chi phí khác kỳ"] = fmtN(otherCostsPeriod);
   data["PA.Dư trả gốc"] = fmtN(available);
   data["PA.Dư trả gốc bằng chữ"] = available > 0 ? numberToVietnameseWords(available) : "";
   data["PA.Số kỳ trả gốc"] = totalPeriods > 0 ? String(totalPeriods) : "";
   data["PA.Số tiền trả gốc mỗi kỳ"] = fmtN(perPeriod);
   data["PA.Số tiền trả gốc mỗi kỳ bằng chữ"] = perPeriod > 0 ? numberToVietnameseWords(perPeriod) : "";
   data["PA.Thu nhập còn lại"] = fmtN(remaining);
-  data["PA.Kỳ hạn trả gốc text"] = repaymentFreq > 0 ? `${repaymentFreq} tháng/kỳ` : "";
-  data["PA.Thời hạn vay text"] = termMonths > 0 ? `${termMonths} tháng` : "";
 
   // ── Individual earner fields (for templates with direct access) ──
   data["PA.Earner1 danh xưng"] = str(fin.earner1_title);

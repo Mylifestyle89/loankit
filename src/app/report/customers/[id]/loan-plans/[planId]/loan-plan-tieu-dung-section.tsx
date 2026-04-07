@@ -11,6 +11,7 @@
 
 import { inputCls } from "@/components/invoice-tracking/form-styles";
 import type { TieuDungSubtype, EarnerTitle } from "@/lib/loan-plan/loan-plan-types";
+import { formatPeriodLabel } from "@/lib/loan-plan/loan-plan-calculator";
 import { NumericInput } from "./numeric-input";
 import { fmtVND, formatPercentInputFromRate, parsePercentInputToRate } from "./loan-plan-editor-utils";
 
@@ -47,12 +48,12 @@ type Props = {
   earner2Income: number;
   onEarner2IncomeChange: (v: number) => void;
 
-  livingExpenses3m: number;
-  onLivingExpenses3mChange: (v: number) => void;
+  livingExpensesPeriod: number;
+  onLivingExpensesPeriodChange: (v: number) => void;
   avgOtherLoanRate: number;
   onAvgOtherLoanRateChange: (v: number) => void;
-  otherCosts3m: number;
-  onOtherCosts3mChange: (v: number) => void;
+  otherCostsPeriod: number;
+  onOtherCostsPeriodChange: (v: number) => void;
 };
 
 export function LoanPlanTieuDungSection(props: Props) {
@@ -63,16 +64,18 @@ export function LoanPlanTieuDungSection(props: Props) {
     earner1Workplace, onEarner1WorkplaceChange, earner1Income, onEarner1IncomeChange,
     earner2Title, onEarner2TitleChange, earner2Name, onEarner2NameChange,
     earner2Workplace, onEarner2WorkplaceChange, earner2Income, onEarner2IncomeChange,
-    livingExpenses3m, onLivingExpenses3mChange,
+    livingExpensesPeriod, onLivingExpensesPeriodChange,
     avgOtherLoanRate, onAvgOtherLoanRateChange,
-    otherCosts3m, onOtherCosts3mChange,
+    otherCostsPeriod, onOtherCostsPeriodChange,
   } = props;
 
-  // ── Derived preview values ──
-  const totalIncome3m = (earner1Income + earner2Income) * 3;
-  const interestCost3m = Math.round(loanAmount * avgOtherLoanRate * 3 / 12);
-  const totalExpenses3m = livingExpenses3m + interestCost3m + otherCosts3m;
-  const available = totalIncome3m - totalExpenses3m;
+  // ── Derived preview values (dynamic theo kỳ hạn trả gốc) ──
+  const periodMonths = repaymentFrequency > 0 ? repaymentFrequency : 1;
+  const periodLabel = formatPeriodLabel(periodMonths);
+  const totalIncomePeriod = (earner1Income + earner2Income) * periodMonths;
+  const interestCostPeriod = Math.round(loanAmount * avgOtherLoanRate * periodMonths / 12);
+  const totalExpensesPeriod = livingExpensesPeriod + interestCostPeriod + otherCostsPeriod;
+  const available = totalIncomePeriod - totalExpensesPeriod;
 
   const totalPeriods = repaymentFrequency > 0 && termMonths > 0
     ? Math.ceil(termMonths / repaymentFrequency)
@@ -152,13 +155,15 @@ export function LoanPlanTieuDungSection(props: Props) {
         </div>
       </div>
 
-      {/* ── Chi phí 3 tháng ── */}
+      {/* ── Chi phí dynamic theo kỳ ── */}
       <div className="space-y-2 pt-2 border-t border-brand-200/40 dark:border-brand-700/20">
-        <p className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">Chi phí bình quân 3 tháng</p>
+        <p className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">
+          Chi phí bình quân {periodLabel}
+        </p>
         <div className="grid gap-3 sm:grid-cols-3">
           <label className="block">
-            <span className="text-xs text-zinc-500">Chi phí sinh hoạt 3 tháng</span>
-            <NumericInput value={livingExpenses3m} onChange={onLivingExpenses3mChange} className={inputCls} placeholder="VD: 24,000,000" />
+            <span className="text-xs text-zinc-500">Chi phí sinh hoạt {periodLabel}</span>
+            <NumericInput value={livingExpensesPeriod} onChange={onLivingExpensesPeriodChange} className={inputCls} placeholder="VD: 24,000,000" />
           </label>
           <label className="block">
             <span className="text-xs text-zinc-500">Lãi suất BQ (%/năm)</span>
@@ -172,8 +177,8 @@ export function LoanPlanTieuDungSection(props: Props) {
             />
           </label>
           <label className="block">
-            <span className="text-xs text-zinc-500">Chi phí khác 3 tháng</span>
-            <NumericInput value={otherCosts3m} onChange={onOtherCosts3mChange} className={inputCls} placeholder="VD: 0" />
+            <span className="text-xs text-zinc-500">Chi phí khác {periodLabel}</span>
+            <NumericInput value={otherCostsPeriod} onChange={onOtherCostsPeriodChange} className={inputCls} placeholder="VD: 0" />
           </label>
         </div>
       </div>
@@ -181,14 +186,16 @@ export function LoanPlanTieuDungSection(props: Props) {
       {/* ── Preview card ── */}
       {(earner1Income > 0 || earner2Income > 0) && (
         <div className="pt-3 border-t border-brand-200/40 dark:border-brand-700/20">
-          <p className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider mb-2">Tính toán khả năng trả nợ (3 tháng)</p>
+          <p className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider mb-2">
+            Tính toán khả năng trả nợ ({periodLabel})
+          </p>
           <div className="grid grid-cols-2 gap-2 text-sm bg-white dark:bg-[#1a1a1a] rounded-lg p-3">
-            <div className="flex justify-between"><span className="text-zinc-500">Tổng thu nhập:</span><span className="font-semibold tabular-nums">{fmtVND(totalIncome3m)}</span></div>
-            <div className="flex justify-between"><span className="text-zinc-500">Tổng chi phí:</span><span className="font-semibold tabular-nums">{fmtVND(totalExpenses3m)}</span></div>
+            <div className="flex justify-between"><span className="text-zinc-500">Tổng thu nhập:</span><span className="font-semibold tabular-nums">{fmtVND(totalIncomePeriod)}</span></div>
+            <div className="flex justify-between"><span className="text-zinc-500">Tổng chi phí:</span><span className="font-semibold tabular-nums">{fmtVND(totalExpensesPeriod)}</span></div>
             <div className="col-span-2 ml-4 text-xs text-zinc-400 space-y-0.5">
-              <div className="flex justify-between"><span>├─ Sinh hoạt:</span><span className="tabular-nums">{fmtVND(livingExpenses3m)}</span></div>
-              <div className="flex justify-between"><span>├─ Lãi vay (ước tính):</span><span className="tabular-nums">{fmtVND(interestCost3m)}</span></div>
-              <div className="flex justify-between"><span>└─ Khác:</span><span className="tabular-nums">{fmtVND(otherCosts3m)}</span></div>
+              <div className="flex justify-between"><span>├─ Sinh hoạt:</span><span className="tabular-nums">{fmtVND(livingExpensesPeriod)}</span></div>
+              <div className="flex justify-between"><span>├─ Lãi vay (ước tính):</span><span className="tabular-nums">{fmtVND(interestCostPeriod)}</span></div>
+              <div className="flex justify-between"><span>└─ Khác:</span><span className="tabular-nums">{fmtVND(otherCostsPeriod)}</span></div>
             </div>
             <div className="col-span-2 flex justify-between pt-1 border-t border-zinc-100 dark:border-white/[0.05]">
               <span className="text-zinc-500">Dư để trả gốc:</span>

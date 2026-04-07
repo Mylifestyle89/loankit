@@ -53,9 +53,9 @@ export default function LoanPlanEditorPage() {
   const [earner2Name, setEarner2Name] = useState("");
   const [earner2Workplace, setEarner2Workplace] = useState("");
   const [earner2Income, setEarner2Income] = useState(0);
-  const [livingExpenses3m, setLivingExpenses3m] = useState(0);
+  const [livingExpensesPeriod, setLivingExpensesPeriod] = useState(0);
   const [avgOtherLoanRate, setAvgOtherLoanRate] = useState(0);
-  const [otherCosts3m, setOtherCosts3m] = useState(0);
+  const [otherCostsPeriod, setOtherCostsPeriod] = useState(0);
   // Đánh giá tín dụng
   const [legalAssessment, setLegalAssessment] = useState("");
   const [marketInput, setMarketInput] = useState("");
@@ -128,9 +128,9 @@ export default function LoanPlanEditorPage() {
       setEarner2Name(fin.earner2_name ?? "");
       setEarner2Workplace(fin.earner2_workplace ?? "");
       setEarner2Income(fin.earner2_monthly_income ?? 0);
-      setLivingExpenses3m(fin.living_expenses_3m ?? 0);
+      setLivingExpensesPeriod(fin.living_expenses_period ?? 0);
       setAvgOtherLoanRate(fin.avg_other_loan_rate ?? 0);
-      setOtherCosts3m(fin.other_costs_3m ?? 0);
+      setOtherCostsPeriod(fin.other_costs_period ?? 0);
       // Đánh giá tín dụng
       setLegalAssessment(fin.legal_assessment ?? "");
       setMarketInput(fin.market_input ?? "");
@@ -200,9 +200,9 @@ export default function LoanPlanEditorPage() {
             earner2_name: earner2Name,
             earner2_workplace: earner2Workplace,
             earner2_monthly_income: earner2Income,
-            living_expenses_3m: livingExpenses3m,
+            living_expenses_period: livingExpensesPeriod,
             avg_other_loan_rate: avgOtherLoanRate,
-            other_costs_3m: otherCosts3m,
+            other_costs_period: otherCostsPeriod,
           } : {}),
           // Đánh giá tín dụng
           legal_assessment: legalAssessment, market_input: marketInput, market_output: marketOutput,
@@ -319,9 +319,9 @@ export default function LoanPlanEditorPage() {
           earner2Name={earner2Name} onEarner2NameChange={setEarner2Name}
           earner2Workplace={earner2Workplace} onEarner2WorkplaceChange={setEarner2Workplace}
           earner2Income={earner2Income} onEarner2IncomeChange={setEarner2Income}
-          livingExpenses3m={livingExpenses3m} onLivingExpenses3mChange={setLivingExpenses3m}
+          livingExpensesPeriod={livingExpensesPeriod} onLivingExpensesPeriodChange={setLivingExpensesPeriod}
           avgOtherLoanRate={avgOtherLoanRate} onAvgOtherLoanRateChange={setAvgOtherLoanRate}
-          otherCosts3m={otherCosts3m} onOtherCosts3mChange={setOtherCosts3m}
+          otherCostsPeriod={otherCostsPeriod} onOtherCostsPeriodChange={setOtherCostsPeriod}
         />
       )}
 

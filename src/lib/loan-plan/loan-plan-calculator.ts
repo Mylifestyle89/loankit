@@ -99,6 +99,12 @@ export function calcDepreciation(assetUnitPrice: number, landArea: number, years
   return Math.round(assetUnitPrice * landArea / years);
 }
 
+/** Format số tháng/kỳ thành label hiển thị: 1 → "tháng", 3 → "3 tháng" */
+export function formatPeriodLabel(months: number): string {
+  if (months <= 0) return "tháng";
+  return months === 1 ? "tháng" : `${months} tháng`;
+}
+
 /** Principal rounding mode for equal-installment schedules.
  *  - "none":   Math.round (default, legacy behavior)
  *  - "up_100k":   round UP to nearest 100,000 — last period auto-adjusts smaller
