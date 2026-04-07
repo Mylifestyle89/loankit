@@ -69,11 +69,51 @@ export const customerService = {
       }),
       prisma.customer.count({ where }),
     ]);
+    // Fetch latest activity timestamp per customer (loans, collaterals, loan plans)
+    const customerIds = data.map((c) => c.id);
+    const [latestLoans, latestCollaterals, latestPlans] = await Promise.all([
+      prisma.loan.groupBy({
+        by: ["customerId"],
+        where: { customerId: { in: customerIds } },
+        _max: { updatedAt: true },
+      }),
+      prisma.collateral.groupBy({
+        by: ["customerId"],
+        where: { customerId: { in: customerIds } },
+        _max: { updatedAt: true },
+      }),
+      prisma.loanPlan.groupBy({
+        by: ["customerId"],
+        where: { customerId: { in: customerIds } },
+        _max: { updatedAt: true },
+      }),
+    ]);
+    const latestByCustomer = new Map<string, { at: Date; type: string }>();
+    const merge = (rows: Array<{ customerId: string; _max: { updatedAt: Date | null } }>, type: string) => {
+      for (const r of rows) {
+        if (!r._max.updatedAt) continue;
+        const cur = latestByCustomer.get(r.customerId);
+        if (!cur || r._max.updatedAt > cur.at) latestByCustomer.set(r.customerId, { at: r._max.updatedAt, type });
+      }
+    };
+    merge(latestLoans, "loan");
+    merge(latestCollaterals, "collateral");
+    merge(latestPlans, "loan_plan");
     return {
       data: data.map((c) => {
         const { loans, ...rest } = c;
         const decrypted = decryptCustomerPii(rest);
-        return { ...decrypted, activeLoanCount: loans.length, activeLoanTotal: loans.reduce((s, l) => s + l.loanAmount, 0) };
+        const latest = latestByCustomer.get(c.id);
+        // lastActivityAt = latest of customer.updatedAt vs related entities
+        const lastActivityAt = latest && latest.at > c.updatedAt ? latest.at : c.updatedAt;
+        const lastActivityType = latest && latest.at > c.updatedAt ? latest.type : "customer";
+        return {
+          ...decrypted,
+          activeLoanCount: loans.length,
+          activeLoanTotal: loans.reduce((s, l) => s + l.loanAmount, 0),
+          lastActivityAt,
+          lastActivityType,
+        };
       }),
       total, page: filter?.page ?? 1, limit: take,
     };

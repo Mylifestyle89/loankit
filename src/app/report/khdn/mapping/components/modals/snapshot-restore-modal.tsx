@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { History, RotateCcw, X, Clock, Database, Calculator } from "lucide-react";
 import { useMappingDataStore } from "../../stores/use-mapping-data-store";
+import { formatRelativeTime } from "@/lib/format-relative-time";
 
 type SnapshotMeta = {
   filename: string;
@@ -30,16 +31,6 @@ function formatTime(iso: string): string {
   const d = new Date(iso);
   const pad = (n: number) => String(n).padStart(2, "0");
   return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
-}
-
-function timeAgo(iso: string): string {
-  const diff = Date.now() - new Date(iso).getTime();
-  const minutes = Math.floor(diff / 60_000);
-  if (minutes < 1) return "vừa xong";
-  if (minutes < 60) return `${minutes} phút trước`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours} giờ trước`;
-  return `${Math.floor(hours / 24)} ngày trước`;
 }
 
 export function SnapshotRestoreModal({ open, onClose }: Props) {
@@ -184,7 +175,7 @@ export function SnapshotRestoreModal({ open, onClose }: Props) {
                         {formatTime(s.timestamp)}
                       </span>
                       <span className="text-xs text-slate-400 dark:text-slate-500">
-                        {timeAgo(s.timestamp)}
+                        {formatRelativeTime(s.timestamp)}
                       </span>
                       {s.source === "manual" && (
                         <span className="rounded-md bg-brand-50 px-1.5 py-0.5 text-[10px] font-medium text-brand-500 dark:bg-brand-500/10 dark:text-brand-400">

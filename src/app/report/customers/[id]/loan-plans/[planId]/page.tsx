@@ -36,6 +36,8 @@ export default function LoanPlanEditorPage() {
   const [landAreaSau, setLandAreaSau] = useState(0);
   const [preferentialRateInput, setPreferentialRateInput] = useState("");
   const [termMonths, setTermMonths] = useState(0);
+  const [repaymentFrequency, setRepaymentFrequency] = useState(12);
+  const [principalRounding, setPrincipalRounding] = useState<"none" | "up_100k" | "down_100k">("none");
   const [constructionContractNo, setConstructionContractNo] = useState("");
   const [constructionContractDate, setConstructionContractDate] = useState("");
   // Common SXKD fields
@@ -97,6 +99,8 @@ export default function LoanPlanEditorPage() {
       setLandAreaSau(fin.land_area_sau ?? 0);
       setPreferentialRateInput(formatPercentInputFromRate(fin.preferential_rate ?? 0));
       setTermMonths(fin.term_months ?? 0);
+      setRepaymentFrequency(fin.repayment_frequency ?? 12);
+      setPrincipalRounding(fin.principal_rounding ?? "none");
       setConstructionContractNo(fin.construction_contract_no ?? "");
       setConstructionContractDate(fin.construction_contract_date ?? "");
       setFarmAddress(fin.farmAddress ?? "");
@@ -151,7 +155,10 @@ export default function LoanPlanEditorPage() {
           ...(loanMethod === "trung_dai" ? {
             depreciation_years: depreciationYears, asset_unit_price: assetUnitPrice,
             preferential_rate: preferentialRate,
-            term_months: termMonths, construction_contract_no: constructionContractNo,
+            term_months: termMonths,
+            repayment_frequency: repaymentFrequency,
+            principal_rounding: principalRounding,
+            construction_contract_no: constructionContractNo,
             construction_contract_date: constructionContractDate,
           } : {}),
           // Đánh giá tín dụng
@@ -246,6 +253,8 @@ export default function LoanPlanEditorPage() {
           landAreaSau={landAreaSau}
           termMonths={termMonths} onTermMonthsChange={setTermMonths}
           preferentialRateInput={preferentialRateInput} onPreferentialRateInputChange={setPreferentialRateInput}
+          repaymentFrequency={repaymentFrequency} onRepaymentFrequencyChange={setRepaymentFrequency}
+          principalRounding={principalRounding} onPrincipalRoundingChange={setPrincipalRounding}
           constructionContractNo={constructionContractNo} onConstructionContractNoChange={setConstructionContractNo}
           constructionContractDate={constructionContractDate} onConstructionContractDateChange={setConstructionContractDate}
         />
@@ -367,6 +376,8 @@ export default function LoanPlanEditorPage() {
             loanAmount={loanAmount} termMonths={termMonths}
             standardRate={interestRate} preferentialRate={preferentialRate || interestRate}
             annualIncome={financials.profit + (depreciationYears > 0 ? Math.round(assetUnitPrice * landAreaSau / depreciationYears) : 0)}
+            repaymentFrequency={repaymentFrequency}
+            principalRounding={principalRounding}
           />
         </div>
       )}

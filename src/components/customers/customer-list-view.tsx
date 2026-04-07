@@ -37,7 +37,7 @@ export function CustomerListView({ customerType, basePath, showSelect = false }:
   const [searchQuery, setSearchQuery] = useState("");
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<"table" | "card">("table");
-  const [sortKey, setSortKey] = useState<SortKey>("updatedAt");
+  const [sortKey, setSortKey] = useState<SortKey>("lastActivityAt");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -77,6 +77,12 @@ export function CustomerListView({ customerType, basePath, showSelect = false }:
   const sortedCustomers = useMemo(() => {
     const list = [...filteredCustomers];
     list.sort((a, b) => {
+      // Date columns: compare as timestamps; fallback to updatedAt if lastActivityAt missing
+      if (sortKey === "lastActivityAt") {
+        const at = new Date(a.lastActivityAt ?? a.updatedAt).getTime();
+        const bt = new Date(b.lastActivityAt ?? b.updatedAt).getTime();
+        return sortDir === "asc" ? at - bt : bt - at;
+      }
       const av = a[sortKey] ?? "";
       const bv = b[sortKey] ?? "";
       const cmp = String(av).localeCompare(String(bv), "vi");

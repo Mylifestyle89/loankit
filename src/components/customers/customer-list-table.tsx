@@ -3,7 +3,9 @@
 import Link from "next/link";
 import { ArrowUpDown, Check, ChevronDown, ChevronUp, RefreshCw, Trash2 } from "lucide-react";
 
-export type SortKey = "customer_name" | "customer_code" | "customer_type" | "updatedAt";
+import { formatRelativeTime } from "@/lib/format-relative-time";
+
+export type SortKey = "customer_name" | "customer_code" | "customer_type" | "lastActivityAt";
 
 export type Customer = {
   id: string;
@@ -19,6 +21,15 @@ export type Customer = {
   updatedAt: string;
   activeLoanCount?: number;
   activeLoanTotal?: number;
+  lastActivityAt?: string;
+  lastActivityType?: "customer" | "loan" | "collateral" | "loan_plan";
+};
+
+const ACTIVITY_LABEL: Record<string, string> = {
+  customer: "Hồ sơ KH",
+  loan: "Khoản vay",
+  collateral: "TSBĐ",
+  loan_plan: "Phương án",
 };
 
 export function SortIcon({ active, dir }: { active: boolean; dir: "asc" | "desc" }) {
@@ -62,8 +73,8 @@ export function CustomerTable({
               <th className="px-4 py-3 text-center text-xs font-semibold text-zinc-500 dark:text-slate-400">Khoản vay</th>
               <th className="px-4 py-3 text-right text-xs font-semibold text-zinc-500 dark:text-slate-400">Tổng dư nợ</th>
               <th className="px-4 py-3 text-left text-xs font-semibold text-zinc-500 dark:text-slate-400">Địa chỉ</th>
-              <th className={thCls} onClick={() => onSort("updatedAt")}>
-                <span className="inline-flex items-center gap-1">Cập nhật <SortIcon active={sortKey === "updatedAt"} dir={sortDir} /></span>
+              <th className={thCls} onClick={() => onSort("lastActivityAt")}>
+                <span className="inline-flex items-center gap-1">Hoạt động gần nhất <SortIcon active={sortKey === "lastActivityAt"} dir={sortDir} /></span>
               </th>
               <th className="px-4 py-3 text-right text-xs font-semibold text-zinc-500 dark:text-slate-400">Thao tác</th>
             </tr>
@@ -97,8 +108,15 @@ export function CustomerTable({
                     {c.activeLoanTotal ? new Intl.NumberFormat("vi-VN").format(c.activeLoanTotal) : "—"}
                   </td>
                   <td className={`${tdCls} text-zinc-500 dark:text-slate-400 max-w-xs truncate`}>{c.address ?? "—"}</td>
-                  <td className={`${tdCls} text-zinc-400 dark:text-slate-500 tabular-nums text-xs`}>
-                    {new Date(c.updatedAt).toLocaleDateString("vi-VN")}
+                  <td className={`${tdCls} text-xs`}>
+                    <div className="flex flex-col leading-tight">
+                      <span className="text-zinc-500 dark:text-slate-400 tabular-nums">
+                        {formatRelativeTime(c.lastActivityAt ?? c.updatedAt)}
+                      </span>
+                      <span className="text-[10px] text-zinc-400 dark:text-slate-500">
+                        {ACTIVITY_LABEL[c.lastActivityType ?? "customer"]}
+                      </span>
+                    </div>
                   </td>
                   <td className={`${tdCls} text-right`}>
                     <div className="flex items-center justify-end gap-1.5">

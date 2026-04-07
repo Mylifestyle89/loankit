@@ -93,6 +93,7 @@ export type LoanPlanFinancialsExtended = LoanPlanFinancials & {
   preferential_rate?: number;          // Lãi suất ưu đãi năm đầu (e.g., 0.075)
   term_months?: number;                // Thời hạn vay (tháng)
   repayment_frequency?: number;        // Kỳ hạn trả gốc (tháng): 1, 3, 6, 12
+  principal_rounding?: "none" | "up_100k" | "down_100k"; // Làm tròn gốc mỗi kỳ (kỳ cuối tự điều chỉnh)
   farmAddress?: string;                // Địa chỉ đất NN
 };
 

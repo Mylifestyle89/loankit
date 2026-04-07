@@ -129,6 +129,10 @@ type TrungDaiProps = {
   onTermMonthsChange: (v: number) => void;
   preferentialRateInput: string;
   onPreferentialRateInputChange: (v: string) => void;
+  repaymentFrequency: number;
+  onRepaymentFrequencyChange: (v: number) => void;
+  principalRounding: "none" | "up_100k" | "down_100k";
+  onPrincipalRoundingChange: (v: "none" | "up_100k" | "down_100k") => void;
   constructionContractNo: string;
   onConstructionContractNoChange: (v: string) => void;
   constructionContractDate: string;
@@ -141,6 +145,8 @@ export function LoanPlanTrungDaiSection({
   landAreaSau,
   termMonths, onTermMonthsChange,
   preferentialRateInput, onPreferentialRateInputChange,
+  repaymentFrequency, onRepaymentFrequencyChange,
+  principalRounding, onPrincipalRoundingChange,
   constructionContractNo, onConstructionContractNoChange,
   constructionContractDate, onConstructionContractDateChange,
 }: TrungDaiProps) {
@@ -203,6 +209,31 @@ export function LoanPlanTrungDaiSection({
             className={inputCls}
             placeholder="VD: 7,5"
           />
+        </label>
+        <label className="block">
+          <span className="text-xs font-medium text-zinc-500">Kỳ hạn trả gốc</span>
+          <select
+            value={repaymentFrequency || 12}
+            onChange={(e) => onRepaymentFrequencyChange(Number(e.target.value))}
+            className={inputCls}
+          >
+            <option value={1}>Hàng tháng</option>
+            <option value={3}>Hàng quý</option>
+            <option value={6}>6 tháng/lần</option>
+            <option value={12}>Hàng năm</option>
+          </select>
+        </label>
+        <label className="block">
+          <span className="text-xs font-medium text-zinc-500">Làm tròn gốc trả</span>
+          <select
+            value={principalRounding || "none"}
+            onChange={(e) => onPrincipalRoundingChange(e.target.value as "none" | "up_100k" | "down_100k")}
+            className={inputCls}
+          >
+            <option value="none">Không làm tròn</option>
+            <option value="up_100k">Làm tròn lên 100.000đ</option>
+            <option value="down_100k">Làm tròn xuống 100.000đ</option>
+          </select>
         </label>
         <label className="block">
           <span className="text-xs font-medium text-zinc-500">Số HĐ thi công</span>

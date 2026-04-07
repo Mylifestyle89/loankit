@@ -233,10 +233,13 @@ export function buildLoanPlanExtendedData(
     const annualIncome = profit + depreciation;
 
     const repaymentFreq = Number(financials.repayment_frequency) || 12;
+    const rounding = (financials.principal_rounding === "up_100k" || financials.principal_rounding === "down_100k")
+      ? financials.principal_rounding : "none";
     const repaymentRows = calcRepaymentSchedule({
       loanAmount: loanAmt, termMonths, standardRate: stdRate,
       preferentialRate: prefRate !== stdRate ? prefRate : undefined,
       annualIncome, repaymentFrequency: repaymentFreq,
+      principalRounding: rounding,
     });
     data["PA_TRANO"] = repaymentRows.map((r) => ({
       "Năm": r.periodLabel ?? `Năm ${r.year}`,
@@ -258,31 +261,35 @@ export function buildLoanPlanExtendedData(
     }
 
     // ── Phí trả nợ trước hạn (HDTD placeholders) ──
-    const clamp = (v: number, min: number, max: number) => Math.max(min, Math.min(max, v));
+    // Chỉ áp dụng cho trung/dài hạn (term > 12 tháng) với kỳ trả đều.
+    // Công thức: Max phí năm N = dư nợ SAU kỳ trả đầu tiên của năm N × rate
+    //           = (balance - principal) của row đầu tiên có year === N
     const MIN_FEE = 1_000_000;
-    // Vay trả trong ngày: 0.5%, max 16tr
-    const sameDayFee = clamp(loanAmt * 0.005, MIN_FEE, 16_000_000);
+    const isMidLongTerm = termMonths > 12 && repaymentRows.length > 0;
+
+    // Vay trả trong ngày: 0.5%, max 16tr (áp dụng mọi khoản)
+    const sameDayFee = Math.max(MIN_FEE, Math.min(loanAmt * 0.005, 16_000_000));
     data["HDTD.Phí vay trả trong ngày"] = "0,5%";
     data["HDTD.Min vay trả trong ngày"] = fmtN(MIN_FEE);
     data["HDTD.Max vay trả trong ngày"] = fmtN(sameDayFee);
-    // Năm 1: 4%, max = dư nợ đầu năm 1 × 4%
-    const bal1 = repaymentRows[0]?.balance ?? loanAmt;
-    const max1 = clamp(bal1 * 0.04, MIN_FEE, bal1 * 0.04);
-    data["HDTD.Phí trả trước năm 1"] = "4%";
-    data["HDTD.Min trả trước năm 1"] = fmtN(MIN_FEE);
-    data["HDTD.Max trả trước năm 1"] = fmtN(max1);
-    // Năm 2: 3%, max = dư nợ đầu năm 2 × 3%
-    const bal2 = repaymentRows[1]?.balance ?? 0;
-    const max2 = bal2 > 0 ? clamp(bal2 * 0.03, MIN_FEE, bal2 * 0.03) : 0;
-    data["HDTD.Phí trả trước năm 2"] = "3%";
-    data["HDTD.Min trả trước năm 2"] = fmtN(MIN_FEE);
-    data["HDTD.Max trả trước năm 2"] = fmtN(max2);
-    // Năm 3+: 2%, max = dư nợ đầu năm 3 × 2%
-    const bal3 = repaymentRows[2]?.balance ?? 0;
-    const max3 = bal3 > 0 ? clamp(bal3 * 0.02, MIN_FEE, bal3 * 0.02) : 0;
-    data["HDTD.Phí trả trước năm 3+"] = "2%";
-    data["HDTD.Min trả trước năm 3+"] = fmtN(MIN_FEE);
-    data["HDTD.Max trả trước năm 3+"] = fmtN(max3);
+
+    if (isMidLongTerm) {
+      const maxFeeForYear = (year: number, rate: number): number => {
+        const row = repaymentRows.find((r) => r.year === year);
+        if (!row) return 0;
+        const balAfter = row.balance - row.principal;
+        return Math.max(MIN_FEE, balAfter * rate);
+      };
+      data["HDTD.Phí trả trước năm 1"] = "4%";
+      data["HDTD.Min trả trước năm 1"] = fmtN(MIN_FEE);
+      data["HDTD.Max trả trước năm 1"] = fmtN(maxFeeForYear(1, 0.04));
+      data["HDTD.Phí trả trước năm 2"] = "3%";
+      data["HDTD.Min trả trước năm 2"] = fmtN(MIN_FEE);
+      data["HDTD.Max trả trước năm 2"] = fmtN(maxFeeForYear(2, 0.03));
+      data["HDTD.Phí trả trước năm 3+"] = "2%";
+      data["HDTD.Min trả trước năm 3+"] = fmtN(MIN_FEE);
+      data["HDTD.Max trả trước năm 3+"] = fmtN(maxFeeForYear(3, 0.02));
+    }
   } catch {
     data["PA_CHIPHI"] = [];
     data["PA_DOANHTHU"] = [];

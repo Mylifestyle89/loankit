@@ -2,7 +2,7 @@
 
 // Bảng trả nợ theo năm — full table cho vay trung dài hạn
 
-import { calcRepaymentSchedule } from "@/lib/loan-plan/loan-plan-calculator";
+import { calcRepaymentSchedule, type PrincipalRounding } from "@/lib/loan-plan/loan-plan-calculator";
 
 type RepaymentScheduleTableProps = {
   loanAmount: number;
@@ -10,6 +10,8 @@ type RepaymentScheduleTableProps = {
   standardRate: number;
   preferentialRate: number;
   annualIncome: number;
+  repaymentFrequency?: number;
+  principalRounding?: PrincipalRounding;
 };
 
 export function RepaymentScheduleTable({
@@ -18,6 +20,8 @@ export function RepaymentScheduleTable({
   standardRate,
   preferentialRate,
   annualIncome,
+  repaymentFrequency,
+  principalRounding,
 }: RepaymentScheduleTableProps) {
   const rows = calcRepaymentSchedule({
     loanAmount,
@@ -25,6 +29,8 @@ export function RepaymentScheduleTable({
     standardRate,
     preferentialRate: preferentialRate !== standardRate ? preferentialRate : undefined,
     annualIncome,
+    repaymentFrequency,
+    principalRounding,
   });
 
   if (rows.length === 0) return null;

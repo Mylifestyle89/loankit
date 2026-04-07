@@ -99,9 +99,23 @@ export function calcDepreciation(assetUnitPrice: number, landArea: number, years
   return Math.round(assetUnitPrice * landArea / years);
 }
 
+/** Principal rounding mode for equal-installment schedules.
+ *  - "none":   Math.round (default, legacy behavior)
+ *  - "up_100k":   round UP to nearest 100,000 — last period auto-adjusts smaller
+ *  - "down_100k": round DOWN to nearest 100,000 — last period auto-adjusts larger
+ */
+export type PrincipalRounding = "none" | "up_100k" | "down_100k";
+
+function roundPrincipal(value: number, mode: PrincipalRounding): number {
+  if (mode === "up_100k") return Math.ceil(value / 100_000) * 100_000;
+  if (mode === "down_100k") return Math.floor(value / 100_000) * 100_000;
+  return Math.round(value);
+}
+
 /**
  * Bảng trả nợ cho vay trung dài hạn
  * Hỗ trợ kỳ hạn trả gốc: 1/3/6/12 tháng (default 12 = theo năm)
+ * Kỳ cuối tự điều chỉnh để tổng gốc = loanAmount.
  */
 export function calcRepaymentSchedule(params: {
   loanAmount: number;
@@ -110,12 +124,14 @@ export function calcRepaymentSchedule(params: {
   preferentialRate?: number;   // lãi suất ưu đãi năm đầu
   annualIncome: number;        // lợi nhuận + khấu hao (theo năm)
   repaymentFrequency?: number; // kỳ hạn trả gốc (tháng): 1, 3, 6, 12. Default 12
+  principalRounding?: PrincipalRounding; // default "none"
 }): RepaymentRow[] {
   const freq = params.repaymentFrequency || 12;
   const totalPeriods = Math.ceil(params.termMonths / freq);
   if (totalPeriods <= 0 || params.loanAmount <= 0) return [];
 
-  const principalPerPeriod = Math.round(params.loanAmount / totalPeriods);
+  const rounding = params.principalRounding ?? "none";
+  const principalPerPeriod = roundPrincipal(params.loanAmount / totalPeriods, rounding);
   // Thu nhập pro-rata theo kỳ (annualIncome × freq/12)
   const incomePerPeriod = Math.round(params.annualIncome * freq / 12);
   // Lãi suất theo kỳ = annual rate × freq/12

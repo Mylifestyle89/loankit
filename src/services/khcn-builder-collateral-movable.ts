@@ -17,6 +17,7 @@ function extractMovableFields(
     STT: index + 1,
     "Tên TSBĐ": col.name,
     "Nhãn hiệu": p.brand ?? p.nhan_hieu ?? "",
+    "Số loại": p.model_code ?? p.so_loai ?? "",
     "Biển kiểm soát": p.license_plate ?? p.bien_ks ?? "",
     "Số khung": p.chassis_number ?? p.so_khung ?? "",
     "Số máy": p.engine_number ?? p.so_may ?? "",

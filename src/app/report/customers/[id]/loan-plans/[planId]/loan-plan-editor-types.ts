@@ -21,6 +21,8 @@ export type Financials = {
   land_area_sau?: number;
   preferential_rate?: number;
   term_months?: number;
+  repayment_frequency?: number;
+  principal_rounding?: "none" | "up_100k" | "down_100k";
   construction_contract_no?: string;
   construction_contract_date?: string;
   farmAddress?: string;

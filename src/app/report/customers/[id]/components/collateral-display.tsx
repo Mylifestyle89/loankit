@@ -19,7 +19,7 @@ const QSD_DISPLAY_GROUPS = [
 ];
 
 const DS_DISPLAY_GROUPS = [
-  { label: "Thông tin phương tiện", keys: new Set(["brand", "engine_number", "chassis_number", "color", "license_plate", "seat_count", "manufacture_year"]) },
+  { label: "Thông tin phương tiện", keys: new Set(["brand", "model_code", "engine_number", "chassis_number", "color", "license_plate", "seat_count", "manufacture_year"]) },
   { label: "Giấy tờ đăng ký", keys: new Set(["registration_number", "registration_date", "registration_place"]) },
   { label: "Hợp đồng bảo đảm", keys: new Set(["mortgage_name", "mortgage_contract", "mortgage_date", "guarantee_registry_place"]) },
   { label: "Bảo hiểm", keys: new Set(["insurance_status", "insurance_amount", "insurance_renewal_date"]) },
