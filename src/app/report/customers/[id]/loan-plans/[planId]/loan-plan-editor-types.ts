@@ -26,6 +26,7 @@ export type Financials = {
   principal_rounding?: "none" | "up_100k" | "down_100k";
   // Tiêu dùng
   tieu_dung_subtype?: TieuDungSubtype;
+  loan_capital_need?: number;
   earner1_title?: EarnerTitle;
   earner1_name?: string;
   earner1_workplace?: string;

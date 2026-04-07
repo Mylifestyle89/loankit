@@ -21,6 +21,7 @@ function isRateInput(value: string): boolean {
 // ─── LoanPlanInfoGrid ──────────────────────────────────────────────────────────
 
 type InfoGridProps = {
+  loanMethod: string;
   name: string;
   onNameChange: (v: string) => void;
   interestRateInput: string;
@@ -35,9 +36,17 @@ type InfoGridProps = {
   onFarmAddressChange: (v: string) => void;
   turnoverAnalysis: string;
   onTurnoverAnalysisChange: (v: string) => void;
+  // Tiêu dùng-only fields
+  termMonths: number;
+  onTermMonthsChange: (v: number) => void;
+  repaymentFrequency: number;
+  onRepaymentFrequencyChange: (v: number) => void;
+  loanCapitalNeed: number;
+  onLoanCapitalNeedChange: (v: number) => void;
 };
 
 export function LoanPlanInfoGrid({
+  loanMethod,
   name, onNameChange,
   interestRateInput, onInterestRateInputChange,
   turnoverCycles, onTurnoverCyclesChange,
@@ -45,7 +54,11 @@ export function LoanPlanInfoGrid({
   landAreaSau, onLandAreaSauChange,
   farmAddress, onFarmAddressChange,
   turnoverAnalysis, onTurnoverAnalysisChange,
+  termMonths, onTermMonthsChange,
+  repaymentFrequency, onRepaymentFrequencyChange,
+  loanCapitalNeed, onLoanCapitalNeedChange,
 }: InfoGridProps) {
+  const isTieuDung = loanMethod === "tieu_dung";
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 rounded-2xl border border-zinc-200 dark:border-white/[0.07] bg-white dark:bg-[#161616] p-5 shadow-sm">
       <label className="block">
@@ -66,53 +79,101 @@ export function LoanPlanInfoGrid({
           placeholder="VD: 9,5"
         />
       </label>
-      <label className="block">
-        <span className="text-xs font-medium text-zinc-500">Vòng quay vốn</span>
-        <input
-          type="number"
-          step="0.1"
-          value={turnoverCycles || ""}
-          onChange={(e) => onTurnoverCyclesChange(Number(e.target.value) || 1)}
-          className={inputCls}
-          placeholder="VD: 3"
-        />
-      </label>
+
+      {/* SXKD: vòng quay vốn / số sào đất / địa chỉ NN | Tiêu dùng: nhu cầu vốn vay / thời hạn / kỳ hạn trả gốc */}
+      {!isTieuDung && (
+        <label className="block">
+          <span className="text-xs font-medium text-zinc-500">Vòng quay vốn</span>
+          <input
+            type="number"
+            step="0.1"
+            value={turnoverCycles || ""}
+            onChange={(e) => onTurnoverCyclesChange(Number(e.target.value) || 1)}
+            className={inputCls}
+            placeholder="VD: 3"
+          />
+        </label>
+      )}
+
+      {isTieuDung && (
+        <label className="block">
+          <span className="text-xs font-medium text-zinc-500">Nhu cầu vốn vay</span>
+          <NumericInput value={loanCapitalNeed} onChange={onLoanCapitalNeedChange} className={inputCls} placeholder="VD: 500,000,000" />
+        </label>
+      )}
+
       <label className="block">
         <span className="text-xs font-medium text-zinc-500">Số tiền vay</span>
         <NumericInput value={loanAmount} onChange={onLoanAmountChange} className={inputCls} placeholder="0" />
       </label>
-      <label className="block">
-        <span className="text-xs font-medium text-zinc-500">Số sào đất</span>
-        <input
-          type="number"
-          step="0.1"
-          value={landAreaSau || ""}
-          onChange={(e) => onLandAreaSauChange(Number(e.target.value) || 0)}
-          className={inputCls}
-          placeholder="VD: 10"
-        />
-      </label>
-      <label className="block">
-        <span className="text-xs font-medium text-zinc-500">Địa chỉ đất NN</span>
-        <input
-          type="text"
-          value={farmAddress}
-          onChange={(e) => onFarmAddressChange(e.target.value)}
-          className={inputCls}
-          placeholder="VD: xã ABC, huyện XYZ"
-        />
-      </label>
-      {/* Phân tích vòng quay vốn — resizable textarea spanning full width */}
-      <label className="block sm:col-span-2 lg:col-span-4">
-        <span className="text-xs font-medium text-zinc-500">Phân tích vòng quay vốn</span>
-        <textarea
-          value={turnoverAnalysis}
-          onChange={(e) => onTurnoverAnalysisChange(e.target.value)}
-          className={`${inputCls} min-h-[60px] resize-y`}
-          rows={3}
-          placeholder="VD: Căn cứ xác định vòng quay vốn lưu động dự kiến kỳ kế hoạch: Hoa Ly có chu kỳ sinh trưởng khoảng 3-4 tháng..."
-        />
-      </label>
+
+      {!isTieuDung && (
+        <>
+          <label className="block">
+            <span className="text-xs font-medium text-zinc-500">Số sào đất</span>
+            <input
+              type="number"
+              step="0.1"
+              value={landAreaSau || ""}
+              onChange={(e) => onLandAreaSauChange(Number(e.target.value) || 0)}
+              className={inputCls}
+              placeholder="VD: 10"
+            />
+          </label>
+          <label className="block">
+            <span className="text-xs font-medium text-zinc-500">Địa chỉ đất NN</span>
+            <input
+              type="text"
+              value={farmAddress}
+              onChange={(e) => onFarmAddressChange(e.target.value)}
+              className={inputCls}
+              placeholder="VD: xã ABC, huyện XYZ"
+            />
+          </label>
+        </>
+      )}
+
+      {isTieuDung && (
+        <>
+          <label className="block">
+            <span className="text-xs font-medium text-zinc-500">Thời hạn vay (tháng)</span>
+            <input
+              type="number"
+              value={termMonths || ""}
+              onChange={(e) => onTermMonthsChange(Number(e.target.value) || 0)}
+              className={inputCls}
+              placeholder="VD: 48"
+            />
+          </label>
+          <label className="block">
+            <span className="text-xs font-medium text-zinc-500">Kỳ hạn trả gốc</span>
+            <select
+              value={repaymentFrequency || 12}
+              onChange={(e) => onRepaymentFrequencyChange(Number(e.target.value))}
+              className={inputCls}
+            >
+              <option value={1}>Hàng tháng</option>
+              <option value={3}>Hàng quý</option>
+              <option value={6}>6 tháng/lần</option>
+              <option value={12}>Hàng năm</option>
+            </select>
+          </label>
+        </>
+      )}
+
+      {/* Phân tích vòng quay vốn — chỉ SXKD */}
+      {!isTieuDung && (
+        <label className="block sm:col-span-2 lg:col-span-4">
+          <span className="text-xs font-medium text-zinc-500">Phân tích vòng quay vốn</span>
+          <textarea
+            value={turnoverAnalysis}
+            onChange={(e) => onTurnoverAnalysisChange(e.target.value)}
+            className={`${inputCls} min-h-[60px] resize-y`}
+            rows={3}
+            placeholder="VD: Căn cứ xác định vòng quay vốn lưu động dự kiến kỳ kế hoạch: Hoa Ly có chu kỳ sinh trưởng khoảng 3-4 tháng..."
+          />
+        </label>
+      )}
     </div>
   );
 }

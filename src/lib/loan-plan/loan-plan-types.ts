@@ -99,6 +99,8 @@ export type LoanPlanFinancialsExtended = LoanPlanFinancials & {
   // ── Tiêu dùng (consumer loan) fields ──
   /** Mục đích vay tiêu dùng: xây/sửa nhà, mua đất ở, mua xe. "mua_sam" scope riêng. */
   tieu_dung_subtype?: TieuDungSubtype;
+  /** Tổng nhu cầu vốn vay (user nhập trực tiếp cho tiêu dùng — không tính từ cost items) */
+  loan_capital_need?: number;
   // Người trả nợ 1 (KH)
   earner1_title?: EarnerTitle;
   earner1_name?: string;

@@ -57,7 +57,7 @@ const EXTENDED_FINANCIAL_KEYS = [
   "turnover_analysis",
   "income_source_type",
   // Tiêu dùng
-  "tieu_dung_subtype",
+  "tieu_dung_subtype", "loan_capital_need",
   "earner1_title", "earner1_name", "earner1_workplace", "earner1_monthly_income",
   "earner2_title", "earner2_name", "earner2_workplace", "earner2_monthly_income",
   "living_expenses_period", "avg_other_loan_rate", "other_costs_period",

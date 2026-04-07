@@ -56,6 +56,7 @@ export default function LoanPlanEditorPage() {
   const [livingExpensesPeriod, setLivingExpensesPeriod] = useState(0);
   const [avgOtherLoanRate, setAvgOtherLoanRate] = useState(0);
   const [otherCostsPeriod, setOtherCostsPeriod] = useState(0);
+  const [loanCapitalNeed, setLoanCapitalNeed] = useState(0);
   // Đánh giá tín dụng
   const [legalAssessment, setLegalAssessment] = useState("");
   const [marketInput, setMarketInput] = useState("");
@@ -131,6 +132,7 @@ export default function LoanPlanEditorPage() {
       setLivingExpensesPeriod(fin.living_expenses_period ?? 0);
       setAvgOtherLoanRate(fin.avg_other_loan_rate ?? 0);
       setOtherCostsPeriod(fin.other_costs_period ?? 0);
+      setLoanCapitalNeed(fin.loan_capital_need ?? 0);
       // Đánh giá tín dụng
       setLegalAssessment(fin.legal_assessment ?? "");
       setMarketInput(fin.market_input ?? "");
@@ -191,6 +193,7 @@ export default function LoanPlanEditorPage() {
           ...(loanMethod === "tieu_dung" ? {
             term_months: termMonths,
             repayment_frequency: repaymentFrequency,
+            loan_capital_need: loanCapitalNeed,
             tieu_dung_subtype: tieuDungSubtype || undefined,
             earner1_title: earner1Title,
             earner1_name: earner1Name,
@@ -279,6 +282,7 @@ export default function LoanPlanEditorPage() {
 
       {/* Plan info */}
       <LoanPlanInfoGrid
+        loanMethod={loanMethod}
         name={name} onNameChange={setName}
         interestRateInput={interestRateInput} onInterestRateInputChange={setInterestRateInput}
         turnoverCycles={turnoverCycles} onTurnoverCyclesChange={setTurnoverCycles}
@@ -286,6 +290,9 @@ export default function LoanPlanEditorPage() {
         landAreaSau={landAreaSau} onLandAreaSauChange={setLandAreaSau}
         farmAddress={farmAddress} onFarmAddressChange={setFarmAddress}
         turnoverAnalysis={turnoverAnalysis} onTurnoverAnalysisChange={setTurnoverAnalysis}
+        termMonths={termMonths} onTermMonthsChange={setTermMonths}
+        repaymentFrequency={repaymentFrequency} onRepaymentFrequencyChange={setRepaymentFrequency}
+        loanCapitalNeed={loanCapitalNeed} onLoanCapitalNeedChange={setLoanCapitalNeed}
       />
 
       {/* ── Trung dài hạn: Khấu hao & Tài sản đầu tư ── */}
@@ -325,24 +332,6 @@ export default function LoanPlanEditorPage() {
         />
       )}
 
-      {/* Thời hạn vay + kỳ hạn trả (áp dụng cho tiêu dùng — trung_dai đã có trong section riêng) */}
-      {loanMethod === "tieu_dung" && (
-        <div className="grid gap-4 sm:grid-cols-2 rounded-2xl border border-zinc-200 dark:border-white/[0.07] bg-white dark:bg-[#161616] p-5 shadow-sm">
-          <label className="block">
-            <span className="text-xs font-medium text-zinc-500">Thời hạn vay (tháng)</span>
-            <input type="number" value={termMonths || ""} onChange={(e) => setTermMonths(Number(e.target.value) || 0)} className={inputCls} placeholder="VD: 48" />
-          </label>
-          <label className="block">
-            <span className="text-xs font-medium text-zinc-500">Kỳ hạn trả gốc</span>
-            <select value={repaymentFrequency || 12} onChange={(e) => setRepaymentFrequency(Number(e.target.value))} className={inputCls}>
-              <option value={1}>Hàng tháng</option>
-              <option value={3}>Hàng quý</option>
-              <option value={6}>6 tháng/lần</option>
-              <option value={12}>Hàng năm</option>
-            </select>
-          </label>
-        </div>
-      )}
 
       {/* Cost items — hide for tieu_dung (consumer loan has its own expense inputs) */}
       {loanMethod !== "tieu_dung" && (
@@ -434,7 +423,7 @@ export default function LoanPlanEditorPage() {
       )}
 
       {/* Nhu cầu vốn vay — hierarchical display */}
-      {financials && (
+      {financials && loanMethod !== "tieu_dung" && (
         <div className="rounded-2xl border border-zinc-200 dark:border-white/[0.07] bg-white dark:bg-[#161616] p-5 shadow-sm">
           <h3 className="text-sm font-semibold mb-3">Nhu cầu vốn vay</h3>
           <div className="text-sm space-y-1.5">
@@ -457,6 +446,21 @@ export default function LoanPlanEditorPage() {
         </div>
       )}
 
+      {/* Nhu cầu vốn vay — variant cho tiêu dùng (input trực tiếp, không vòng quay/CPTT) */}
+      {loanMethod === "tieu_dung" && loanCapitalNeed > 0 && (
+        <div className="rounded-2xl border border-zinc-200 dark:border-white/[0.07] bg-white dark:bg-[#161616] p-5 shadow-sm">
+          <h3 className="text-sm font-semibold mb-3">Nhu cầu vốn vay</h3>
+          <div className="text-sm space-y-1.5">
+            <TreeRow level={0} label="Nhu cầu vốn vay" value={fmtVND(loanCapitalNeed)} bold />
+            <TreeRow level={1} label="Số tiền vay" value={fmtVND(loanAmount)} />
+            <TreeRow level={1} label="Vốn đối ứng" sub="= Nhu cầu vốn vay − Số tiền vay" value={fmtVND(loanCapitalNeed - loanAmount)} color={loanCapitalNeed - loanAmount < 0 ? "red" : undefined} />
+            <div className="border-t border-dashed border-zinc-200 dark:border-white/10 my-2" />
+            <TreeRow level={0} label="Tỷ lệ vốn tự có" sub="= Vốn đối ứng / Nhu cầu vốn vay"
+              value={loanCapitalNeed ? (((loanCapitalNeed - loanAmount) / loanCapitalNeed) * 100).toFixed(1) + "%" : "—"} bold />
+          </div>
+        </div>
+      )}
+
       {/* ── Bảng trả nợ theo năm (trung dài hạn) ── */}
       {loanMethod === "trung_dai" && termMonths > 12 && loanAmount > 0 && financials && (
         <div className="rounded-2xl border border-brand-200 dark:border-brand-500/20 bg-white dark:bg-[#161616] p-5 shadow-sm">
@@ -470,17 +474,19 @@ export default function LoanPlanEditorPage() {
         </div>
       )}
 
-      {/* ── Đánh giá tín dụng ── */}
-      <CreditAssessmentSection
-        planId={planId} planName={name} costItems={costItems} revenueItems={revenueItems}
-        financials={{ loanAmount, interestRate, term_months: termMonths, asset_unit_price: assetUnitPrice, land_area_sau: landAreaSau, construction_contract_no: constructionContractNo }}
-        legalAssessment={legalAssessment} setLegalAssessment={setLegalAssessment}
-        marketInput={marketInput} setMarketInput={setMarketInput}
-        marketOutput={marketOutput} setMarketOutput={setMarketOutput}
-        laborCapability={laborCapability} setLaborCapability={setLaborCapability}
-        machineryCapability={machineryCapability} setMachineryCapability={setMachineryCapability}
-        otherFactors={otherFactors} setOtherFactors={setOtherFactors}
-      />
+      {/* ── Đánh giá tín dụng — hide cho tiêu dùng (nguồn trả từ lương, không cần phân tích PA/dự án) ── */}
+      {loanMethod !== "tieu_dung" && (
+        <CreditAssessmentSection
+          planId={planId} planName={name} costItems={costItems} revenueItems={revenueItems}
+          financials={{ loanAmount, interestRate, term_months: termMonths, asset_unit_price: assetUnitPrice, land_area_sau: landAreaSau, construction_contract_no: constructionContractNo }}
+          legalAssessment={legalAssessment} setLegalAssessment={setLegalAssessment}
+          marketInput={marketInput} setMarketInput={setMarketInput}
+          marketOutput={marketOutput} setMarketOutput={setMarketOutput}
+          laborCapability={laborCapability} setLaborCapability={setLaborCapability}
+          machineryCapability={machineryCapability} setMachineryCapability={setMachineryCapability}
+          otherFactors={otherFactors} setOtherFactors={setOtherFactors}
+        />
+      )}
     </section>
   );
 }

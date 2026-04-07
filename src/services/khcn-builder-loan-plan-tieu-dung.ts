@@ -98,6 +98,24 @@ export function buildTieuDungLoanPlanData(fin: Fin, data: Data): void {
   data["PA.Kỳ hạn trả gốc text"] = `${periodMonths} tháng/kỳ`;
   data["PA.Thời hạn vay text"] = termMonths > 0 ? `${termMonths} tháng` : "";
 
+  // ── Nhu cầu vốn vay (user nhập trực tiếp cho tiêu dùng) ──
+  const capitalNeed = num(fin.loan_capital_need);
+  const counterpart = capitalNeed - loanAmt;
+  data["PA.Tổng nhu cầu vốn"] = fmtN(capitalNeed);
+  data["PA.Tổng nhu cầu vốn bằng chữ"] = capitalNeed > 0 ? numberToVietnameseWords(capitalNeed) : "";
+  data["PA.Vốn đối ứng"] = fmtN(counterpart);
+  data["PA.Vốn đối ứng bằng chữ"] = counterpart > 0 ? numberToVietnameseWords(counterpart) : "";
+  data["PA.Tỷ lệ vốn đối ứng"] = capitalNeed > 0
+    ? `${((counterpart / capitalNeed) * 100).toFixed(2).replace(".", ",")}%`
+    : "";
+  // Mirror sang HĐTD prefix (template HĐTD đôi khi dùng)
+  data["HĐTD.Tổng nhu cầu vốn"] = fmtN(capitalNeed);
+  data["HĐTD.TNCV bằng chữ"] = capitalNeed > 0 ? numberToVietnameseWords(capitalNeed) : "";
+  data["HĐTD.Vốn đối ứng"] = fmtN(counterpart);
+  data["HĐTD.Tỷ lệ vốn đối ứng"] = capitalNeed > 0
+    ? `${((counterpart / capitalNeed) * 100).toFixed(2).replace(".", ",")}%`
+    : "";
+
   // ── Numeric placeholders (period-aware names) ──
   data["PA.Tổng thu nhập kỳ"] = fmtN(totalIncomePeriod);
   data["PA.Tổng thu nhập kỳ bằng chữ"] = totalIncomePeriod > 0 ? numberToVietnameseWords(totalIncomePeriod) : "";
