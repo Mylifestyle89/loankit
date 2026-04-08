@@ -32,13 +32,26 @@ function loadEnvFile(filePath: string): Record<string, string> {
 }
 
 async function main() {
+  const useTurso = process.argv.includes("--turso");
+
   if (!process.env.ENCRYPTION_KEY) {
     const env = loadEnvFile(resolve(process.cwd(), ".env"));
     if (env.ENCRYPTION_KEY) process.env.ENCRYPTION_KEY = env.ENCRYPTION_KEY;
   }
 
-  const dbPath = resolve(process.cwd(), "prisma/dev.db");
-  const prisma = new PrismaClient({ adapter: new PrismaLibSql({ url: `file:${dbPath}` }) });
+  let prisma: PrismaClient;
+  if (useTurso) {
+    const env = loadEnvFile(resolve(process.cwd(), ".env.vercel.production"));
+    const url = env.TURSO_DATABASE_URL || env.DATABASE_URL;
+    const authToken = env.TURSO_AUTH_TOKEN;
+    if (!url || !authToken) throw new Error("Turso env vars missing");
+    prisma = new PrismaClient({ adapter: new PrismaLibSql({ url, authToken }) });
+    console.log(`Target: ${url}`);
+  } else {
+    const dbPath = resolve(process.cwd(), "prisma/dev.db");
+    prisma = new PrismaClient({ adapter: new PrismaLibSql({ url: `file:${dbPath}` }) });
+    console.log(`Target: ${dbPath}`);
+  }
 
   try {
     // 1. Every customer has a hash
