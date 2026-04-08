@@ -16,11 +16,19 @@ declare global {
  * choose save location. Falls back to traditional <a download> for browsers
  * that don't support it (Firefox, Safari, mobile).
  *
+ * Dev gate: in Next.js 16 + Turbopack local dev, the File System Access API
+ * path writes 0-byte files for binary responses (blob bytes get dropped
+ * between the picker confirmation and `writable.write`). Force the anchor
+ * download path in development so devs can actually test downloads.
+ * Production (Vercel) is unaffected and keeps the picker UX.
+ *
  * Shows a Chrome-style toast notification on successful download.
  */
 export async function saveFileWithPicker(blob: Blob, suggestedName: string): Promise<void> {
-  // Try native file picker (Chrome/Edge desktop)
-  if (typeof window !== "undefined" && "showSaveFilePicker" in window) {
+  const isDev = process.env.NODE_ENV === "development";
+
+  // Try native file picker (Chrome/Edge desktop) — skip in dev
+  if (!isDev && typeof window !== "undefined" && "showSaveFilePicker" in window) {
     try {
       const ext = suggestedName.split(".").pop()?.toLowerCase() ?? "docx";
       const mimeMap: Record<string, string> = {
