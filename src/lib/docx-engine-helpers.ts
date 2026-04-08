@@ -160,15 +160,26 @@ export function mergeAdjacentRuns(xml: string): string {
       }
       if (depth <= 0) continue;
 
-      // Merge subsequent nodes until all [ are closed
+      // Merge subsequent nodes until all [ are closed.
+      // Capture the chunk before clearing textMods[j] so the append source
+      // and the depth source are always the same string — previously the
+      // two were decoupled (textMods vs nodes) and happened to agree only
+      // because j > i nodes hadn't been touched yet.
+      let lastConsumed = i;
       for (let j = i + 1; j < textMods.length && depth > 0; j++) {
-        textMods[i].newText += textMods[j].newText;
+        const chunk = textMods[j].newText;
+        textMods[i].newText += chunk;
         textMods[j].newText = "";
-        for (const ch of nodes[j].text) {
+        for (const ch of chunk) {
           if (ch === "[") depth++;
           else if (ch === "]") depth--;
         }
+        lastConsumed = j;
       }
+      // Skip past consumed indices so the next outer iteration does not
+      // re-scan empty nodes (correctness is preserved either way — empty
+      // strings have depth 0 and are skipped — but this is explicit).
+      i = lastConsumed;
     }
 
     // Check if any changes were made
