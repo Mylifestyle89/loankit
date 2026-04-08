@@ -8,7 +8,6 @@
  */
 import { PrismaClient } from "@prisma/client";
 import { PrismaLibSql } from "@prisma/adapter-libsql";
-import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import {
   decryptCoBorrowerPii,
@@ -17,31 +16,15 @@ import {
   hashCustomerCode,
   isEncrypted,
 } from "@/lib/field-encryption";
-
-function loadEnvFile(filePath: string): Record<string, string> {
-  const raw = readFileSync(filePath, "utf8");
-  const env: Record<string, string> = {};
-  for (const line of raw.split(/\r?\n/)) {
-    const trimmed = line.trim();
-    if (!trimmed || trimmed.startsWith("#")) continue;
-    const eq = trimmed.indexOf("=");
-    if (eq === -1) continue;
-    env[trimmed.slice(0, eq).trim()] = trimmed.slice(eq + 1).trim().replace(/^"|"$/g, "");
-  }
-  return env;
-}
+import { ensureEncryptionKey, loadProdEnv } from "./_env-utils";
 
 async function main() {
   const useTurso = process.argv.includes("--turso");
-
-  if (!process.env.ENCRYPTION_KEY) {
-    const env = loadEnvFile(resolve(process.cwd(), ".env"));
-    if (env.ENCRYPTION_KEY) process.env.ENCRYPTION_KEY = env.ENCRYPTION_KEY;
-  }
+  ensureEncryptionKey();
 
   let prisma: PrismaClient;
   if (useTurso) {
-    const env = loadEnvFile(resolve(process.cwd(), ".env.vercel.production"));
+    const env = loadProdEnv();
     const url = env.TURSO_DATABASE_URL || env.DATABASE_URL;
     const authToken = env.TURSO_AUTH_TOKEN;
     if (!url || !authToken) throw new Error("Turso env vars missing");

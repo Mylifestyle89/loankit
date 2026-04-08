@@ -12,19 +12,7 @@
 import { createClient } from "@libsql/client";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-
-function loadEnvFile(filePath: string): Record<string, string> {
-  const raw = readFileSync(filePath, "utf8");
-  const env: Record<string, string> = {};
-  for (const line of raw.split(/\r?\n/)) {
-    const trimmed = line.trim();
-    if (!trimmed || trimmed.startsWith("#")) continue;
-    const eq = trimmed.indexOf("=");
-    if (eq === -1) continue;
-    env[trimmed.slice(0, eq).trim()] = trimmed.slice(eq + 1).trim().replace(/^"|"$/g, "");
-  }
-  return env;
-}
+import { loadProdEnv } from "./_env-utils";
 
 /** Strip `-- comments` from a SQL file and split on `;` into statements. */
 function splitStatements(sql: string): string[] {
@@ -48,7 +36,7 @@ async function main() {
     process.exit(1);
   }
 
-  const env = loadEnvFile(resolve(process.cwd(), ".env.vercel.production"));
+  const env = loadProdEnv();
   const url = env.TURSO_DATABASE_URL || env.DATABASE_URL;
   const authToken = env.TURSO_AUTH_TOKEN;
   if (!url || !authToken) {

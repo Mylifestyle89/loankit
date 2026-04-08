@@ -9,28 +9,11 @@
  * Run: npx tsx scripts/backup-turso-to-json.ts
  */
 import { createClient } from "@libsql/client";
-import { readFileSync, writeFileSync } from "node:fs";
+import { writeFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { loadProdEnv } from "./_env-utils";
 
-// ---------- Load env from .env.vercel.production (no dotenv dep) ----------
-function loadEnvFile(filePath: string): Record<string, string> {
-  const raw = readFileSync(filePath, "utf8");
-  const env: Record<string, string> = {};
-  for (const line of raw.split(/\r?\n/)) {
-    const trimmed = line.trim();
-    if (!trimmed || trimmed.startsWith("#")) continue;
-    const eq = trimmed.indexOf("=");
-    if (eq === -1) continue;
-    const key = trimmed.slice(0, eq).trim();
-    let value = trimmed.slice(eq + 1).trim();
-    if (value.startsWith('"') && value.endsWith('"')) value = value.slice(1, -1);
-    env[key] = value;
-  }
-  return env;
-}
-
-const envPath = resolve(process.cwd(), ".env.vercel.production");
-const env = loadEnvFile(envPath);
+const env = loadProdEnv();
 const url = env.TURSO_DATABASE_URL || env.DATABASE_URL;
 const authToken = env.TURSO_AUTH_TOKEN;
 

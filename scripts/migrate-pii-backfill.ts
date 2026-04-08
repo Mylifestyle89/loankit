@@ -16,7 +16,6 @@
  */
 import { PrismaClient } from "@prisma/client";
 import { PrismaLibSql } from "@prisma/adapter-libsql";
-import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import {
   decryptField,
@@ -26,40 +25,18 @@ import {
   hashCustomerCode,
   isEncrypted,
 } from "@/lib/field-encryption";
-
-// ---------- env loading (mirrors backup-turso-to-json) ----------
-function loadEnvFile(filePath: string): Record<string, string> {
-  const raw = readFileSync(filePath, "utf8");
-  const env: Record<string, string> = {};
-  for (const line of raw.split(/\r?\n/)) {
-    const trimmed = line.trim();
-    if (!trimmed || trimmed.startsWith("#")) continue;
-    const eq = trimmed.indexOf("=");
-    if (eq === -1) continue;
-    const key = trimmed.slice(0, eq).trim();
-    let value = trimmed.slice(eq + 1).trim();
-    if (value.startsWith('"') && value.endsWith('"')) value = value.slice(1, -1);
-    env[key] = value;
-  }
-  return env;
-}
+import { ensureEncryptionKey, loadProdEnv } from "./_env-utils";
 
 function createPrisma(mode: "local" | "turso"): PrismaClient {
   if (mode === "turso") {
-    const env = loadEnvFile(resolve(process.cwd(), ".env.vercel.production"));
+    const env = loadProdEnv();
     const url = env.TURSO_DATABASE_URL || env.DATABASE_URL;
     const authToken = env.TURSO_AUTH_TOKEN;
     if (!url || !authToken) throw new Error("Turso env vars missing");
-    // ENCRYPTION_KEY must match what the live app uses.
-    if (!process.env.ENCRYPTION_KEY && env.ENCRYPTION_KEY) {
-      process.env.ENCRYPTION_KEY = env.ENCRYPTION_KEY;
-    }
-    const adapter = new PrismaLibSql({ url, authToken });
-    return new PrismaClient({ adapter });
+    return new PrismaClient({ adapter: new PrismaLibSql({ url, authToken }) });
   }
   const dbPath = resolve(process.cwd(), "prisma/dev.db");
-  const adapter = new PrismaLibSql({ url: `file:${dbPath}` });
-  return new PrismaClient({ adapter });
+  return new PrismaClient({ adapter: new PrismaLibSql({ url: `file:${dbPath}` }) });
 }
 
 // ---------- per-model backfill ----------
@@ -172,10 +149,7 @@ async function backfillRelatedPersons(prisma: PrismaClient): Promise<Counters> {
 async function main() {
   const mode: "local" | "turso" = process.argv.includes("--turso") ? "turso" : "local";
   console.log(`Backfill mode: ${mode}`);
-  if (!process.env.ENCRYPTION_KEY && mode === "local") {
-    const env = loadEnvFile(resolve(process.cwd(), ".env"));
-    if (env.ENCRYPTION_KEY) process.env.ENCRYPTION_KEY = env.ENCRYPTION_KEY;
-  }
+  ensureEncryptionKey();
 
   const prisma = createPrisma(mode);
   try {

@@ -1,18 +1,9 @@
 // Quick read-only sanity check of the customers table on Turso —
 // used to confirm migration SQL reached the production database.
 import { createClient } from "@libsql/client";
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
+import { loadProdEnv } from "./_env-utils";
 
-const raw = readFileSync(resolve(process.cwd(), ".env.vercel.production"), "utf8");
-const env: Record<string, string> = {};
-for (const line of raw.split(/\r?\n/)) {
-  const trimmed = line.trim();
-  if (!trimmed || trimmed.startsWith("#")) continue;
-  const eq = trimmed.indexOf("=");
-  if (eq === -1) continue;
-  env[trimmed.slice(0, eq).trim()] = trimmed.slice(eq + 1).trim().replace(/^"|"$/g, "");
-}
+const env = loadProdEnv();
 
 async function main() {
   const client = createClient({
