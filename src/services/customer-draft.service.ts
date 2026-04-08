@@ -28,7 +28,12 @@ import {
   deriveGender,
   parseCustomerDataJson,
 } from "./customer-service-helpers";
-import { decryptCustomerPii, encryptCustomerPii, encryptField, isEncrypted } from "@/lib/field-encryption";
+import {
+  decryptCustomerPii,
+  encryptCoBorrowerPii,
+  encryptCustomerPii,
+  hashCustomerCode,
+} from "@/lib/field-encryption";
 
 // Column → field key mapping (shared with customer.service.ts)
 const FIELD_TO_COLUMN: Record<string, string> = {
@@ -130,11 +135,17 @@ export async function saveFromDraft(
     };
 
     const encryptedData = encryptCustomerPii(sharedData);
+    // Deterministic hash so lookups by plaintext CIF still work even though
+    // customer_code stores a random-IV ciphertext.
+    const customer_code_hash = hashCustomerCode(payload.customer_code);
 
     let customer: Customer;
     let created: boolean;
     if (existing) {
-      customer = await tx.customer.update({ where: { id: existing.id }, data: encryptedData });
+      customer = await tx.customer.update({
+        where: { id: existing.id },
+        data: { ...encryptedData, customer_code_hash },
+      });
       created = false;
       await tx.coBorrower.deleteMany({ where: { customerId: customer.id } });
       await tx.collateral.deleteMany({ where: { customerId: customer.id } });
@@ -142,7 +153,9 @@ export async function saveFromDraft(
       await tx.creditAtOther.deleteMany({ where: { customerId: customer.id } });
       await tx.loan.deleteMany({ where: { customerId: customer.id } });
     } else {
-      customer = await tx.customer.create({ data: { customer_name: payload.customer_name, ...encryptedData } });
+      customer = await tx.customer.create({
+        data: { customer_name: payload.customer_name, ...encryptedData, customer_code_hash },
+      });
       created = true;
     }
 
@@ -156,11 +169,9 @@ export async function saveFromDraft(
         : [singleFn(values)].filter((x): x is T => x !== null);
 
     const cbData = resolve("TV", extractAllCoBorrowers, extractCoBorrower).map((cb) => {
-      const row = { customerId: customer.id, ...cb };
-      if (row.phone && typeof row.phone === "string" && !isEncrypted(row.phone)) {
-        row.phone = encryptField(row.phone);
-      }
-      return row;
+      // Apply full CoBorrower PII encryption (full_name, id_number, phone,
+      // addresses, …) not just phone. The helper is idempotent.
+      return encryptCoBorrowerPii({ customerId: customer.id, ...cb });
     });
     if (cbData.length) await tx.coBorrower.createMany({ data: cbData });
 

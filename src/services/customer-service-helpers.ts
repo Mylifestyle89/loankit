@@ -1,6 +1,6 @@
 /** Helper functions for customer data transformation */
 
-import { encryptCustomerPii } from "@/lib/field-encryption";
+import { encryptCustomerPii, hashCustomerCode } from "@/lib/field-encryption";
 
 import type { CreateCustomerInput, UpdateCustomerInput } from "./customer-service-types";
 
@@ -68,8 +68,10 @@ export function toCreateDbData(input: CreateCustomerInput) {
     email: input.email ?? null,
     ...(input.data_json !== undefined ? { data_json: JSON.stringify(input.data_json) } : {}),
   };
-  // Encrypt PII fields (customer_code, phone, cccd, spouse_cccd) before DB write
-  return encryptCustomerPii(raw);
+  // Encrypt PII fields before DB write + compute deterministic hash for
+  // lookup. The hash is derived from the plaintext CIF before encryption.
+  const encrypted = encryptCustomerPii(raw);
+  return { ...encrypted, customer_code_hash: hashCustomerCode(input.customer_code) };
 }
 
 export function toUpdateDbData(input: UpdateCustomerInput) {
@@ -104,6 +106,11 @@ export function toUpdateDbData(input: UpdateCustomerInput) {
   if (input.approver_name !== undefined) data.approver_name = input.approver_name;
   if (input.approver_title !== undefined) data.approver_title = input.approver_title;
   if (input.data_json !== undefined) data.data_json = JSON.stringify(input.data_json);
-  // Encrypt PII fields before DB write
-  return encryptCustomerPii(data);
+  // Encrypt PII fields before DB write. If customer_code is being changed,
+  // refresh customer_code_hash from the new plaintext so lookups stay valid.
+  const encrypted = encryptCustomerPii(data);
+  if (typeof input.customer_code === "string" && input.customer_code) {
+    (encrypted as Record<string, unknown>).customer_code_hash = hashCustomerCode(input.customer_code);
+  }
+  return encrypted;
 }

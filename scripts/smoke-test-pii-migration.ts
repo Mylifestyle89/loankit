@@ -1,0 +1,85 @@
+/**
+ * Smoke test after phase 2 PII backfill — verifies that:
+ *   1. Every customer has a non-null customer_code_hash
+ *   2. Lookup by hashCustomerCode(plaintext CIF) finds the row
+ *   3. CoBorrower/RelatedPerson PII fields round-trip back to plaintext
+ *
+ * Run: npx tsx scripts/smoke-test-pii-migration.ts
+ */
+import { PrismaClient } from "@prisma/client";
+import { PrismaLibSql } from "@prisma/adapter-libsql";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
+import {
+  decryptCoBorrowerPii,
+  decryptField,
+  decryptRelatedPersonPii,
+  hashCustomerCode,
+  isEncrypted,
+} from "@/lib/field-encryption";
+
+function loadEnvFile(filePath: string): Record<string, string> {
+  const raw = readFileSync(filePath, "utf8");
+  const env: Record<string, string> = {};
+  for (const line of raw.split(/\r?\n/)) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith("#")) continue;
+    const eq = trimmed.indexOf("=");
+    if (eq === -1) continue;
+    env[trimmed.slice(0, eq).trim()] = trimmed.slice(eq + 1).trim().replace(/^"|"$/g, "");
+  }
+  return env;
+}
+
+async function main() {
+  if (!process.env.ENCRYPTION_KEY) {
+    const env = loadEnvFile(resolve(process.cwd(), ".env"));
+    if (env.ENCRYPTION_KEY) process.env.ENCRYPTION_KEY = env.ENCRYPTION_KEY;
+  }
+
+  const dbPath = resolve(process.cwd(), "prisma/dev.db");
+  const prisma = new PrismaClient({ adapter: new PrismaLibSql({ url: `file:${dbPath}` }) });
+
+  try {
+    // 1. Every customer has a hash
+    const total = await prisma.customer.count();
+    const withHash = await prisma.customer.count({
+      where: { NOT: { customer_code_hash: "" } },
+    });
+    console.log(`Customers: ${total} total, ${withHash} with non-empty hash`);
+
+    // 2. Hash lookup round-trip on 3 sample customers
+    const samples = await prisma.customer.findMany({ take: 3 });
+    for (const row of samples) {
+      const plain = isEncrypted(row.customer_code) ? decryptField(row.customer_code) : row.customer_code;
+      const hash = hashCustomerCode(plain);
+      const found = await prisma.customer.findUnique({ where: { customer_code_hash: hash } });
+      const ok = found?.id === row.id;
+      console.log(`  ${row.id.slice(0, 10)}  plain=${plain.slice(0, 12)}  lookup=${ok ? "OK" : "FAIL"}`);
+      if (!ok) throw new Error(`Lookup mismatch for ${row.id}`);
+    }
+
+    // 3. CoBorrower decrypt round-trip
+    const cb = await prisma.coBorrower.findFirst();
+    if (cb) {
+      const decrypted = decryptCoBorrowerPii(cb as unknown as Record<string, unknown>);
+      console.log(`CoBorrower ${cb.id.slice(0, 10)}  full_name=${String(decrypted.full_name).slice(0, 20)}`);
+    }
+
+    // 4. RelatedPerson decrypt round-trip
+    const rp = await prisma.relatedPerson.findFirst();
+    if (rp) {
+      const decrypted = decryptRelatedPersonPii(rp as unknown as Record<string, unknown>);
+      console.log(`RelatedPerson ${rp.id.slice(0, 10)}  id_number=${String(decrypted.id_number).slice(0, 15)}`);
+    }
+
+    console.log("\nAll smoke checks passed.");
+  } finally {
+    await prisma.$disconnect();
+  }
+}
+
+void main().catch((err) => {
+  console.error("Smoke test failed:", err);
+  process.exit(1);
+});

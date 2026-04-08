@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireEditorOrAdmin } from "@/lib/auth-guard";
+import { handleAuthError, requireEditorOrAdmin, requireSession } from "@/lib/auth-guard";
+import { decryptRelatedPersonPii, encryptRelatedPersonPii } from "@/lib/field-encryption";
 import { prisma } from "@/lib/prisma";
 
 type Ctx = { params: Promise<{ id: string }> };
@@ -7,13 +8,17 @@ type Ctx = { params: Promise<{ id: string }> };
 /** GET /api/customers/:id/related-persons */
 export async function GET(_req: NextRequest, ctx: Ctx) {
   try {
+    await requireSession();
     const { id } = await ctx.params;
-    const items = await prisma.relatedPerson.findMany({
+    const rows = await prisma.relatedPerson.findMany({
       where: { customerId: id },
       orderBy: { createdAt: "asc" },
     });
+    const items = rows.map((r) => decryptRelatedPersonPii(r as unknown as Record<string, unknown>));
     return NextResponse.json({ ok: true, items });
   } catch (e: unknown) {
+    const authResponse = handleAuthError(e);
+    if (authResponse) return authResponse;
     const msg = e instanceof Error ? e.message : "Unknown error";
     return NextResponse.json({ ok: false, error: msg }, { status: 500 });
   }
@@ -28,19 +33,20 @@ export async function POST(req: NextRequest, ctx: Ctx) {
     if (!body.name?.trim()) {
       return NextResponse.json({ ok: false, error: "name is required" }, { status: 400 });
     }
-    const item = await prisma.relatedPerson.create({
-      data: {
-        customerId: id,
-        name: body.name.trim(),
-        id_number: body.id_number ?? null,
-        address: body.address ?? null,
-        relation_type: body.relation_type ?? null,
-        agribank_debt: body.agribank_debt ?? null,
-        agribank_branch: body.agribank_branch ?? null,
-      },
+    const payload = encryptRelatedPersonPii({
+      customerId: id,
+      name: body.name.trim(),
+      id_number: body.id_number ?? null,
+      address: body.address ?? null,
+      relation_type: body.relation_type ?? null,
+      agribank_debt: body.agribank_debt ?? null,
+      agribank_branch: body.agribank_branch ?? null,
     });
+    const item = await prisma.relatedPerson.create({ data: payload as never });
     return NextResponse.json({ ok: true, item });
   } catch (e: unknown) {
+    const authResponse = handleAuthError(e);
+    if (authResponse) return authResponse;
     const msg = e instanceof Error ? e.message : "Unknown error";
     return NextResponse.json({ ok: false, error: msg }, { status: 500 });
   }
