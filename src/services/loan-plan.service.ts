@@ -70,9 +70,19 @@ function recalcFinancials(
   interestRate: number,
   turnoverCycles: number,
   tax: number,
+  termMonths: number = 12,
 ): LoanPlanFinancials {
   const revenue = revenueItems.reduce((sum, r) => sum + r.amount, 0);
-  return calcFinancials({ costItems, revenue, loanAmount, interestRate, turnoverCycles, tax });
+  return calcFinancials({ costItems, revenue, loanAmount, interestRate, turnoverCycles, tax, termMonths });
+}
+
+/** Extract numeric term_months từ object nếu có; trả undefined nếu thiếu/invalid. */
+function pickTermMonths(source: Record<string, unknown> | undefined): number | undefined {
+  if (!source || !("term_months" in source)) return undefined;
+  const raw = source["term_months"];
+  if (raw === undefined || raw === null) return undefined;
+  const n = typeof raw === "number" ? raw : Number(raw);
+  return Number.isFinite(n) && n > 0 ? n : undefined;
 }
 
 export async function createPlanFromTemplate(input: CreatePlanInput) {
@@ -102,7 +112,8 @@ export async function createPlanFromTemplate(input: CreatePlanInput) {
   const interestRate = input.interestRate ?? 0;
   const turnoverCycles = input.turnoverCycles ?? 1;
   const tax = input.tax ?? 0;
-  const financials: Record<string, unknown> = recalcFinancials(costItems, revenueItems, loanAmount, interestRate, turnoverCycles, tax);
+  const termMonths = pickTermMonths(input as Record<string, unknown>) ?? 12;
+  const financials: Record<string, unknown> = recalcFinancials(costItems, revenueItems, loanAmount, interestRate, turnoverCycles, tax, termMonths);
 
   // Merge trung_dai extended fields into financials
   for (const key of EXTENDED_FINANCIAL_KEYS) {
@@ -135,7 +146,10 @@ export async function updatePlan(id: string, data: UpdatePlanInput) {
   const interestRate = data.interestRate ?? existingFinancials.interestRate ?? 0;
   const turnoverCycles = data.turnoverCycles ?? existingFinancials.turnoverCycles ?? 1;
   const tax = data.tax ?? existingFinancials.tax ?? 0;
-  const financials: Record<string, unknown> = recalcFinancials(costItems, revenueItems, loanAmount, interestRate, turnoverCycles, tax);
+  const termMonths = pickTermMonths(data as Record<string, unknown>)
+    ?? pickTermMonths(existingFinancials as Record<string, unknown>)
+    ?? 12;
+  const financials: Record<string, unknown> = recalcFinancials(costItems, revenueItems, loanAmount, interestRate, turnoverCycles, tax, termMonths);
 
   // Merge trung_dai extended fields into financials_json
   for (const key of EXTENDED_FINANCIAL_KEYS) {

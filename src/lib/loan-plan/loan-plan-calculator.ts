@@ -17,9 +17,11 @@ export function calcTotalDirectCost(costItems: CostItem[]): number {
   return costItems.reduce((sum, item) => sum + item.amount, 0);
 }
 
-/** Lãi vay = Số tiền vay × Lãi suất (annual, no month factor) */
-export function calcInterest(loanAmount: number, rate: number): number {
-  return loanAmount * rate;
+/** Lãi vay = Số tiền vay × Lãi suất năm × (termMonths / 12).
+ *  termMonths default 12 để backward-compat với caller cũ (1-year loans). */
+export function calcInterest(loanAmount: number, rate: number, termMonths: number = 12): number {
+  const months = termMonths > 0 ? termMonths : 12;
+  return loanAmount * rate * months / 12;
 }
 
 // Revenue calculators per category
@@ -91,6 +93,7 @@ export type CalcFinancialsInput = {
   interestRate: number; // annual rate, e.g. 0.09 for 9%
   turnoverCycles: number; // Vòng quay vốn
   tax: number; // Thuế (user-editable)
+  termMonths?: number; // Thời hạn vay (tháng). Default 12 nếu undefined.
 };
 
 /** Khấu hao nhà kính = đơn giá × số sào / số năm khấu hao */
@@ -171,7 +174,7 @@ export function calcRepaymentSchedule(params: {
 
 export function calcFinancials(input: CalcFinancialsInput): LoanPlanFinancials {
   const totalDirectCost = calcTotalDirectCost(input.costItems);
-  const interest = calcInterest(input.loanAmount, input.interestRate);
+  const interest = calcInterest(input.loanAmount, input.interestRate, input.termMonths);
   const tax = input.tax;
   const totalIndirectCost = interest + tax;
   const totalCost = totalDirectCost + totalIndirectCost;
