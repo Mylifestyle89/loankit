@@ -1,13 +1,18 @@
 /**
- * AES-256-GCM field-level encryption for PII data (CIF, phone, CCCD).
+ * AES-256-GCM field-level encryption for PII data (CIF, phone, CCCD, ...).
  * Encrypted values stored as: "enc:<iv-b64>:<authTag-b64>:<ciphertext-b64>"
+ *
+ * Deterministic HMAC-SHA256 hashing is also provided for lookup columns
+ * (e.g. customer_code_hash) so we can find records by plaintext CIF after
+ * the stored value becomes a random-IV ciphertext.
  */
-import { createCipheriv, createDecipheriv, randomBytes } from "crypto";
+import { createCipheriv, createDecipheriv, createHash, createHmac, randomBytes } from "crypto";
 
 import { maskMiddle } from "@/services/security.service";
 
 const ALGO = "aes-256-gcm";
 const PREFIX = "enc:";
+const HMAC_VERSION = "hmac-v1";
 
 /** Resolve 32-byte encryption key from env */
 function getKey(): Buffer {
@@ -16,6 +21,29 @@ function getKey(): Buffer {
     throw new Error("ENCRYPTION_KEY must be 64 hex chars (32 bytes)");
   }
   return Buffer.from(hex, "hex");
+}
+
+/** Derive a stable HMAC key from ENCRYPTION_KEY so we do not introduce a
+ *  second env var. Changing HMAC_VERSION (or the source key) invalidates
+ *  every stored hash — write a key-rotation script if this happens. */
+let cachedHmacKey: Buffer | null = null;
+function getHmacKey(): Buffer {
+  if (cachedHmacKey) return cachedHmacKey;
+  const source = Buffer.concat([getKey(), Buffer.from(HMAC_VERSION, "utf8")]);
+  cachedHmacKey = createHash("sha256").update(source).digest();
+  return cachedHmacKey;
+}
+
+/** Deterministic HMAC-SHA256 of a lookup value, returned as base64url.
+ *  Same input always produces the same output → safe for unique indexes
+ *  and `WHERE` lookups. Not reversible. */
+export function hashLookupValue(plaintext: string): string {
+  return createHmac("sha256", getHmacKey()).update(plaintext, "utf8").digest("base64url");
+}
+
+/** Hash a customer CIF for the customer_code_hash column. */
+export function hashCustomerCode(plaintext: string): string {
+  return hashLookupValue(plaintext);
 }
 
 // ── Core encrypt/decrypt ────────────────────────────────────────────
@@ -76,8 +104,32 @@ export function maskPiiField(
 
 // ── Batch encrypt/decrypt for Customer model ────────────────────────
 
-/** PII fields on Customer that need encryption */
-const PII_CUSTOMER_FIELDS = ["customer_code", "phone", "cccd", "spouse_cccd"] as const;
+/** PII fields on Customer that need encryption. Extended 2026-04-08
+ *  to cover the full Agribank compliance surface. date_of_birth is
+ *  intentionally excluded (year-only, not sensitive). */
+const PII_CUSTOMER_FIELDS = [
+  "customer_code",
+  "phone",
+  "cccd",
+  "spouse_cccd",
+  "cccd_old",
+  "bank_account",
+  "spouse_name",
+  "email",
+] as const;
+
+/** PII fields on CoBorrower that need encryption. birth_year excluded. */
+const PII_COBORROWER_FIELDS = [
+  "full_name",
+  "id_number",
+  "id_old",
+  "phone",
+  "current_address",
+  "permanent_address",
+] as const;
+
+/** PII fields on RelatedPerson that need encryption. */
+const PII_RELATED_PERSON_FIELDS = ["id_number", "address"] as const;
 
 /** Encrypt all PII fields in a customer data object (before DB write) */
 export function encryptCustomerPii<T extends Record<string, unknown>>(data: T): T {
@@ -110,6 +162,65 @@ export function decryptCustomerPii<T extends Record<string, unknown>>(data: T): 
     }
   }
   return result;
+}
+
+/** Shared per-field encrypt helper — used by CoBorrower/RelatedPerson so the
+ *  loop body stays DRY across models. */
+function encryptFieldsInPlace<T extends Record<string, unknown>>(data: T, fields: readonly string[]): T {
+  const result = { ...data };
+  for (const field of fields) {
+    const val = result[field];
+    if (typeof val === "string" && val && !isEncrypted(val)) {
+      (result as Record<string, unknown>)[field] = encryptField(val);
+    }
+  }
+  return result;
+}
+
+/** Shared per-field decrypt helper. Tolerant of per-field failure: logs
+ *  and leaves the field as its original (encrypted) value so export/read
+ *  paths do not die on one bad row. */
+function decryptFieldsInPlace<T extends Record<string, unknown>>(
+  data: T,
+  fields: readonly string[],
+  modelLabel: string,
+): T {
+  const result = { ...data };
+  for (const field of fields) {
+    const val = result[field];
+    if (typeof val === "string" && isEncrypted(val)) {
+      try {
+        (result as Record<string, unknown>)[field] = decryptField(val);
+      } catch (error) {
+        const id = "id" in result ? result.id : "<unknown>";
+        console.error(
+          `[decrypt${modelLabel}Pii] ${field} failed for ${modelLabel} ${id}:`,
+          error instanceof Error ? error.message : error,
+        );
+      }
+    }
+  }
+  return result;
+}
+
+/** Encrypt all PII fields on a CoBorrower row before DB write. */
+export function encryptCoBorrowerPii<T extends Record<string, unknown>>(data: T): T {
+  return encryptFieldsInPlace(data, PII_COBORROWER_FIELDS);
+}
+
+/** Decrypt all PII fields on a CoBorrower row after DB read. */
+export function decryptCoBorrowerPii<T extends Record<string, unknown>>(data: T): T {
+  return decryptFieldsInPlace(data, PII_COBORROWER_FIELDS, "CoBorrower");
+}
+
+/** Encrypt all PII fields on a RelatedPerson row before DB write. */
+export function encryptRelatedPersonPii<T extends Record<string, unknown>>(data: T): T {
+  return encryptFieldsInPlace(data, PII_RELATED_PERSON_FIELDS);
+}
+
+/** Decrypt all PII fields on a RelatedPerson row after DB read. */
+export function decryptRelatedPersonPii<T extends Record<string, unknown>>(data: T): T {
+  return decryptFieldsInPlace(data, PII_RELATED_PERSON_FIELDS, "RelatedPerson");
 }
 
 /** Mask PII fields in a customer object for API responses */
