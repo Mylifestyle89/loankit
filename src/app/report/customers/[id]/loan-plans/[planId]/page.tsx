@@ -9,7 +9,7 @@ import { CostItemsTable, type CostItem } from "./cost-items-table";
 import { NumericInput } from "./numeric-input";
 import { inputCls } from "@/components/invoice-tracking/form-styles";
 import { SmartField } from "@/components/smart-field";
-import { type Financials, type RevenueItem, type TieuDungSubtype, type EarnerTitle } from "./loan-plan-editor-types";
+import { type Financials, type RevenueItem, type TieuDungSubtype, type EarnerTitle, type IncomeSourceType } from "./loan-plan-editor-types";
 import { fmtVND, formatPercentInputFromRate, parsePercentInputToRate } from "./loan-plan-editor-utils";
 import { TreeRow, Stat } from "./loan-plan-financial-display";
 import { RepaymentScheduleTable } from "./loan-plan-repayment-schedule-table";
@@ -44,6 +44,7 @@ export default function LoanPlanEditorPage() {
   // Common SXKD fields
   const [farmAddress, setFarmAddress] = useState("");
   // Tiêu dùng fields
+  const [incomeSourceType, setIncomeSourceType] = useState<IncomeSourceType | "">("");
   const [tieuDungSubtype, setTieuDungSubtype] = useState<TieuDungSubtype | "">("");
   const [earner1Title, setEarner1Title] = useState<EarnerTitle>("Ông");
   const [earner1Name, setEarner1Name] = useState("");
@@ -120,6 +121,7 @@ export default function LoanPlanEditorPage() {
       setConstructionContractDate(fin.construction_contract_date ?? "");
       setFarmAddress(fin.farmAddress ?? "");
       // Tiêu dùng
+      setIncomeSourceType(fin.income_source_type ?? "");
       setTieuDungSubtype(fin.tieu_dung_subtype ?? "");
       setEarner1Title(fin.earner1_title ?? "Ông");
       setEarner1Name(fin.earner1_name ?? "");
@@ -195,6 +197,7 @@ export default function LoanPlanEditorPage() {
             repayment_frequency: repaymentFrequency,
             principal_rounding: principalRounding,
             loan_capital_need: loanCapitalNeed,
+            income_source_type: incomeSourceType || undefined,
             tieu_dung_subtype: tieuDungSubtype || undefined,
             earner1_title: earner1Title,
             earner1_name: earner1Name,
@@ -312,6 +315,22 @@ export default function LoanPlanEditorPage() {
       )}
 
       {/* ── Tiêu dùng: Nguồn thu nhập + Chi phí + Preview ── */}
+      {loanMethod === "tieu_dung" && (
+        <div className="rounded-2xl border border-zinc-200 dark:border-white/[0.07] bg-white dark:bg-[#161616] p-5 shadow-sm">
+          <label className="block text-xs text-zinc-500 mb-1">Nguồn thu nhập chính trả nợ</label>
+          <select
+            className="w-full rounded-lg border border-zinc-200 dark:border-white/[0.07] bg-white dark:bg-[#0f0f0f] px-3 py-2 text-sm"
+            value={incomeSourceType}
+            onChange={(e) => setIncomeSourceType((e.target.value || "") as IncomeSourceType | "")}
+          >
+            <option value="">— Chọn nguồn thu —</option>
+            <option value="salary">Lương (cán bộ / công nhân viên)</option>
+            <option value="rental">Cho thuê tài sản</option>
+            <option value="agriculture">Nông nghiệp</option>
+            <option value="business">Kinh doanh</option>
+          </select>
+        </div>
+      )}
       {loanMethod === "tieu_dung" && (
         <LoanPlanTieuDungSection
           loanAmount={loanAmount}

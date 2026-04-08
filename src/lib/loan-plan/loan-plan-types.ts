@@ -83,6 +83,9 @@ export type LoanPlanCategory =
   | "xay_dung"
   | "han_muc";
 
+/** Nguồn thu nhập chính dùng để trả nợ (đồng bộ với zod INCOME_SOURCE_TYPES) */
+export type IncomeSourceType = "salary" | "rental" | "agriculture" | "business";
+
 // Extended fields for trung_dai (medium-long term) loan plans
 export type LoanPlanFinancialsExtended = LoanPlanFinancials & {
   depreciation_years?: number;         // Số năm khấu hao (e.g., 8)
@@ -95,6 +98,7 @@ export type LoanPlanFinancialsExtended = LoanPlanFinancials & {
   repayment_frequency?: number;        // Kỳ hạn trả gốc (tháng): 1, 3, 6, 12
   principal_rounding?: "none" | "up_100k" | "down_100k"; // Làm tròn gốc mỗi kỳ (kỳ cuối tự điều chỉnh)
   farmAddress?: string;                // Địa chỉ đất NN
+  income_source_type?: IncomeSourceType; // Nguồn thu nhập chính trả nợ (chuẩn bị cho bộ hồ sơ tiêu dùng)
 
   // ── Tiêu dùng (consumer loan) fields ──
   /** Mục đích vay tiêu dùng: xây/sửa nhà, mua đất ở, mua xe. "mua_sam" scope riêng. */
