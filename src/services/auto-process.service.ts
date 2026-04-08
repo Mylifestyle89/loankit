@@ -209,7 +209,10 @@ export const autoProcessService = {
       });
       job.rootCandidates = resolution.candidates;
       job.suggestedRootKey = resolution.rootKey;
-      job.repeatKey = "items";
+      // Detect loop marker from placeholders: template tag [#Xxx] → repeatKey = "Xxx"
+      // Fallback to "items" if no loop marker found.
+      const loopMarker = placeholders.find((p) => p.startsWith("#"));
+      job.repeatKey = loopMarker ? loopMarker.slice(1).trim() : "items";
       job.customerNameKey = pickBestCustomerNameKey(headers, suggestion.mapping);
       job.phase = "ready";
       job.message = `Đã tìm thấy khóa chính: ${job.suggestedRootKey}`;
@@ -232,72 +235,50 @@ export const autoProcessService = {
       throw new ValidationError("Job chưa sẵn sàng để chạy batch export.");
     }
 
-    const rootResolution = resolveRootKey({
-      rows: job.rows,
-      headers: job.headers,
-      aiSuggestedKey: job.suggestedRootKey,
-      userSelectedKey: input.rootKey,
-    });
-    const rootKey = rootResolution.rootKey;
+    // Single-file mode: loop ALL rows inside one DOCX (no grouping by root key).
+    // Template has [#<repeatKey>]...[/<repeatKey>] marker; entire dataset becomes that loop array.
     const mappedRows = mapRowsWithSuggestion(job.rows, job.mapping);
-    const groupedRecords = groupDataByField(mappedRows, rootKey, job.repeatKey) as Array<Record<string, unknown>>;
-    if (groupedRecords.length === 0) {
-      throw new ValidationError(`Không thể gom nhóm dữ liệu theo khóa '${rootKey}'.`);
-    }
+    // Allow user to override repeatKey via run input (root_key field is repurposed)
+    const repeatKey = input.rootKey?.trim() || job.repeatKey || "items";
+    job.repeatKey = repeatKey;
 
     const timestamp = new Date().toISOString().replace(/[-:TZ.]/g, "").slice(0, 14);
     const outputDir = `report_assets/exports/${job.jobType}_${timestamp}`;
+    const outputPath = path.posix.join(outputDir, `${job.jobType}_${timestamp}.docx`);
     job.outputDir = outputDir;
     job.outputPaths = [];
     job.phase = "running";
     job.error = undefined;
-    job.message = "Đang xử lý batch export...";
+    job.message = `Đang gen file duy nhất chứa ${mappedRows.length} bản ghi...`;
     job.progress = {
       current: 0,
-      total: groupedRecords.length,
+      total: 1,
       percent: 0,
-      currentLabel: "Bắt đầu xử lý dữ liệu...",
+      currentLabel: job.message,
     };
     job.updatedAt = nowIso();
 
-    for (let i = 0; i < groupedRecords.length; i += 1) {
-      const groupedRecord = groupedRecords[i];
-      const payload = resolveParentFromGroupedRecord(groupedRecord, job.repeatKey);
-      const rootValue = sanitizePart(payload[rootKey], `record-${i + 1}`);
-      const customerKey = job.customerNameKey ?? "customer";
-      const customerName = sanitizePart(payload[customerKey], "unknown-customer");
-      const outputPath = path.posix.join(outputDir, `${customerName} - ${rootValue}.docx`);
+    // Build payload: single object with all rows under repeat key + aggregate scalars from row[0]
+    const firstRow = mappedRows[0] ?? {};
+    const payload: Record<string, unknown> = {
+      ...firstRow,
+      [repeatKey]: mappedRows,
+    };
 
-      job.progress = {
-        current: i,
-        total: groupedRecords.length,
-        percent: Math.round((i / groupedRecords.length) * 100),
-        currentLabel: `Đang xử lý hồ sơ khách hàng ${customerName}...`,
-      };
-      job.updatedAt = nowIso();
-
-      try {
-        await docxEngine.generateDocx(job.templatePath, { ...payload, [job.repeatKey]: payload[job.repeatKey] }, outputPath);
-      } catch (error) {
-        mapDocxError(error);
-      }
-      job.outputPaths.push(outputPath);
-      job.progress = {
-        current: i + 1,
-        total: groupedRecords.length,
-        percent: Math.round(((i + 1) / groupedRecords.length) * 100),
-        currentLabel: `Đã hoàn thành ${i + 1}/${groupedRecords.length}`,
-      };
-      job.updatedAt = nowIso();
+    try {
+      await docxEngine.generateDocx(job.templatePath, payload, outputPath);
+    } catch (error) {
+      mapDocxError(error);
     }
+    job.outputPaths.push(outputPath);
 
     job.phase = "completed";
-    job.message = `Hoàn tất batch export: ${job.outputPaths.length} file.`;
+    job.message = `Hoàn tất: 1 file chứa ${mappedRows.length} bản ghi.`;
     job.progress = {
-      current: groupedRecords.length,
-      total: groupedRecords.length,
+      current: 1,
+      total: 1,
       percent: 100,
-      currentLabel: "Hoàn tất xử lý.",
+      currentLabel: job.message,
     };
     job.updatedAt = nowIso();
     return toJobSummary(job);
