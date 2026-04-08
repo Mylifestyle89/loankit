@@ -49,29 +49,6 @@ export function withValidatedBody<T extends ZodType>(
 }
 
 /**
- * Wrap route handler với error handling và security headers
- * Usage: withErrorHandling(async (req) => { return NextResponse.json(...) }, "error message")
- */
-export function withErrorHandling(
-  handler: (req: NextRequest) => Promise<NextResponseType>,
-  errorMessage?: string
-) {
-  return async (req: NextRequest): Promise<NextResponseType> => {
-    try {
-      return applySecurityHeaders(await handler(req));
-    } catch (error) {
-      const response = NextResponse.json(
-        {
-          error: errorMessage || (error instanceof Error ? error.message : "Internal server error"),
-        },
-        { status: 500 }
-      );
-      return applySecurityHeaders(response);
-    }
-  };
-}
-
-/**
  * In-memory rate limiter state (per route+client key)
  * In production, consider using Redis or external service
  */

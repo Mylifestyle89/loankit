@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
 import { toHttpError } from "@/core/errors/app-error";
-import { withErrorHandling, withValidatedBody } from "@/lib/api-helpers";
+import { withValidatedBody } from "@/lib/api-helpers";
+import { withErrorHandling } from "@/lib/api/with-error-handling";
 import { requireSession, requireEditorOrAdmin, handleAuthError } from "@/lib/auth-guard";
 import { reportService } from "@/services/report.service";
 
@@ -39,7 +40,6 @@ export const POST = withErrorHandling(
     });
     return NextResponse.json({ ok: true, master_template: master });
   }),
-  "Failed to create master template.",
 );
 
 export async function PUT(req: NextRequest) {

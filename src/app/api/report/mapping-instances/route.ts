@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
 import { toHttpError } from "@/core/errors/app-error";
-import { withErrorHandling, withValidatedBody } from "@/lib/api-helpers";
+import { withValidatedBody } from "@/lib/api-helpers";
+import { withErrorHandling } from "@/lib/api/with-error-handling";
 import { reportService } from "@/services/report.service";
 import { requireSession, requireEditorOrAdmin, handleAuthError } from "@/lib/auth-guard";
 
@@ -46,5 +47,4 @@ export const POST = withErrorHandling(
     });
     return NextResponse.json({ ok: true, mapping_instance: mappingInstance });
   }),
-  "Failed to create mapping instance.",
 );

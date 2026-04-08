@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
 import { toHttpError, ValidationError } from "@/core/errors/app-error";
-import { withErrorHandling, withValidatedBody } from "@/lib/api-helpers";
+import { withValidatedBody } from "@/lib/api-helpers";
+import { withErrorHandling } from "@/lib/api/with-error-handling";
 import { reportService } from "@/services/report.service";
 
 export const runtime = "nodejs";
@@ -53,7 +54,6 @@ export const PUT = withErrorHandling(
       active_version_id: result.activeVersionId,
     });
   }),
-  "Failed to save mapping draft.",
 );
 
 export async function POST(req: NextRequest) {

@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
 import { toHttpError } from "@/core/errors/app-error";
-import { withErrorHandling, withValidatedBody } from "@/lib/api-helpers";
+import { withValidatedBody } from "@/lib/api-helpers";
+import { withErrorHandling } from "@/lib/api/with-error-handling";
 import { reportService } from "@/services/report.service";
 
 export const runtime = "nodejs";
@@ -49,5 +50,4 @@ export const PUT = withErrorHandling(
       field_formulas: result.field_formulas,
     });
   }),
-  "Failed to save manual values.",
 );
