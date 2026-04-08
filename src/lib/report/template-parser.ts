@@ -24,14 +24,15 @@ export async function parseDocxPlaceholderInventory(templatePath: string): Promi
   const placeholders = new Set<string>();
   for (const part of parts) {
     const xmlText = await zip.file(part)?.async("string");
-    if (!xmlText) {
-      continue;
-    }
-    for (const match of xmlText.matchAll(BRACKET_RE)) {
+    if (!xmlText) continue;
+    // Concat <w:t> text nodes first — Word splits placeholders across multiple runs
+    // (e.g. [Số tiền] → [Số</w:t></w:r><w:r><w:t> tiền]) which breaks raw-XML regex.
+    const textContent = [...xmlText.matchAll(/<w:t[^>]*>([\s\S]*?)<\/w:t>/g)]
+      .map((m) => decodeXmlEntities(m[1] ?? ""))
+      .join("");
+    for (const match of textContent.matchAll(BRACKET_RE)) {
       const value = match[1]?.trim();
-      if (value) {
-        placeholders.add(value);
-      }
+      if (value) placeholders.add(value);
     }
   }
 

@@ -13,8 +13,9 @@ type StartBody = {
 };
 
 export const POST = withRateLimit("auto-process-start")(async (req: NextRequest) => {
+  let body: StartBody = {};
   try {
-    const body = (await req.json()) as StartBody;
+    body = (await req.json()) as StartBody;
     const result = await autoProcessService.startUniversalAutoProcess({
       excelPath: String(body.excel_path ?? ""),
       templatePath: String(body.template_path ?? ""),
@@ -26,6 +27,13 @@ export const POST = withRateLimit("auto-process-start")(async (req: NextRequest)
     });
   } catch (error) {
     const httpError = toHttpError(error, "Không thể khởi tạo Auto-Process.");
+    console.error("[auto-process/start]", {
+      status: httpError.status,
+      message: httpError.message,
+      excel_path: body.excel_path,
+      template_path: body.template_path,
+      job_type: body.job_type,
+    });
     return NextResponse.json(
       {
         ok: false,
