@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
 import { toHttpError, ValidationError } from "@/core/errors/app-error";
+import { handleAuthError, requireEditorOrAdmin } from "@/lib/auth-guard";
 import { reportService } from "@/services/report.service";
 import { parseXlsxToImportData } from "@/services/report/customer-xlsx-io.service";
 
@@ -15,6 +16,7 @@ const importSchema = z.object({
 
 export async function POST(req: NextRequest) {
   try {
+    await requireEditorOrAdmin();
     const contentType = req.headers.get("content-type") ?? "";
 
     let data: { version?: unknown; customers?: unknown[]; field_templates?: unknown[] };
@@ -38,10 +40,15 @@ export async function POST(req: NextRequest) {
     const imported = await reportService.importData(data);
     return NextResponse.json({ ok: true, imported });
   } catch (error) {
+    const authResponse = handleAuthError(error);
+    if (authResponse) return authResponse;
     if (error instanceof z.ZodError) {
-      const validationError = new ValidationError("Định dạng file không hợp lệ.", error.flatten().fieldErrors);
+      // Log schema details server-side only; response omits `details` to avoid
+      // leaking internal field structure to clients.
+      console.error("[api/report/import-data] Zod validation failed:", error.flatten().fieldErrors);
+      const validationError = new ValidationError("Định dạng file không hợp lệ.");
       return NextResponse.json(
-        { ok: false, error: validationError.message, details: validationError.details },
+        { ok: false, error: validationError.message },
         { status: validationError.status },
       );
     }

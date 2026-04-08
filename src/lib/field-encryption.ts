@@ -83,9 +83,12 @@ export function decryptIfEncrypted(value: string | null | undefined): string | n
 
 /** Mask config per PII type */
 const MASK_CONFIG = {
-  cif: { keepStart: 0, keepEnd: 4 },   // ****1234
-  phone: { keepStart: 3, keepEnd: 3 }, // 091****678
-  cccd: { keepStart: 2, keepEnd: 3 },  // 07****234
+  cif: { keepStart: 0, keepEnd: 4 },     // ****1234
+  phone: { keepStart: 3, keepEnd: 3 },   // 091****678
+  cccd: { keepStart: 2, keepEnd: 3 },    // 07****234
+  account: { keepStart: 0, keepEnd: 4 }, // ****5678 (bank_account)
+  email: { keepStart: 2, keepEnd: 4 },   // ab****.com (generic middle-mask, keeps domain tail)
+  name: { keepStart: 1, keepEnd: 1 },    // N***A (spouse_name)
 } as const;
 
 export type PiiType = keyof typeof MASK_CONFIG;
@@ -106,7 +109,11 @@ export function maskPiiField(
 
 /** PII fields on Customer that need encryption. Extended 2026-04-08
  *  to cover the full Agribank compliance surface. date_of_birth is
- *  intentionally excluded (year-only, not sensitive). */
+ *  intentionally excluded (year-only, not sensitive).
+ *
+ *  INVARIANT: every field here MUST also appear in `maskMap` inside
+ *  `maskCustomerResponse` below — otherwise decrypt paths will leak
+ *  plaintext PII in API responses. */
 const PII_CUSTOMER_FIELDS = [
   "customer_code",
   "phone",
@@ -234,6 +241,10 @@ export function maskCustomerResponse<T extends Record<string, unknown>>(
     phone: "phone",
     cccd: "cccd",
     spouse_cccd: "cccd",
+    cccd_old: "cccd",
+    bank_account: "account",
+    spouse_name: "name",
+    email: "email",
   };
   for (const [field, type] of Object.entries(maskMap)) {
     if (revealFields?.has(field) || revealFields?.has("all")) continue;

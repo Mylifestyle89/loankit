@@ -1,10 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { toHttpError } from "@/core/errors/app-error";
+import { handleAuthError, requireEditorOrAdmin } from "@/lib/auth-guard";
 import { reportService } from "@/services/report.service";
 import { exportCustomersToXlsx } from "@/services/report/customer-xlsx-io.service";
 
 export async function GET() {
   try {
+    // Bulk PII export — viewer role explicitly excluded. Editor/admin only.
+    await requireEditorOrAdmin();
     const stream = await reportService.exportDataStream();
     return new NextResponse(stream, {
       headers: {
@@ -13,6 +16,8 @@ export async function GET() {
       },
     });
   } catch (error) {
+    const authResponse = handleAuthError(error);
+    if (authResponse) return authResponse;
     const httpError = toHttpError(error, "Failed to export data");
     return NextResponse.json({ ok: false, error: httpError.message }, { status: httpError.status });
   }
@@ -20,6 +25,7 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
+    await requireEditorOrAdmin();
     const body = (await req.json()) as {
       customerIds?: string[];
       templateIds?: string[];
@@ -58,6 +64,8 @@ export async function POST(req: NextRequest) {
       },
     });
   } catch (error) {
+    const authResponse = handleAuthError(error);
+    if (authResponse) return authResponse;
     const httpError = toHttpError(error, "Failed to export data");
     return NextResponse.json({ ok: false, error: httpError.message }, { status: httpError.status });
   }

@@ -4,12 +4,15 @@ import { z } from "zod";
 import { toHttpError, ValidationError } from "@/core/errors/app-error";
 import { withValidatedBody } from "@/lib/api-helpers";
 import { withErrorHandling } from "@/lib/api/with-error-handling";
+import { handleAuthError, requireEditorOrAdmin, requireSession } from "@/lib/auth-guard";
 import { reportService } from "@/services/report.service";
 
 export const runtime = "nodejs";
 
 export async function GET(req: NextRequest) {
   try {
+    // Viewer (internal control) may read active mapping; mutations below require editor+.
+    await requireSession();
     const mappingInstanceId = req.nextUrl.searchParams.get("mapping_instance_id") ?? undefined;
     const result = await reportService.getMapping({ mappingInstanceId });
     return NextResponse.json({
@@ -20,6 +23,8 @@ export async function GET(req: NextRequest) {
       alias_map: result.alias_map,
     });
   } catch (error) {
+    const authResponse = handleAuthError(error);
+    if (authResponse) return authResponse;
     const httpError = toHttpError(error, "Failed to load mapping.");
     return NextResponse.json(
       { ok: false, error: httpError.message },
@@ -39,6 +44,7 @@ const mappingPutSchema = z.object({
 
 export const PUT = withErrorHandling(
   withValidatedBody(mappingPutSchema, async (body) => {
+    await requireEditorOrAdmin();
     const result = await reportService.saveMappingDraft({
       createdBy: body.created_by,
       notes: body.notes,
@@ -58,6 +64,7 @@ export const PUT = withErrorHandling(
 
 export async function POST(req: NextRequest) {
   try {
+    await requireEditorOrAdmin();
     const body = (await req.json()) as { action?: string; version_id?: string };
     if (body.action !== "publish") {
       throw new ValidationError("Unsupported action.");
@@ -70,6 +77,8 @@ export async function POST(req: NextRequest) {
       versions: result.versions,
     });
   } catch (error) {
+    const authResponse = handleAuthError(error);
+    if (authResponse) return authResponse;
     const httpError = toHttpError(error, "Failed to publish mapping version.");
     return NextResponse.json(
       { ok: false, error: httpError.message },
