@@ -72,7 +72,12 @@ type RunInput = {
   rootKey?: string;
 };
 
-const jobs = new Map<string, AutoProcessJob>();
+// Preserve jobs across Next HMR reloads (module re-evaluation clears local state).
+// Attaching to globalThis keeps Map alive between dev saves so /start → /run flow
+// doesn't lose the job id when editing this file.
+const globalStore = globalThis as unknown as { __autoProcessJobs?: Map<string, AutoProcessJob> };
+const jobs: Map<string, AutoProcessJob> = globalStore.__autoProcessJobs ?? new Map<string, AutoProcessJob>();
+globalStore.__autoProcessJobs = jobs;
 
 async function readTabularRows(dataPath: string): Promise<{ headers: string[]; rows: DynamicRow[] }> {
   const abs = resolveAssetPath(dataPath);
