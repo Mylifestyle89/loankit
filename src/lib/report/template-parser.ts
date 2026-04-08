@@ -6,6 +6,9 @@ import JSZip from "jszip";
 export { suggestAliasForPlaceholder } from "./placeholder-utils";
 
 const BRACKET_RE = /\[([^\]\r\n]{1,200})\]/g;
+// Paragraphs do not nest in OOXML — only <w:tbl> nests. Safe to use non-greedy match here.
+const W_PARAGRAPH_RE = /<w:p\b[^>]*>[\s\S]*?<\/w:p>/g;
+const W_TEXT_RE = /<w:t[^>]*>([\s\S]*?)<\/w:t>/g;
 
 export type PlaceholderInventory = {
   template_path: string;
@@ -13,34 +16,50 @@ export type PlaceholderInventory = {
   placeholders: string[];
 };
 
-export async function parseDocxPlaceholderInventory(templatePath: string): Promise<PlaceholderInventory> {
-  const absolute = path.join(process.cwd(), templatePath);
-  const docxBuffer = await fs.readFile(absolute);
-  const zip = await JSZip.loadAsync(docxBuffer);
-  const parts = Object.keys(zip.files).filter((name) => {
-    return name === "word/document.xml" || /^word\/header\d+\.xml$/.test(name) || /^word\/footer\d+\.xml$/.test(name);
-  });
+/**
+ * Scan an XML part for bracket placeholders. Joins <w:t> text within each
+ * paragraph (to catch split runs like `[Số</w:t>...<w:t> tiền]`) but keeps
+ * paragraphs separate so a stray `[` in one paragraph cannot pair with `]`
+ * in another.
+ */
+export function extractPlaceholdersFromXml(xml: string): string[] {
+  const found: string[] = [];
+  for (const pMatch of xml.matchAll(W_PARAGRAPH_RE)) {
+    const paragraph = pMatch[0];
+    const text = [...paragraph.matchAll(W_TEXT_RE)]
+      .map((m) => decodeXmlEntities(m[1] ?? ""))
+      .join("");
+    if (!text.includes("[")) continue;
+    for (const bMatch of text.matchAll(BRACKET_RE)) {
+      const value = bMatch[1]?.trim();
+      if (value) found.push(value);
+    }
+  }
+  return found;
+}
 
+async function collectPlaceholders(zip: JSZip, partFilter: (name: string) => boolean): Promise<string[]> {
+  const parts = Object.keys(zip.files).filter(partFilter);
   const placeholders = new Set<string>();
   for (const part of parts) {
     const xmlText = await zip.file(part)?.async("string");
     if (!xmlText) continue;
-    // Concat <w:t> text nodes first — Word splits placeholders across multiple runs
-    // (e.g. [Số tiền] → [Số</w:t></w:r><w:r><w:t> tiền]) which breaks raw-XML regex.
-    const textContent = [...xmlText.matchAll(/<w:t[^>]*>([\s\S]*?)<\/w:t>/g)]
-      .map((m) => decodeXmlEntities(m[1] ?? ""))
-      .join("");
-    for (const match of textContent.matchAll(BRACKET_RE)) {
-      const value = match[1]?.trim();
-      if (value) placeholders.add(value);
+    for (const value of extractPlaceholdersFromXml(xmlText)) {
+      placeholders.add(value);
     }
   }
+  return Array.from(placeholders).sort((a, b) => a.localeCompare(b, "vi"));
+}
 
-  return {
-    template_path: templatePath,
-    parts_scanned: parts.sort(),
-    placeholders: Array.from(placeholders).sort((a, b) => a.localeCompare(b, "vi")),
-  };
+export async function parseDocxPlaceholderInventory(templatePath: string): Promise<PlaceholderInventory> {
+  const absolute = path.join(process.cwd(), templatePath);
+  const docxBuffer = await fs.readFile(absolute);
+  const zip = await JSZip.loadAsync(docxBuffer);
+  const partFilter = (name: string) =>
+    name === "word/document.xml" || /^word\/header\d+\.xml$/.test(name) || /^word\/footer\d+\.xml$/.test(name);
+  const placeholders = await collectPlaceholders(zip, partFilter);
+  const parts = Object.keys(zip.files).filter(partFilter).sort();
+  return { template_path: templatePath, parts_scanned: parts, placeholders };
 }
 
 function decodeXmlEntities(str: string): string {
@@ -52,30 +71,10 @@ function decodeXmlEntities(str: string): string {
     .replace(/&apos;/g, "'");
 }
 
-/**
- * Parse placeholders from a DOCX buffer directly (no file system access needed).
- * Joins all <w:t> text fragments before matching to catch placeholders split
- * across multiple runs by Word's internal formatting.
- */
+/** Parse placeholders from a DOCX buffer directly (no filesystem access). */
 export async function parseDocxPlaceholdersFromBuffer(buffer: Buffer): Promise<string[]> {
   const zip = await JSZip.loadAsync(buffer);
-  const parts = Object.keys(zip.files).filter((name) =>
-    name === "word/document.xml" ||
-    /^word\/(header|footer|footnotes|endnotes)\d*\.xml$/.test(name),
-  );
-
-  const placeholders = new Set<string>();
-  for (const part of parts) {
-    const xmlText = await zip.file(part)?.async("string");
-    if (!xmlText) continue;
-    const textContent = [...xmlText.matchAll(/<w:t[^>]*>([\s\S]*?)<\/w:t>/g)]
-      .map((m) => decodeXmlEntities(m[1] ?? ""))
-      .join("");
-    for (const match of textContent.matchAll(BRACKET_RE)) {
-      const value = match[1]?.trim();
-      if (value) placeholders.add(value);
-    }
-  }
-  return Array.from(placeholders).sort((a, b) => a.localeCompare(b, "vi"));
+  const partFilter = (name: string) =>
+    name === "word/document.xml" || /^word\/(header|footer|footnotes|endnotes)\d*\.xml$/.test(name);
+  return collectPlaceholders(zip, partFilter);
 }
-
