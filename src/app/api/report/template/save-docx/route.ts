@@ -2,6 +2,7 @@ import path from "node:path";
 
 import { NextRequest, NextResponse } from "next/server";
 import { toHttpError } from "@/core/errors/app-error";
+import { requireEditorOrAdmin, handleAuthError } from "@/lib/auth-guard";
 import { reportService } from "@/services/report.service";
 
 export const runtime = "nodejs";
@@ -10,6 +11,7 @@ const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB
 
 export async function PUT(req: NextRequest) {
   try {
+    await requireEditorOrAdmin();
     const relPath = req.nextUrl.searchParams.get("path") ?? "";
 
     // Path traversal prevention
@@ -43,6 +45,8 @@ export async function PUT(req: NextRequest) {
     });
     return NextResponse.json({ ok: true, path: result.path, backup_path: result.backupPath, mode: result.mode });
   } catch (error) {
+    const authResponse = handleAuthError(error);
+    if (authResponse) return authResponse;
     const httpError = toHttpError(error, "Failed to save DOCX.");
     return NextResponse.json(
       { ok: false, error: httpError.message },

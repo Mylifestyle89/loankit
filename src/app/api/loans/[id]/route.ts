@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
 import { toHttpError, ValidationError } from "@/core/errors/app-error";
-import { requireEditorOrAdmin, requireAdmin } from "@/lib/auth-guard";
+import { requireSession, requireEditorOrAdmin, requireAdmin, handleAuthError } from "@/lib/auth-guard";
 import { TRACKING_STATUSES } from "@/lib/invoice-tracking-format-helpers";
 import { loanService } from "@/services/loan.service";
 
@@ -55,10 +55,13 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
+    await requireSession();
     const { id } = await params;
     const loan = await loanService.getById(id);
     return NextResponse.json({ ok: true, loan });
   } catch (error) {
+    const authResponse = handleAuthError(error);
+    if (authResponse) return authResponse;
     const httpError = toHttpError(error, "Failed to get loan.");
     return NextResponse.json({ ok: false, error: httpError.message }, { status: httpError.status });
   }

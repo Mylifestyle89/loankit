@@ -1,6 +1,6 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { withErrorHandling, withValidatedBody } from "@/lib/api-helpers";
+import { requireEditorOrAdmin, handleAuthError } from "@/lib/auth-guard";
 import { reportService } from "@/services/report.service";
 
 export const runtime = "nodejs";
@@ -10,15 +10,25 @@ const restoreSchema = z.object({
 });
 
 /** POST /api/report/snapshots/restore — restore manual values + formulas from a snapshot */
-export const POST = withErrorHandling(
-  withValidatedBody(restoreSchema, async (body) => {
+export async function POST(req: NextRequest) {
+  try {
+    await requireEditorOrAdmin();
+    const body = restoreSchema.parse(await req.json());
     const result = await reportService.restoreSnapshot(body.filename);
     const data = await reportService.getSnapshot(body.filename);
-    return NextResponse.json({
-      ok: true,
-      restored: result,
-      data,
-    });
-  }),
-  "Không thể khôi phục snapshot.",
-);
+    return NextResponse.json({ ok: true, restored: result, data });
+  } catch (error) {
+    const authResponse = handleAuthError(error);
+    if (authResponse) return authResponse;
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { ok: false, error: "Invalid request body", details: error.flatten().fieldErrors },
+        { status: 400 },
+      );
+    }
+    return NextResponse.json(
+      { ok: false, error: error instanceof Error ? error.message : "Không thể khôi phục snapshot." },
+      { status: 500 },
+    );
+  }
+}

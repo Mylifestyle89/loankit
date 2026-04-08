@@ -4,7 +4,7 @@ import { z } from "zod";
 import { toHttpError, ValidationError } from "@/core/errors/app-error";
 import { maskCustomerResponse } from "@/lib/field-encryption";
 import { customerService } from "@/services/customer.service";
-import { requireAdmin, handleAuthError } from "@/lib/auth-guard";
+import { requireSession, requireAdmin, handleAuthError } from "@/lib/auth-guard";
 
 export const runtime = "nodejs";
 
@@ -26,6 +26,7 @@ const createCustomerSchema = z.object({
 
 export async function GET(req: NextRequest) {
   try {
+    await requireSession();
     const rawType = req.nextUrl.searchParams.get("type");
     const type = rawType === "corporate" || rawType === "individual" ? rawType : undefined;
     const page = Number(req.nextUrl.searchParams.get("page")) || 1;
@@ -35,6 +36,8 @@ export async function GET(req: NextRequest) {
     const maskedCustomers = result.data.map((c) => maskCustomerResponse(c));
     return NextResponse.json({ ok: true, customers: maskedCustomers, total: result.total, page: result.page, limit: result.limit });
   } catch (error) {
+    const authResponse = handleAuthError(error);
+    if (authResponse) return authResponse;
     const httpError = toHttpError(error, "Failed to list customers.");
     return NextResponse.json(
       {

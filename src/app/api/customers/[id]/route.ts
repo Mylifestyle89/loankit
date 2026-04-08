@@ -4,7 +4,7 @@ import { z } from "zod";
 import { toHttpError, ValidationError } from "@/core/errors/app-error";
 import { maskCustomerResponse } from "@/lib/field-encryption";
 import { customerService } from "@/services/customer.service";
-import { requireAdmin, requireEditorOrAdmin, handleAuthError } from "@/lib/auth-guard";
+import { requireSession, requireAdmin, requireEditorOrAdmin, handleAuthError } from "@/lib/auth-guard";
 
 export const runtime = "nodejs";
 
@@ -43,13 +43,14 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
+    await requireSession(); // Base read access — logged-in user only
     const { id } = await params;
     const full = req.nextUrl.searchParams.get("full") === "true";
-    // ?reveal=all or ?reveal=customer_code,phone,cccd to show raw PII (requires auth)
+    // ?reveal=all or ?reveal=customer_code,phone,cccd to show raw PII (requires elevated role)
     const revealParam = req.nextUrl.searchParams.get("reveal");
     let revealFields: Set<string> | undefined;
     if (revealParam) {
-      await requireEditorOrAdmin(); // PII reveal requires authenticated editor+
+      await requireEditorOrAdmin(); // PII reveal requires editor+
       revealFields = new Set(revealParam.split(","));
     }
 
@@ -71,6 +72,8 @@ export async function GET(
     const masked = maskCustomerResponse(payload, revealFields);
     return NextResponse.json({ ok: true, customer: masked });
   } catch (error) {
+    const authResponse = handleAuthError(error);
+    if (authResponse) return authResponse;
     const httpError = toHttpError(error, "Failed to get customer.");
     return NextResponse.json(
       {
