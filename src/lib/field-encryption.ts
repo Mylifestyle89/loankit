@@ -91,13 +91,22 @@ export function encryptCustomerPii<T extends Record<string, unknown>>(data: T): 
   return result;
 }
 
-/** Decrypt all PII fields in a customer data object (after DB read) */
+/** Decrypt all PII fields in a customer data object (after DB read).
+ *  Decryption failures on individual fields (e.g. key rotation, corrupted
+ *  ciphertext) are logged and the offending field is passed through as the
+ *  raw encrypted value instead of throwing, so callers like export/stream
+ *  do not die on a single bad row. */
 export function decryptCustomerPii<T extends Record<string, unknown>>(data: T): T {
   const result = { ...data };
   for (const field of PII_CUSTOMER_FIELDS) {
     const val = result[field];
     if (typeof val === "string" && isEncrypted(val)) {
-      (result as Record<string, unknown>)[field] = decryptField(val);
+      try {
+        (result as Record<string, unknown>)[field] = decryptField(val);
+      } catch (error) {
+        const id = "id" in result ? result.id : "<unknown>";
+        console.error(`[decryptCustomerPii] ${field} failed for customer ${id}:`, error instanceof Error ? error.message : error);
+      }
     }
   }
   return result;

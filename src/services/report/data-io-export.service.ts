@@ -112,35 +112,43 @@ export async function exportDataStream(params?: {
 
   const stream = new ReadableStream<Uint8Array>({
     start: async (controller) => {
-      controller.enqueue(
-        encode(`{"version":"${version}","exported_at":"${new Date().toISOString()}","customers":[`),
-      );
-      let first = true;
+      try {
+        controller.enqueue(
+          encode(`{"version":"${version}","exported_at":"${new Date().toISOString()}","customers":[`),
+        );
+        let first = true;
 
-      if (includeRelations) {
-        for await (const batch of fullCustomerBatches(where, 100)) {
-          for (const customer of batch) {
-            const chunk = `${first ? "" : ","}${JSON.stringify(customer)}`;
-            controller.enqueue(encode(chunk));
-            first = false;
+        if (includeRelations) {
+          for await (const batch of fullCustomerBatches(where, 100)) {
+            for (const customer of batch) {
+              const chunk = `${first ? "" : ","}${JSON.stringify(customer)}`;
+              controller.enqueue(encode(chunk));
+              first = false;
+            }
+          }
+        } else {
+          for await (const batch of customerBatches(where, 500)) {
+            for (const customer of batch) {
+              const chunk = `${first ? "" : ","}${JSON.stringify(customer)}`;
+              controller.enqueue(encode(chunk));
+              first = false;
+            }
           }
         }
-      } else {
-        for await (const batch of customerBatches(where, 500)) {
-          for (const customer of batch) {
-            const chunk = `${first ? "" : ","}${JSON.stringify(customer)}`;
-            controller.enqueue(encode(chunk));
-            first = false;
-          }
-        }
+
+        controller.enqueue(
+          encode(
+            `],"field_templates":${JSON.stringify(fieldTemplates)},"field_catalog":${JSON.stringify(state.field_catalog || [])}}`,
+          ),
+        );
+        controller.close();
+      } catch (error) {
+        // Surface stream failures loudly instead of truncating silently to an
+        // empty body — callers still see the partial chunks that were already
+        // flushed, and the error hits server logs.
+        console.error("[exportDataStream] failed:", error);
+        controller.error(error);
       }
-
-      controller.enqueue(
-        encode(
-          `],"field_templates":${JSON.stringify(fieldTemplates)},"field_catalog":${JSON.stringify(state.field_catalog || [])}}`,
-        ),
-      );
-      controller.close();
     },
   });
   return stream;
