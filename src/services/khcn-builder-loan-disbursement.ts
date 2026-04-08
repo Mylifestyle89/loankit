@@ -97,15 +97,14 @@ export function buildLoanExtendedData(
   data["HĐTD.Kỳ chấm điểm"] = loan.scoring_period ?? "";
 
   // TSBĐ tổng hợp bằng chữ
+  const obligationWords = loan.securedObligation ? numberToVietnameseWords(loan.securedObligation) : "";
   data["HĐTD.TGTTSBĐ bằng chữ"] = loan.collateralValue
     ? numberToVietnameseWords(loan.collateralValue)
     : "";
-  data["HĐTD.TNVBĐ bằng chữ"] = loan.securedObligation
-    ? numberToVietnameseWords(loan.securedObligation)
-    : "";
-  data["HĐTD.TNVBĐTĐ bằng chữ"] = loan.securedObligation
-    ? numberToVietnameseWords(loan.securedObligation)
-    : "";
+  data["HĐTD.Tổng giá trị TSBĐ bằng chữ"] = data["HĐTD.TGTTSBĐ bằng chữ"]; // full-name alias
+  data["HĐTD.TNVBĐ bằng chữ"] = obligationWords;
+  data["HĐTD.TNVBĐTĐ bằng chữ"] = obligationWords;
+  data["HĐTD.Tổng nghĩa vụ bảo đảm bằng chữ"] = obligationWords; // full-name alias used in templates
   data["HĐTD.Tổng nghĩa vụ bảo đảm tối đa"] = fmtN(loan.securedObligation);
   data["HĐTD.Tổng Nghĩa vụ bảo đảm tối đa"] = fmtN(loan.securedObligation);
 

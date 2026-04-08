@@ -150,4 +150,51 @@ export function buildTieuDungLoanPlanData(fin: Fin, data: Data): void {
   data["PA.Earner2 họ tên"] = str(fin.earner2_name);
   data["PA.Earner2 nơi công tác"] = str(fin.earner2_workplace);
   data["PA.Earner2 lương tháng"] = fmtN(income2);
+
+  // ── HĐTD.* income placeholders (BCDX common "Nguồn trả nợ" section) ──
+  // Tiêu dùng: nguồn trả duy nhất là lương. SXKD/khác = 0.
+  const monthlyTotal = income1 + income2;
+  const annualTotal = monthlyTotal * 12;
+  data["HĐTD.Tiền lương hàng tháng"] = fmtN(monthlyTotal);
+  data["HĐTD.Tổng thu nhập từ lương"] = fmtN(annualTotal);
+  data["HĐTD.Tổng thu nhập từ SXKD"] = fmtN(0);
+  data["HĐTD.Thu nhập khác"] = fmtN(0);
+  data["HĐTD.Cụ thể về thu nhập khác"] = "";
+  data["HĐTD.Nơi công tác"] = str(fin.earner1_workplace);
+
+  // ── Phí trả nợ trước hạn (HDTD placeholders) ──
+  // Áp dụng khi term > 12 tháng với kỳ trả đều (không áp dụng vay ngắn hạn tiêu dùng).
+  const MIN_FEE = 1_000_000;
+  const isMidLongTerm = termMonths > 12 && totalPeriods > 0;
+
+  // Vay trả trong ngày: 0.5%, max 16tr (áp dụng mọi khoản)
+  const sameDayFee = Math.max(MIN_FEE, Math.min(loanAmt * 0.005, 16_000_000));
+  data["HDTD.Phí vay trả trong ngày"] = "0,5%";
+  data["HDTD.Min vay trả trong ngày"] = fmtN(MIN_FEE);
+  data["HDTD.Max vay trả trong ngày"] = fmtN(sameDayFee);
+
+  if (isMidLongTerm) {
+    // Formula: Max phí năm N = (dư nợ sau kỳ đầu năm N) × rate
+    // = loanAmt - (số kỳ đã trả trước khi sang năm N + 1) × perPeriod
+    // Năm 1 bắt đầu kỳ 1. Sau kỳ 1 → trả 1 kỳ.
+    // Năm 2 bắt đầu tháng 13. Số kỳ đã trả đầu năm 2 = 12/periodMonths.
+    // Sau kỳ đầu năm N = (N-1)*12/periodMonths + 1 kỳ.
+    const periodsPerYear = 12 / periodMonths;
+    const maxFeeForYear = (year: number, rate: number): number => {
+      const periodsBeforeFirstOfYear = (year - 1) * periodsPerYear;
+      const periodsPaid = periodsBeforeFirstOfYear + 1;
+      if (periodsPaid >= totalPeriods) return MIN_FEE;
+      const balAfter = loanAmt - periodsPaid * perPeriod;
+      return Math.max(MIN_FEE, Math.round(balAfter * rate));
+    };
+    data["HDTD.Phí trả trước năm 1"] = "4%";
+    data["HDTD.Min trả trước năm 1"] = fmtN(MIN_FEE);
+    data["HDTD.Max trả trước năm 1"] = fmtN(maxFeeForYear(1, 0.04));
+    data["HDTD.Phí trả trước năm 2"] = "3%";
+    data["HDTD.Min trả trước năm 2"] = fmtN(MIN_FEE);
+    data["HDTD.Max trả trước năm 2"] = fmtN(maxFeeForYear(2, 0.03));
+    data["HDTD.Phí trả trước năm 3+"] = "2%";
+    data["HDTD.Min trả trước năm 3+"] = fmtN(MIN_FEE);
+    data["HDTD.Max trả trước năm 3+"] = fmtN(maxFeeForYear(3, 0.02));
+  }
 }
