@@ -3,23 +3,31 @@ import crypto from "node:crypto";
 /**
  * HMAC-based file-access tokens bound to the issuing session.
  *
- * Production requires FILE_ACCESS_SECRET — failing fast at module load
- * prevents a silent random-per-cold-start fallback invalidating tokens
- * across Vercel instances. Dev keeps the random fallback for convenience.
+ * Production requires FILE_ACCESS_SECRET. Dev falls back to a random
+ * per-process secret. The resolution is lazy so Next.js `next build`
+ * can evaluate this module during page-data collection even when the
+ * production env var is not yet available (it is resolved on the first
+ * sign/verify call at runtime).
  *
  * Tokens bind to a sessionId so a token minted for user A cannot be
  * replayed by user B.
  */
-function resolveSecret(): string {
+let cachedSecret: string | null = null;
+
+function getSecret(): string {
+  if (cachedSecret) return cachedSecret;
   const envSecret = process.env.FILE_ACCESS_SECRET;
-  if (envSecret) return envSecret;
+  if (envSecret) {
+    cachedSecret = envSecret;
+    return cachedSecret;
+  }
   if (process.env.NODE_ENV === "production") {
     throw new Error("FILE_ACCESS_SECRET is required in production");
   }
-  return crypto.randomBytes(32).toString("hex");
+  cachedSecret = crypto.randomBytes(32).toString("hex");
+  return cachedSecret;
 }
 
-const SECRET = resolveSecret();
 const TTL_MS = 10 * 60 * 1000; // 10 minutes
 
 function buildPayload(filePath: string, ts: string, sessionId: string): string {
@@ -30,7 +38,7 @@ function buildPayload(filePath: string, ts: string, sessionId: string): string {
 export function signFileAccess(filePath: string, sessionId: string): string {
   const ts = Date.now().toString(36);
   const sig = crypto
-    .createHmac("sha256", SECRET)
+    .createHmac("sha256", getSecret())
     .update(buildPayload(filePath, ts, sessionId))
     .digest("base64url");
   return `${ts}.${sig}`;
@@ -45,7 +53,7 @@ export function verifyFileAccess(filePath: string, token: string, sessionId: str
   const sig = token.slice(dotIdx + 1);
 
   const expected = crypto
-    .createHmac("sha256", SECRET)
+    .createHmac("sha256", getSecret())
     .update(buildPayload(filePath, ts, sessionId))
     .digest("base64url");
 
