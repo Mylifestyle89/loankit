@@ -1,5 +1,7 @@
 import { NextResponse, type NextRequest, type NextResponse as NextResponseType } from "next/server";
 import { type ZodType } from "zod";
+import { AppError } from "@/core/errors/app-error";
+import { AuthError } from "@/lib/auth-guard";
 import { getClientIp } from "@/lib/rate-limiter";
 
 /**
@@ -37,6 +39,10 @@ export function withValidatedBody<T extends ZodType>(
       const validated = schema.parse(body);
       return applySecurityHeaders(await handler(validated));
     } catch (error) {
+      // Let typed errors bubble to an outer withErrorHandling wrapper so
+      // auth/app errors keep their proper status codes instead of being
+      // flattened to 400.
+      if (error instanceof AuthError || error instanceof AppError) throw error;
       const response = NextResponse.json(
         {
           error: error instanceof Error ? error.message : "Invalid request body",
