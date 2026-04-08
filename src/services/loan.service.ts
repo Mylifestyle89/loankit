@@ -13,6 +13,16 @@ export type CreateLoanInput = {
   endDate: string;
   purpose?: string;
   disbursementCount?: string;
+  // Optional extended fields (DOCX import, plan builder). All nullable so
+  // callers can pass partial data without breaking the Prisma create.
+  loan_method?: string | null;
+  lending_method?: string | null;
+  principal_schedule?: string | null;
+  interest_schedule?: string | null;
+  total_capital_need?: number | null;
+  equity_amount?: number | null;
+  expected_revenue?: number | null;
+  expected_profit?: number | null;
 };
 
 export type UpdateLoanInput = {
@@ -132,6 +142,19 @@ export const loanService = {
     const endDate = new Date(input.endDate);
     if (isNaN(startDate.getTime())) throw new ValidationError("startDate is not a valid date.");
     if (isNaN(endDate.getTime())) throw new ValidationError("endDate is not a valid date.");
+    // Build extended-field overrides. Only include fields the caller
+    // actually provided a non-null value for — null gets dropped so Prisma
+    // keeps the schema default (e.g. loan_method defaults to "tung_lan").
+    const extended: Record<string, string | number> = {};
+    if (typeof input.loan_method === "string" && input.loan_method) extended.loan_method = input.loan_method;
+    if (typeof input.lending_method === "string" && input.lending_method) extended.lending_method = input.lending_method;
+    if (typeof input.principal_schedule === "string" && input.principal_schedule) extended.principal_schedule = input.principal_schedule;
+    if (typeof input.interest_schedule === "string" && input.interest_schedule) extended.interest_schedule = input.interest_schedule;
+    if (typeof input.total_capital_need === "number") extended.total_capital_need = input.total_capital_need;
+    if (typeof input.equity_amount === "number") extended.equity_amount = input.equity_amount;
+    if (typeof input.expected_revenue === "number") extended.expected_revenue = input.expected_revenue;
+    if (typeof input.expected_profit === "number") extended.expected_profit = input.expected_profit;
+
     return prisma.loan.create({
       data: {
         customerId: input.customerId,
@@ -142,6 +165,7 @@ export const loanService = {
         endDate,
         purpose: input.purpose ?? null,
         disbursementCount: input.disbursementCount ?? null,
+        ...extended,
       },
     });
   },

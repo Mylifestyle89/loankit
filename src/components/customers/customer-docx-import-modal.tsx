@@ -1,17 +1,40 @@
 "use client";
 
-import { useState, useRef } from "react";
+/**
+ * DOCX import modal — AI-assisted customer onboarding from Vietnamese bank
+ * loan documents. Owns the step state (upload → processing → review) and
+ * delegates the heavy review UI + submit flow to sibling modules.
+ *
+ * Re-render behavior:
+ * - Update handlers use the functional setExtracted form, so individual
+ *   field edits do not leak stale state between sections.
+ * - Sections in the review step are React.memo'd so typing in one section
+ *   does not re-render siblings.
+ */
+
+import { FileText, Loader2, Upload, X } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { FileText, Loader2, Upload, X, AlertTriangle, Check } from "lucide-react";
+import { useCallback, useRef, useState } from "react";
 
 import { BaseModal } from "@/components/ui/base-modal";
+import type {
+  ExtractedCoBorrower,
+  ExtractedCollateral,
+  ExtractedCustomer,
+  ExtractedLoan,
+} from "@/services/customer-docx-extraction.service";
+
+import type { FieldValue, SectionKind } from "./customer-docx-import-modal-field-section";
+import { CustomerDocxImportReviewStep } from "./customer-docx-import-modal-review-step";
+import { submitExtractedDocxImport } from "./customer-docx-import-modal-submit";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 type ExtractedData = {
-  customer: Record<string, string>;
-  loans: Record<string, string | number>[];
-  collaterals: Record<string, string | number>[];
+  customer: Partial<ExtractedCustomer>;
+  loans: Partial<ExtractedLoan>[];
+  collaterals: Partial<ExtractedCollateral>[];
+  co_borrowers: Partial<ExtractedCoBorrower>[];
 };
 
 type Step = "upload" | "processing" | "review";
@@ -21,29 +44,6 @@ type Props = {
   onClose: () => void;
   onSuccess: () => void;
   basePath: string;
-};
-
-// ─── Field labels ────────────────────────────────────────────────────────────
-
-const CUSTOMER_LABELS: Record<string, string> = {
-  customer_name: "Họ tên", customer_code: "Mã KH", cccd: "Số CCCD",
-  cccd_issued_date: "Ngày cấp CCCD", cccd_issued_place: "Nơi cấp",
-  date_of_birth: "Ngày sinh", gender: "Giới tính", phone: "Số ĐT",
-  address: "Địa chỉ", marital_status: "Tình trạng HN",
-  spouse_name: "Họ tên vợ/chồng", spouse_cccd: "CCCD vợ/chồng",
-};
-
-const LOAN_LABELS: Record<string, string> = {
-  contract_number: "Số hợp đồng", loan_amount: "Số tiền vay",
-  interest_rate: "Lãi suất (%)", purpose: "Mục đích vay",
-  start_date: "Ngày bắt đầu", end_date: "Ngày kết thúc",
-};
-
-const COLLATERAL_LABELS: Record<string, string> = {
-  name: "Tên TSBĐ", type: "Loại", certificate_serial: "Số GCN",
-  land_address: "Địa chỉ thửa đất", total_value: "Giá trị (VNĐ)",
-  obligation: "Nghĩa vụ bảo đảm", land_area: "Diện tích",
-  land_type_1: "Loại đất", land_unit_price_1: "Đơn giá (VNĐ/m²)",
 };
 
 const MAX_FILES = 5;
@@ -61,11 +61,17 @@ export function CustomerDocxImportModal({ open, onClose, onSuccess, basePath }: 
   const [duplicateWarning, setDuplicateWarning] = useState("");
 
   function reset() {
-    setStep("upload"); setFiles([]); setExtracted(null);
-    setError(""); setDuplicateWarning("");
+    setStep("upload");
+    setFiles([]);
+    setExtracted(null);
+    setError("");
+    setDuplicateWarning("");
   }
 
-  function handleClose() { reset(); onClose(); }
+  function handleClose() {
+    reset();
+    onClose();
+  }
 
   function addFiles(newFiles: FileList | File[]) {
     const incoming = Array.from(newFiles)
@@ -83,7 +89,7 @@ export function CustomerDocxImportModal({ open, onClose, onSuccess, basePath }: 
     setFiles((prev) => prev.filter((_, i) => i !== index));
   }
 
-  // ── Step 1: Upload → AI extract ──
+  // ── Step 1 → 2: Upload + AI extract ──
 
   async function handleExtract() {
     if (files.length === 0) return;
@@ -95,25 +101,39 @@ export function CustomerDocxImportModal({ open, onClose, onSuccess, basePath }: 
       files.forEach((f) => fd.append("files", f));
 
       const res = await fetch("/api/customers/import-docx", { method: "POST", body: fd });
-      const data = await res.json();
+      const data = (await res.json()) as {
+        ok: boolean;
+        extracted?: ExtractedData;
+        error?: string;
+      };
 
-      if (!data.ok) throw new Error(data.error || "Trích xuất thất bại");
+      if (!data.ok || !data.extracted) throw new Error(data.error || "Trích xuất thất bại");
 
-      setExtracted(data.extracted);
+      // Defensive normalization: backend may omit co_borrowers on older responses.
+      const normalized: ExtractedData = {
+        customer: data.extracted.customer ?? {},
+        loans: data.extracted.loans ?? [],
+        collaterals: data.extracted.collaterals ?? [],
+        co_borrowers: data.extracted.co_borrowers ?? [],
+      };
+      setExtracted(normalized);
 
-      // Check duplicate CCCD (non-blocking)
-      const cccd = data.extracted?.customer?.cccd;
+      // Non-blocking duplicate check by CCCD
+      const cccd = normalized.customer?.cccd;
       if (cccd) {
         try {
           const checkRes = await fetch(`/api/customers?type=individual`);
-          const checkData = await checkRes.json();
+          const checkData = (await checkRes.json()) as {
+            ok: boolean;
+            customers?: Array<{ cccd?: string; customer_name?: string }>;
+          };
           if (checkData.ok) {
-            const dup = (checkData.customers ?? []).find(
-              (c: { cccd?: string }) => c.cccd === cccd,
-            );
+            const dup = (checkData.customers ?? []).find((c) => c.cccd === cccd);
             if (dup) setDuplicateWarning(`CCCD "${cccd}" đã tồn tại: ${dup.customer_name}`);
           }
-        } catch { /* non-blocking */ }
+        } catch {
+          /* duplicate check is non-blocking */
+        }
       }
 
       setStep("review");
@@ -123,96 +143,14 @@ export function CustomerDocxImportModal({ open, onClose, onSuccess, basePath }: 
     }
   }
 
-  // ── Step 3: Submit → create customer + loan + collateral ──
+  // ── Step 3: Submit ──
 
   async function handleSubmit() {
     if (!extracted) return;
     setSubmitting(true);
     setError("");
-
     try {
-      const c = extracted.customer;
-
-      // 1) Create customer
-      const custRes = await fetch("/api/customers", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          customer_name: c.customer_name || "Chưa xác định",
-          customer_code: c.customer_code || `DOCX-${Date.now()}`,
-          customer_type: "individual",
-          cccd: c.cccd || null,
-          date_of_birth: c.date_of_birth || null,
-          phone: c.phone || null,
-          address: c.address || null,
-          data_json: {
-            cccd_issued_date: c.cccd_issued_date,
-            cccd_issued_place: c.cccd_issued_place,
-            gender: c.gender,
-            marital_status: c.marital_status,
-            spouse_name: c.spouse_name,
-            spouse_cccd: c.spouse_cccd,
-            import_source: "docx",
-          },
-        }),
-      });
-      const custData = await custRes.json();
-      if (!custData.ok) throw new Error(custData.error || "Tạo khách hàng thất bại");
-
-      const customerId = custData.customer.id;
-      const warnings: string[] = [];
-
-      // 2) Create loans + collaterals in parallel
-      const loanPromises = extracted.loans
-        .filter((loan) => loan.contract_number || loan.loan_amount)
-        .map((loan) =>
-          fetch("/api/loans", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              customerId,
-              contractNumber: String(loan.contract_number || ""),
-              loanAmount: Number(loan.loan_amount) || 0,
-              interestRate: Number(loan.interest_rate) || 0,
-              startDate: String(loan.start_date || new Date().toISOString().slice(0, 10)),
-              endDate: String(loan.end_date || new Date().toISOString().slice(0, 10)),
-              purpose: String(loan.purpose || ""),
-            }),
-          }).then((r) => r.json()),
-        );
-
-      const colPromises = extracted.collaterals
-        .filter((col) => col.name)
-        .map((col) =>
-          fetch(`/api/customers/${customerId}/collaterals`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              collateral_type: String(col.type || "qsd_dat"),
-              name: String(col.name),
-              total_value: Number(col.total_value) || null,
-              obligation: Number(col.obligation) || null,
-              properties: {
-                certificate_serial: col.certificate_serial,
-                land_address: col.land_address,
-                land_area: col.land_area,
-                land_type_1: col.land_type_1,
-                land_unit_price_1: col.land_unit_price_1,
-              },
-            }),
-          }).then((r) => r.json()),
-        );
-
-      const [loanResults, colResults] = await Promise.all([
-        Promise.allSettled(loanPromises),
-        Promise.allSettled(colPromises),
-      ]);
-
-      const loanFails = loanResults.filter((r) => r.status === "rejected" || (r.status === "fulfilled" && !r.value?.ok));
-      const colFails = colResults.filter((r) => r.status === "rejected" || (r.status === "fulfilled" && !r.value?.ok));
-      if (loanFails.length > 0) warnings.push(`${loanFails.length} khoản vay tạo thất bại`);
-      if (colFails.length > 0) warnings.push(`${colFails.length} TSBĐ tạo thất bại`);
-
+      const { customerId, warnings } = await submitExtractedDocxImport(extracted);
       onSuccess();
       handleClose();
       if (warnings.length > 0) {
@@ -226,65 +164,95 @@ export function CustomerDocxImportModal({ open, onClose, onSuccess, basePath }: 
     }
   }
 
-  // ── Editable field helpers ──
+  // Single stable update callback — functional setState so it never reads
+  // stale `extracted`. One handler for every section instead of four, so
+  // the FieldSection memo does not get defeated by per-row inline arrows.
+  const updateField = useCallback(
+    (kind: SectionKind, index: number, key: string, value: FieldValue) => {
+      setExtracted((prev) => {
+        if (!prev) return prev;
+        if (kind === "customer") {
+          return { ...prev, customer: { ...prev.customer, [key]: value } };
+        }
+        const listKey = kind === "loan" ? "loans" : kind === "collateral" ? "collaterals" : "co_borrowers";
+        const list = [...prev[listKey]];
+        list[index] = { ...list[index], [key]: value };
+        return { ...prev, [listKey]: list };
+      });
+    },
+    [],
+  );
 
-  function updateCustomerField(key: string, value: string) {
-    setExtracted((prev) => prev ? { ...prev, customer: { ...prev.customer, [key]: value } } : prev);
-  }
+  const addCoBorrower = useCallback(() => {
+    setExtracted((prev) => (prev ? { ...prev, co_borrowers: [...prev.co_borrowers, {}] } : prev));
+  }, []);
 
-  function updateLoanField(index: number, key: string, value: string) {
+  const removeCoBorrower = useCallback((index: number) => {
     setExtracted((prev) => {
       if (!prev) return prev;
-      const loans = [...prev.loans];
-      loans[index] = { ...loans[index], [key]: value };
-      return { ...prev, loans };
+      return { ...prev, co_borrowers: prev.co_borrowers.filter((_, i) => i !== index) };
     });
-  }
+  }, []);
 
-  function updateCollateralField(index: number, key: string, value: string) {
-    setExtracted((prev) => {
-      if (!prev) return prev;
-      const collaterals = [...prev.collaterals];
-      collaterals[index] = { ...collaterals[index], [key]: value };
-      return { ...prev, collaterals };
-    });
-  }
+  // ─────────────────────────────────────────────────────────────────────────
 
   return (
     <BaseModal open={open} onClose={handleClose} title="Import thông tin từ hồ sơ DOCX" maxWidthClassName="max-w-3xl">
       <div className="space-y-4">
-        {/* ── Upload step ── */}
         {step === "upload" && (
           <>
             <div
               onClick={() => inputRef.current?.click()}
               onDragOver={(e) => e.preventDefault()}
-              onDrop={(e) => { e.preventDefault(); addFiles(e.dataTransfer.files); }}
-              className="flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-zinc-300 dark:border-white/15 p-8 cursor-pointer hover:border-brand-400 transition-colors"
+              onDrop={(e) => {
+                e.preventDefault();
+                addFiles(e.dataTransfer.files);
+              }}
+              className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-zinc-300 p-8 transition-colors hover:border-brand-400 dark:border-white/15"
             >
               <Upload className="h-8 w-8 text-zinc-400" />
-              <span className="text-sm text-zinc-500">Kéo thả hoặc nhấn để chọn file .docx (tối đa {MAX_FILES} file)</span>
+              <span className="text-sm text-zinc-500">
+                Kéo thả hoặc nhấn để chọn file .docx (tối đa {MAX_FILES} file)
+              </span>
               <span className="text-xs text-zinc-400">BCĐX, HĐTD, PASDV, BB định giá...</span>
-              <input ref={inputRef} type="file" accept=".docx" multiple className="hidden"
-                onChange={(e) => { if (e.target.files) addFiles(e.target.files); e.target.value = ""; }} />
+              <input
+                ref={inputRef}
+                type="file"
+                accept=".docx"
+                multiple
+                className="hidden"
+                onChange={(e) => {
+                  if (e.target.files) addFiles(e.target.files);
+                  e.target.value = "";
+                }}
+              />
             </div>
 
             {files.length > 0 && (
               <div className="space-y-3">
                 <div className="flex flex-wrap gap-2">
                   {files.map((f, i) => (
-                    <div key={i} className="flex items-center gap-2 rounded-lg border border-zinc-200 dark:border-white/10 px-3 py-1.5 text-xs">
+                    <div
+                      key={i}
+                      className="flex items-center gap-2 rounded-lg border border-zinc-200 px-3 py-1.5 text-xs dark:border-white/10"
+                    >
                       <FileText className="h-3.5 w-3.5 text-brand-500" />
-                      <span className="truncate max-w-[200px]">{f.name}</span>
-                      <button type="button" onClick={() => removeFile(i)}
-                        className="text-zinc-400 hover:text-red-500 cursor-pointer">
+                      <span className="max-w-[200px] truncate">{f.name}</span>
+                      <button
+                        type="button"
+                        onClick={() => removeFile(i)}
+                        className="text-zinc-400 hover:text-red-500"
+                      >
                         <X className="h-3.5 w-3.5" />
                       </button>
                     </div>
                   ))}
                 </div>
-                <button type="button" onClick={handleExtract}
-                  className="w-full rounded-lg bg-brand-500 px-5 py-2.5 text-sm font-medium text-white shadow-sm hover:brightness-110 cursor-pointer">
+                <button
+                  type="button"
+                  onClick={handleExtract}
+                  className="w-full rounded-lg bg-brand-500 px-5 py-2.5 text-sm font-medium text-white shadow-sm hover:brightness-110"
+                >
                   Trích xuất thông tin ({files.length} file)
                 </button>
               </div>
@@ -294,7 +262,6 @@ export function CustomerDocxImportModal({ open, onClose, onSuccess, basePath }: 
           </>
         )}
 
-        {/* ── Processing step ── */}
         {step === "processing" && (
           <div className="flex flex-col items-center gap-3 py-10">
             <Loader2 className="h-8 w-8 animate-spin text-brand-500" />
@@ -303,86 +270,20 @@ export function CustomerDocxImportModal({ open, onClose, onSuccess, basePath }: 
           </div>
         )}
 
-        {/* ── Review step ── */}
         {step === "review" && extracted && (
-          <>
-            {duplicateWarning && (
-              <div className="flex items-center gap-2 rounded-lg bg-yellow-50 dark:bg-yellow-500/10 border border-yellow-200 dark:border-yellow-500/20 px-3 py-2 text-sm text-yellow-700 dark:text-yellow-400">
-                <AlertTriangle className="h-4 w-4 shrink-0" />
-                <span>{duplicateWarning}</span>
-              </div>
-            )}
-
-            <div className="max-h-[60vh] overflow-y-auto space-y-5 pr-1">
-              {/* Customer info */}
-              <FieldSection title="Thông tin khách hàng" labels={CUSTOMER_LABELS}
-                data={extracted.customer} onChange={updateCustomerField} />
-
-              {/* Loans */}
-              {extracted.loans.map((loan, i) => (
-                <FieldSection key={i} title={`Khoản vay ${extracted.loans.length > 1 ? i + 1 : ""}`}
-                  labels={LOAN_LABELS} data={loan}
-                  onChange={(k, v) => updateLoanField(i, k, v)} />
-              ))}
-
-              {/* Collaterals */}
-              {extracted.collaterals.map((col, i) => (
-                <FieldSection key={i} title={`Tài sản bảo đảm ${extracted.collaterals.length > 1 ? i + 1 : ""}`}
-                  labels={COLLATERAL_LABELS} data={col}
-                  onChange={(k, v) => updateCollateralField(i, k, v)} />
-              ))}
-            </div>
-
-            {error && <p className="text-sm text-red-500">{error}</p>}
-
-            <div className="flex gap-3 pt-2">
-              <button type="button" onClick={reset}
-                className="rounded-lg border border-zinc-300 dark:border-white/15 px-4 py-2 text-sm hover:bg-zinc-50 dark:hover:bg-white/5 cursor-pointer">
-                Thử lại
-              </button>
-              <button type="button" onClick={handleSubmit} disabled={submitting}
-                className="flex-1 inline-flex items-center justify-center gap-2 rounded-lg bg-brand-500 px-5 py-2 text-sm font-medium text-white shadow-sm hover:brightness-110 disabled:opacity-50 cursor-pointer">
-                {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
-                {submitting ? "Đang tạo..." : "Tạo khách hàng"}
-              </button>
-            </div>
-          </>
+          <CustomerDocxImportReviewStep
+            extracted={extracted}
+            duplicateWarning={duplicateWarning}
+            error={error}
+            submitting={submitting}
+            onUpdateField={updateField}
+            onAddCoBorrower={addCoBorrower}
+            onRemoveCoBorrower={removeCoBorrower}
+            onBack={reset}
+            onSubmit={handleSubmit}
+          />
         )}
       </div>
     </BaseModal>
-  );
-}
-
-// ─── Editable field section ──────────────────────────────────────────────────
-
-function FieldSection({ title, labels, data, onChange }: {
-  title: string;
-  labels: Record<string, string>;
-  data: Record<string, string | number>;
-  onChange: (key: string, value: string) => void;
-}) {
-  const entries = Object.entries(labels).filter(([key]) => {
-    const val = data[key];
-    return val !== undefined && val !== "" && val !== 0;
-  });
-
-  if (entries.length === 0) return null;
-
-  return (
-    <div>
-      <h4 className="text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-2">{title}</h4>
-      <div className="grid gap-2">
-        {entries.map(([key, label]) => (
-          <label key={key} className="flex items-center gap-3">
-            <span className="text-xs font-medium text-zinc-500 w-32 shrink-0">{label}</span>
-            <input
-              value={String(data[key] ?? "")}
-              onChange={(e) => onChange(key, e.target.value)}
-              className="flex-1 rounded-md border border-zinc-200 dark:border-white/10 bg-white dark:bg-[#1a1a1a] px-3 py-1.5 text-sm outline-none focus:border-brand-300 dark:focus:border-brand-500/30"
-            />
-          </label>
-        ))}
-      </div>
-    </div>
   );
 }

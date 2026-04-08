@@ -16,6 +16,15 @@ const createSchema = z.object({
   endDate: z.string().min(1),
   purpose: z.string().optional(),
   disbursementCount: z.string().optional(),
+  // Optional extended fields for DOCX import / loan plan builder
+  loan_method: z.string().nullable().optional(),
+  lending_method: z.string().nullable().optional(),
+  principal_schedule: z.string().nullable().optional(),
+  interest_schedule: z.string().nullable().optional(),
+  total_capital_need: z.number().nullable().optional(),
+  equity_amount: z.number().nullable().optional(),
+  expected_revenue: z.number().nullable().optional(),
+  expected_profit: z.number().nullable().optional(),
 });
 
 export async function GET(req: NextRequest) {
