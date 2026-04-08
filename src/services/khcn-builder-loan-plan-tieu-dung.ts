@@ -10,6 +10,7 @@
  * Emits PA.* placeholders used by Phương án sử dụng vốn and BCĐX tiêu dùng templates.
  */
 
+import { parseNum } from "@/lib/import/xlsx-number-utils";
 import { numberToVietnameseWords } from "@/lib/number-to-vietnamese-words";
 import { formatPeriodLabel, roundPrincipal, type PrincipalRounding } from "@/lib/loan-plan/loan-plan-calculator";
 import { fmtN } from "@/lib/report/format-number-vn";
@@ -24,7 +25,8 @@ const SUBTYPE_LABELS: Record<string, string> = {
   mua_sam: "mua sắm vật dụng sinh hoạt",
 };
 
-const num = (v: unknown): number => Number(v) || 0;
+// Locale-aware parser: handles "1.500.000", "1,5", plain numbers, null/undefined
+const num = (v: unknown): number => parseNum(v);
 const str = (v: unknown): string => (v == null ? "" : String(v));
 const fmtMoney = (n: number): string => fmtN(n) + " đồng";
 

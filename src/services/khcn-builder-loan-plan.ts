@@ -173,8 +173,12 @@ export function buildLoanPlanExtendedData(
       interestCost = Math.round(rate * Number(financials.loanAmount) * months / 12);
     }
     const tax = Number(financials.tax) || 0;
-    // Trung dài hạn: chi phí gián tiếp = khấu hao, ngắn hạn = lãi vay + thuế
-    const totalIndirectCost = (depreciation > 0) ? depreciation : (interestCost + tax);
+    // Trung dài hạn: gián tiếp = khấu hao + lãi vay + thuế
+    // Ngắn hạn: gián tiếp = lãi vay + thuế (không có khấu hao)
+    const isTrungDai = plan.loan_method === "trung_dai";
+    const totalIndirectCost = isTrungDai
+      ? (depreciation + interestCost + tax)
+      : (interestCost + tax);
     const totalCostAll = totalDirectCost + totalIndirectCost;
     const totalRevenue = revenueItems.reduce((s, r) => s + (r.amount ?? 0), 0);
     const profit = totalRevenue - totalCostAll;
