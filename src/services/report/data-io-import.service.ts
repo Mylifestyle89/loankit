@@ -4,6 +4,11 @@
 import type { Prisma } from "@prisma/client";
 
 import { ValidationError } from "@/core/errors/app-error";
+import {
+  encryptCoBorrowerPii,
+  encryptRelatedPersonPii,
+  hashCustomerCode,
+} from "@/lib/field-encryption";
 import { prisma } from "@/lib/prisma";
 import { loadState, saveState } from "@/lib/report/fs-store";
 
@@ -142,12 +147,23 @@ export async function importData(input: {
 
   await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
     // 1. PRE-FETCH ALL EXISTING ENTITIES TO AVOID N+1
+    // CIF lookup goes through the deterministic hash column because
+    // customer_code itself is encrypted with a random IV. Keep a
+    // plain→hash map so the downstream map lookup can still key on plain
+    // CIFs from the incoming import payload.
     const allCustomerCodes = customersInput.map((c) => c.customer_code).filter(Boolean);
+    const plainToHash = new Map(allCustomerCodes.map((code) => [code, hashCustomerCode(code)]));
+    const allHashes = Array.from(plainToHash.values());
     const existingCustomers = await tx.customer.findMany({
-      where: { customer_code: { in: allCustomerCodes } },
-      select: { id: true, customer_code: true },
+      where: { customer_code_hash: { in: allHashes } },
+      select: { id: true, customer_code_hash: true },
     });
-    const customerMap = new Map(existingCustomers.map((c) => [c.customer_code, c]));
+    const byHash = new Map(existingCustomers.map((c) => [c.customer_code_hash, c]));
+    const customerMap = new Map<string, { id: string; customer_code: string }>();
+    for (const [plain, hash] of plainToHash) {
+      const row = byHash.get(hash);
+      if (row) customerMap.set(plain, { id: row.id, customer_code: plain });
+    }
 
     const allContractNumbers = customersInput
       .flatMap((c) => (isV2 && "loans" in c && Array.isArray(c.loans) ? c.loans.map((l) => l.contractNumber) : []))
@@ -210,6 +226,7 @@ export async function importData(input: {
         const created = await tx.customer.create({
           data: {
             customer_code: customerRaw.customer_code,
+            customer_code_hash: hashCustomerCode(customerRaw.customer_code),
             customer_name: customerRaw.customer_name,
             address: customerRaw.address,
             main_business: customerRaw.main_business,
@@ -242,13 +259,15 @@ export async function importData(input: {
       if (Array.isArray(raw.co_borrowers)) {
         await tx.coBorrower.deleteMany({ where: { customerId } });
         for (const cb of raw.co_borrowers as Record<string, unknown>[]) {
-          await tx.coBorrower.create({ data: { ...cb, id: undefined, customerId } as never });
+          const payload = encryptCoBorrowerPii({ ...cb, id: undefined, customerId });
+          await tx.coBorrower.create({ data: payload as never });
         }
       }
       if (Array.isArray(raw.related_persons)) {
         await tx.relatedPerson.deleteMany({ where: { customerId } });
         for (const rp of raw.related_persons as Record<string, unknown>[]) {
-          await tx.relatedPerson.create({ data: { ...rp, id: undefined, customerId } as never });
+          const payload = encryptRelatedPersonPii({ ...rp, id: undefined, customerId });
+          await tx.relatedPerson.create({ data: payload as never });
         }
       }
       if (Array.isArray(raw.credit_agribank)) {

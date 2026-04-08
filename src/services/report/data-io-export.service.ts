@@ -3,7 +3,11 @@
  */
 import type { Prisma } from "@prisma/client";
 
-import { decryptCustomerPii } from "@/lib/field-encryption";
+import {
+  decryptCoBorrowerPii,
+  decryptCustomerPii,
+  decryptRelatedPersonPii,
+} from "@/lib/field-encryption";
 import { prisma } from "@/lib/prisma";
 import { loadState } from "@/lib/report/fs-store";
 
@@ -56,9 +60,22 @@ async function* fullCustomerBatches(
     });
 
     if (rows.length === 0) break;
-    yield rows.map(decryptCustomerPii);
+    yield rows.map(decryptFullCustomer);
     cursorId = rows[rows.length - 1].id as string;
   }
+}
+
+/** Decrypt PII on the Customer row and every nested CoBorrower/
+ *  RelatedPerson so the export contains plaintext values. */
+function decryptFullCustomer<T extends Record<string, unknown>>(row: T): T {
+  const customer = decryptCustomerPii(row);
+  const coBorrowers = Array.isArray((customer as Record<string, unknown>).co_borrowers)
+    ? ((customer as Record<string, unknown>).co_borrowers as Array<Record<string, unknown>>).map(decryptCoBorrowerPii)
+    : (customer as Record<string, unknown>).co_borrowers;
+  const relatedPersons = Array.isArray((customer as Record<string, unknown>).related_persons)
+    ? ((customer as Record<string, unknown>).related_persons as Array<Record<string, unknown>>).map(decryptRelatedPersonPii)
+    : (customer as Record<string, unknown>).related_persons;
+  return { ...customer, co_borrowers: coBorrowers, related_persons: relatedPersons } as T;
 }
 
 // ---------------------------------------------------------------------------
@@ -75,7 +92,7 @@ export async function exportData(params?: { customerIds?: string[]; templateIds?
     where,
     include: fullCustomerInclude,
   });
-  const customers = rawCustomers.map(decryptCustomerPii);
+  const customers = rawCustomers.map(decryptFullCustomer);
 
   const state = await loadState();
   const field_templates =
