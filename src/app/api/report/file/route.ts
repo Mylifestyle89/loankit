@@ -4,6 +4,7 @@ import path from "node:path";
 import { NextRequest, NextResponse } from "next/server";
 
 import { toHttpError, NotFoundError, ValidationError } from "@/core/errors/app-error";
+import { requireSession, handleAuthError } from "@/lib/auth-guard";
 import { REPORT_ASSETS_BASE, validatePathUnderBase } from "@/lib/report/path-validation";
 import { verifyFileAccess } from "@/lib/report/file-token";
 
@@ -11,16 +12,17 @@ export const runtime = "nodejs";
 
 export async function GET(req: NextRequest) {
   try {
+    const session = await requireSession();
     const relPath = req.nextUrl.searchParams.get("path") ?? "";
     const download = req.nextUrl.searchParams.get("download") === "1";
     const token = req.nextUrl.searchParams.get("token") ?? "";
 
-    // --- Auth: require a valid HMAC token ---
+    // --- Auth: require a valid HMAC token bound to this session ---
     if (!token) {
       return NextResponse.json({ ok: false, error: "Missing token." }, { status: 401 });
     }
     try {
-      verifyFileAccess(relPath, token);
+      verifyFileAccess(relPath, token, session.user.id);
     } catch {
       return NextResponse.json({ ok: false, error: "Invalid or expired token." }, { status: 403 });
     }
@@ -44,6 +46,8 @@ export async function GET(req: NextRequest) {
       },
     });
   } catch (error) {
+    const authResponse = handleAuthError(error);
+    if (authResponse) return authResponse;
     if ((error as NodeJS.ErrnoException).code === "ENOENT") {
       const nfe = new NotFoundError("File không tồn tại.");
       return NextResponse.json({ ok: false, error: nfe.message }, { status: nfe.status });

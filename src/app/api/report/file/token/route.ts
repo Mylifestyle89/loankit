@@ -6,10 +6,10 @@ import { REPORT_ASSETS_BASE, validatePathUnderBase } from "@/lib/report/path-val
 
 export const runtime = "nodejs";
 
-/** Generate a short-lived HMAC token for downloading a report file. */
+/** Generate a short-lived HMAC token bound to the caller's session. */
 export async function GET(req: NextRequest) {
   try {
-    await requireSession();
+    const session = await requireSession();
 
     const filePath = req.nextUrl.searchParams.get("path") ?? "";
     if (!filePath) {
@@ -26,7 +26,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Invalid file type" }, { status: 400 });
     }
 
-    const token = signFileAccess(filePath);
+    const token = signFileAccess(filePath, session.user.id);
     return NextResponse.json({ token });
   } catch (error) {
     const authResponse = handleAuthError(error);

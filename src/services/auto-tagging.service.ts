@@ -26,7 +26,8 @@ export { replaceWithTags } from "./auto-tagging-replace";
 
 export async function saveTemplate(
   templateBuffer: Buffer,
-  outputName?: string,
+  outputName: string | undefined,
+  sessionId: string,
 ): Promise<{ templatePath: string; downloadUrl: string }> {
   const timestamp = new Date().toISOString().replace(/[:.]/g, "").slice(0, 15);
   const dirName = `AutoTagging_${timestamp}`;
@@ -42,6 +43,6 @@ export async function saveTemplate(
   const relPath = path.relative(process.cwd(), filePath).replace(/\\/g, "/");
   return {
     templatePath: relPath,
-    downloadUrl: `/api/report/file?path=${encodeURIComponent(relPath)}&download=1&token=${encodeURIComponent(signFileAccess(relPath))}`,
+    downloadUrl: `/api/report/file?path=${encodeURIComponent(relPath)}&download=1&token=${encodeURIComponent(signFileAccess(relPath, sessionId))}`,
   };
 }
