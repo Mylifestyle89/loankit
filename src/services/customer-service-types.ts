@@ -31,6 +31,9 @@ export type CreateCustomerInput = {
   appraiser?: string | null;
   approver_name?: string | null;
   approver_title?: string | null;
+  /** JSON array of legal documents (Tài liệu pháp lý — TLPA) rendered via
+   *  [#TLPA]...[/TLPA] loop. Stored as stringified JSON on the Customer row. */
+  documents_pa_json?: string | null;
   data_json?: Record<string, unknown>;
 };
 

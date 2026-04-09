@@ -66,6 +66,7 @@ export function toCreateDbData(input: CreateCustomerInput) {
     cic_product_name: input.cic_product_name ?? null,
     cic_product_code: input.cic_product_code ?? null,
     email: input.email ?? null,
+    ...(input.documents_pa_json !== undefined ? { documents_pa_json: input.documents_pa_json } : {}),
     ...(input.data_json !== undefined ? { data_json: JSON.stringify(input.data_json) } : {}),
   };
   // Encrypt PII fields before DB write + compute deterministic hash for
@@ -105,6 +106,7 @@ export function toUpdateDbData(input: UpdateCustomerInput) {
   if (input.appraiser !== undefined) data.appraiser = input.appraiser;
   if (input.approver_name !== undefined) data.approver_name = input.approver_name;
   if (input.approver_title !== undefined) data.approver_title = input.approver_title;
+  if (input.documents_pa_json !== undefined) data.documents_pa_json = input.documents_pa_json;
   if (input.data_json !== undefined) data.data_json = JSON.stringify(input.data_json);
   // Encrypt PII fields before DB write. If customer_code is being changed,
   // refresh customer_code_hash from the new plaintext so lookups stay valid.

@@ -35,6 +35,7 @@ const updateCustomerSchema = z.object({
   gender: z.string().optional().nullable(),
   cic_product_name: z.string().optional().nullable(),
   cic_product_code: z.string().optional().nullable(),
+  documents_pa_json: z.string().optional().nullable(),
   data_json: z.record(z.string(), z.unknown()).optional(),
 });
 
