@@ -5,6 +5,7 @@
 import JSZip from "jszip";
 
 import { NotFoundError } from "@/core/errors/app-error";
+import { decryptCustomerPii } from "@/lib/field-encryption";
 import { OVERDUE_INTEREST_LABEL, LATE_PAYMENT_INTEREST_LABEL } from "./khcn-builder-loan-disbursement";
 import { docxEngine } from "@/lib/docx-engine";
 import { numberToVietnameseWords } from "@/lib/number-to-vietnamese-words";
@@ -57,7 +58,9 @@ export async function buildReportData(
 ): Promise<Record<string, unknown>> {
   const d = await loadFullDisbursement(disbursementId);
   const loan = d.loan;
-  const cust = loan.customer;
+  // Decrypt PII fields (customer_code, phone, cccd, etc.) so they render
+  // as plaintext in the DOCX template instead of "enc:..." ciphertext.
+  const cust = decryptCustomerPii(loan.customer as unknown as Record<string, unknown>) as typeof loan.customer;
   const t = today();
 
   // Collect all invoices (from beneficiary lines)
