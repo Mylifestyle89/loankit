@@ -5,7 +5,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 
 import { useLanguage } from "@/components/language-provider";
-import { LoanStatusBadge } from "@/components/invoice-tracking/loan-status-badge";
 import { LoanEditModal } from "@/components/invoice-tracking/loan-edit-modal";
 import { DisbursementFormModal } from "@/components/invoice-tracking/disbursement-form-modal";
 import { BeneficiaryModal } from "@/components/invoice-tracking/beneficiary-modal";
@@ -17,6 +16,7 @@ import { DisbursementTable, type DisbursementRow } from "@/components/invoice-tr
 import { LoanCollateralPicker, type PickerCollateral } from "./components/loan-collateral-picker";
 import { LoanDetailHeader } from "./components/loan-detail-header";
 import { LoanDisbursementSummaryCards } from "./components/loan-disbursement-summary-cards";
+import { LoanPlanCard } from "./components/loan-plan-card";
 import { LoanPlanSelectorModal } from "@/app/report/customers/[id]/components/loan-plan-selector-modal";
 
 type DisbursementSummary = {
@@ -166,9 +166,33 @@ export default function LoanDetailPage() {
         loan={loan}
         onEditLoan={() => setShowEditModal(true)}
         onOpenBeneficiaryModal={() => setShowBeneficiaryModal(true)}
-        onAssignPlan={() => setShowPlanAssignModal(true)}
-        onUnassignPlan={() => handlePlanAssign(null)}
+        onStatusChange={async (status) => {
+          await fetch(`/api/loans/${id}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ status }),
+          });
+          void loadLoan();
+        }}
+        onContractNumberChange={async (contractNumber) => {
+          await fetch(`/api/loans/${id}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ contractNumber }),
+          });
+          void loadLoan();
+        }}
       />
+
+      {/* Loan plan card */}
+      {loan.customer?.id && (
+        <LoanPlanCard
+          loanPlan={loan.loanPlan}
+          customerId={loan.customer.id}
+          onAssign={() => setShowPlanAssignModal(true)}
+          onUnassign={() => handlePlanAssign(null)}
+        />
+      )}
 
       {/* Collateral picker */}
       {collaterals.length > 0 && loan && (
