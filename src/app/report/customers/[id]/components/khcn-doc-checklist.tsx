@@ -65,7 +65,7 @@ export function KhcnDocChecklist({
     const controller = new AbortController();
     setLoading(true);
     setChecked(new Set()); // Reset checked when method changes
-    fetch(`/api/report/templates/khcn?loan_method=${method}`, { signal: controller.signal })
+    fetch(`/api/report/templates/khcn?loan_method=${method}`, { signal: controller.signal, cache: "no-store" })
       .then((r) => r.json())
       .then((d) => {
         if (d.ok) setCategories(d.categories ?? []);

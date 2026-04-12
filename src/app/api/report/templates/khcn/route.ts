@@ -23,6 +23,6 @@ export async function GET(req: NextRequest) {
 
   return NextResponse.json(
     { ok: true, method, categories, total: templates.length },
-    { headers: { "Cache-Control": "public, max-age=86400, stale-while-revalidate=3600" } },
+    { headers: { "Cache-Control": "no-cache" } },
   );
 }
