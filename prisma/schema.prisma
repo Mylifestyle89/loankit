@@ -215,6 +215,10 @@ model Loan {
   // Tài sản bảo đảm đã chọn cho khoản vay này
   selectedCollateralIds String @default("[]") // JSON array of Collateral IDs
 
+  // Phương án vay vốn (nullable, backward compat)
+  loanPlanId String?   // FK → LoanPlan
+  loanPlan   LoanPlan? @relation(fields: [loanPlanId], references: [id], onDelete: SetNull)
+
   disbursements Disbursement[]
   beneficiaries Beneficiary[]
 
@@ -435,6 +439,8 @@ model LoanPlan {
   revenue_items_json String @default("[]")
   /// JSON: computed financials { totalCost, revenue, profit, loanAmount, counterpartCapital, ... }
   financials_json    String @default("{}")
+
+  loans Loan[]
 
   @@index([customerId])
   @@index([status])

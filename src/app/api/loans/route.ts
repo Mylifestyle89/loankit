@@ -25,6 +25,7 @@ const createSchema = z.object({
   equity_amount: z.number().nullable().optional(),
   expected_revenue: z.number().nullable().optional(),
   expected_profit: z.number().nullable().optional(),
+  loanPlanId: z.string().nullable().optional(),
 });
 
 export async function GET(req: NextRequest) {

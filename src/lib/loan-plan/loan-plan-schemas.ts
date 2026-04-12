@@ -54,6 +54,10 @@ export const createPlanSchema = z.object({
   machinery_capability: z.string().optional(),
   other_factors: z.string().optional(),
   turnover_analysis: z.string().optional(),
+  // Đánh giá lại hạn mức 36 tháng
+  review_36_months: z.boolean().optional(),
+  actual_revenue: z.number().optional(),
+  actual_cost: z.number().optional(),
   // Tiêu dùng
   tieu_dung_subtype: z.enum(["xay_sua_nha", "mua_dat", "mua_xe", "mua_sam"]).optional(),
   loan_capital_need: z.number().optional(),

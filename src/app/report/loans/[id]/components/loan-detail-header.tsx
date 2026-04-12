@@ -8,7 +8,7 @@
  */
 
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, FileText, X } from "lucide-react";
 import { LoanStatusBadge } from "@/components/invoice-tracking/loan-status-badge";
 import { fmtDisplay as fmt, fmtDateDisplay as fmtDate } from "@/lib/invoice-tracking-format-helpers";
 import { useLanguage } from "@/components/language-provider";
@@ -19,9 +19,11 @@ type Props = {
   loan: Loan;
   onEditLoan: () => void;
   onOpenBeneficiaryModal: () => void;
+  onAssignPlan: () => void;
+  onUnassignPlan: () => void;
 };
 
-export function LoanDetailHeader({ loan, onEditLoan, onOpenBeneficiaryModal }: Props) {
+export function LoanDetailHeader({ loan, onEditLoan, onOpenBeneficiaryModal, onAssignPlan, onUnassignPlan }: Props) {
   const { t } = useLanguage();
 
   return (
@@ -55,13 +57,27 @@ export function LoanDetailHeader({ loan, onEditLoan, onOpenBeneficiaryModal }: P
             >
               Thông tin hợp đồng tín dụng
             </button>
-            {loan.customer?.id && (
-              <Link
-                href={`/report/customers/${loan.customer.id}/loan-plans`}
-                className="rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-white/80 dark:bg-white/[0.05] px-3 py-1.5 text-xs font-medium text-brand-500 dark:text-brand-400 transition-colors hover:bg-brand-100 dark:hover:bg-brand-400/10"
+            {loan.loanPlan ? (
+              <span className="inline-flex items-center gap-1.5 rounded-lg border border-brand-200 dark:border-brand-500/20 bg-brand-50 dark:bg-brand-500/10 px-3 py-1.5 text-xs font-medium text-brand-600 dark:text-brand-400">
+                <FileText className="h-3.5 w-3.5 shrink-0" />
+                <span className="max-w-[140px] truncate">PA: {loan.loanPlan.name}</span>
+                <button
+                  type="button"
+                  onClick={onUnassignPlan}
+                  className="ml-0.5 rounded hover:text-red-500 transition-colors"
+                  aria-label="Bỏ gắn phương án"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </span>
+            ) : (
+              <button
+                type="button"
+                onClick={onAssignPlan}
+                className="rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-white/80 dark:bg-white/[0.05] px-3 py-1.5 text-xs font-medium text-zinc-600 dark:text-slate-300 transition-colors hover:bg-brand-50 dark:hover:bg-brand-500/10 hover:text-brand-600 dark:hover:text-brand-400"
               >
-                Phương án vay vốn
-              </Link>
+                Gắn phương án
+              </button>
             )}
             <button
               type="button"

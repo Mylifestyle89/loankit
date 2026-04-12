@@ -77,6 +77,7 @@ function NewLoanForm() {
           endDate: isoEnd,
           purpose: purpose || undefined,
           disbursementCount: disbursementCount || undefined,
+          loanPlanId: searchParams.get("planId") ?? undefined,
         }),
       });
       const data = await res.json();

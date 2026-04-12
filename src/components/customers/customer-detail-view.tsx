@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useParams, useSearchParams } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { ArrowLeft } from "lucide-react";
 
@@ -80,6 +80,7 @@ type CustomerDetailViewProps = {
 export function CustomerDetailView({ customerType, basePath }: CustomerDetailViewProps) {
   const { t } = useLanguage();
   const params = useParams();
+  const router = useRouter();
   const searchParams = useSearchParams();
   const id = params.id as string;
   const isIndividual = customerType === "individual";
@@ -268,7 +269,11 @@ export function CustomerDetailView({ customerType, basePath }: CustomerDetailVie
           <button
             key={tab.key}
             type="button"
-            onClick={() => setActiveTab(tab.key)}
+            onClick={() =>
+              tab.key === "loan-plans"
+                ? router.push(`/report/customers/${id}/loan-plans`)
+                : setActiveTab(tab.key)
+            }
             className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
               activeTab === tab.key
                 ? "border-brand-500 text-brand-600 dark:border-brand-400 dark:text-brand-400"

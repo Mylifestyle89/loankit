@@ -23,6 +23,7 @@ export type CreateLoanInput = {
   equity_amount?: number | null;
   expected_revenue?: number | null;
   expected_profit?: number | null;
+  loanPlanId?: string | null;
 };
 
 export type UpdateLoanInput = {
@@ -66,6 +67,8 @@ export type UpdateLoanInput = {
   prior_outstanding?: number | null;
   // Tài sản bảo đảm đã chọn (JSON array of collateral IDs)
   selectedCollateralIds?: string;
+  // Gắn / bỏ gắn phương án vay vốn
+  loanPlanId?: string | null;
 };
 
 export const loanService = {
@@ -127,6 +130,7 @@ export const loanService = {
       where: { id },
       include: {
         customer: { select: { id: true, customer_name: true, customer_type: true } },
+        loanPlan: { select: { id: true, name: true } },
       },
     });
     if (!loan) throw new NotFoundError("Loan not found.");
@@ -165,6 +169,7 @@ export const loanService = {
         endDate,
         purpose: input.purpose ?? null,
         disbursementCount: input.disbursementCount ?? null,
+        loanPlanId: input.loanPlanId ?? null,
         ...extended,
       },
     });
@@ -203,7 +208,7 @@ export const loanService = {
       "expected_revenue", "expected_cost", "expected_profit", "from_project",
       "other_income", "other_income_detail", "customer_rating", "debt_group", "scoring_period",
       "prior_contract_number", "prior_contract_date", "prior_outstanding",
-      "selectedCollateralIds",
+      "selectedCollateralIds", "loanPlanId",
     ];
     for (const key of passthrough) {
       if (input[key] !== undefined) data[key] = input[key];

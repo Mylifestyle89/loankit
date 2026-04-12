@@ -16,6 +16,8 @@ import { RepaymentScheduleTable } from "./loan-plan-repayment-schedule-table";
 import { CreditAssessmentSection } from "./loan-plan-credit-assessment-section";
 import { LoanPlanInfoGrid, LoanPlanTrungDaiSection } from "./loan-plan-form-sections";
 import { LoanPlanTieuDungSection } from "./loan-plan-tieu-dung-section";
+import { LoanPlanReview36Section } from "./loan-plan-review-36-section";
+import { METHOD_SHORT_LABELS, METHOD_OPTIONS } from "@/lib/loan-plan/loan-plan-constants";
 
 export default function LoanPlanEditorPage() {
   const { id: customerId, planId } = useParams() as { id: string; planId: string };
@@ -66,6 +68,10 @@ export default function LoanPlanEditorPage() {
   const [machineryCapability, setMachineryCapability] = useState("");
   const [otherFactors, setOtherFactors] = useState("");
   const [turnoverAnalysis, setTurnoverAnalysis] = useState("");
+  // Đánh giá lại hạn mức 36 tháng
+  const [review36Months, setReview36Months] = useState(false);
+  const [actualRevenue, setActualRevenue] = useState(0);
+  const [actualCost, setActualCost] = useState(0);
   const xlsxInputRef = useRef<HTMLInputElement>(null);
   const interestRate = parsePercentInputToRate(interestRateInput);
   const preferentialRate = parsePercentInputToRate(preferentialRateInput);
@@ -143,6 +149,10 @@ export default function LoanPlanEditorPage() {
       setMachineryCapability(fin.machinery_capability ?? "");
       setOtherFactors(fin.other_factors ?? "");
       setTurnoverAnalysis(fin.turnover_analysis ?? "");
+      // Đánh giá lại hạn mức 36 tháng
+      setReview36Months(fin.review_36_months ?? false);
+      setActualRevenue(fin.actual_revenue ?? 0);
+      setActualCost(fin.actual_cost ?? 0);
     } catch (err) { setError(err instanceof Error ? err.message : "Lỗi tải dữ liệu"); }
     setLoading(false);
   }, [planId]);
@@ -214,6 +224,12 @@ export default function LoanPlanEditorPage() {
           // Đánh giá tín dụng
           legal_assessment: legalAssessment, market_input: marketInput, market_output: marketOutput,
           labor_capability: laborCapability, machinery_capability: machineryCapability, other_factors: otherFactors, turnover_analysis: turnoverAnalysis,
+          // Đánh giá lại hạn mức 36 tháng (actual_profit derived in builder, not stored)
+          ...(loanMethod === "han_muc" ? {
+            review_36_months: review36Months,
+            actual_revenue: actualRevenue,
+            actual_cost: actualCost,
+          } : {}),
         }),
       });
       const data = await res.json();
@@ -252,6 +268,20 @@ export default function LoanPlanEditorPage() {
           <h2 className="text-lg font-bold text-brand-600 dark:text-brand-400">
             {name || "Phương án"}
           </h2>
+          <select
+            value={loanMethod}
+            onChange={(e) => setLoanMethod(e.target.value)}
+            className={`rounded-full px-2.5 py-0.5 text-xs font-medium border-0 outline-none cursor-pointer ${
+              loanMethod === "han_muc"   ? "bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-400" :
+              loanMethod === "trung_dai" ? "bg-purple-100 text-purple-700 dark:bg-purple-500/15 dark:text-purple-400" :
+              loanMethod === "tieu_dung" ? "bg-pink-100 text-pink-700 dark:bg-pink-500/15 dark:text-pink-400" :
+              "bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-400"
+            }`}
+          >
+            {METHOD_OPTIONS.filter((o) => o.value !== "cam_co").map((o) => (
+              <option key={o.value} value={o.value}>{METHOD_SHORT_LABELS[o.value]}</option>
+            ))}
+          </select>
         </div>
         <div className="flex items-center gap-2">
           <input type="file" accept=".xlsx,.xls" className="hidden" ref={xlsxInputRef}
@@ -506,6 +536,18 @@ export default function LoanPlanEditorPage() {
           laborCapability={laborCapability} setLaborCapability={setLaborCapability}
           machineryCapability={machineryCapability} setMachineryCapability={setMachineryCapability}
           otherFactors={otherFactors} setOtherFactors={setOtherFactors}
+        />
+      )}
+
+      {/* ── Đánh giá lại hạn mức 36 tháng — chỉ hiển thị cho phương án hạn mức ── */}
+      {loanMethod === "han_muc" && financials && (
+        <LoanPlanReview36Section
+          enabled={review36Months} onEnabledChange={setReview36Months}
+          actualRevenue={actualRevenue} onActualRevenueChange={setActualRevenue}
+          actualCost={actualCost} onActualCostChange={setActualCost}
+          plannedRevenue={financials.revenue}
+          plannedCost={financials.totalCost}
+          plannedProfit={financials.profit}
         />
       )}
     </section>

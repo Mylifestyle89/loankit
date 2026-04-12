@@ -240,6 +240,25 @@ export function buildLoanPlanExtendedData(
           ? `${((counterpart / capitalNeed) * 100).toFixed(2).replace(".", ",")}%` : "";
       }
     }
+    // ── Đánh giá lại hạn mức 36 tháng — kết quả thực hiện vs kế hoạch ──
+    if (financials.review_36_months) {
+      const actualRevenue = Number(financials.actual_revenue) || 0;
+      const actualCost = Number(financials.actual_cost) || 0;
+      // Lợi nhuận thực hiện = actual_profit nếu đã lưu, fallback = doanh thu - chi phí
+      const actualProfit = financials.actual_profit != null
+        ? Number(financials.actual_profit)
+        : (actualRevenue - actualCost);
+      data["HĐTD.Doanh thu thực hiện"] = fmtN(actualRevenue);
+      data["HĐTD.Chi phí thực hiện"] = fmtN(actualCost);
+      data["HĐTD.Lợi nhuận thực hiện"] = fmtN(actualProfit);
+      // Tỷ lệ hoàn thành (%) = Thực hiện / Kế hoạch × 100
+      const fmtRatio = (actual: number, planned: number) =>
+        planned > 0 ? `${((actual / planned) * 100).toFixed(1).replace(".", ",")}%` : "";
+      data["HĐTD.Tỷ lệ hoàn thành doanh thu"] = fmtRatio(actualRevenue, totalRevenue);
+      data["HĐTD.Tỷ lệ hoàn thành chi phí"] = fmtRatio(actualCost, totalCostAll);
+      data["HĐTD.Tỷ lệ hoàn thành lợi nhuận"] = fmtRatio(actualProfit, profit);
+    }
+
     // ── Bảng trả nợ theo năm (PA_TRANO) — vay trung dài hạn ──
     const termMonths = Number(financials.term_months || financials.loanTerm) || 0;
     const stdRate = Number(financials.interestRate) || 0;

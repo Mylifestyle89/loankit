@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { ChevronDown, ChevronRight, Plus } from "lucide-react";
+import { LoanPlanSelectorModal } from "./loan-plan-selector-modal";
 
 type Loan = {
   id: string;
@@ -171,9 +172,7 @@ function LoanRow({ loan }: { loan: Loan }) {
 }
 
 export function CustomerLoansSection({ loans, customerId }: { loans: Loan[]; customerId?: string }) {
-  const addLoanHref = customerId
-    ? `/report/loans/new?customerId=${customerId}`
-    : "/report/loans/new";
+  const [showPlanSelector, setShowPlanSelector] = useState(false);
 
   return (
     <div className="space-y-3">
@@ -181,12 +180,14 @@ export function CustomerLoansSection({ loans, customerId }: { loans: Loan[]; cus
         <h3 className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">
           Khoản vay ({loans.length})
         </h3>
-        <Link
-          href={addLoanHref}
-          className="rounded-lg px-4 py-2 text-sm font-medium inline-flex items-center gap-1.5 bg-brand-500 text-white shadow-sm shadow-brand-500/25 hover:brightness-110 transition-all duration-150"
+        <button
+          type="button"
+          onClick={() => setShowPlanSelector(true)}
+          disabled={!customerId}
+          className="rounded-lg px-4 py-2 text-sm font-medium inline-flex items-center gap-1.5 bg-brand-500 text-white shadow-sm shadow-brand-500/25 hover:brightness-110 transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <Plus className="h-3.5 w-3.5" /> Thêm khoản vay
-        </Link>
+        </button>
       </div>
 
       {loans.length === 0 ? (
@@ -210,6 +211,14 @@ export function CustomerLoansSection({ loans, customerId }: { loans: Loan[]; cus
             />
           ))}
         </div>
+      )}
+
+      {customerId && (
+        <LoanPlanSelectorModal
+          open={showPlanSelector}
+          customerId={customerId}
+          onClose={() => setShowPlanSelector(false)}
+        />
       )}
     </div>
   );

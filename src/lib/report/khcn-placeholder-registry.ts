@@ -281,4 +281,21 @@ export const KHCN_PLACEHOLDER_GROUPS: PlaceholderGroup[] = [
       "TLPA.Số lượng",
     ],
   },
+  {
+    label: "Đánh giá lại hạn mức 36 tháng",
+    prefix: "HĐTD",
+    items: [
+      // Kết quả thực hiện so với kế hoạch
+      "HĐTD.Doanh thu thực hiện",
+      "HĐTD.Chi phí thực hiện",
+      "HĐTD.Lợi nhuận thực hiện",
+      "HĐTD.Tỷ lệ hoàn thành doanh thu",
+      "HĐTD.Tỷ lệ hoàn thành chi phí",
+      "HĐTD.Tỷ lệ hoàn thành lợi nhuận",
+      // Nguồn vốn bổ sung
+      "HĐTD.Vốn vay TCTD khác",
+      "HĐTD.Vốn bằng tài sản khác",
+      "HĐTD.TNCV bằng chữ",
+    ],
+  },
 ];

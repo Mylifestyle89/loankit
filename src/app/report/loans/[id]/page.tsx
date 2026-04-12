@@ -17,6 +17,7 @@ import { DisbursementTable, type DisbursementRow } from "@/components/invoice-tr
 import { LoanCollateralPicker, type PickerCollateral } from "./components/loan-collateral-picker";
 import { LoanDetailHeader } from "./components/loan-detail-header";
 import { LoanDisbursementSummaryCards } from "./components/loan-disbursement-summary-cards";
+import { LoanPlanSelectorModal } from "@/app/report/customers/[id]/components/loan-plan-selector-modal";
 
 type DisbursementSummary = {
   totalDisbursed: number;
@@ -51,6 +52,7 @@ export default function LoanDetailPage() {
 
   const [showModal, setShowModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showPlanAssignModal, setShowPlanAssignModal] = useState(false);
   const [showBeneficiaryModal, setShowBeneficiaryModal] = useState(false);
   const [editingDisbursementId, setEditingDisbursementId] = useState<string | null>(null);
   const [reportDisbursementId, setReportDisbursementId] = useState<string | null>(null);
@@ -141,6 +143,15 @@ export default function LoanDetailPage() {
     void loadDisbursements();
   }
 
+  async function handlePlanAssign(planId: string | null) {
+    await fetch(`/api/loans/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ loanPlanId: planId }),
+    });
+    void loadLoan();
+  }
+
   if (loading) return (
     <div className="flex items-center justify-center py-16">
       <div className="h-6 w-6 animate-spin rounded-full border-2 border-brand-200 border-t-brand-500 dark:border-brand-700 dark:border-t-brand-400" />
@@ -155,6 +166,8 @@ export default function LoanDetailPage() {
         loan={loan}
         onEditLoan={() => setShowEditModal(true)}
         onOpenBeneficiaryModal={() => setShowBeneficiaryModal(true)}
+        onAssignPlan={() => setShowPlanAssignModal(true)}
+        onUnassignPlan={() => handlePlanAssign(null)}
       />
 
       {/* Collateral picker */}
@@ -278,6 +291,15 @@ export default function LoanDetailPage() {
           defaultAmount={invoiceTarget.amount}
           onClose={() => setInvoiceTarget(null)}
           onCreated={handleCreated}
+        />
+      )}
+
+      {loan.customer?.id && (
+        <LoanPlanSelectorModal
+          open={showPlanAssignModal}
+          customerId={loan.customer.id}
+          onClose={() => setShowPlanAssignModal(false)}
+          onSelect={handlePlanAssign}
         />
       )}
     </section>

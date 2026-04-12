@@ -50,4 +50,8 @@ export type Financials = {
   machinery_capability?: string;
   other_factors?: string;
   turnover_analysis?: string; // Phân tích vòng quay vốn
+  // Đánh giá lại hạn mức 36 tháng
+  review_36_months?: boolean;
+  actual_revenue?: number;
+  actual_cost?: number;
 };

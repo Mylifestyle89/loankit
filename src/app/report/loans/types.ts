@@ -15,4 +15,5 @@ export type Loan = {
   disbursementLimitByAsset: number | null;
   isKhcn: boolean;
   selectedCollateralIds: string;
+  loanPlan: { id: string; name: string } | null;
 };

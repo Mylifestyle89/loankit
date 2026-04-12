@@ -50,6 +50,7 @@ export const KHCN_TEMPLATES: KhcnDocTemplate[] = [
   // Báo cáo đề xuất
   { path: `${BASE}/Báo cáo đề xuất/2268.02B BCDXCV ngan han co TSBD cat tuong.docx`, name: "BCĐX ngắn hạn từng lần", category: "bao_cao", methods: ["tung_lan", "tieu_dung"] },
   { path: `${BASE}/Báo cáo đề xuất/2268.02B BCDXCV ngan han HMTD.docx`, name: "BCĐX ngắn hạn - HMTD", category: "bao_cao", methods: ["han_muc"] },
+  { path: `${BASE}/Báo cáo đề xuất/39. MS 20.HMTD-CN BC danh gia xac dinh han muc tin dung.docx`, name: "BC đánh giá xác định HMTD (Mẫu 20 - 36 tháng)", category: "bao_cao", methods: ["han_muc"] },
   { path: `${BASE}/Báo cáo đề xuất/2268.02C BCDXCV trung, dai han nha kinh.docx`, name: "BCĐX trung dài hạn - Nhà kính", category: "bao_cao", methods: ["trung_dai"] },
   { path: `${BASE}/Báo cáo đề xuất/2268.02A BCDXCV tieu dung co TSBD.docx`, name: "BCĐX tiêu dùng có TSBĐ (2268.02A)", category: "bao_cao", methods: ["tieu_dung"] },
 
