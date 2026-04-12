@@ -381,6 +381,22 @@ export function CollateralForm({ customerId, initial, onSaved, onCancel }: {
       {/* ═══ ĐỘNG SẢN (Phương tiện GT) ═══ */}
       {type === "dong_san" && fields.length > 0 && (
         <div className="space-y-6 pt-2 border-t border-zinc-200 dark:border-white/[0.07]">
+          {/* Chủ sở hữu */}
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <h4 className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider">Chủ sở hữu tài sản</h4>
+              <button type="button" onClick={() => setOwners((prev) => [...prev, { ...EMPTY_OWNER }])}
+                className={`${btnCls} inline-flex items-center gap-1 text-[11px] border border-zinc-200 dark:border-white/[0.09]`}>
+                <Plus className="h-3 w-3" /> Thêm
+              </button>
+            </div>
+            {owners.length === 0 && (
+              <p className="text-xs text-zinc-400 px-1">Mặc định là người vay/đồng vay. Chỉ thêm khi chủ sở hữu là bên thứ ba.</p>
+            )}
+            <div className="space-y-2">
+              {owners.map((o, i) => <OwnerRow key={i} owner={o} index={i} onChange={handleOwnerChange} onRemove={handleOwnerRemove} />)}
+            </div>
+          </div>
           <div>
             <SectionHeader title="Thông tin phương tiện" />
             {renderGroup(DS_VEHICLE_KEYS)}

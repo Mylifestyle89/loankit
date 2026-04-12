@@ -159,6 +159,7 @@ export const FORM_FIELDS: Record<string, { key: string; label: string }[]> = {
     { key: "insurance_status", label: "Mua bảo hiểm TSBĐ" },
     { key: "insurance_amount", label: "Số tiền bảo hiểm" },
     { key: "insurance_renewal_date", label: "Thời điểm gia hạn BH" },
+    { key: "asset_usage_status", label: "Tình trạng sử dụng TS" },
   ],
   tiet_kiem: [
     { key: "_subtype", label: "Loại TSBĐ" },
@@ -191,7 +192,7 @@ export const QSD_CONTRACT_KEYS = ["mortgage_name", "mortgage_contract", "mortgag
 export const DS_VEHICLE_KEYS = ["brand", "model_code", "engine_number", "chassis_number", "color", "license_plate", "seat_count", "manufacture_year"];
 export const DS_REG_KEYS = ["registration_number", "registration_date", "registration_place"];
 export const DS_CONTRACT_KEYS = ["mortgage_name", "mortgage_contract", "mortgage_date", "guarantee_registry_place"];
-export const DS_INSURANCE_KEYS = ["insurance_status", "insurance_amount", "insurance_renewal_date"];
+export const DS_INSURANCE_KEYS = ["insurance_status", "insurance_amount", "insurance_renewal_date", "asset_usage_status"];
 
 /* ── Tiết kiệm / GTCG subtype & paper type options ── */
 export const TK_SUBTYPES = [
