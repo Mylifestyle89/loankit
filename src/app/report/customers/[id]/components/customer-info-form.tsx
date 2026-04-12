@@ -183,46 +183,31 @@ export function CustomerInfoForm({
             </>
           )}
           {showIndividual && (
-            <>
+            <div className="grid grid-cols-2 gap-x-4 gap-y-4">
               <label className="block">
                 <span className="text-sm font-medium">Danh xưng</span>
-                <select value={form.gender} onChange={(e) => setForm((p) => ({ ...p, gender: e.target.value }))} className={inputCls}>
-                  <option value="">-- Chọn --</option>
-                  <option value="male">Ông</option>
-                  <option value="female">Bà</option>
-                </select>
+                <SmartField fieldKey="customer.gender" value={form.gender} onChange={(val) => setForm((p) => ({ ...p, gender: val }))} className={inputCls} />
               </label>
-              <div className="grid grid-cols-2 gap-4">
-                <label className="block">
-                  <span className="text-sm font-medium">CCCD/CMND</span>
-                  <SmartField fieldKey="customer.cccd" value={form.cccd} onChange={(val) => setForm((p) => ({ ...p, cccd: val }))} className={inputCls} />
-                </label>
-                <label className="block">
-                  <span className="text-sm font-medium">Năm sinh</span>
-                  <input
-                    value={form.date_of_birth}
-                    onChange={(e) => setForm((p) => ({ ...p, date_of_birth: e.target.value }))}
-                    placeholder="VD: 1990 hoặc 15/03/1990"
-                    className={inputCls}
-                  />
-                </label>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <label className="block">
-                  <span className="text-sm font-medium">Ngày cấp CCCD</span>
-                  <input
-                    value={form.cccd_issued_date}
-                    onChange={(e) => setForm((p) => ({ ...p, cccd_issued_date: formatDateInput(e.target.value) }))}
-                    placeholder="dd/mm/yyyy"
-                    maxLength={10}
-                    className={inputCls}
-                  />
-                </label>
-                <label className="block">
-                  <span className="text-sm font-medium">Nơi cấp CCCD</span>
-                  <SmartField fieldKey="customer.cccd_issued_place" value={form.cccd_issued_place} onChange={(val) => setForm((p) => ({ ...p, cccd_issued_place: val }))} className={inputCls} />
-                </label>
-              </div>
+              <label className="block">
+                <span className="text-sm font-medium">Năm sinh</span>
+                <SmartField fieldKey="customer.date_of_birth" value={form.date_of_birth} onChange={(val) => setForm((p) => ({ ...p, date_of_birth: val }))} className={inputCls} placeholder="1990" />
+              </label>
+              <label className="block">
+                <span className="text-sm font-medium">Loại giấy tờ tùy thân</span>
+                <SmartField fieldKey="customer.id_type" value={form.id_type} onChange={(val) => setForm((p) => ({ ...p, id_type: val }))} className={inputCls} />
+              </label>
+              <label className="block">
+                <span className="text-sm font-medium">Số CCCD/CMND</span>
+                <SmartField fieldKey="customer.cccd" value={form.cccd} onChange={(val) => setForm((p) => ({ ...p, cccd: val }))} className={inputCls} />
+              </label>
+              <label className="block">
+                <span className="text-sm font-medium">Ngày cấp</span>
+                <SmartField fieldKey="customer.cccd_issued_date" value={form.cccd_issued_date} onChange={(val) => setForm((p) => ({ ...p, cccd_issued_date: formatDateInput(val) }))} className={inputCls} placeholder="dd/mm/yyyy" />
+              </label>
+              <label className="block">
+                <span className="text-sm font-medium">Nơi cấp</span>
+                <SmartField fieldKey="customer.cccd_issued_place" value={form.cccd_issued_place} onChange={(val) => setForm((p) => ({ ...p, cccd_issued_place: val }))} className={inputCls} />
+              </label>
               <label className="block">
                 <span className="text-sm font-medium">CMND cũ</span>
                 <SmartField fieldKey="customer.cccd_old" value={form.cccd_old} onChange={(val) => setForm((p) => ({ ...p, cccd_old: val }))} className={inputCls} />
@@ -231,51 +216,30 @@ export function CustomerInfoForm({
                 <span className="text-sm font-medium">Số điện thoại</span>
                 <SmartField fieldKey="customer.phone" value={form.phone} onChange={(val) => setForm((p) => ({ ...p, phone: val }))} className={inputCls} />
               </label>
-              <div className="grid grid-cols-2 gap-4">
-                <label className="block">
-                  <span className="text-sm font-medium">Số tài khoản</span>
-                  <SmartField fieldKey="customer.bank_account" value={form.bank_account} onChange={(val) => setForm((p) => ({ ...p, bank_account: val }))} className={inputCls} />
-                </label>
-                <label className="block">
-                  <span className="text-sm font-medium">Nơi mở tài khoản</span>
-                  <SmartField fieldKey="customer.bank_name" value={form.bank_name} onChange={(val) => setForm((p) => ({ ...p, bank_name: val }))} className={inputCls} />
-                </label>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <label className="block">
-                  <span className="text-sm font-medium">Tên sản phẩm TTTD</span>
-                  <SmartField fieldKey="customer.cic_product_name" value={form.cic_product_name} onChange={(val) => setForm((p) => ({ ...p, cic_product_name: val }))} className={inputCls} />
-                </label>
-                <label className="block">
-                  <span className="text-sm font-medium">Mã sản phẩm TTTD</span>
-                  <SmartField fieldKey="customer.cic_product_code" value={form.cic_product_code} onChange={(val) => setForm((p) => ({ ...p, cic_product_code: val }))} className={inputCls} />
-                </label>
-              </div>
-            </>
-          )}
-
-          {/* Thông tin bổ sung (Lộc Việt / chung) */}
-          {showIndividual && (
-            <div className="border-t border-zinc-200 dark:border-white/[0.07] pt-4">
-              <h3 className="text-sm font-semibold mb-3">Thông tin bổ sung</h3>
-              <div className="grid grid-cols-3 gap-4">
-                <label className="block">
-                  <span className="text-sm font-medium">Nghề nghiệp</span>
-                  <input value={form.occupation} onChange={(e) => setForm((p) => ({ ...p, occupation: e.target.value }))} className={inputCls} />
-                </label>
-                <label className="block">
-                  <span className="text-sm font-medium">Quốc tịch</span>
-                  <input value={form.nationality} onChange={(e) => setForm((p) => ({ ...p, nationality: e.target.value }))} className={inputCls} />
-                </label>
-                <label className="block">
-                  <span className="text-sm font-medium">Loại giấy tờ tùy thân</span>
-                  <select value={form.id_type} onChange={(e) => setForm((p) => ({ ...p, id_type: e.target.value }))} className={inputCls}>
-                    <option value="CCCD">CCCD</option>
-                    <option value="CMND">CMND</option>
-                    <option value="Hộ chiếu">Hộ chiếu</option>
-                  </select>
-                </label>
-              </div>
+              <label className="block">
+                <span className="text-sm font-medium">Số tài khoản</span>
+                <SmartField fieldKey="customer.bank_account" value={form.bank_account} onChange={(val) => setForm((p) => ({ ...p, bank_account: val }))} className={inputCls} />
+              </label>
+              <label className="block">
+                <span className="text-sm font-medium">Nơi mở tài khoản</span>
+                <SmartField fieldKey="customer.bank_name" value={form.bank_name} onChange={(val) => setForm((p) => ({ ...p, bank_name: val }))} className={inputCls} />
+              </label>
+              <label className="block">
+                <span className="text-sm font-medium">Nghề nghiệp</span>
+                <SmartField fieldKey="customer.occupation" value={form.occupation} onChange={(val) => setForm((p) => ({ ...p, occupation: val }))} className={inputCls} />
+              </label>
+              <label className="block">
+                <span className="text-sm font-medium">Quốc tịch</span>
+                <SmartField fieldKey="customer.nationality" value={form.nationality} onChange={(val) => setForm((p) => ({ ...p, nationality: val }))} className={inputCls} />
+              </label>
+              <label className="block">
+                <span className="text-sm font-medium">Tên sản phẩm TTTD</span>
+                <SmartField fieldKey="customer.cic_product_name" value={form.cic_product_name} onChange={(val) => setForm((p) => ({ ...p, cic_product_name: val }))} className={inputCls} />
+              </label>
+              <label className="block">
+                <span className="text-sm font-medium">Mã sản phẩm TTTD</span>
+                <SmartField fieldKey="customer.cic_product_code" value={form.cic_product_code} onChange={(val) => setForm((p) => ({ ...p, cic_product_code: val }))} className={inputCls} />
+              </label>
             </div>
           )}
 
