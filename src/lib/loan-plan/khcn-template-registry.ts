@@ -65,6 +65,12 @@ export const KHCN_TEMPLATES: KhcnDocTemplate[] = [
   ...CAMCO_TEMPLATES,
   ...CAMCO_ASSET_TEMPLATES,
 
+  // Hồ sơ thẻ Lộc Việt (thẻ tín dụng)
+  { path: `${BASE}/Hồ sơ thẻ Lộc Việt/12299 Hop dong the tin dung Loc Viet.docx`, name: "HĐ thẻ tín dụng Lộc Việt (12299)", category: "the_loc_viet", methods: ["the_loc_viet"] },
+  { path: `${BASE}/Hồ sơ thẻ Lộc Việt/12299.01 Giay de nghi phat hanh the LV kiem HD.docx`, name: "Giấy đề nghị phát hành thẻ LV (12299.01)", category: "the_loc_viet", methods: ["the_loc_viet"] },
+  { path: `${BASE}/Hồ sơ thẻ Lộc Việt/1919.09 BCTD phat hanh the Loc Viet.docx`, name: "BCTĐ phát hành thẻ Lộc Việt (1919.09)", category: "the_loc_viet", methods: ["the_loc_viet"] },
+  { path: `${BASE}/Hồ sơ thẻ Lộc Việt/8857.22.Phieu nhan ho so kiem giay hen Ca nhan.docx`, name: "Phiếu nhận hồ sơ kiêm giấy hẹn (8857.22)", category: "the_loc_viet", methods: ["the_loc_viet"] },
+
   // Chứng từ giải ngân — exclude cam_co (has own UNC templates)
   { path: `${BASE}/Chứng từ giải ngân/599 Uy nhiem chi A4.docx`, name: "Ủy nhiệm chi A4 (599)", category: "giai_ngan", methods: ["tung_lan", "han_muc", "trung_dai", "tieu_dung"] },
   { path: `${BASE}/Chứng từ giải ngân/in UNC.docx`, name: "In UNC", category: "giai_ngan", methods: ["tung_lan", "han_muc", "trung_dai", "tieu_dung"] },
@@ -82,6 +88,7 @@ export const DOC_CATEGORY_LABELS: Record<string, string> = {
   bao_cao: "Báo cáo đề xuất",
   kiem_tra: "Biên bản kiểm tra",
   giai_ngan: "Chứng từ giải ngân",
+  the_loc_viet: "Hồ sơ thẻ Lộc Việt",
   ...ASSET_CATEGORY_LABELS,
   ...CAMCO_ASSET_CATEGORY_LABELS,
 };

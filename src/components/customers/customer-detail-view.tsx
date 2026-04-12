@@ -45,6 +45,7 @@ type FullCustomer = {
   cic_product_name: string | null;
   cic_product_code: string | null;
   documents_pa_json: string | null;
+  data_json: Record<string, unknown> | null;
   active_branch_id: string | null;
   relationship_officer: string | null;
   appraiser: string | null;
@@ -117,6 +118,10 @@ export function CustomerDetailView({ customerType, basePath }: CustomerDetailVie
     gender: "",
     cic_product_name: "",
     cic_product_code: "",
+    // data_json extended fields
+    occupation: "",
+    nationality: "Việt Nam",
+    id_type: "CCCD",
   });
   const [documentsPa, setDocumentsPa] = useState<Array<{ document_type: string; number: string; issuing_authority: string; issue_date: string; notes: string }>>([]);
 
@@ -155,6 +160,10 @@ export function CustomerDetailView({ customerType, basePath }: CustomerDetailVie
         gender: c.gender ?? "",
         cic_product_name: c.cic_product_name ?? "",
         cic_product_code: c.cic_product_code ?? "",
+        // data_json extended fields
+        occupation: (c.data_json as Record<string, string>)?.occupation ?? "",
+        nationality: (c.data_json as Record<string, string>)?.nationality ?? "Việt Nam",
+        id_type: (c.data_json as Record<string, string>)?.id_type ?? "CCCD",
       });
       try {
         const docs = JSON.parse(c.documents_pa_json || "[]");
@@ -216,6 +225,12 @@ export function CustomerDetailView({ customerType, basePath }: CustomerDetailVie
           cic_product_name: form.cic_product_name.trim() || null,
           cic_product_code: form.cic_product_code.trim() || null,
           documents_pa_json: JSON.stringify(documentsPa),
+          data_json: {
+            ...((customer?.data_json as Record<string, unknown>) ?? {}),
+            occupation: form.occupation.trim() || undefined,
+            nationality: form.nationality.trim() || undefined,
+            id_type: form.id_type || undefined,
+          },
         }),
       });
       const data = (await res.json()) as { ok: boolean; error?: string };

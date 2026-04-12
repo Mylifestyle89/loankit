@@ -90,6 +90,16 @@ export async function buildKhcnReportData(
     "Văn bản ủy quyền số": "",
   };
 
+  // Extended customer fields from data_json (Lộc Việt + general)
+  const dataJson: Record<string, unknown> =
+    typeof c.data_json === "string" ? JSON.parse(c.data_json || "{}") : (c.data_json ?? {});
+  data["Nghề nghiệp"] = dataJson.occupation ?? "";
+  data["Quốc tịch"] = dataJson.nationality ?? "Việt Nam";
+  data["Loại giấy tờ tùy thân"] = dataJson.id_type ?? "CCCD";
+  data["Nơi công tác"] = dataJson.workplace ?? "";
+  data["Thu nhập bình quân/tháng"] = dataJson.monthly_income ? fmtN(Number(dataJson.monthly_income)) : "";
+  data["Ngành nghề kinh doanh"] = c.main_business ?? "";
+
   buildCustomerAliases(c, data);
 
   buildBranchStaffData(
@@ -149,6 +159,17 @@ export async function buildKhcnReportData(
     data["HĐTD.Phương thức cho vay"] = lendingFreeText
       ? lendingFreeText
       : (lendingMethodMap[loan.loan_method ?? ""] ?? loan.loan_method ?? "");
+
+    // Thẻ tín dụng Lộc Việt — credit card specific fields
+    data["HĐTD.Hạn mức thẻ tín dụng"] = fmtN(loan.loanAmount);
+    data["HĐTD.HMTTD bằng chữ"] = numberToVietnameseWords(loan.loanAmount);
+    data["HĐTD.Số tài khoản"] = c.bank_account ?? "";
+    if (loan.endDate && loan.startDate) {
+      const cardMonths =
+        (loan.endDate.getFullYear() - loan.startDate.getFullYear()) * 12 +
+        (loan.endDate.getMonth() - loan.startDate.getMonth());
+      data["HĐTD.Thời hạn hiệu lực của thẻ"] = `${cardMonths} tháng`;
+    }
 
     buildLoanExtendedData(loan, data);
 

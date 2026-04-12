@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 
 import { useLanguage } from "@/components/language-provider";
 import { LoanEditModal } from "@/components/invoice-tracking/loan-edit-modal";
@@ -33,6 +33,7 @@ const PAGE_SIZE = 20;
 
 export default function LoanDetailPage() {
   const { t } = useLanguage();
+  const router = useRouter();
   const { id } = useParams<{ id: string }>();
 
   // Loan info
@@ -159,13 +160,29 @@ export default function LoanDetailPage() {
   );
   if (error || !loan) return <p className="p-6 text-sm text-red-700 dark:text-red-400">{error || "Not found"}</p>;
 
+  const isCard = loan.loan_method === "the_loc_viet";
+
   return (
     <section className="space-y-5">
       {/* Hero card */}
       <LoanDetailHeader
         loan={loan}
+        isCard={isCard}
         onEditLoan={() => setShowEditModal(true)}
         onOpenBeneficiaryModal={() => setShowBeneficiaryModal(true)}
+        onDeleteLoan={async () => {
+          const confirmed = window.confirm(
+            `Xóa khoản vay "${loan.contractNumber}"?\n\nThao tác này không thể hoàn tác. Tất cả dữ liệu giải ngân, hóa đơn liên quan sẽ bị xóa.`
+          );
+          if (!confirmed) return;
+          const res = await fetch(`/api/loans/${id}`, { method: "DELETE" });
+          const data = await res.json();
+          if (data.ok) {
+            router.push(loan.customer?.id ? `/report/customers/${loan.customer.id}?tab=loans` : "/report/loans");
+          } else {
+            alert(data.error ?? "Xóa thất bại");
+          }
+        }}
         onStatusChange={async (status) => {
           await fetch(`/api/loans/${id}`, {
             method: "PATCH",
@@ -184,8 +201,8 @@ export default function LoanDetailPage() {
         }}
       />
 
-      {/* Loan plan card */}
-      {loan.customer?.id && (
+      {/* Loan plan card — hide for credit card */}
+      {!isCard && loan.customer?.id && (
         <LoanPlanCard
           loanPlan={loan.loanPlan}
           customerId={loan.customer.id}
@@ -211,49 +228,49 @@ export default function LoanDetailPage() {
         />
       )}
 
-      {/* Summary cards */}
-      {summary && <LoanDisbursementSummaryCards summary={summary} />}
+      {/* Summary cards — hide for credit card */}
+      {!isCard && summary && <LoanDisbursementSummaryCards summary={summary} />}
 
-      {/* Toolbar */}
-      <div className="flex flex-wrap items-center gap-3">
-        <input
-          type="text"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder={t("disbursements.searchPlaceholder") ?? "Tìm kiếm mô tả..."}
-          className="flex-1 min-w-[200px] rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] px-3 py-2 text-sm shadow-sm transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40"
-        />
-        <select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-          className="cursor-pointer rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] px-3 py-2 text-sm shadow-sm transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40"
-        >
-          <option value="">{t("invoices.all") ?? "Tất cả"}</option>
-          <option value="active">{t("disbursements.active") ?? "Đang hoạt động"}</option>
-          <option value="completed">{t("disbursements.completed") ?? "Đã hoàn thành"}</option>
-          <option value="cancelled">{t("disbursements.cancelled") ?? "Đã hủy"}</option>
-        </select>
-        <button
-          type="button"
-          onClick={() => setShowModal(true)}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-brand-500 px-4 py-2 text-sm font-medium text-white shadow-sm shadow-brand-500/25 transition-all hover:shadow-md hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/50"
-        >
-          {t("disbursements.add")}
-        </button>
-      </div>
-
-      {/* Disbursement table */}
-      <div className="rounded-xl border border-zinc-200 dark:border-white/[0.07] bg-white dark:bg-[#161616] overflow-hidden shadow-sm">
-        <DisbursementTable
-          disbursements={disbursements}
-          loading={disbLoading}
-          t={t}
-          onEdit={setEditingDisbursementId}
-          onReport={setReportDisbursementId}
-          onAddInvoice={setInvoiceTarget}
-        />
-        <PaginationControls page={page} pageSize={PAGE_SIZE} total={total} onPageChange={setPage} />
-      </div>
+      {/* Toolbar + Disbursements — hide for credit card */}
+      {!isCard && (<>
+        <div className="flex flex-wrap items-center gap-3">
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder={t("disbursements.searchPlaceholder") ?? "Tìm kiếm mô tả..."}
+            className="flex-1 min-w-[200px] rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] px-3 py-2 text-sm shadow-sm transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40"
+          />
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="cursor-pointer rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] px-3 py-2 text-sm shadow-sm transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40"
+          >
+            <option value="">{t("invoices.all") ?? "Tất cả"}</option>
+            <option value="active">{t("disbursements.active") ?? "Đang hoạt động"}</option>
+            <option value="completed">{t("disbursements.completed") ?? "Đã hoàn thành"}</option>
+            <option value="cancelled">{t("disbursements.cancelled") ?? "Đã hủy"}</option>
+          </select>
+          <button
+            type="button"
+            onClick={() => setShowModal(true)}
+            className="inline-flex items-center gap-1.5 rounded-lg bg-brand-500 px-4 py-2 text-sm font-medium text-white shadow-sm shadow-brand-500/25 transition-all hover:shadow-md hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/50"
+          >
+            {t("disbursements.add")}
+          </button>
+        </div>
+        <div className="rounded-xl border border-zinc-200 dark:border-white/[0.07] bg-white dark:bg-[#161616] overflow-hidden shadow-sm">
+          <DisbursementTable
+            disbursements={disbursements}
+            loading={disbLoading}
+            t={t}
+            onEdit={setEditingDisbursementId}
+            onReport={setReportDisbursementId}
+            onAddInvoice={setInvoiceTarget}
+          />
+          <PaginationControls page={page} pageSize={PAGE_SIZE} total={total} onPageChange={setPage} />
+        </div>
+      </>)}
 
       {showModal && (
         <DisbursementFormModal

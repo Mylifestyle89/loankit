@@ -298,4 +298,14 @@ export const KHCN_PLACEHOLDER_GROUPS: PlaceholderGroup[] = [
       "HĐTD.TNCV bằng chữ",
     ],
   },
+  {
+    label: "Thẻ tín dụng Lộc Việt",
+    prefix: "HĐTD",
+    items: [
+      "HĐTD.Hạn mức thẻ tín dụng",
+      "HĐTD.HMTTD bằng chữ",
+      "HĐTD.Số tài khoản",
+      "HĐTD.Thời hạn hiệu lực của thẻ",
+    ],
+  },
 ];

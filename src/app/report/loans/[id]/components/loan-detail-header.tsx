@@ -9,7 +9,7 @@
 
 import Link from "next/link";
 import { useState, useRef, useEffect } from "react";
-import { ArrowLeft, ChevronDown, Pencil } from "lucide-react";
+import { ArrowLeft, ChevronDown, Pencil, Trash2 } from "lucide-react";
 import { fmtDisplay as fmt, fmtDateDisplay as fmtDate } from "@/lib/invoice-tracking-format-helpers";
 import { useLanguage } from "@/components/language-provider";
 
@@ -27,9 +27,11 @@ type Props = {
   onOpenBeneficiaryModal: () => void;
   onStatusChange?: (status: string) => void;
   onContractNumberChange?: (contractNumber: string) => void;
+  onDeleteLoan?: () => void;
+  isCard?: boolean;
 };
 
-export function LoanDetailHeader({ loan, onEditLoan, onOpenBeneficiaryModal, onStatusChange, onContractNumberChange }: Props) {
+export function LoanDetailHeader({ loan, onEditLoan, onOpenBeneficiaryModal, onStatusChange, onContractNumberChange, onDeleteLoan, isCard }: Props) {
   const { t } = useLanguage();
   const [statusOpen, setStatusOpen] = useState(false);
   const statusRef = useRef<HTMLDivElement>(null);
@@ -147,26 +149,39 @@ export function LoanDetailHeader({ loan, onEditLoan, onOpenBeneficiaryModal, onS
             >
               Thông tin hợp đồng tín dụng
             </button>
-            <button
-              type="button"
-              onClick={onOpenBeneficiaryModal}
-              className="rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-white/80 dark:bg-white/[0.05] px-3 py-1.5 text-xs font-medium text-zinc-600 dark:text-slate-300 transition-colors hover:bg-brand-50 dark:hover:bg-brand-500/10 hover:text-brand-600 dark:hover:text-brand-400"
-            >
-              {t("beneficiaries.title") ?? "Đơn vị thụ hưởng"}
-            </button>
-            <Link
-              href={`/report/invoices?customerId=${loan.customer.id}`}
-              className="rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-white/80 dark:bg-white/[0.05] px-3 py-1.5 text-xs font-medium text-zinc-500 dark:text-slate-400 transition-colors hover:bg-zinc-50 dark:hover:bg-white/[0.06]"
-            >
-              Hóa đơn
-            </Link>
+            {!isCard && (
+              <button
+                type="button"
+                onClick={onOpenBeneficiaryModal}
+                className="rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-white/80 dark:bg-white/[0.05] px-3 py-1.5 text-xs font-medium text-zinc-600 dark:text-slate-300 transition-colors hover:bg-brand-50 dark:hover:bg-brand-500/10 hover:text-brand-600 dark:hover:text-brand-400"
+              >
+                {t("beneficiaries.title") ?? "Đơn vị thụ hưởng"}
+              </button>
+            )}
+            {!isCard && (
+              <Link
+                href={`/report/invoices?customerId=${loan.customer.id}`}
+                className="rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-white/80 dark:bg-white/[0.05] px-3 py-1.5 text-xs font-medium text-zinc-500 dark:text-slate-400 transition-colors hover:bg-zinc-50 dark:hover:bg-white/[0.06]"
+              >
+                Hóa đơn
+              </Link>
+            )}
+            {onDeleteLoan && (
+              <button
+                type="button"
+                onClick={onDeleteLoan}
+                className="rounded-lg border border-red-200 dark:border-red-500/20 bg-white/80 dark:bg-white/[0.05] px-3 py-1.5 text-xs font-medium text-red-500 dark:text-red-400 transition-colors hover:bg-red-50 dark:hover:bg-red-500/10"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </button>
+            )}
           </div>
         </div>
 
         {/* Loan details grid */}
         <div className="relative mt-4 grid grid-cols-2 gap-3 text-sm md:grid-cols-4">
           <div className="rounded-lg bg-white/60 dark:bg-white/[0.04] border border-zinc-100 dark:border-white/[0.05] p-3">
-            <span className="text-xs text-zinc-400 dark:text-slate-500">{t("loans.loanAmount")}</span>
+            <span className="text-xs text-zinc-400 dark:text-slate-500">{isCard ? "Hạn mức thẻ" : t("loans.loanAmount")}</span>
             <p className="mt-0.5 font-semibold tabular-nums">{fmt(loan.loanAmount)} VND</p>
           </div>
           <div className="rounded-lg bg-white/60 dark:bg-white/[0.04] border border-zinc-100 dark:border-white/[0.05] p-3">
@@ -174,11 +189,11 @@ export function LoanDetailHeader({ loan, onEditLoan, onOpenBeneficiaryModal, onS
             <p className="mt-0.5 font-semibold">{loan.interestRate != null ? `${loan.interestRate}%` : "—"}</p>
           </div>
           <div className="rounded-lg bg-white/60 dark:bg-white/[0.04] border border-zinc-100 dark:border-white/[0.05] p-3">
-            <span className="text-xs text-zinc-400 dark:text-slate-500">{t("loans.startDate")}</span>
+            <span className="text-xs text-zinc-400 dark:text-slate-500">{isCard ? "Ngày phát hành" : t("loans.startDate")}</span>
             <p className="mt-0.5 font-semibold">{fmtDate(loan.startDate)}</p>
           </div>
           <div className="rounded-lg bg-white/60 dark:bg-white/[0.04] border border-zinc-100 dark:border-white/[0.05] p-3">
-            <span className="text-xs text-zinc-400 dark:text-slate-500">{t("loans.endDate")}</span>
+            <span className="text-xs text-zinc-400 dark:text-slate-500">{isCard ? "Ngày hết hạn" : t("loans.endDate")}</span>
             <p className="mt-0.5 font-semibold">{fmtDate(loan.endDate)}</p>
           </div>
         </div>

@@ -5,6 +5,7 @@ export const METHOD_OPTIONS = [
   { value: "trung_dai", label: "Trung dài hạn SXKD" },
   { value: "tieu_dung", label: "Tiêu dùng" },
   { value: "cam_co", label: "Vay cầm cố" },
+  { value: "the_loc_viet", label: "Thẻ tín dụng Lộc Việt" },
 ] as const;
 
 export const METHOD_LABELS: Record<string, string> = {
@@ -13,6 +14,7 @@ export const METHOD_LABELS: Record<string, string> = {
   trung_dai: "Trung dài hạn SXKD",
   tieu_dung: "Tiêu dùng",
   cam_co: "Vay cầm cố",
+  the_loc_viet: "Thẻ tín dụng Lộc Việt",
 };
 
 /** Short labels for loan methods (used in tables, admin UI) */
@@ -22,6 +24,7 @@ export const METHOD_SHORT_LABELS: Record<string, string> = {
   trung_dai: "Trung dài hạn",
   tieu_dung: "Tiêu dùng",
   cam_co: "Cầm cố",
+  the_loc_viet: "Thẻ Lộc Việt",
 };
 
 /** Income source type options for tiêu dùng loans */

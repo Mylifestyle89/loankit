@@ -2,6 +2,7 @@
 
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { CreditCard, Landmark } from "lucide-react";
 
 import { useLanguage } from "@/components/language-provider";
 import { fmtNumber, parseNumber, formatDateInput, dmy2iso } from "@/lib/invoice-tracking-format-helpers";
@@ -16,6 +17,7 @@ function NewLoanForm() {
   const { t } = useLanguage();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const [loanType, setLoanType] = useState<"normal" | "the_loc_viet" | null>(null);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [customerId, setCustomerId] = useState(searchParams.get("customerId") ?? "");
   const [contractNumber, setContractNumber] = useState("");
@@ -27,6 +29,8 @@ function NewLoanForm() {
   const [disbursementCount, setDisbursementCount] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+
+  const isCard = loanType === "the_loc_viet";
 
   useEffect(() => {
     fetch("/api/customers").then((r) => r.json()).then((d) => {
@@ -75,9 +79,10 @@ function NewLoanForm() {
           interestRate: interestRate ? Number(interestRate) : undefined,
           startDate: isoStart,
           endDate: isoEnd,
-          purpose: purpose || undefined,
-          disbursementCount: disbursementCount || undefined,
-          loanPlanId: searchParams.get("planId") ?? undefined,
+          purpose: isCard ? undefined : (purpose || undefined),
+          disbursementCount: isCard ? undefined : (disbursementCount || undefined),
+          loanPlanId: isCard ? undefined : (searchParams.get("planId") ?? undefined),
+          loan_method: isCard ? "the_loc_viet" : undefined,
         }),
       });
       const data = await res.json();
@@ -103,7 +108,35 @@ function NewLoanForm() {
         </div>
       </div>
 
+      {/* Loan type selector */}
+      {!loanType && (
+        <div className="grid grid-cols-2 gap-4">
+          <button type="button" onClick={() => setLoanType("normal")}
+            className="flex flex-col items-center gap-3 rounded-2xl border-2 border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#161616] p-6 transition-all hover:border-brand-400 hover:shadow-md">
+            <Landmark className="h-8 w-8 text-brand-500" />
+            <span className="text-sm font-semibold">Khoản vay thông thường</span>
+            <span className="text-xs text-zinc-400">SXKD, tiêu dùng, trung dài hạn...</span>
+          </button>
+          <button type="button" onClick={() => setLoanType("the_loc_viet")}
+            className="flex flex-col items-center gap-3 rounded-2xl border-2 border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#161616] p-6 transition-all hover:border-amber-400 hover:shadow-md">
+            <CreditCard className="h-8 w-8 text-amber-500" />
+            <span className="text-sm font-semibold">Thẻ tín dụng Lộc Việt</span>
+            <span className="text-xs text-zinc-400">Phát hành thẻ tín dụng</span>
+          </button>
+        </div>
+      )}
+
+      {loanType && (
       <form onSubmit={handleSubmit} className="rounded-2xl border border-zinc-200 dark:border-white/[0.07] bg-white dark:bg-[#161616] p-6 shadow-sm space-y-4">
+        {/* Type indicator */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 text-xs text-zinc-500">
+            {isCard ? <CreditCard className="h-4 w-4 text-amber-500" /> : <Landmark className="h-4 w-4 text-brand-500" />}
+            <span className="font-medium">{isCard ? "Thẻ tín dụng Lộc Việt" : "Khoản vay thông thường"}</span>
+          </div>
+          <button type="button" onClick={() => setLoanType(null)} className="text-xs text-brand-500 hover:underline">Đổi loại</button>
+        </div>
+
         <label className="block">
           <span className={labelCls}>{t("loans.customer")}</span>
           <select required value={customerId} onChange={(e) => setCustomerId(e.target.value)} className={inputCls}>
@@ -112,12 +145,12 @@ function NewLoanForm() {
           </select>
         </label>
         <label className="block">
-          <span className={labelCls}>{t("loans.contractNumber")}</span>
-          <input type="text" required value={contractNumber} onChange={(e) => setContractNumber(e.target.value)} className={inputCls} />
+          <span className={labelCls}>{isCard ? "Mã hồ sơ thẻ" : t("loans.contractNumber")}</span>
+          <input type="text" required value={contractNumber} onChange={(e) => setContractNumber(e.target.value)} placeholder={isCard ? "VD: LV-2026-001" : ""} className={inputCls} />
         </label>
         <div className="grid grid-cols-2 gap-4">
           <label className="block">
-            <span className={labelCls}>{t("loans.loanAmount")}</span>
+            <span className={labelCls}>{isCard ? "Hạn mức thẻ tín dụng" : t("loans.loanAmount")}</span>
             <input
               type="text"
               required
@@ -135,7 +168,7 @@ function NewLoanForm() {
         </div>
         <div className="grid grid-cols-2 gap-4">
           <label className="block">
-            <span className={labelCls}>{t("loans.startDate")}</span>
+            <span className={labelCls}>{isCard ? "Ngày phát hành" : t("loans.startDate")}</span>
             <input
               type="text"
               required
@@ -147,7 +180,7 @@ function NewLoanForm() {
             />
           </label>
           <label className="block">
-            <span className={labelCls}>{t("loans.endDate")}</span>
+            <span className={labelCls}>{isCard ? "Ngày hết hạn" : t("loans.endDate")}</span>
             <input
               type="text"
               required
@@ -159,19 +192,23 @@ function NewLoanForm() {
             />
           </label>
         </div>
-        <label className="block">
-          <span className={labelCls}>{t("loans.disbursementCount")}</span>
-          <input
-            type="text"
-            value={disbursementCount}
-            onChange={(e) => setDisbursementCount(e.target.value)}
-            className={inputCls}
-          />
-        </label>
-        <label className="block">
-          <span className={labelCls}>{t("loans.purpose")}</span>
-          <textarea value={purpose} onChange={(e) => setPurpose(e.target.value)} rows={2} className={inputCls} />
-        </label>
+        {!isCard && (
+          <label className="block">
+            <span className={labelCls}>{t("loans.disbursementCount")}</span>
+            <input
+              type="text"
+              value={disbursementCount}
+              onChange={(e) => setDisbursementCount(e.target.value)}
+              className={inputCls}
+            />
+          </label>
+        )}
+        {!isCard && (
+          <label className="block">
+            <span className={labelCls}>{t("loans.purpose")}</span>
+            <textarea value={purpose} onChange={(e) => setPurpose(e.target.value)} rows={2} className={inputCls} />
+          </label>
+        )}
         <div className="flex justify-end gap-3 pt-2">
           <button type="button" onClick={() => router.back()} className="cursor-pointer rounded-lg border border-zinc-200 dark:border-white/[0.09] px-4 py-2 text-sm text-zinc-600 dark:text-slate-400 shadow-sm transition-all duration-150 hover:border-brand-200 dark:hover:border-brand-500/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40">
             {t("common.cancel")}
@@ -181,6 +218,7 @@ function NewLoanForm() {
           </button>
         </div>
       </form>
+      )}
     </section>
   );
 }

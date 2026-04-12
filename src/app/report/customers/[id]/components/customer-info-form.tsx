@@ -41,6 +41,10 @@ type FormState = {
   gender: string;
   cic_product_name: string;
   cic_product_code: string;
+  // data_json extended fields
+  occupation: string;
+  nationality: string;
+  id_type: string;
 };
 
 type Props = {
@@ -249,6 +253,31 @@ export function CustomerInfoForm({
                 </label>
               </div>
             </>
+          )}
+
+          {/* Thông tin bổ sung (Lộc Việt / chung) */}
+          {showIndividual && (
+            <div className="border-t border-zinc-200 dark:border-white/[0.07] pt-4">
+              <h3 className="text-sm font-semibold mb-3">Thông tin bổ sung</h3>
+              <div className="grid grid-cols-3 gap-4">
+                <label className="block">
+                  <span className="text-sm font-medium">Nghề nghiệp</span>
+                  <input value={form.occupation} onChange={(e) => setForm((p) => ({ ...p, occupation: e.target.value }))} className={inputCls} />
+                </label>
+                <label className="block">
+                  <span className="text-sm font-medium">Quốc tịch</span>
+                  <input value={form.nationality} onChange={(e) => setForm((p) => ({ ...p, nationality: e.target.value }))} className={inputCls} />
+                </label>
+                <label className="block">
+                  <span className="text-sm font-medium">Loại giấy tờ tùy thân</span>
+                  <select value={form.id_type} onChange={(e) => setForm((p) => ({ ...p, id_type: e.target.value }))} className={inputCls}>
+                    <option value="CCCD">CCCD</option>
+                    <option value="CMND">CMND</option>
+                    <option value="Hộ chiếu">Hộ chiếu</option>
+                  </select>
+                </label>
+              </div>
+            </div>
           )}
 
           {/* Tài liệu liên quan PA */}

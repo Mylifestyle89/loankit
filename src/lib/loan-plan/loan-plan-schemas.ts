@@ -17,7 +17,7 @@ export const revenueItemSchema = z.object({
   amount: z.number(),
 });
 
-export const LOAN_METHODS = ["tung_lan", "han_muc", "trung_dai", "tieu_dung"] as const;
+export const LOAN_METHODS = ["tung_lan", "han_muc", "trung_dai", "tieu_dung", "the_loc_viet"] as const;
 export const INCOME_SOURCE_TYPES = ["salary", "rental", "agriculture", "business"] as const;
 
 export const loanMethodEnum = z.enum(LOAN_METHODS);
