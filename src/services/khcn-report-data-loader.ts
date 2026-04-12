@@ -3,7 +3,7 @@
  * needed for DOCX template rendering.
  */
 import { NotFoundError } from "@/core/errors/app-error";
-import { decryptCustomerPii, decryptIfEncrypted } from "@/lib/field-encryption";
+import { decryptCoBorrowerPii, decryptCustomerPii, decryptRelatedPersonPii } from "@/lib/field-encryption";
 import { prisma } from "@/lib/prisma";
 
 // ── Load full customer with ALL relations needed for templates ──
@@ -35,9 +35,8 @@ export async function loadFullCustomer(customerId: string, loanId?: string, disb
   if (!c) throw new NotFoundError("Customer not found.");
   // Decrypt PII fields for DOCX template rendering (needs raw values)
   Object.assign(c, decryptCustomerPii(c));
-  // Decrypt CoBorrower phone
-  for (const cb of c.co_borrowers) {
-    if (cb.phone) cb.phone = decryptIfEncrypted(cb.phone);
-  }
+  // Decrypt all PII fields on co-borrowers and related persons
+  c.co_borrowers = c.co_borrowers.map((cb) => decryptCoBorrowerPii(cb as unknown as Record<string, unknown>) as typeof cb);
+  c.related_persons = c.related_persons.map((rp) => decryptRelatedPersonPii(rp as unknown as Record<string, unknown>) as typeof rp);
   return c;
 }
