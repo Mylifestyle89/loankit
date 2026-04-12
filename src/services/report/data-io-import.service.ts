@@ -212,6 +212,7 @@ export async function importData(input: {
           where: { id: existingCust.id },
           data: {
             customer_name: customerRaw.customer_name ?? undefined,
+            customer_type: customerRaw.customer_type ?? undefined,
             address: customerRaw.address,
             main_business: customerRaw.main_business,
             charter_capital: customerRaw.charter_capital,
@@ -228,6 +229,7 @@ export async function importData(input: {
             customer_code: customerRaw.customer_code,
             customer_code_hash: hashCustomerCode(customerRaw.customer_code),
             customer_name: customerRaw.customer_name,
+            customer_type: customerRaw.customer_type ?? "corporate",
             address: customerRaw.address,
             main_business: customerRaw.main_business,
             charter_capital: customerRaw.charter_capital,

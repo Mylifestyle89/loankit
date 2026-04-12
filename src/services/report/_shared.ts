@@ -203,6 +203,7 @@ export type BuildFreshness = {
 export type ImportCustomerRecord = {
   customer_code: string;
   customer_name: string;
+  customer_type?: string | null;
   address: string | null;
   main_business: string | null;
   charter_capital: number | null;
