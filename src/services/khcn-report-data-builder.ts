@@ -160,15 +160,12 @@ export async function buildKhcnReportData(
       ? lendingFreeText
       : (lendingMethodMap[loan.loan_method ?? ""] ?? loan.loan_method ?? "");
 
-    // Thẻ tín dụng Lộc Việt — credit card specific fields
+    // Thẻ tín dụng Lộc Việt
     data["HĐTD.Hạn mức thẻ tín dụng"] = fmtN(loan.loanAmount);
     data["HĐTD.HMTTD bằng chữ"] = numberToVietnameseWords(loan.loanAmount);
     data["HĐTD.Số tài khoản"] = c.bank_account ?? "";
-    if (loan.endDate && loan.startDate) {
-      const cardMonths =
-        (loan.endDate.getFullYear() - loan.startDate.getFullYear()) * 12 +
-        (loan.endDate.getMonth() - loan.startDate.getMonth());
-      data["HĐTD.Thời hạn hiệu lực của thẻ"] = `${cardMonths} tháng`;
+    if (loan.endDate) {
+      data["HĐTD.Thời hạn hiệu lực của thẻ"] = `${data["HĐTD.Thời hạn vay"]} ${data["HĐTD.Kiểu thời hạn"]}`.trim();
     }
 
     buildLoanExtendedData(loan, data);

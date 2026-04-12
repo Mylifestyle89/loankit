@@ -41,7 +41,6 @@ type FormState = {
   gender: string;
   cic_product_name: string;
   cic_product_code: string;
-  // data_json extended fields
   occupation: string;
   nationality: string;
   id_type: string;

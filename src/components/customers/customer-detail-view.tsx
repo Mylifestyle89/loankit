@@ -118,7 +118,6 @@ export function CustomerDetailView({ customerType, basePath }: CustomerDetailVie
     gender: "",
     cic_product_name: "",
     cic_product_code: "",
-    // data_json extended fields
     occupation: "",
     nationality: "Việt Nam",
     id_type: "CCCD",
