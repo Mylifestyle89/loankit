@@ -35,24 +35,31 @@ export function buildCoBorrowerData(
     data["TV.Mối quan hệ với KH vay"] = first.relationship ?? "";
     data["TV.Dư nợ tại Agribank"] = first.agribank_debt ?? "";
   }
-  // TV loop markers (for templates using [#TV]...[/TV])
-  data["TV"] = coBorrowers.map((cb, i) => ({
-    STT: i + 1,
-    "Danh xưng": cb.title ?? "",
-    "Họ và tên": cb.full_name,
-    "Họ và tên in hoa": cb.full_name.toUpperCase(),
-    "Loại giấy tờ tùy thân": cb.id_type ?? "",
-    "CMND": cb.id_number ?? "",
-    "CMND cũ": cb.id_old ?? "",
-    "Ngày cấp": cb.id_issued_date ?? "",
-    "Nơi cấp": cb.id_issued_place ?? "",
-    "Năm sinh": cb.birth_year ?? "",
-    "Số điện thoại": cb.phone ?? "",
-    "Địa chỉ hiện tại": cb.current_address ?? "",
-    "Nơi thường trú": cb.permanent_address ?? "",
-    "Mối quan hệ với KH vay": cb.relationship ?? "",
-    "Dư nợ tại Agribank": cb.agribank_debt ?? "",
-  }));
+  // TV loop — include both prefixed and unprefixed keys so
+  // templates using [TV.Họ và tên] inside [#TV] loop resolve correctly
+  data["TV"] = coBorrowers.map((cb, i) => {
+    const item: Record<string, unknown> = {
+      STT: i + 1,
+      "Danh xưng": cb.title ?? "",
+      "Họ và tên": cb.full_name,
+      "Họ và tên in hoa": cb.full_name.toUpperCase(),
+      "Loại giấy tờ tùy thân": cb.id_type ?? "",
+      "CMND": cb.id_number ?? "",
+      "CMND cũ": cb.id_old ?? "",
+      "Ngày cấp": cb.id_issued_date ?? "",
+      "Nơi cấp": cb.id_issued_place ?? "",
+      "Năm sinh": cb.birth_year ?? "",
+      "Số điện thoại": cb.phone ?? "",
+      "Địa chỉ hiện tại": cb.current_address ?? "",
+      "Nơi thường trú": cb.permanent_address ?? "",
+      "Mối quan hệ với KH vay": cb.relationship ?? "",
+      "Dư nợ tại Agribank": cb.agribank_debt ?? "",
+    };
+    for (const [k, v] of Object.entries(item)) {
+      item[`TV.${k}`] = v;
+    }
+    return item;
+  });
 }
 
 // ── RelatedPerson (NLQ = Người liên quan) ──
@@ -82,14 +89,22 @@ export function buildRelatedPersonData(
     data["NLQ.Dư nợ tại Agribank"] = first.agribank_debt ?? "";
     data["NLQ.TV.STT"] = "1";
   }
-  // NLQ loop
-  data["NLQ"] = relatedPersons.map((rp, i) => ({
-    STT: i + 1,
-    "TV.STT": i + 1,
-    "Tên tổ chức/Cá nhân": rp.name,
-    "Số ĐKKD/CMND": rp.id_number ?? "",
-    "Địa chỉ": rp.address ?? "",
-    "Mối liên quan": rp.relation_type ?? "",
-    "Dư nợ tại Agribank": rp.agribank_debt ?? "",
-  }));
+  // NLQ loop — include both prefixed and unprefixed keys so
+  // templates using [NLQ.Tên tổ chức/Cá nhân] inside [#NLQ] loop resolve correctly
+  data["NLQ"] = relatedPersons.map((rp, i) => {
+    const item: Record<string, unknown> = {
+      STT: i + 1,
+      "TV.STT": i + 1,
+      "Tên tổ chức/Cá nhân": rp.name,
+      "Số ĐKKD/CMND": rp.id_number ?? "",
+      "Địa chỉ": rp.address ?? "",
+      "Mối liên quan": rp.relation_type ?? "",
+      "Dư nợ tại Agribank": rp.agribank_debt ?? "",
+    };
+    // Duplicate with NLQ. prefix for templates that use [NLQ.X] inside loop
+    for (const [k, v] of Object.entries(item)) {
+      item[`NLQ.${k}`] = v;
+    }
+    return item;
+  });
 }
