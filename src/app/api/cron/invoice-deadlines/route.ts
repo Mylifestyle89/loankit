@@ -12,12 +12,20 @@ function safeCompare(a: string, b: string): boolean {
 }
 
 export async function GET(req: NextRequest) {
-  // Validate cron secret — supports both Vercel Cron (Authorization: Bearer) and custom header (x-cron-secret)
+  console.log(`[cron/invoice-deadlines] Called at ${new Date().toISOString()} ua=${req.headers.get("user-agent") ?? "unknown"}`);
+
+  // Validate cron secret — supports Vercel Cron (Authorization: Bearer), custom header (x-cron-secret), or query ?secret=
   const expected = process.env.CRON_SECRET;
   const bearer = req.headers.get("authorization")?.replace("Bearer ", "");
   const custom = req.headers.get("x-cron-secret");
-  const secret = bearer || custom;
-  if (!expected || !secret || !safeCompare(secret, expected)) {
+  const query = req.nextUrl.searchParams.get("secret");
+  const secret = bearer || custom || query;
+  if (!expected) {
+    console.error("[cron/invoice-deadlines] CRON_SECRET env var not set");
+    return NextResponse.json({ ok: false, error: "Server misconfigured" }, { status: 500 });
+  }
+  if (!secret || !safeCompare(secret, expected)) {
+    console.warn(`[cron/invoice-deadlines] Unauthorized: bearer=${!!bearer} custom=${!!custom} query=${!!query}`);
     return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
   }
 
@@ -27,7 +35,7 @@ export async function GET(req: NextRequest) {
   } catch (error) {
     console.error("[cron/invoice-deadlines] Error:", error);
     return NextResponse.json(
-      { ok: false, error: "Internal server error" },
+      { ok: false, error: error instanceof Error ? error.message : "Internal server error" },
       { status: 500 },
     );
   }

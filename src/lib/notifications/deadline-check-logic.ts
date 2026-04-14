@@ -17,11 +17,15 @@ export type DeadlineCheckResult = {
 
 /** Shared logic: check due-soon + overdue invoices, create notifications, send emails */
 export async function runDeadlineCheck(): Promise<DeadlineCheckResult> {
+  const startTime = Date.now();
   const now = new Date();
   const sevenDaysFromNow = new Date(now.getTime() + SEVEN_DAYS);
   let emailsSent = 0;
   let emailErrors = 0;
   let notificationsCreated = 0;
+
+  console.log(`[deadline-check] START at ${now.toISOString()}`);
+  console.log(`[deadline-check] SMTP configured: host=${!!process.env.SMTP_HOST} user=${!!process.env.SMTP_USER} pass=${!!process.env.SMTP_PASS}`);
 
   // Invoice include pattern for customer access
   const invoiceInclude = {
@@ -66,15 +70,21 @@ export async function runDeadlineCheck(): Promise<DeadlineCheckResult> {
     },
     include: invoiceInclude,
   });
+  console.log(`[deadline-check] Found ${dueSoon.length} due-soon invoices (next 7 days)`);
+  console.log(`[deadline-check] Dedup set size (notified in last 24h): ${notifiedSet.size}`);
 
   for (const inv of dueSoon) {
     const effectiveDate = inv.customDeadline ?? inv.dueDate;
     if (effectiveDate > sevenDaysFromNow || effectiveDate <= now) continue;
 
     // Dedup: skip if notified in last 24h
-    if (notifiedSet.has(`invoice_due_soon:${inv.id}`)) continue;
+    if (notifiedSet.has(`invoice_due_soon:${inv.id}`)) {
+      console.log(`[deadline-check] SKIP ${inv.invoiceNumber} — already notified in last 24h`);
+      continue;
+    }
 
     const customer = inv.disbursement.loan.customer;
+    console.log(`[deadline-check] Processing invoice ${inv.invoiceNumber}, customer=${customer.customer_name}, email=${customer.email ?? "NONE"}`);
     const notif = await notificationService.create({
       type: "invoice_due_soon",
       title: `HD sap den han: ${inv.invoiceNumber}`,
@@ -96,8 +106,13 @@ export async function runDeadlineCheck(): Promise<DeadlineCheckResult> {
         where: { id: notif.id },
         data: result.success ? { emailSentAt: new Date() } : { emailError: result.error },
       });
-      if (result.success) emailsSent++;
-      else emailErrors++;
+      if (result.success) {
+        emailsSent++;
+        console.log(`[deadline-check] EMAIL SENT to ${customer.email} for invoice ${inv.invoiceNumber}`);
+      } else {
+        emailErrors++;
+        console.error(`[deadline-check] EMAIL FAILED to ${customer.email} for invoice ${inv.invoiceNumber}: ${result.error}`);
+      }
     }
   }
 
@@ -105,7 +120,7 @@ export async function runDeadlineCheck(): Promise<DeadlineCheckResult> {
   const { count: newlyOverdue, newlyOverdueIds } = await invoiceService.markOverdue();
 
   if (newlyOverdueIds.length === 0) {
-    return {
+    const earlyResult = {
       dueSoonChecked: dueSoon.length,
       newlyOverdue: 0,
       totalOverdue: 0,
@@ -113,6 +128,8 @@ export async function runDeadlineCheck(): Promise<DeadlineCheckResult> {
       emailsSent,
       emailErrors,
     };
+    console.log(`[deadline-check] DONE (no newly overdue) in ${Date.now() - startTime}ms:`, JSON.stringify(earlyResult));
+    return earlyResult;
   }
 
   const overdue = await prisma.invoice.findMany({
@@ -150,7 +167,7 @@ export async function runDeadlineCheck(): Promise<DeadlineCheckResult> {
     }
   }
 
-  return {
+  const result = {
     dueSoonChecked: dueSoon.length,
     newlyOverdue,
     totalOverdue: newlyOverdueIds.length,
@@ -158,4 +175,6 @@ export async function runDeadlineCheck(): Promise<DeadlineCheckResult> {
     emailsSent,
     emailErrors,
   };
+  console.log(`[deadline-check] DONE in ${Date.now() - startTime}ms:`, JSON.stringify(result));
+  return result;
 }

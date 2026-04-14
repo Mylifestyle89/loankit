@@ -12,15 +12,20 @@ function getTransporter(): Transporter | null {
   const pass = process.env.SMTP_PASS;
 
   if (!host || !user || !pass) {
-    console.warn("[email-service] SMTP not configured — email disabled.");
+    console.warn(`[email-service] SMTP not configured — email disabled. host=${!!host} user=${!!user} pass=${!!pass}`);
     return null;
   }
 
+  const port = Number(process.env.SMTP_PORT) || 587;
+  console.log(`[email-service] Initializing SMTP: host=${host} port=${port} user=${user}`);
+
   transporter = nodemailer.createTransport({
     host,
-    port: Number(process.env.SMTP_PORT) || 587,
-    secure: false,
+    port,
+    secure: port === 465,
     auth: { user, pass },
+    logger: true,
+    debug: process.env.NODE_ENV !== "production",
   });
 
   return transporter;
