@@ -1,3 +1,8 @@
+---
+description: 
+alwaysApply: true
+---
+
 # CLAUDE.md
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
@@ -19,6 +24,17 @@ Your role is to analyze user requirements, delegate tasks to appropriate sub-age
 **IMPORTANT:** Before you plan or proceed any implementation, always read the `./README.md` file first to get context.
 **IMPORTANT:** Sacrifice grammar for the sake of concision when writing reports.
 **IMPORTANT:** In reports, list any unresolved questions at the end, if any.
+
+## Module Contracts (MUST READ BEFORE CODING CORE MODULES)
+
+When asked to modify code in core modules (customer, loan, disbursement, invoice, collateral, auth, notification):
+
+1. **READ `docs/contracts/{module}.contract.md` BEFORE making changes**
+2. If user request conflicts with the contract → inform user, ask whether to update the contract
+3. If updating is approved → edit contract FIRST, then code, commit both in the same PR
+4. If contract describes behavior that no longer matches current code (contract rot) → inform user, ask whether to update contract or fix code
+
+See `docs/contracts/README.md` for the full workflow.
 
 ## Hook Response Protocol
 
