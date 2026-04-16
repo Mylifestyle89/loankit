@@ -2,7 +2,7 @@
 
 > **Status:** draft
 > **Owner:** Quân
-> **Last updated:** 2026-04-15
+> **Last updated:** 2026-04-16
 > **Related schemas:** `src/services/invoice-queries.service.ts`, `src/services/invoice-crud.service.ts`, `src/lib/notifications/deadline-check-logic.ts`, `prisma/schema.prisma` (Invoice)
 > **Cross-references:**
 > - [disbursement-and-beneficiary.contract.md](disbursement-and-beneficiary.contract.md) — §3 (invoiceStatus enum), §4.2 (supplement deadline), §4.6 (virtual invoice reference)
@@ -158,7 +158,7 @@ Giống pattern [loan contract §5.9](loan-and-plan.contract.md):
 - **CẤM** raw `prisma.invoice.*` ở API routes — MUST qua `invoiceService.*`
 - **CẤM** assume virtual invoices tồn tại ở DB
 - Service MUST check: status transition hợp lệ, update `DisbursementBeneficiary.invoiceAmount` + `invoiceStatus` khi upload real invoice
-- **⚠️ NOT YET IMPLEMENTED — HIGH PRIORITY:** validate `totalInvoiceAmount + newAmount ≤ beneficiary.amount` trước insert. Hiện `recalcBeneficiaryStatus()` chỉ recalc status, KHÔNG reject over-fill → editor upload tổng vượt beneficiary amount sẽ làm data inconsistent, report sai. Fix đơn giản: thêm check trong `createInvoice` service trước `prisma.invoice.create`.
+- IMPLEMENTED. `createInvoice()` validates `bene.invoiceAmount + input.amount ≤ bene.amount` before insert, throws error if exceeded.
 
 ---
 
@@ -215,7 +215,7 @@ Zod schemas inline trong API routes (`src/app/api/invoices/**`). Không có cent
 | Situation | Decision |
 |---|---|
 | Query virtual `id` trong Prisma trực tiếp | 404 — virtual không ở DB. Dùng `DisbursementBeneficiary.findUnique` nếu cần |
-| Upload invoice khiến tổng > beneficiary.amount | **⚠️ NOT YET ENFORCED.** `recalcBeneficiaryStatus()` chỉ set `has_invoice` khi total ≥ amount, KHÔNG reject over-fill. Target: service validate `totalInvoiceAmount + newAmount ≤ beneficiary.amount` trước insert. |
+| Upload invoice khiến tổng > beneficiary.amount | Blocked at service — 400 error if total exceeds beneficiary allocation |
 | Upload invoice cho `bang_ke` beneficiary | Block — `bang_ke` là alternative path, không dùng invoice |
 | Real invoice `dueDate` giống `customDeadline` | `customDeadline` wins (§4.4) |
 | Cron trigger 2 lần trong 24h | Idempotent nhờ dedup 24h (AppNotification metadata) |

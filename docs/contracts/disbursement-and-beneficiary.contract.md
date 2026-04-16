@@ -2,7 +2,7 @@
 
 > **Status:** draft
 > **Owner:** Quân
-> **Last updated:** 2026-04-15
+> **Last updated:** 2026-04-16
 > **Related schemas:** `src/services/disbursement.service.ts`, `prisma/schema.prisma` (Disbursement, DisbursementBeneficiary, Beneficiary)
 > **Cross-references:**
 > - [invoice.contract.md](invoice.contract.md) — §4.1 (virtual invoice generation từ beneficiary pending/supplementing)
@@ -93,7 +93,7 @@ Terminal states để đảm bảo audit trail: không được "un-complete" ha
 
 ### 4.1 Amount Rules
 - `Disbursement.amount > 0`
-- **`sum(DisbursementBeneficiary.amount) ≤ Disbursement.amount`** ⚠️ **NOT YET IMPLEMENTED** — target behavior. Xem plan triển khai sau. Hiện tại không hard-check, rely on UI validation.
+- **`sum(DisbursementBeneficiary.amount) ≤ Disbursement.amount`** — IMPLEMENTED. `createBeneficiaryLines()` validates `existingSum + newSum ≤ disbursement.amount` inside transaction before creating lines.
 - `invoiceAmount` cộng dồn khi upload invoice mới
 - `invoiceAmount ≤ amount` per beneficiary line
 
@@ -110,9 +110,9 @@ Terminal states để đảm bảo audit trail: không được "un-complete" ha
 - Khi `invoiceStatus ∈ [pending, supplementing]` → sinh virtual invoice entry ở invoice-queries service
 - Xem [invoice contract](invoice.contract.md) §4
 
-### 4.5 Concurrency / Race Conditions ⚠️ NOT YET IMPLEMENTED
+### 4.5 Concurrency / Race Conditions
 
-**Scenario:** 2 editor cùng thêm beneficiary cho 1 disbursement. Nếu chỉ validate `sum ≤ amount` ở app layer lúc đọc, 2 requests song song có thể cùng pass validation rồi cùng save → tổng vượt limit.
+IMPLEMENTED. Validation runs inside `prisma.$transaction` — concurrent requests see consistent sum.
 
 **Strategy:** **Optimistic + re-validate trong transaction**
 
@@ -197,7 +197,7 @@ Beneficiary modal quản lý DisbursementBeneficiary qua `/api/disbursements/[id
 |---|---|
 | Xóa Loan có Disbursements | Soft delete tầng tầng (service layer cascade set `deletedAt`, không rely Prisma onDelete) |
 | Xóa Beneficiary gốc | SetNull `beneficiaryId` trên DisbursementBeneficiary, snapshot fields giữ nguyên |
-| Tổng beneficiary amount > disbursement amount | Không enforce ở DB, service nên validate (hiện chưa hard-check) |
+| Tổng beneficiary amount > disbursement amount | Enforced at service layer — validates inside transaction before create (§4.1, §4.5) |
 | `bang_ke` beneficiaries trong invoice queries | Exclude via `EXCLUDE_BANG_KE_INVOICES` clause |
 | Virtual invoice id format | `virtual-{beneficiaryId}` — không phải UUID, không query Prisma trực tiếp |
 | Cron scan supplement deadlines | Dedup key: `{type}:supplement-{beneficiaryId}` (khác real invoice key) |

@@ -2,7 +2,7 @@
 
 > **Status:** draft
 > **Owner:** Quân
-> **Last updated:** 2026-04-15
+> **Last updated:** 2026-04-16
 > **Related schemas:** `src/app/report/customers/[id]/components/collateral-config.ts`, `src/services/khcn-builder-collateral-*.ts`, `prisma/schema.prisma` (Collateral)
 > **Cross-references:**
 > - [customer.contract.md](customer.contract.md) — Collateral thuộc Customer (cascade delete)
@@ -98,23 +98,21 @@ _owners: OwnerEntry[] = [
 - `_owners[0]` = primary owner, fallback to top-level `owner_name` field nếu `_owners` rỗng
 - Template multi-owner: builder loop qua `_owners` array để render multiple rows
 
-### 4.2.1 PII Encryption cho `_owners` ⚠️ NOT YET IMPLEMENTED — HIGH PRIORITY (Compliance)
+### 4.2.1 PII Encryption cho `_owners`
 
-**Risk:** `cccd`, `phone`, `current_address` trong `_owners` hiện plain text trong `properties_json` column. Agribank security scan quét DB sẽ flag → compliance violation.
-
-**Target approach — 2 options:**
+**Current implementation: Option B — encrypt `_owners` JSON string.**
 
 | Option | Pros | Cons |
 |---|---|---|
 | **A. Promote `_owners` → table `CollateralOwner`** với PII columns encrypted giống `CoBorrower` | Clean separation, query được theo owner, consistent với CoBorrower pattern | Cần DB migration, refactor builder + UI |
 | **B. Encrypt toàn bộ `_owners` JSON string** trước khi save vào `properties_json` | Nhanh, không migration | Mất khả năng query nested fields trong SQL |
 
-**Recommended: Option B** — Loankit không search owner theo CCCD, quy mô nhỏ. Tốc độ implement nhanh hơn. Nếu sau này cần search → migrate sang Option A.
+**Đang dùng Option B** — Loankit không search owner theo CCCD, quy mô nhỏ. Nếu sau này cần search → migrate sang Option A.
 
-**Implementation sketch (B):**
+**Implementation details (B):**
 - Trước save: `properties_json._owners = encryptField(JSON.stringify(_owners))`
 - Sau load: decrypt string → parse JSON → expose array
-- Thêm helper `encryptCollateralOwners()`, `decryptCollateralOwners()` trong `field-encryption.ts`
+- Helpers `encryptCollateralOwners()`, `decryptCollateralOwners()` trong `field-encryption.ts`
 
 ### 4.3 Owner Type: Bên Vay vs Bên Thứ 3 (BT3)
 
@@ -151,7 +149,7 @@ Giống pattern từ các modules khác:
 
 **Service MUST validate:**
 - `total_value ≥ 0`
-- **⚠️ NOT YET IMPLEMENTED:** `obligation ≤ total_value` — nghĩa vụ bảo đảm vượt giá trị TS là phi logic nghiệp vụ. Hiện chỉ warn ở UI, có thể bypass qua API call trực tiếp. Target: throw error rõ ràng ở service layer trước save.
+- `obligation ≤ total_value` — nghĩa vụ bảo đảm vượt giá trị TS là phi logic nghiệp vụ. Service MUST validate and DOES validate: throws error if violated. Implemented in collateral POST + PATCH API routes.
 
 ### 4.8 Soft Delete
 
@@ -215,7 +213,7 @@ Collateral luôn nested dưới Customer (không có top-level `/api/collaterals
 | `total_value = null` | Báo cáo hiển thị "—"; builder skip field |
 | Collateral không thuộc loan method nào | Vẫn tồn tại, xuất hiện trong "Tất cả TSBĐ" của customer |
 | `properties_json` parse fail | Fallback `{}`, không crash — loss type-specific data (silent) |
-| `obligation > total_value` | **⚠️ NOT YET ENFORCED.** Warn-only ở UI. Target: block ở service (§4.7) — nghĩa vụ vượt giá trị TS là phi logic tín dụng |
+| `obligation > total_value` | Blocked at service layer — 400 error if obligation > total_value |
 | Import BK land: diện tích không round | Auto-round `total_value` qua `round_to_thousand_vnd` nếu flag bật |
 
 ---

@@ -2,7 +2,7 @@
 
 > **Status:** draft
 > **Owner:** Quân
-> **Last updated:** 2026-04-15
+> **Last updated:** 2026-04-16
 > **Related schemas:** `src/lib/loan-plan/loan-plan-schemas.ts`, `src/lib/loan-plan/loan-plan-constants.ts`, `prisma/schema.prisma` (Loan, LoanPlan, LoanPlanTemplate)
 > **Cross-references:**
 > - [customer.contract.md](customer.contract.md) — §2 (Loan.customerId cascade)
@@ -160,16 +160,14 @@ Extended fields persist qua `financials_json`. Follows repo-wide JSON extension 
 - 1 LoanPlan có thể link nhiều Loans (reverse relation)
 - Linking = tham chiếu, không copy data — Loan không snapshot plan data (có thể stale nếu plan đổi)
 
-### 5.6 LoanPlan.loan_method vs Loan.loan_method ⚠️ NOT YET IMPLEMENTED — HIGH PRIORITY
+### 5.6 LoanPlan.loan_method vs Loan.loan_method
 
-Duplicate field ở 2 entities. Khi link Loan↔Plan, 2 methods nên khớp. Hiện không enforce → có thể mismatch (VD: plan `tung_lan`, loan link là `han_muc`) → xuất report lệch, builder pick sai template, silent bug.
+IMPLEMENTED. Service validates on PATCH loanPlanId: rejects if `plan.loan_method !== loan.loan_method` with explicit error message.
 
-**Target rule:** Khi PATCH `loan.loanPlanId = X`:
+Khi PATCH `loan.loanPlanId = X`:
 1. Load `plan = LoanPlan.findUnique({ id: X })`
 2. Reject nếu `plan.loan_method !== loan.loan_method`
 3. Error message: `"LoanPlan method (${plan.loan_method}) mismatch với Loan method (${loan.loan_method})"`
-
-**Priority:** HIGH. Đây là risk lớn nhất hiện tại — resolve trước các open questions khác.
 
 ### 5.7 Template Spawn
 
@@ -270,7 +268,7 @@ Inline Zod trong `src/app/api/loans/**` — không có central schema file.
 
 | Situation | Decision |
 |---|---|
-| Loan + Plan `loan_method` mismatch | Hiện không enforce — MUST validate (§5.6, target) |
+| Loan + Plan `loan_method` mismatch | Enforced — service rejects PATCH loanPlanId if methods differ (§5.6) |
 | `selectedCollateralIds` trống | Dùng TẤT CẢ collaterals của customer khi xuất report |
 | `selectedCollateralIds` chứa ID không tồn tại | Silent filter trong builder, không throw |
 | Template bị xóa khi Plan đã spawn | Plan giữ data (snapshot), `templateId` set null |
