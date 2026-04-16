@@ -3,6 +3,7 @@
  * Covers: customer info, branch/staff, loans, collaterals, co-borrowers,
  * credit info, related persons, loan plans.
  */
+import { decryptCollateralOwners } from "@/lib/field-encryption";
 import { numberToVietnameseWords } from "@/lib/number-to-vietnamese-words";
 import { fmtDate, today } from "@/lib/report/report-date-utils";
 import { fmtN } from "@/lib/report/format-number-vn";
@@ -196,7 +197,7 @@ export async function buildKhcnReportData(
   }
 
   data.TSBD = collaterals.map((col, i) => {
-    const props = JSON.parse(col.properties_json || "{}");
+    const props = decryptCollateralOwners(JSON.parse(col.properties_json || "{}"));
     return {
       STT: i + 1,
       "Tên TSBĐ": col.name,

@@ -200,6 +200,14 @@ export const loanService = {
     if (input.disbursementLimitByAsset !== undefined) data.disbursementLimitByAsset = input.disbursementLimitByAsset;
     if (input.status !== undefined) data.status = input.status;
 
+    // Validate loan_method mismatch when linking to LoanPlan
+    if (input.loanPlanId) {
+      const plan = await prisma.loanPlan.findUnique({ where: { id: input.loanPlanId }, select: { loan_method: true } });
+      if (plan && existing.loan_method && plan.loan_method !== existing.loan_method) {
+        throw new ValidationError(`Phương án (${plan.loan_method}) không khớp phương thức khoản vay (${existing.loan_method})`);
+      }
+    }
+
     // Điều kiện cho vay + Nguồn vốn + Hiệu quả & Xếp hạng
     const passthrough: (keyof UpdateLoanInput)[] = [
       "lending_method", "tcmblm_reason", "interest_method", "principal_schedule",

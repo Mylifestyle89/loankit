@@ -1,6 +1,7 @@
 /**
  * KHCN builder: savings (tiet_kiem) and other (tai_san_khac) collateral data.
  */
+import { decryptCollateralOwners } from "@/lib/field-encryption";
 import { numberToVietnameseWords } from "@/lib/number-to-vietnamese-words";
 import { fmtN } from "@/lib/report/format-number-vn";
 import { type Data, emitIndexedFields, emitFlatFields } from "./khcn-builder-collateral-helpers";
@@ -19,7 +20,7 @@ function mapPaperTypeLabel(subtype: string, paperType: string): string {
 function extractSavingsFields(
   col: { name: string; total_value?: number | null; obligation?: number | null; properties_json: string },
 ) {
-  const p = JSON.parse(col.properties_json || "{}");
+  const p = decryptCollateralOwners(JSON.parse(col.properties_json || "{}")) as Record<string, any>;
   const isGtcg = p._subtype === "gtcg";
   return {
     "Tên TSBĐ": col.name,
@@ -58,7 +59,7 @@ export function buildSavingsCollateralData(
   // Parse properties_json once per item — reused for flat fields, totals, and loop rows
   const parsed = items.map((col) => ({
     col,
-    props: JSON.parse(col.properties_json || "{}") as Record<string, string>,
+    props: decryptCollateralOwners(JSON.parse(col.properties_json || "{}")) as Record<string, any> as Record<string, string>,
   }));
 
   // Indexed TK_1.*, TK_2.*, STK_1.*, STK_2.*... + flat TK.*, STK.* from first
@@ -116,7 +117,7 @@ export function buildSavingsCollateralData(
 function extractOtherFields(
   col: { name: string; total_value?: number | null; obligation?: number | null; properties_json: string },
 ) {
-  const p = JSON.parse(col.properties_json || "{}");
+  const p = decryptCollateralOwners(JSON.parse(col.properties_json || "{}")) as Record<string, any>;
   return {
     "Tên TSBĐ": col.name,
     "Mua bảo hiểm TSBĐ": p.insurance ?? "",

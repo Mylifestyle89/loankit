@@ -1,6 +1,7 @@
 /**
  * KHCN builder: movable collateral (dong_san / động sản) data.
  */
+import { decryptCollateralOwners } from "@/lib/field-encryption";
 import { numberToVietnameseWords } from "@/lib/number-to-vietnamese-words";
 import { fmtN } from "@/lib/report/format-number-vn";
 import { type Data, parseOwners, buildOwnerFields, emitIndexedFields, emitFlatFields } from "./khcn-builder-collateral-helpers";
@@ -24,7 +25,7 @@ function extractMovableFields(
   col: { name: string; total_value?: number | null; obligation?: number | null; properties_json: string },
   index: number,
 ) {
-  const p = JSON.parse(col.properties_json || "{}");
+  const p = decryptCollateralOwners(JSON.parse(col.properties_json || "{}")) as Record<string, any>;
   const owners = parseOwners(p._owners);
   const o1 = owners[0] ?? {};
   const fields = {

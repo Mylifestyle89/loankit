@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireEditorOrAdmin } from "@/lib/auth-guard";
+import { encryptCollateralOwners, decryptCollateralOwners } from "@/lib/field-encryption";
 import { prisma } from "@/lib/prisma";
 
 type Ctx = { params: Promise<{ id: string }> };
@@ -15,7 +16,7 @@ export async function GET(_req: NextRequest, ctx: Ctx) {
     // Parse JSON properties for client
     const items = collaterals.map((c) => {
       let properties = {};
-      try { properties = JSON.parse(c.properties_json || "{}"); } catch { /* malformed JSON — default to empty */ }
+      try { properties = decryptCollateralOwners(JSON.parse(c.properties_json || "{}")); } catch { /* malformed JSON — default to empty */ }
       return { ...c, properties };
     });
     return NextResponse.json({ ok: true, collaterals: items });
@@ -39,6 +40,12 @@ export async function POST(req: NextRequest, ctx: Ctx) {
         { status: 400 },
       );
     }
+    if (typeof obligation === "number" && typeof total_value === "number" && obligation > total_value) {
+      return NextResponse.json(
+        { ok: false, error: `Nghĩa vụ bảo đảm (${obligation}) không được vượt tổng giá trị TSBĐ (${total_value})` },
+        { status: 400 },
+      );
+    }
 
     const collateral = await prisma.collateral.create({
       data: {
@@ -47,7 +54,7 @@ export async function POST(req: NextRequest, ctx: Ctx) {
         name,
         total_value: total_value ?? null,
         obligation: obligation ?? null,
-        properties_json: JSON.stringify(properties ?? {}),
+        properties_json: JSON.stringify(encryptCollateralOwners(properties ?? {})),
       },
     });
     return NextResponse.json({ ok: true, collateral });

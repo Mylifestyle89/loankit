@@ -97,6 +97,17 @@ export async function createInvoice(input: CreateInvoiceInput) {
     });
   }
 
+  // Guard: invoice amount must not exceed remaining beneficiary allocation
+  if (input.disbursementBeneficiaryId) {
+    const bene = await prisma.disbursementBeneficiary.findUnique({
+      where: { id: input.disbursementBeneficiaryId },
+      select: { amount: true, invoiceAmount: true },
+    });
+    if (bene && bene.invoiceAmount + input.amount > bene.amount) {
+      throw new Error(`Tổng hóa đơn (${bene.invoiceAmount + input.amount}) vượt số tiền phân bổ (${bene.amount})`);
+    }
+  }
+
   const invoice = await prisma.invoice.create({
     data: {
       disbursementId: input.disbursementId,

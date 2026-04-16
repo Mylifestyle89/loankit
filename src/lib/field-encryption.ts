@@ -230,6 +230,29 @@ export function decryptRelatedPersonPii<T extends Record<string, unknown>>(data:
   return decryptFieldsInPlace(data, PII_RELATED_PERSON_FIELDS, "RelatedPerson");
 }
 
+/** Encrypt _owners array in collateral properties_json (PII: cccd, phone, address). */
+export function encryptCollateralOwners(props: Record<string, unknown>): Record<string, unknown> {
+  const result = { ...props };
+  if (Array.isArray(result._owners) && result._owners.length > 0) {
+    result._owners = encryptField(JSON.stringify(result._owners));
+  }
+  return result;
+}
+
+/** Decrypt _owners in collateral properties_json after DB read. */
+export function decryptCollateralOwners(props: Record<string, unknown>): Record<string, unknown> {
+  const result = { ...props };
+  if (typeof result._owners === "string" && isEncrypted(result._owners)) {
+    try {
+      result._owners = JSON.parse(decryptField(result._owners));
+    } catch {
+      console.warn("[field-encryption] Failed to decrypt _owners, resetting to []");
+      result._owners = [];
+    }
+  }
+  return result;
+}
+
 /** Mask PII fields in a customer object for API responses */
 export function maskCustomerResponse<T extends Record<string, unknown>>(
   customer: T,

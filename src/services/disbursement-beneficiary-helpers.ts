@@ -17,13 +17,27 @@ export function validateBeneficiaryAmounts(beneficiaries: BeneficiaryLineInput[]
   }
 }
 
-/** Create beneficiary lines + their invoices within a transaction */
+/** Create beneficiary lines + their invoices within a transaction.
+ * Validates sum(new beneficiary amounts) + existing ≤ disbursement.amount. */
 export async function createBeneficiaryLines(
   tx: PrismaTx,
   disbursementId: string,
   beneficiaries: BeneficiaryLineInput[],
   disbursementDate?: Date,
 ) {
+  // Guard: total beneficiary allocation must not exceed disbursement amount
+  const [disb, existingAgg] = await Promise.all([
+    tx.disbursement.findUniqueOrThrow({ where: { id: disbursementId }, select: { amount: true } }),
+    tx.disbursementBeneficiary.aggregate({ where: { disbursementId }, _sum: { amount: true } }),
+  ]);
+  const existingSum = existingAgg._sum.amount ?? 0;
+  const newSum = beneficiaries.reduce((s, b) => s + b.amount, 0);
+  if (existingSum + newSum > disb.amount) {
+    throw new ValidationError(
+      `Tổng phân bổ (${existingSum + newSum}) vượt số tiền giải ngân (${disb.amount})`,
+    );
+  }
+
   for (const b of beneficiaries) {
     const line = await tx.disbursementBeneficiary.create({
       data: {
