@@ -253,6 +253,40 @@ export const KHCN_PLACEHOLDER_GROUPS: PlaceholderGroup[] = [
     ],
   },
   {
+    label: "Bảng chi phí nông nghiệp (Tiêu dùng)",
+    prefix: "PA_CHIPHI_AGRI",
+    loop: "PA_CHIPHI_AGRI",
+    items: [
+      "PA_CHIPHI_AGRI.STT", "PA_CHIPHI_AGRI.Khoản mục",
+      "PA_CHIPHI_AGRI.ĐVT", "PA_CHIPHI_AGRI.Đơn giá",
+      "PA_CHIPHI_AGRI.Số lượng", "PA_CHIPHI_AGRI.Thành tiền",
+    ],
+  },
+  {
+    label: "Bảng doanh thu kinh doanh (Tiêu dùng)",
+    prefix: "PA_CHIPHI_BIZ",
+    loop: "PA_CHIPHI_BIZ",
+    items: [
+      "PA_CHIPHI_BIZ.STT", "PA_CHIPHI_BIZ.Nhóm Hàng",
+      "PA_CHIPHI_BIZ.Số lượng", "PA_CHIPHI_BIZ.Giá trị nhập hàng",
+      "PA_CHIPHI_BIZ.Doanh thu dự kiến",
+    ],
+  },
+  {
+    label: "HĐTD - Thu nhập tiêu dùng (nông nghiệp / kinh doanh)",
+    prefix: "HĐTD",
+    items: [
+      "HĐTD.Mô tả nguồn trả nợ",
+      "HĐTD.Tổng chi phí nông nghiệp", "HĐTD.Tổng thu nhập nông nghiệp",
+      "HĐTD.Lợi nhuận nông nghiệp", "HĐTD.Chi phí sinh hoạt/năm",
+      "HĐTD.Thu nhập trả nợ/năm",
+      "HĐTD.Tổng giá trị nhập", "HĐTD.Tổng doanh thu",
+      "HĐTD.Lợi nhuận kinh doanh/năm", "HĐTD.Chi phí khác/năm",
+      "HĐTD.Thu nhập bình quân/tháng", "HĐTD.Chi phí sinh hoạt/tháng",
+      "HĐTD.Thu nhập trả nợ/tháng", "HĐTD.Số gốc trả/tháng",
+    ],
+  },
+  {
     label: "Đánh giá tín dụng",
     prefix: "HĐTD",
     items: [

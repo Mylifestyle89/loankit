@@ -14,6 +14,7 @@ import { parseNum } from "@/lib/import/xlsx-number-utils";
 import { numberToVietnameseWords } from "@/lib/number-to-vietnamese-words";
 import { formatPeriodLabel, roundPrincipal, type PrincipalRounding } from "@/lib/loan-plan/loan-plan-calculator";
 import { fmtN } from "@/lib/report/format-number-vn";
+import { buildAgricultureIncomeData, buildBusinessIncomeData } from "./khcn-builder-tieu-dung-income-helpers";
 
 type Data = Record<string, unknown>;
 type Fin = Record<string, unknown>;
@@ -153,16 +154,35 @@ export function buildTieuDungLoanPlanData(fin: Fin, data: Data): void {
   data["PA.Earner2 nơi công tác"] = str(fin.earner2_workplace);
   data["PA.Earner2 lương tháng"] = fmtN(income2);
 
-  // ── HĐTD.* income placeholders (BCDX common "Nguồn trả nợ" section) ──
-  // Tiêu dùng: nguồn trả duy nhất là lương. SXKD/khác = 0.
-  const monthlyTotal = income1 + income2;
-  const annualTotal = monthlyTotal * 12;
-  data["HĐTD.Tiền lương hàng tháng"] = fmtN(monthlyTotal);
-  data["HĐTD.Tổng thu nhập từ lương"] = fmtN(annualTotal);
-  data["HĐTD.Tổng thu nhập từ SXKD"] = fmtN(0);
-  data["HĐTD.Thu nhập khác"] = fmtN(0);
-  data["HĐTD.Cụ thể về thu nhập khác"] = "";
-  data["HĐTD.Nơi công tác"] = str(fin.earner1_workplace);
+  // ── HĐTD.* income placeholders — dispatch theo income_source_type ──
+  const source = str(fin.income_source_type) || "salary";
+  if (source === "agriculture") {
+    Object.assign(data, buildAgricultureIncomeData(fin, loanAmt));
+    data["HĐTD.Tiền lương hàng tháng"] = fmtN(0);
+    data["HĐTD.Tổng thu nhập từ lương"] = fmtN(0);
+    data["HĐTD.Tổng thu nhập từ SXKD"] = fmtN(0);
+    data["HĐTD.Thu nhập khác"] = fmtN(0);
+    data["HĐTD.Cụ thể về thu nhập khác"] = "";
+    data["HĐTD.Nơi công tác"] = "";
+  } else if (source === "business") {
+    Object.assign(data, buildBusinessIncomeData(fin, loanAmt));
+    data["HĐTD.Tiền lương hàng tháng"] = fmtN(0);
+    data["HĐTD.Tổng thu nhập từ lương"] = fmtN(0);
+    data["HĐTD.Tổng thu nhập từ SXKD"] = fmtN(0);
+    data["HĐTD.Thu nhập khác"] = fmtN(0);
+    data["HĐTD.Cụ thể về thu nhập khác"] = "";
+    data["HĐTD.Nơi công tác"] = "";
+  } else {
+    // Default: salary
+    const monthlyTotal = income1 + income2;
+    const annualTotal = monthlyTotal * 12;
+    data["HĐTD.Tiền lương hàng tháng"] = fmtN(monthlyTotal);
+    data["HĐTD.Tổng thu nhập từ lương"] = fmtN(annualTotal);
+    data["HĐTD.Tổng thu nhập từ SXKD"] = fmtN(0);
+    data["HĐTD.Thu nhập khác"] = fmtN(0);
+    data["HĐTD.Cụ thể về thu nhập khác"] = "";
+    data["HĐTD.Nơi công tác"] = str(fin.earner1_workplace);
+  }
 
   // ── Phí trả nợ trước hạn (HDTD placeholders) ──
   // Áp dụng khi term > 12 tháng với kỳ trả đều (không áp dụng vay ngắn hạn tiêu dùng).

@@ -39,6 +39,20 @@ type InvoiceEmailData = {
   contractNumber?: string;
 };
 
+export type InvoiceDigestItem = {
+  invoiceNumber: string;
+  amount: number;
+  dueDate: Date;
+  contractNumber?: string | null;
+  isOverdue: boolean;
+  isSupplement: boolean;
+};
+
+export type InvoiceDigestData = {
+  customerName: string;
+  items: InvoiceDigestItem[];
+};
+
 /** Escape HTML to prevent XSS */
 function esc(s: string): string {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
@@ -125,6 +139,69 @@ export const emailService = {
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       console.error("[email-service] sendInvoiceOverdue error:", msg);
+      return { success: false, error: msg };
+    }
+  },
+
+  /** Send ONE digest email containing all due/overdue invoices for a customer. */
+  async sendInvoiceDigest(
+    to: string,
+    data: InvoiceDigestData,
+  ): Promise<{ success: boolean; error?: string }> {
+    if (!isValidEmail(to)) return { success: false, error: "Invalid email address" };
+    if (data.items.length === 0) return { success: false, error: "No items to send" };
+    const t = getTransporter();
+    if (!t) return { success: false, error: "SMTP not configured" };
+
+    const overdue = data.items.filter((i) => i.isOverdue);
+    const dueSoon = data.items.filter((i) => !i.isOverdue);
+    const totalAmount = data.items.reduce((s, i) => s + i.amount, 0);
+
+    const rowHtml = (i: InvoiceDigestItem) => `
+      <tr>
+        <td style="padding:6px 10px;border:1px solid #ddd;">${esc(i.invoiceNumber)}${i.isSupplement ? ' <span style="color:#888;font-size:11px;">(cần bổ sung)</span>' : ""}</td>
+        <td style="padding:6px 10px;border:1px solid #ddd;text-align:right;">${fmtVND(i.amount)}</td>
+        <td style="padding:6px 10px;border:1px solid #ddd;">${fmtDate(i.dueDate)}</td>
+        <td style="padding:6px 10px;border:1px solid #ddd;">${esc(i.contractNumber ?? "—")}</td>
+      </tr>`;
+
+    const tableHtml = (title: string, color: string, items: InvoiceDigestItem[]) => items.length === 0 ? "" : `
+      <h3 style="color:${color};margin-top:20px;">${title} (${items.length})</h3>
+      <table style="border-collapse:collapse;width:100%;font-size:14px;">
+        <thead><tr style="background:#f5f5f5;">
+          <th style="padding:6px 10px;border:1px solid #ddd;text-align:left;">Số hóa đơn</th>
+          <th style="padding:6px 10px;border:1px solid #ddd;text-align:right;">Số tiền (VND)</th>
+          <th style="padding:6px 10px;border:1px solid #ddd;text-align:left;">Ngày đến hạn</th>
+          <th style="padding:6px 10px;border:1px solid #ddd;text-align:left;">Hợp đồng</th>
+        </tr></thead>
+        <tbody>${items.map(rowHtml).join("")}</tbody>
+      </table>`;
+
+    const subject = overdue.length > 0
+      ? `[CẢNH BÁO] Bạn có ${overdue.length} hóa đơn quá hạn${dueSoon.length > 0 ? ` và ${dueSoon.length} sắp đến hạn` : ""}`
+      : `[Nhắc nhở] Bạn có ${dueSoon.length} hóa đơn sắp đến hạn`;
+
+    try {
+      await t.sendMail({
+        from: process.env.EMAIL_FROM || process.env.SMTP_USER,
+        to,
+        subject,
+        html: `
+          <div style="font-family:Arial,sans-serif;max-width:700px;">
+            <h2>Thông báo hóa đơn</h2>
+            <p>Khách hàng: <strong>${esc(data.customerName)}</strong></p>
+            <p>Tổng số hóa đơn cần xử lý: <strong>${data.items.length}</strong> — Tổng giá trị: <strong>${fmtVND(totalAmount)} VND</strong></p>
+            ${tableHtml("Hóa đơn quá hạn", "#d32f2f", overdue)}
+            ${tableHtml("Hóa đơn sắp đến hạn", "#f57c00", dueSoon)}
+            <hr style="margin-top:24px;"/>
+            <p style="color:#888;font-size:12px;">Email tự động — vui lòng không trả lời.</p>
+          </div>
+        `,
+      });
+      return { success: true };
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      console.error("[email-service] sendInvoiceDigest error:", msg);
       return { success: false, error: msg };
     }
   },

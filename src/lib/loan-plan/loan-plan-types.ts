@@ -86,6 +86,27 @@ export type LoanPlanCategory =
 /** Nguồn thu nhập chính dùng để trả nợ (đồng bộ với zod INCOME_SOURCE_TYPES) */
 export type IncomeSourceType = "salary" | "rental" | "agriculture" | "business";
 
+/** Dòng chi phí / doanh thu trong bảng nông nghiệp (6 cột) */
+export type AgricultureItem = {
+  order?: string;         // "I", "1", "-", ...
+  name: string;
+  unit?: string;          // ĐVT
+  unitPrice?: number;     // Đơn giá
+  quantity?: number;      // Số lượng
+  amount: number;         // Thành tiền
+  isGroupHeader?: boolean; // true → dòng nhóm đậm (I.TỔNG CHI PHÍ, II.THU NHẬP...)
+};
+
+/** Dòng doanh thu kinh doanh trong bảng kinh doanh (5 cột) */
+export type BusinessRevenueRow = {
+  order?: string;
+  name: string;              // Nhóm hàng / Mặt hàng
+  quantity?: number;         // Số lượng hàng dự kiến
+  importValue?: number;      // Giá trị nhập hàng
+  revenue?: number;          // Doanh thu dự kiến
+  isGroupHeader?: boolean;
+};
+
 // Extended fields for trung_dai (medium-long term) loan plans
 export type LoanPlanFinancialsExtended = LoanPlanFinancials & {
   depreciation_years?: number;         // Số năm khấu hao (e.g., 8)
@@ -103,6 +124,15 @@ export type LoanPlanFinancialsExtended = LoanPlanFinancials & {
   // ── Tiêu dùng (consumer loan) fields ──
   /** Mục đích vay tiêu dùng: xây/sửa nhà, mua đất ở, mua xe. "mua_sam" scope riêng. */
   tieu_dung_subtype?: TieuDungSubtype;
+  // Nguồn trả nợ nông nghiệp (agriculture)
+  agriculture_items?: AgricultureItem[];
+  agriculture_living_expenses_annual?: number; // Chi phí sinh hoạt BQ/năm
+  // Nguồn trả nợ kinh doanh (business)
+  business_rows?: BusinessRevenueRow[];
+  business_other_costs_annual?: number;          // Chi phí mặt bằng/nhân công/thuế /năm
+  business_living_expenses_monthly?: number;     // Chi phí sinh hoạt /tháng
+  // Mô tả nguồn trả nợ (user nhập tay, dùng cho agriculture + business)
+  repayment_narrative?: string;
   /** Tổng nhu cầu vốn vay (user nhập trực tiếp cho tiêu dùng — không tính từ cost items) */
   loan_capital_need?: number;
   // Người trả nợ 1 (KH)

@@ -4,13 +4,15 @@
  */
 import { NextRequest, NextResponse } from "next/server";
 
-import { getTemplatesForMethod, groupByCategory, DOC_CATEGORY_LABELS, ASSET_CATEGORY_KEYS } from "@/lib/loan-plan/khcn-template-registry";
+import { getTemplatesForMethodAndSource, groupByCategory, DOC_CATEGORY_LABELS, ASSET_CATEGORY_KEYS } from "@/lib/loan-plan/khcn-template-registry";
+import type { IncomeSourceType } from "@/lib/loan-plan/loan-plan-types";
 
 export const runtime = "nodejs";
 
 export async function GET(req: NextRequest) {
   const method = req.nextUrl.searchParams.get("loan_method") ?? "tung_lan";
-  const templates = getTemplatesForMethod(method);
+  const source = (req.nextUrl.searchParams.get("income_source") ?? "") as IncomeSourceType | "";
+  const templates = getTemplatesForMethodAndSource(method, source);
   const grouped = groupByCategory(templates);
 
   // Convert to ordered array with labels

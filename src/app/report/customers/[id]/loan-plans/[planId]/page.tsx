@@ -9,13 +9,15 @@ import { CostItemsTable, type CostItem } from "./cost-items-table";
 import { NumericInput } from "./numeric-input";
 import { inputCls } from "@/components/invoice-tracking/form-styles";
 import { SmartField } from "@/components/smart-field";
-import { type Financials, type RevenueItem, type TieuDungSubtype, type EarnerTitle, type IncomeSourceType } from "./loan-plan-editor-types";
+import { type Financials, type RevenueItem, type TieuDungSubtype, type EarnerTitle, type IncomeSourceType, type AgricultureItem, type BusinessRevenueRow } from "./loan-plan-editor-types";
 import { fmtVND, formatPercentInputFromRate, parsePercentInputToRate } from "./loan-plan-editor-utils";
 import { TreeRow, Stat } from "./loan-plan-financial-display";
 import { RepaymentScheduleTable } from "./loan-plan-repayment-schedule-table";
 import { CreditAssessmentSection } from "./loan-plan-credit-assessment-section";
 import { LoanPlanInfoGrid, LoanPlanTrungDaiSection } from "./loan-plan-form-sections";
 import { LoanPlanTieuDungSection } from "./loan-plan-tieu-dung-section";
+import { LoanPlanAgricultureIncomeForm } from "./loan-plan-agriculture-income-form";
+import { LoanPlanBusinessIncomeForm } from "./loan-plan-business-income-form";
 import { LoanPlanReview36Section } from "./loan-plan-review-36-section";
 import { METHOD_SHORT_LABELS, METHOD_OPTIONS } from "@/lib/loan-plan/loan-plan-constants";
 
@@ -60,6 +62,13 @@ export default function LoanPlanEditorPage() {
   const [avgOtherLoanRate, setAvgOtherLoanRate] = useState(0);
   const [otherCostsPeriod, setOtherCostsPeriod] = useState(0);
   const [loanCapitalNeed, setLoanCapitalNeed] = useState(0);
+  // Tiêu dùng - nông nghiệp / kinh doanh
+  const [agricultureItems, setAgricultureItems] = useState<AgricultureItem[]>([]);
+  const [agricultureLivingExpenses, setAgricultureLivingExpenses] = useState(0);
+  const [businessRows, setBusinessRows] = useState<BusinessRevenueRow[]>([]);
+  const [businessOtherCosts, setBusinessOtherCosts] = useState(0);
+  const [businessLivingExpenses, setBusinessLivingExpenses] = useState(0);
+  const [repaymentNarrative, setRepaymentNarrative] = useState("");
   // Đánh giá tín dụng
   const [legalAssessment, setLegalAssessment] = useState("");
   const [marketInput, setMarketInput] = useState("");
@@ -141,6 +150,12 @@ export default function LoanPlanEditorPage() {
       setAvgOtherLoanRate(fin.avg_other_loan_rate ?? 0);
       setOtherCostsPeriod(fin.other_costs_period ?? 0);
       setLoanCapitalNeed(fin.loan_capital_need ?? 0);
+      setAgricultureItems(fin.agriculture_items ?? []);
+      setAgricultureLivingExpenses(fin.agriculture_living_expenses_annual ?? 0);
+      setBusinessRows(fin.business_rows ?? []);
+      setBusinessOtherCosts(fin.business_other_costs_annual ?? 0);
+      setBusinessLivingExpenses(fin.business_living_expenses_monthly ?? 0);
+      setRepaymentNarrative(fin.repayment_narrative ?? "");
       // Đánh giá tín dụng
       setLegalAssessment(fin.legal_assessment ?? "");
       setMarketInput(fin.market_input ?? "");
@@ -220,6 +235,12 @@ export default function LoanPlanEditorPage() {
             living_expenses_period: livingExpensesPeriod,
             avg_other_loan_rate: avgOtherLoanRate,
             other_costs_period: otherCostsPeriod,
+            agriculture_items: agricultureItems,
+            agriculture_living_expenses_annual: agricultureLivingExpenses,
+            business_rows: businessRows,
+            business_other_costs_annual: businessOtherCosts,
+            business_living_expenses_monthly: businessLivingExpenses,
+            repayment_narrative: repaymentNarrative,
           } : {}),
           // Đánh giá tín dụng
           legal_assessment: legalAssessment, market_input: marketInput, market_output: marketOutput,
@@ -355,13 +376,12 @@ export default function LoanPlanEditorPage() {
           >
             <option value="">— Chọn nguồn thu —</option>
             <option value="salary">Lương (cán bộ / công nhân viên)</option>
-            <option value="rental">Cho thuê tài sản</option>
             <option value="agriculture">Nông nghiệp</option>
             <option value="business">Kinh doanh</option>
           </select>
         </div>
       )}
-      {loanMethod === "tieu_dung" && (
+      {loanMethod === "tieu_dung" && (!incomeSourceType || incomeSourceType === "salary") && (
         <LoanPlanTieuDungSection
           loanAmount={loanAmount}
           termMonths={termMonths}
@@ -381,6 +401,29 @@ export default function LoanPlanEditorPage() {
           otherCostsPeriod={otherCostsPeriod} onOtherCostsPeriodChange={setOtherCostsPeriod}
           principalRounding={principalRounding} onPrincipalRoundingChange={setPrincipalRounding}
         />
+      )}
+      {loanMethod === "tieu_dung" && incomeSourceType === "agriculture" && (
+        <div className="rounded-2xl border border-zinc-200 dark:border-white/[0.07] bg-white dark:bg-[#161616] p-5 shadow-sm space-y-2">
+          <h3 className="text-sm font-semibold">Bảng chi phí / doanh thu nông nghiệp</h3>
+          <LoanPlanAgricultureIncomeForm
+            items={agricultureItems} onItemsChange={setAgricultureItems}
+            livingExpenses={agricultureLivingExpenses} onLivingExpensesChange={setAgricultureLivingExpenses}
+            narrative={repaymentNarrative} onNarrativeChange={setRepaymentNarrative}
+            loanAmount={loanAmount} termMonths={termMonths}
+            interestRate={interestRate} preferentialRate={preferentialRate || undefined}
+          />
+        </div>
+      )}
+      {loanMethod === "tieu_dung" && incomeSourceType === "business" && (
+        <div className="rounded-2xl border border-zinc-200 dark:border-white/[0.07] bg-white dark:bg-[#161616] p-5 shadow-sm space-y-2">
+          <h3 className="text-sm font-semibold">Bảng doanh thu kinh doanh</h3>
+          <LoanPlanBusinessIncomeForm
+            rows={businessRows} onRowsChange={setBusinessRows}
+            otherCosts={businessOtherCosts} onOtherCostsChange={setBusinessOtherCosts}
+            livingExpenses={businessLivingExpenses} onLivingExpensesChange={setBusinessLivingExpenses}
+            narrative={repaymentNarrative} onNarrativeChange={setRepaymentNarrative}
+          />
+        </div>
       )}
 
 

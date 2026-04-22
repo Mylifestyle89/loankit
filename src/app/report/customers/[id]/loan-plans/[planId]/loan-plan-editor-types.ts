@@ -1,7 +1,7 @@
 // Types for loan plan editor page
 
-export type { RevenueItem, TieuDungSubtype, EarnerTitle, IncomeSourceType } from "@/lib/loan-plan/loan-plan-types";
-import type { TieuDungSubtype, EarnerTitle, IncomeSourceType } from "@/lib/loan-plan/loan-plan-types";
+export type { RevenueItem, TieuDungSubtype, EarnerTitle, IncomeSourceType, AgricultureItem, BusinessRevenueRow } from "@/lib/loan-plan/loan-plan-types";
+import type { TieuDungSubtype, EarnerTitle, IncomeSourceType, AgricultureItem, BusinessRevenueRow } from "@/lib/loan-plan/loan-plan-types";
 
 export type Financials = {
   totalDirectCost: number;
@@ -42,6 +42,13 @@ export type Financials = {
   construction_contract_date?: string;
   farmAddress?: string;
   income_source_type?: IncomeSourceType;
+  // Tiêu dùng - nông nghiệp / kinh doanh
+  agriculture_items?: AgricultureItem[];
+  agriculture_living_expenses_annual?: number;
+  business_rows?: BusinessRevenueRow[];
+  business_other_costs_annual?: number;
+  business_living_expenses_monthly?: number;
+  repayment_narrative?: string;
   // Đánh giá tín dụng (AI-assisted)
   legal_assessment?: string;
   market_input?: string;

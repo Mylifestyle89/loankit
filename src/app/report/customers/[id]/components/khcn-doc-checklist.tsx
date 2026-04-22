@@ -27,10 +27,12 @@ export function KhcnDocChecklist({
   loanMethod: initialMethod,
   customerId,
   loanId: initialLoanId,
+  incomeSource,
 }: {
   loanMethod?: string;
   customerId?: string;
   loanId?: string;
+  incomeSource?: string;
 }) {
   const [method, setMethod] = useState(initialMethod ?? "tung_lan");
   const [tab, setTab] = useState<TabKey>("docs");
@@ -65,7 +67,8 @@ export function KhcnDocChecklist({
     const controller = new AbortController();
     setLoading(true);
     setChecked(new Set()); // Reset checked when method changes
-    fetch(`/api/report/templates/khcn?loan_method=${method}`, { signal: controller.signal, cache: "no-store" })
+    const sourceParam = incomeSource ? `&income_source=${incomeSource}` : "";
+    fetch(`/api/report/templates/khcn?loan_method=${method}${sourceParam}`, { signal: controller.signal, cache: "no-store" })
       .then((r) => r.json())
       .then((d) => {
         if (d.ok) setCategories(d.categories ?? []);
@@ -75,7 +78,7 @@ export function KhcnDocChecklist({
         if (e.name !== "AbortError") setLoading(false);
       });
     return () => controller.abort();
-  }, [method]);
+  }, [method, incomeSource]);
 
   const filteredCategories = useMemo(
     () => categories.filter((c) => (tab === "tsbd") === !!c.isAsset),

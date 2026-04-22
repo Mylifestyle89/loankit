@@ -1,6 +1,25 @@
 // Shared Zod schemas for Loan Plan API validation
 import { z } from "zod";
 
+export const agricultureItemSchema = z.object({
+  order: z.string().optional(),
+  name: z.string(),
+  unit: z.string().optional(),
+  unitPrice: z.number().optional(),
+  quantity: z.number().optional(),
+  amount: z.number(),
+  isGroupHeader: z.boolean().optional(),
+});
+
+export const businessRevenueRowSchema = z.object({
+  order: z.string().optional(),
+  name: z.string(),
+  quantity: z.number().optional(),
+  importValue: z.number().optional(),
+  revenue: z.number().optional(),
+  isGroupHeader: z.boolean().optional(),
+});
+
 export const costItemSchema = z.object({
   name: z.string(),
   unit: z.string(),
@@ -72,6 +91,13 @@ export const createPlanSchema = z.object({
   living_expenses_period: z.number().optional(),
   avg_other_loan_rate: z.number().optional(),
   other_costs_period: z.number().optional(),
+  // Tiêu dùng - nguồn nông nghiệp / kinh doanh
+  agriculture_items: z.array(agricultureItemSchema).optional(),
+  agriculture_living_expenses_annual: z.number().optional(),
+  business_rows: z.array(businessRevenueRowSchema).optional(),
+  business_other_costs_annual: z.number().optional(),
+  business_living_expenses_monthly: z.number().optional(),
+  repayment_narrative: z.string().optional(),
 });
 
 export const updatePlanSchema = createPlanSchema.omit({ customerId: true });

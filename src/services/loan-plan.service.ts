@@ -61,6 +61,10 @@ const EXTENDED_FINANCIAL_KEYS = [
   "earner1_title", "earner1_name", "earner1_workplace", "earner1_monthly_income",
   "earner2_title", "earner2_name", "earner2_workplace", "earner2_monthly_income",
   "living_expenses_period", "avg_other_loan_rate", "other_costs_period",
+  // Tiêu dùng - nông nghiệp / kinh doanh
+  "agriculture_items", "agriculture_living_expenses_annual",
+  "business_rows", "business_other_costs_annual", "business_living_expenses_monthly",
+  "repayment_narrative",
 ] as const;
 
 function recalcFinancials(

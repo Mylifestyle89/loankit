@@ -5,6 +5,7 @@
 
 import { ASSET_TEMPLATES, ASSET_CATEGORY_LABELS, ASSET_CATEGORY_KEYS as _ASSET_KEYS } from "./khcn-asset-template-registry";
 import { CAMCO_TEMPLATES, CAMCO_ASSET_TEMPLATES, CAMCO_ASSET_CATEGORY_KEYS, CAMCO_ASSET_CATEGORY_LABELS } from "./khcn-camco-template-registry";
+import type { IncomeSourceType } from "./loan-plan-types";
 
 /** Merged asset category keys (BĐS + động sản + cầm cố) */
 export const ASSET_CATEGORY_KEYS = new Set([..._ASSET_KEYS, ...CAMCO_ASSET_CATEGORY_KEYS]);
@@ -15,6 +16,8 @@ export type KhcnDocTemplate = {
   category: string;
   /** Which loan methods this template applies to. Empty = all methods. */
   methods: string[];
+  /** Which income sources this template applies to. Undefined/empty = all sources. */
+  incomeSources?: IncomeSourceType[];
 };
 
 const BASE = "report_assets/KHCN templates";
@@ -52,7 +55,9 @@ export const KHCN_TEMPLATES: KhcnDocTemplate[] = [
   { path: `${BASE}/Báo cáo đề xuất/2268.02B BCDXCV ngan han HMTD.docx`, name: "BCĐX ngắn hạn - HMTD", category: "bao_cao", methods: ["han_muc"] },
   { path: `${BASE}/Báo cáo đề xuất/39. MS 20.HMTD-CN BC danh gia xac dinh han muc tin dung.docx`, name: "BC đánh giá xác định HMTD (Mẫu 20 - 36 tháng)", category: "bao_cao", methods: ["han_muc"] },
   { path: `${BASE}/Báo cáo đề xuất/2268.02C BCDXCV trung, dai han nha kinh.docx`, name: "BCĐX trung dài hạn - Nhà kính", category: "bao_cao", methods: ["trung_dai"] },
-  { path: `${BASE}/Báo cáo đề xuất/2268.02A BCDXCV tieu dung co TSBD.docx`, name: "BCĐX tiêu dùng có TSBĐ (2268.02A)", category: "bao_cao", methods: ["tieu_dung"] },
+  { path: `${BASE}/Báo cáo đề xuất/2268.02A BCDXCV tieu dung co TSBD.docx`, name: "BCĐX tiêu dùng có TSBĐ - Lương (2268.02A)", category: "bao_cao", methods: ["tieu_dung"], incomeSources: ["salary"] },
+  { path: `${BASE}/Báo cáo đề xuất/2268.02A BCDXCV tieu dung nong nghiep.docx`, name: "BCĐX tiêu dùng - Nông nghiệp (2268.02A)", category: "bao_cao", methods: ["tieu_dung"], incomeSources: ["agriculture"] },
+  { path: `${BASE}/Báo cáo đề xuất/2268.02A BCDXCV tieu dung kinh doanh.docx`, name: "BCĐX tiêu dùng - Kinh doanh (2268.02A)", category: "bao_cao", methods: ["tieu_dung"], incomeSources: ["business"] },
 
   // Biên bản kiểm tra
   { path: `${BASE}/Biên bản kiểm tra/2268.11A BB kiem tra SDVV tung lan.docx`, name: "BB kiểm tra SDVV từng lần (2268.11A)", category: "kiem_tra", methods: ["tung_lan", "han_muc", "trung_dai", "tieu_dung"] },
@@ -98,6 +103,15 @@ export function getTemplatesForMethod(method: string): KhcnDocTemplate[] {
   return KHCN_TEMPLATES.filter(
     (t) => t.methods.length === 0 || t.methods.includes(method),
   );
+}
+
+/** Filter templates by loan method + income source (for tiêu dùng export step). */
+export function getTemplatesForMethodAndSource(method: string, source?: IncomeSourceType | ""): KhcnDocTemplate[] {
+  return KHCN_TEMPLATES.filter((t) => {
+    const methodOk = t.methods.length === 0 || t.methods.includes(method);
+    const sourceOk = !t.incomeSources || !source || t.incomeSources.includes(source as IncomeSourceType);
+    return methodOk && sourceOk;
+  });
 }
 
 /** Group templates by category */
