@@ -120,11 +120,17 @@ export async function runDeadlineCheck(): Promise<DeadlineCheckResult> {
     }, notif.id);
   }
 
-  // 2. Real invoices newly overdue
+  // 2. Real invoices overdue — mark newly overdue + notify ALL overdue invoices (not just newly transitioned)
+  // Newly transitioned: pending → overdue (status update)
   const { count: newlyOverdue, newlyOverdueIds } = await invoiceService.markOverdue();
-  const overdue = newlyOverdueIds.length > 0
-    ? await prisma.invoice.findMany({ where: { id: { in: newlyOverdueIds } }, include: invoiceInclude })
-    : [];
+
+  // Query ALL currently overdue invoices (includes previously marked ones) for daily repeat reminders
+  // Dedup 24h prevents notification spam — same invoice only fires once per day
+  const overdue = await prisma.invoice.findMany({
+    where: { status: "overdue" },
+    include: invoiceInclude,
+  });
+  console.log(`[deadline-check] Found ${overdue.length} total overdue invoices (${newlyOverdue} newly marked)`);
 
   for (const inv of overdue) {
     if (notifiedSet.has(`invoice_overdue:${inv.id}`)) continue;
@@ -177,7 +183,7 @@ export async function runDeadlineCheck(): Promise<DeadlineCheckResult> {
   const result = {
     dueSoonChecked: dueSoon.length,
     newlyOverdue,
-    totalOverdue: newlyOverdueIds.length,
+    totalOverdue: overdue.length,
     supplementDueSoon,
     supplementOverdue,
     notificationsCreated,
