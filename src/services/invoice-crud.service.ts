@@ -1,5 +1,5 @@
 /**
- * Invoice CRUD operations — create, update, delete, getById, bulkMarkPaid.
+ * Invoice CRUD operations — create, update, delete, getById.
  */
 import { NotFoundError } from "@/core/errors/app-error";
 import { addOneMonthClamped } from "@/lib/invoice-tracking-format-helpers";
@@ -152,27 +152,6 @@ export async function updateInvoice(id: string, input: UpdateInvoiceInput) {
   return updated;
 }
 
-/** Bulk mark invoices as paid. Uses updateMany + deduplicated beneficiary recalc. */
-export async function bulkMarkPaid(ids: string[]) {
-  if (ids.length === 0) return { count: 0 };
-  const invoices = await prisma.invoice.findMany({
-    where: { id: { in: ids }, status: { in: ["pending", "overdue"] } },
-    select: { id: true, disbursementBeneficiaryId: true },
-  });
-  const validIds = invoices.map((inv) => inv.id);
-  if (validIds.length === 0) return { count: 0 };
-
-  await prisma.invoice.updateMany({
-    where: { id: { in: validIds } },
-    data: { status: "paid" },
-  });
-
-  const beneficiaryIds = [
-    ...new Set(invoices.map((inv) => inv.disbursementBeneficiaryId).filter(Boolean)),
-  ] as string[];
-  await Promise.all(beneficiaryIds.map(recalcBeneficiaryStatus));
-  return { count: validIds.length };
-}
 
 export async function deleteInvoice(id: string) {
   const existing = await prisma.invoice.findUnique({ where: { id } });

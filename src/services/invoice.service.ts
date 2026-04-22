@@ -7,7 +7,6 @@ import {
   createInvoice,
   updateInvoice,
   deleteInvoice,
-  bulkMarkPaid,
 } from "./invoice-crud.service";
 import {
   listByDisbursement,
@@ -47,7 +46,6 @@ export const invoiceService = {
   getById,
   create: createInvoice,
   update: updateInvoice,
-  bulkMarkPaid,
   delete: deleteInvoice,
   markOverdue,
   getCustomerSummary,

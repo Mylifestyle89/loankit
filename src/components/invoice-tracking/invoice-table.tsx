@@ -21,14 +21,9 @@ type Invoice = {
 
 type Props = {
   invoices: Invoice[];
-  onMarkPaid?: (id: string) => void;
   onDelete?: (id: string) => void;
   /** Called when user clicks "Bổ sung" on a needs_supplement virtual entry */
   onSupplement?: (inv: Invoice) => void;
-  selectable?: boolean;
-  selectedIds?: Set<string>;
-  onToggleSelect?: (id: string) => void;
-  onToggleSelectAll?: () => void;
 };
 
 function isDueSoon(dueDate: string): boolean {
@@ -40,7 +35,6 @@ function isDueSoon(dueDate: string): boolean {
 
 /** Countdown text: "Con X ngay" or "Qua han Y ngay" */
 function deadlineCountdown(dueDate: string, status: string): string | null {
-  if (status === "paid") return null;
   const diffMs = new Date(dueDate).getTime() - Date.now();
   const diffDays = Math.ceil(diffMs / (24 * 60 * 60 * 1000));
   if (diffDays < 0) return `Quá hạn ${Math.abs(diffDays)} ngày`;
@@ -49,37 +43,18 @@ function deadlineCountdown(dueDate: string, status: string): string | null {
   return null;
 }
 
-export function isSelectable(inv: { id: string; status: string }): boolean {
-  if (inv.id.startsWith("virtual-")) return false;
-  return inv.status === "pending" || inv.status === "overdue";
-}
-
-export function InvoiceTable({ invoices, onMarkPaid, onDelete, onSupplement, selectable, selectedIds, onToggleSelect, onToggleSelectAll }: Props) {
+export function InvoiceTable({ invoices, onDelete, onSupplement }: Props) {
   const { t } = useLanguage();
 
   if (invoices.length === 0) {
     return <p className="p-6 text-sm text-zinc-500 dark:text-slate-400">{t("invoices.noData")}</p>;
   }
 
-  const eligibleInvoices = selectable ? invoices.filter(isSelectable) : [];
-  const allSelected = selectable && eligibleInvoices.length > 0 && eligibleInvoices.every((inv) => selectedIds?.has(inv.id));
-
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b border-zinc-200 dark:border-white/[0.07] bg-brand-50/50 dark:bg-white/[0.05] text-left">
-            {selectable && (
-              <th className="pl-4 pr-1 py-2.5 w-8">
-                <input
-                  type="checkbox"
-                  checked={allSelected}
-                  onChange={() => onToggleSelectAll?.()}
-                  className="h-4 w-4 rounded border-zinc-300 text-brand-500 focus:ring-brand-500 cursor-pointer"
-                  title="Chọn tất cả"
-                />
-              </th>
-            )}
             <th className="px-4 py-2.5 font-semibold whitespace-nowrap">{t("invoices.number")}</th>
             <th className="px-4 py-2.5 font-semibold whitespace-nowrap">{t("invoices.supplier")}</th>
             <th className="px-4 py-2.5 font-semibold whitespace-nowrap text-right">{t("invoices.amount")}</th>
@@ -99,25 +74,6 @@ export function InvoiceTable({ invoices, onMarkPaid, onDelete, onSupplement, sel
                   : ""
               }`}
             >
-              {selectable && (
-                <td className="pl-4 pr-1 py-2.5 w-8">
-                  {isSelectable(inv) ? (
-                    <input
-                      type="checkbox"
-                      checked={selectedIds?.has(inv.id) ?? false}
-                      onChange={() => onToggleSelect?.(inv.id)}
-                      className="h-4 w-4 rounded border-zinc-300 text-brand-500 focus:ring-brand-500 cursor-pointer"
-                    />
-                  ) : (
-                    <input
-                      type="checkbox"
-                      disabled
-                      className="h-4 w-4 rounded border-zinc-200 dark:border-zinc-700 opacity-30 cursor-not-allowed"
-                      title={inv.status === "needs_supplement" ? "Cần bổ sung đủ hóa đơn trước khi hoàn thành" : ""}
-                    />
-                  )}
-                </td>
-              )}
               <td className="px-4 py-2.5 font-medium whitespace-nowrap">{inv.invoiceNumber}</td>
               <td className="px-4 py-2.5">{inv.supplierName}</td>
               <td className="px-4 py-2.5 text-right tabular-nums">{fmt(inv.amount)}</td>
@@ -160,15 +116,6 @@ export function InvoiceTable({ invoices, onMarkPaid, onDelete, onSupplement, sel
                       className="cursor-pointer rounded border border-brand-300 dark:border-brand-500/30 px-2 py-1 text-xs text-brand-600 dark:text-brand-400 transition-colors duration-150 hover:bg-brand-50 dark:hover:bg-brand-500/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/50"
                     >
                       Bổ sung
-                    </button>
-                  )}
-                  {inv.status === "pending" && onMarkPaid && !inv.id.startsWith("virtual-") && (
-                    <button
-                      type="button"
-                      onClick={() => onMarkPaid(inv.id)}
-                      className="cursor-pointer rounded border border-green-300 dark:border-green-500/30 px-2 py-1 text-xs text-green-700 dark:text-green-400 transition-colors duration-150 hover:bg-green-50 dark:hover:bg-green-500/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500/50"
-                    >
-                      {t("invoices.markPaid")}
                     </button>
                   )}
                   {onDelete && !inv.id.startsWith("virtual-") && (
