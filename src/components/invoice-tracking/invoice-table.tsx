@@ -106,7 +106,16 @@ export function InvoiceTable({ invoices, onDelete, onSupplement }: Props) {
                   );
                 })()}
               </td>
-              <td className="px-4 py-2.5"><InvoiceStatusBadge status={inv.status} /></td>
+              <td className="px-4 py-2.5">
+                {(() => {
+                  const b = inv.disbursementBeneficiary;
+                  // When beneficiary invoiceAmount covers disbursement amount → show "Đủ hóa đơn"
+                  if (b && b.invoiceAmount >= b.amount && b.amount > 0 && !inv.id.startsWith("virtual-")) {
+                    return <InvoiceStatusBadge status="has_invoice" />;
+                  }
+                  return <InvoiceStatusBadge status={inv.status} />;
+                })()}
+              </td>
               <td className="px-4 py-2.5">
                 <div className="flex gap-2">
                   {inv.status === "needs_supplement" && onSupplement && (
