@@ -108,6 +108,8 @@ export function InvoiceTable({ invoices, onDelete, onSupplement }: Props) {
               </td>
               <td className="px-4 py-2.5">
                 {(() => {
+                  // Legacy "paid" invoices (pre-2026-04-22 refactor) → treat as fully invoiced
+                  if (inv.status === "paid") return <InvoiceStatusBadge status="has_invoice" />;
                   const b = inv.disbursementBeneficiary;
                   // When beneficiary invoiceAmount covers disbursement amount → show "Đủ hóa đơn"
                   if (b && b.invoiceAmount >= b.amount && b.amount > 0 && !inv.id.startsWith("virtual-")) {
