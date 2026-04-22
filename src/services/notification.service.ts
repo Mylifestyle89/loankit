@@ -1,16 +1,23 @@
 import { prisma } from "@/lib/prisma";
 
 export const notificationService = {
-  async list(opts?: { unreadOnly?: boolean; limit?: number }) {
+  async list(opts?: { unreadOnly?: boolean; limit?: number; skip?: number }) {
     return prisma.appNotification.findMany({
       where: opts?.unreadOnly ? { readAt: null } : undefined,
       orderBy: { createdAt: "desc" },
       take: opts?.limit ?? 50,
+      skip: opts?.skip ?? 0,
     });
   },
 
-  async getUnreadCount() {
-    return prisma.appNotification.count({ where: { readAt: null } });
+  async countAll(opts?: { unreadOnly?: boolean }) {
+    return prisma.appNotification.count({
+      where: opts?.unreadOnly ? { readAt: null } : undefined,
+    });
+  },
+
+  getUnreadCount() {
+    return notificationService.countAll({ unreadOnly: true });
   },
 
   async create(input: {

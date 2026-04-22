@@ -5,21 +5,13 @@ import { motion } from "framer-motion";
 import { Bell, AlertTriangle, Clock } from "lucide-react";
 import { useNotificationStore } from "./use-notification-store";
 import { useLanguage } from "@/components/language-provider";
+import { formatRelativeTime } from "@/lib/format-relative-time";
 
 const TYPE_ICONS: Record<string, typeof Bell> = {
   invoice_due_soon: Clock,
   invoice_overdue: AlertTriangle,
   duplicate_invoice: AlertTriangle,
 };
-
-function timeAgo(dateStr: string): string {
-  const diff = Date.now() - new Date(dateStr).getTime();
-  const mins = Math.floor(diff / 60000);
-  if (mins < 60) return `${mins}m`;
-  const hours = Math.floor(mins / 60);
-  if (hours < 24) return `${hours}h`;
-  return `${Math.floor(hours / 24)}d`;
-}
 
 export function NotificationPanel({ style }: { style?: React.CSSProperties }) {
   const { notifications, markRead, markAllRead, close } = useNotificationStore();
@@ -56,7 +48,7 @@ export function NotificationPanel({ style }: { style?: React.CSSProperties }) {
         </button>
       </div>
 
-      <div className="max-h-80 overflow-y-auto">
+      <div className="max-h-72 overflow-y-auto">
         {notifications.length === 0 ? (
           <p className="px-4 py-6 text-center text-sm text-zinc-400 dark:text-slate-500">
             {t("notifications.empty")}
@@ -78,12 +70,22 @@ export function NotificationPanel({ style }: { style?: React.CSSProperties }) {
                   <p className="truncate text-xs text-zinc-500 dark:text-slate-400">{n.message}</p>
                 </div>
                 <span className="shrink-0 text-[10px] text-zinc-400 dark:text-slate-500">
-                  {timeAgo(n.createdAt)}
+                  {formatRelativeTime(n.createdAt)}
                 </span>
               </button>
             );
           })
         )}
+      </div>
+      {/* View all history — redirect to invoice page */}
+      <div className="border-t border-slate-200/60 dark:border-white/[0.07] px-4 py-2">
+        <a
+          href="/report/invoices?notifications=1"
+          onClick={close}
+          className="block w-full text-center text-xs text-brand-500 dark:text-brand-400 hover:underline py-0.5 cursor-pointer"
+        >
+          Xem tất cả lịch sử
+        </a>
       </div>
     </motion.div>
   );
