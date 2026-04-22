@@ -15,7 +15,7 @@ const ALLOWED_PREFIX = "report_assets/";
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { customerId, templatePath, templateLabel, loanId, overrides } = body;
+    const { customerId, templatePath, templateLabel, loanId, overrides, collateralIds } = body;
 
     if (!customerId || !templatePath) {
       return NextResponse.json(
@@ -40,6 +40,7 @@ export async function POST(req: NextRequest) {
       templateLabel ?? "KHCN",
       loanId,
       overrides,
+      Array.isArray(collateralIds) ? collateralIds : undefined,
     );
 
     return new NextResponse(new Uint8Array(result.buffer), {

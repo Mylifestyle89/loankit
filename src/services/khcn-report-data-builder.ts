@@ -36,6 +36,7 @@ export async function buildKhcnReportData(
   loanId?: string,
   overrides?: Record<string, string>,
   disbursementId?: string,
+  collateralIds?: string[],
 ): Promise<Record<string, unknown>> {
   const c = await loadFullCustomer(customerId, loanId, disbursementId);
   const t = today();
@@ -45,9 +46,11 @@ export async function buildKhcnReportData(
   const loan = c.loans[0];
   const latestPlan = c.loan_plans[0];
 
-  // Filter collaterals by loan selection (empty = use all for backward compat)
+  // Filter collaterals: explicit selection from UI takes priority over loan.selectedCollateralIds
   let collaterals = c.collaterals;
-  if (loan?.selectedCollateralIds) {
+  if (collateralIds && collateralIds.length > 0) {
+    collaterals = c.collaterals.filter((col) => collateralIds.includes(col.id));
+  } else if (loan?.selectedCollateralIds) {
     try {
       const selectedIds: string[] = JSON.parse(loan.selectedCollateralIds);
       if (selectedIds.length > 0) {

@@ -35,8 +35,9 @@ export async function generateKhcnReport(
   templateLabel: string,
   loanId?: string,
   overrides?: Record<string, string>,
+  collateralIds?: string[],
 ): Promise<KhcnReportResult> {
-  const data = await buildKhcnReportData(customerId, loanId, overrides);
+  const data = await buildKhcnReportData(customerId, loanId, overrides, undefined, collateralIds);
   flattenUncPlaceholders(data, overrides);
 
   const buffer = await docxEngine.generateDocxBuffer(templatePath, data);
