@@ -66,15 +66,6 @@ export default function DisbursementDetailPage() {
 
   useEffect(() => { void loadData(); }, [loadData]);
 
-  async function handleMarkPaid(invoiceId: string) {
-    await fetch(`/api/invoices/${invoiceId}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status: "paid" }),
-    });
-    void loadData();
-  }
-
   async function handleDeleteInvoice(invoiceId: string) {
     if (!confirm(t("disbursements.deleteConfirm"))) return;
     await fetch(`/api/invoices/${invoiceId}`, { method: "DELETE" });
@@ -156,7 +147,6 @@ export default function DisbursementDetailPage() {
       <div className="rounded-2xl border border-zinc-200 dark:border-white/[0.07] bg-white dark:bg-[#161616] shadow-sm overflow-hidden">
         <InvoiceTable
           invoices={disbursement.invoices}
-          onMarkPaid={handleMarkPaid}
           onDelete={handleDeleteInvoice}
         />
       </div>
