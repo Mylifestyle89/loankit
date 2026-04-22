@@ -1,6 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
+import { X } from "lucide-react";
 import { type ReactNode, useEffect, useRef } from "react";
 
 type BaseModalProps = {
@@ -62,11 +63,19 @@ export function BaseModal({
             exit={{ opacity: 0, y: 12, scale: 0.99 }}
             transition={{ duration: 0.18, ease: "easeOut" }}
           >
-            {title ? (
-              <div className="border-b border-slate-200/60 px-5 py-3 dark:border-white/[0.07]">
+            <div className="flex items-center justify-between border-b border-slate-200/60 px-5 py-3 dark:border-white/[0.07]">
+              {title ? (
                 <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">{title}</h3>
-              </div>
-            ) : null}
+              ) : <span />}
+              <button
+                type="button"
+                onClick={onClose}
+                aria-label="Đóng"
+                className="cursor-pointer rounded-lg p-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 dark:text-slate-500 dark:hover:bg-white/[0.06] dark:hover:text-slate-300 transition-colors"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
             <div className="px-5 py-4">{children}</div>
             {footer ? <div className="border-t border-slate-200/60 px-5 py-3 dark:border-white/[0.07]">{footer}</div> : null}
           </motion.div>
