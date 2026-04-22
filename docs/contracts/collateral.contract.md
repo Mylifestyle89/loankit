@@ -2,7 +2,7 @@
 
 > **Status:** draft
 > **Owner:** Quân
-> **Last updated:** 2026-04-16
+> **Last updated:** 2026-04-22
 > **Related schemas:** `src/app/report/customers/[id]/components/collateral-config.ts`, `src/services/khcn-builder-collateral-*.ts`, `prisma/schema.prisma` (Collateral)
 > **Cross-references:**
 > - [customer.contract.md](customer.contract.md) — Collateral thuộc Customer (cascade delete)
@@ -128,6 +128,19 @@ Template registry có sets riêng cho BT3 (`*_bt3.docx`), dùng khi owner không
 - Empty `"[]"` → Loan dùng TẤT CẢ collaterals của customer khi xuất report
 - Không FK DB — orphan IDs silent filter trong builder
 - Xem [loan-and-plan contract](loan-and-plan.contract.md) §5.4
+
+### 4.4.1 Per-Request Override via `collateralIds`
+
+Khi generate DOCX qua `POST /api/report/templates/khcn/generate`, client có thể truyền `collateralIds: string[]` trong request body để **override** `Loan.selectedCollateralIds` cho lần generate đó:
+
+**Priority:**
+1. `collateralIds` (explicit từ request) — nếu có và length > 0
+2. `Loan.selectedCollateralIds` (JSON trên Loan record)
+3. Tất cả collaterals của Customer (fallback nếu cả 2 đều rỗng)
+
+**Use case:** UI tab TSBĐ cho phép user chọn 1 hay nhiều TSBĐ cụ thể trước khi in mẫu biểu, thay vì luôn dùng tất cả TSBĐ của loan.
+
+> **Source:** `src/services/khcn-report-data-builder.ts` — `buildKhcnReportData()` — param `collateralIds`
 
 ### 4.5 Valuation Rounding
 

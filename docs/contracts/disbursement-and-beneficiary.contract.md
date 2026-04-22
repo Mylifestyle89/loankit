@@ -2,7 +2,7 @@
 
 > **Status:** draft
 > **Owner:** Quân
-> **Last updated:** 2026-04-16
+> **Last updated:** 2026-04-22
 > **Related schemas:** `src/services/disbursement.service.ts`, `prisma/schema.prisma` (Disbursement, DisbursementBeneficiary, Beneficiary)
 > **Cross-references:**
 > - [invoice.contract.md](invoice.contract.md) — §4.1 (virtual invoice generation từ beneficiary pending/supplementing)
@@ -137,7 +137,24 @@ await prisma.$transaction(async (tx) => {
 
 **Khi nào revisit:** Nếu có complaint về "sum vượt limit" trên production → chuyển sang pessimistic hoặc serializable isolation.
 
-### 4.6 Soft Delete ⚠️ NOT YET IMPLEMENTED
+### 4.6 DOCX Report: `GN.Số tiền nợ hóa đơn`
+
+Placeholder `[GN.Số tiền nợ hóa đơn]` trong mẫu "Cam kết bổ sung chứng từ" được tính là:
+
+```
+GN.Số tiền nợ hóa đơn = SUM(DisbursementBeneficiary.amount WHERE invoiceStatus = "pending")
+```
+
+**KHÔNG phải** tổng `Invoice.amount` đã upload — đó là `GN.Tổng Số tiền hóa đơn` (khác field).
+
+| Placeholder | Formula | Nghĩa |
+|---|---|---|
+| `GN.Số tiền nợ hóa đơn` | `SUM(beneficiary.amount WHERE invoiceStatus = pending)` | Số tiền giải ngân chưa có hóa đơn |
+| `GN.Tổng Số tiền hóa đơn` | `SUM(Invoice.amount)` | Tổng giá trị hóa đơn đã nộp |
+
+> **Source:** `src/services/disbursement-report.service.ts` — `buildReportData()`
+
+### 4.7 Soft Delete ⚠️ NOT YET IMPLEMENTED
 
 Follows repo-wide convention — xem `docs/contracts/README.md` §8.1. Module-specific note:
 - Xóa Loan → soft delete Disbursements tầng tầng (service cascade, không rely Prisma onDelete)

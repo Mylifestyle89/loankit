@@ -2,7 +2,7 @@
 
 > **Status:** draft
 > **Owner:** Quân
-> **Last updated:** 2026-04-16
+> **Last updated:** 2026-04-22
 > **Related schemas:** `src/services/invoice-queries.service.ts`, `src/services/invoice-crud.service.ts`, `src/lib/notifications/deadline-check-logic.ts`, `prisma/schema.prisma` (Invoice)
 > **Cross-references:**
 > - [disbursement-and-beneficiary.contract.md](disbursement-and-beneficiary.contract.md) — §3 (invoiceStatus enum), §4.2 (supplement deadline), §4.6 (virtual invoice reference)
@@ -77,18 +77,19 @@ Disbursement
 
 | Status | Storage | Nghĩa |
 |---|---|---|
-| `pending` | DB (real) | Mới tạo, chưa paid, chưa overdue |
-| `paid` | DB (real) | Đã thanh toán |
+| `pending` | DB (real) | Mới tạo, chưa overdue |
+| ~~`paid`~~ | ~~DB (real)~~ | **DEPRECATED** — Đã xóa khỏi application flow (2026-04-22). Còn tồn tại trong DB dưới dạng legacy data, không reachable qua UI hay API |
 | `overdue` | DB (real) | Quá hạn (auto-marked bởi cron) |
 | `needs_supplement` | Virtual (computed) | Beneficiary line thiếu invoice, chưa có real invoice nào map tới |
 
 **Transitions (real):**
-- `pending` → `paid` (manual PATCH "mark paid")
-- `pending` → `overdue` (auto bởi `markOverdue()` cron)
-- `paid` → không chuyển nữa (terminal)
-- `overdue` → `paid` (cho phép late payment)
+- `pending` → `overdue` (auto bởi `markOverdue()` cron — duy nhất transition tự động)
+- ~~`pending` → `paid`~~ **REMOVED** — manual mark paid đã bị xóa như tech debt
+- ~~`overdue` → `paid`~~ **REMOVED**
 
 **Virtual không transition** — được generate lại mỗi lần query dựa trên `DisbursementBeneficiary.invoiceStatus`.
+
+> **⚠️ DB note:** Field `status` vẫn là plain String trong schema — không có DB constraint chặn giá trị `paid`. Legacy rows giữ nguyên. Nếu cần query "invoice thực sự hoàn thành", dùng `DisbursementBeneficiary.invoiceStatus = has_invoice` thay vì `Invoice.status = paid`.
 
 ---
 
@@ -152,6 +153,17 @@ Follows repo-wide convention — xem `docs/contracts/README.md` §8.1.
 
 Lưu ý: virtual invoices không delete (không tồn tại physically). Muốn "xóa" virtual → update `DisbursementBeneficiary.invoiceStatus = has_invoice / bang_ke` để loại khỏi query.
 
+### 4.9 Status Display Rule (Badge Priority)
+
+Badge "Trạng thái" trong UI **KHÔNG** derive trực tiếp từ `Invoice.status`. Priority:
+
+1. `DisbursementBeneficiary.invoiceAmount >= amount` → hiển thị **"Đủ hóa đơn"** (màu xanh emerald)
+2. Còn lại → hiển thị `Invoice.status` badge (`pending` = vàng, `overdue` = đỏ)
+
+**Lý do:** `Invoice.status = pending` tồn tại kể cả khi beneficiary đã có đủ invoice — hai field track hai thứ khác nhau. Badge phải reflect trạng thái nghiệp vụ thực, không chỉ DB field.
+
+> **Source:** `src/components/invoice-tracking/invoice-table.tsx` — badge render logic
+
 ### 4.8 Data Integrity Strategy
 
 Giống pattern [loan contract §5.9](loan-and-plan.contract.md):
@@ -169,9 +181,9 @@ Giống pattern [loan contract §5.9](loan-and-plan.contract.md):
 | List invoices | ✅ | ✅ | ✅ |
 | View detail | ✅ | ✅ | ✅ |
 | Create real invoice | ✅ | ✅ | ❌ |
-| Mark paid (PATCH status) | ✅ | ✅ | ❌ |
+| ~~Mark paid (PATCH status)~~ | ~~✅~~ | ~~✅~~ | ~~❌~~ | **REMOVED** |
 | Delete | ✅ | ❌ | ❌ |
-| Bulk mark paid | ✅ | ✅ | ❌ |
+| ~~Bulk mark paid~~ | ~~✅~~ | ~~✅~~ | ~~❌~~ | **REMOVED** |
 | Trigger cron endpoint | — | — | — | (requires CRON_SECRET) |
 
 ---
@@ -205,8 +217,8 @@ Zod schemas inline trong API routes (`src/app/api/invoices/**`). Không có cent
 | GET | `/api/cron/invoice-deadlines` | CRON_SECRET | Vercel Cron daily 0h UTC — scan + send digest |
 | POST | `/api/invoices/from-virtual` ⚠️ NOT YET IMPLEMENTED | editor+ | Convert virtual → real. Body: `{ virtualId, invoiceNumber, amount, issueDate }`. Service extract `beneficiaryId` từ prefix, pre-populate `supplierName/disbursementId/disbursementBeneficiaryId/dueDate` từ beneficiary data, chỉ require user nhập 3 fields mới. |
 
-### Bulk endpoints
-- POST `/api/invoices/bulk-complete` — mark multiple paid cùng lúc (admin UI tool)
+### Removed bulk endpoints
+- ~~POST `/api/invoices/bulk-complete`~~ — **REMOVED 2026-04-22.** Mark paid là tech debt, không còn supported.
 
 ---
 
