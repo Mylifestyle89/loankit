@@ -71,7 +71,7 @@ export async function buildKhcnReportData(
     "Ngày cấp CCCD": c.cccd_issued_date ?? "",
     "Nơi cấp CCCD": c.cccd_issued_place ?? "",
     "Năm sinh": c.date_of_birth ?? "",
-    "Giới tính": c.gender === "male" ? "Nam" : c.gender === "female" ? "Nữ" : "",
+    "Giới tính": (() => { const g = c.gender?.toLowerCase()?.trim() ?? ""; return (g === "male" || g === "ông" || g === "nam" || g === "mr") ? "Nam" : (g === "female" || g === "bà" || g === "nữ" || g === "mrs") ? "Nữ" : ""; })(),
     "Số điện thoại": c.phone ?? "",
     "Tình trạng hôn nhân": c.marital_status ?? "",
     "Họ tên vợ/chồng": c.spouse_name ?? "",

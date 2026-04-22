@@ -2,8 +2,16 @@
  * KHCN builder: customer aliases and branch/staff fields.
  */
 
-
 type Data = Record<string, unknown>;
+
+/** Resolve gender stored in various formats ("male", "Ông", "Nam", "mr"...) → "Ông" | "Bà" | "" */
+function resolveGenderTitle(gender: string | null | undefined): string {
+  if (!gender) return "";
+  const g = gender.toLowerCase().trim();
+  if (g === "male" || g === "ông" || g === "nam" || g === "mr") return "Ông";
+  if (g === "female" || g === "bà" || g === "nữ" || g === "mrs" || g === "ms") return "Bà";
+  return "";
+}
 
 // ── Customer aliases (flat fields used across many templates) ──
 
@@ -24,7 +32,7 @@ export function buildCustomerAliases(c: {
   data["Ngày cấp"] = c.cccd_issued_date ?? "";
   data["Nơi cấp"] = c.cccd_issued_place ?? "";
   data["Loại giấy tờ tùy thân"] = c.cccd ? "CCCD" : "";
-  data["Danh xưng"] = c.gender === "male" ? "Ông" : c.gender === "female" ? "Bà" : "";
+  data["Danh xưng"] = resolveGenderTitle(c.gender);
   // "Tên gọi in hoa" is set by buildBranchStaffData (branch name in header)
   data["TÊN KHÁCH HÀNG"] = c.customer_name?.toUpperCase() ?? "";
   data["Tên khách hàng in hoa"] = c.customer_name?.toUpperCase() ?? "";
