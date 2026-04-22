@@ -32,10 +32,12 @@ export type TemplateKey = keyof typeof DISBURSEMENT_TEMPLATES;
 /** Server-side whitelist of allowed override keys per template (security: prevents key injection) */
 export const ALLOWED_OVERRIDE_KEYS: Record<TemplateKey, string[]> = {
   bcdx: [
-    "Mã CN", "Tên gọi in hoa", "HĐTD.Hạn mức bảo lãnh",
-    "GN.Số dư L/C", "GN.Số dư bảo lãnh",
+    "Mã CN", "Tên chi nhánh/PGD", "Tên gọi in hoa",
+    "HĐTD.Hạn mức bảo lãnh", "GN.Số dư L/C", "GN.Số dư bảo lãnh",
     "HĐTD.Lãi suất quá hạn", "HĐTD.Lãi suất chậm trả",
     "Tổng giá trị TSBĐ", "Phạm vi bảo đảm", "Địa danh",
+    // Common person fields (passed from unified form, ignored if not in template)
+    "Loại giấy tờ tùy thân", "CMND", "Nơi cấp", "Ngày cấp",
   ],
   giay_nhan_no: [
     "Mã CN", "Tên chi nhánh/PGD",
@@ -46,8 +48,10 @@ export const ALLOWED_OVERRIDE_KEYS: Record<TemplateKey, string[]> = {
   ],
   danh_muc_ho_so: ["Số điện thoại", "Tên người dùng"],
   in_unc: [],
+  // Proper-case keys — server aliases "Nơi cấp"→"nơi cấp", "Ngày cấp"→"ngày cấp"
   cam_ket_bo_sung_chung_tu: [
-    "Loại giấy tờ tùy thân", "CMND", "nơi cấp", "ngày cấp",
-    "Tên chi nhánh/PGD",
+    "Tên chi nhánh/PGD", "Loại giấy tờ tùy thân", "CMND",
+    "Nơi cấp", "Ngày cấp",
+    "Mã CN", "Địa danh", "HĐTD.Lãi suất quá hạn", "HĐTD.Lãi suất chậm trả",
   ],
 };

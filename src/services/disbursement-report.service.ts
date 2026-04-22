@@ -67,6 +67,11 @@ export async function buildReportData(
   const allInvoices = d.beneficiaryLines.flatMap((b) => b.invoices);
   const totalInvoiceAmount = allInvoices.reduce((s, inv) => s + inv.amount, 0);
 
+  // "Nợ hóa đơn" = disbursement amount to beneficiaries that haven't submitted invoices yet
+  const pendingInvoiceAmount = d.beneficiaryLines
+    .filter((b) => b.invoiceStatus === "pending")
+    .reduce((s, b) => s + b.amount, 0);
+
   // Computed fields
   const remainingLimit = (loan.loanAmount ?? 0) - (d.currentOutstanding ?? 0);
   const loanTermMonths = monthsBetween(loan.startDate, loan.endDate);
@@ -145,10 +150,9 @@ export async function buildReportData(
     "HĐTD.Định kỳ trả lãi": d.interestSchedule ?? "",
     "GN.Số tiền gốc nhận nợ": d.debtAmount ?? d.amount,
 
-    "GN.Tổng mức cấp tín dụng": loan.loanAmount,
     "GN.Tổng Số tiền hóa đơn": totalInvoiceAmount,
-    "GN.Số tiền nợ hóa đơn": totalInvoiceAmount,
-    "GN.Số tiền nợ hóa đơn bằng chữ": numberToVietnameseWords(totalInvoiceAmount),
+    "GN.Số tiền nợ hóa đơn": pendingInvoiceAmount,
+    "GN.Số tiền nợ hóa đơn bằng chữ": numberToVietnameseWords(pendingInvoiceAmount),
 
     // --- Loan misc ---
     "Số giải ngân": disbNumber,
@@ -205,6 +209,15 @@ export async function buildReportData(
       }
     }
   }
+
+  // Cross-template aliases derived from unified form keys
+  // "Tên chi nhánh/PGD" → auto-uppercase fills [Tên gọi in hoa] in bcdx template
+  if (data["Tên chi nhánh/PGD"]) {
+    data["Tên gọi in hoa"] = String(data["Tên chi nhánh/PGD"]).toUpperCase();
+  }
+  // Normalize case: unified form uses "Nơi cấp"/"Ngày cấp"; cam_ket template uses lowercase
+  if (data["Nơi cấp"]) data["nơi cấp"] = data["Nơi cấp"];
+  if (data["Ngày cấp"]) data["ngày cấp"] = data["Ngày cấp"];
 
   // Auto-calc: Tổng mức cấp tín dụng = Dư nợ hiện tại + Số dư L/C + Số dư bảo lãnh
   const parseNum = (v: unknown) => Number(String(v ?? "0").replace(/\./g, "")) || 0;

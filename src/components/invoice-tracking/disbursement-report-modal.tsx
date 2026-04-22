@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { FileText, Download, Loader2 } from "lucide-react";
+import { Download, Loader2 } from "lucide-react";
 
 import { BaseModal } from "@/components/ui/base-modal";
 import { useLanguage } from "@/components/language-provider";
@@ -16,51 +16,45 @@ const TEMPLATES: { key: TemplateKey; label: string; description: string }[] = [
   { key: "cam_ket_bo_sung_chung_tu", label: "Cam kết bổ sung chứng từ", description: "Cam kết bổ sung chứng từ giải ngân" },
 ];
 
-// Override fields per template (only fields NOT in DB)
-type OverrideField = { key: string; label: string; placeholder?: string; type?: "currency" };
+type OverrideField = { key: string; label: string; placeholder?: string; type?: "currency"; colSpan?: "full" };
 
-const OVERRIDE_FIELDS: Record<TemplateKey, OverrideField[]> = {
+// Fields shared across ≥2 templates — always visible regardless of selected template
+const COMMON_FIELDS: OverrideField[] = [
+  // Chi nhánh
+  { key: "Mã CN", label: "Mã chi nhánh", placeholder: "VD: CN01" },
+  { key: "Tên chi nhánh/PGD", label: "Tên chi nhánh/PGD", placeholder: "VD: Chi nhánh tỉnh Lâm Đồng" },
+  { key: "Địa danh", label: "Địa danh", placeholder: "VD: Lâm Đồng" },
+  // Lãi suất
+  { key: "HĐTD.Lãi suất quá hạn", label: "Lãi suất nợ quá hạn" },
+  { key: "HĐTD.Lãi suất chậm trả", label: "Lãi suất chậm trả" },
+  // Người đại diện
+  { key: "Loại giấy tờ tùy thân", label: "Loại giấy tờ tùy thân", placeholder: "CMND / CCCD" },
+  { key: "CMND", label: "Số CMND/CCCD" },
+  { key: "Ngày cấp", label: "Ngày cấp CMND/CCCD", placeholder: "dd/mm/yyyy" },
+  { key: "Nơi cấp", label: "Nơi cấp CMND/CCCD" },
+];
+
+// Fields unique to each template (shown only when that template is selected)
+const SPECIFIC_FIELDS: Partial<Record<TemplateKey, OverrideField[]>> = {
   bcdx: [
-    { key: "Mã CN", label: "Mã chi nhánh", placeholder: "VD: CN01" },
-    { key: "Tên gọi in hoa", label: "Tên chi nhánh (in hoa)", placeholder: "VD: CHI NHÁNH TỈNH LÂM ĐỒNG" },
     { key: "HĐTD.Hạn mức bảo lãnh", label: "Hạn mức bảo lãnh" },
     { key: "GN.Số dư L/C", label: "Số dư L/C", placeholder: "0" },
     { key: "GN.Số dư bảo lãnh", label: "Số dư bảo lãnh", placeholder: "0" },
-    { key: "HĐTD.Lãi suất quá hạn", label: "Lãi suất nợ quá hạn" },
-    { key: "HĐTD.Lãi suất chậm trả", label: "Lãi chậm trả" },
-    { key: "Tổng giá trị TSBĐ", label: "Tổng giá trị tài sản bảo đảm", placeholder: "VD: 3.588.940.000", type: "currency" },
+    { key: "Tổng giá trị TSBĐ", label: "Tổng giá trị TSBĐ", placeholder: "VD: 3.588.940.000", type: "currency" },
     { key: "Phạm vi bảo đảm", label: "Phạm vi bảo đảm", placeholder: "VD: 5.000.000.000", type: "currency" },
-    { key: "Địa danh", label: "Địa danh", placeholder: "VD: Lâm Đồng" },
   ],
   giay_nhan_no: [
-    { key: "Mã CN", label: "Mã chi nhánh" },
-    { key: "Tên chi nhánh/PGD", label: "Tên chi nhánh/PGD" },
+    { key: "Danh xưng", label: "Danh xưng", placeholder: "Ông / Bà" },
     { key: "Loại giấy tờ pháp lý", label: "Loại giấy tờ pháp lý", placeholder: "Giấy CN ĐKKD" },
     { key: "Số ĐKKD", label: "Số ĐKKD" },
     { key: "Nơi cấp ĐKKD", label: "Nơi cấp ĐKKD" },
     { key: "Ngày cấp ĐKKD", label: "Ngày cấp ĐKKD", placeholder: "dd/mm/yyyy" },
-    { key: "Danh xưng", label: "Danh xưng", placeholder: "Ông / Bà" },
-    { key: "Loại giấy tờ tùy thân", label: "Loại giấy tờ tùy thân", placeholder: "CMND / CCCD" },
-    { key: "CMND", label: "Số CMND/CCCD" },
-    { key: "Ngày cấp", label: "Ngày cấp CMND" },
-    { key: "Nơi cấp", label: "Nơi cấp CMND" },
     { key: "Giấy tờ ủy quyền", label: "Giấy tờ ủy quyền", placeholder: "(nếu có)" },
     { key: "GN.Lãi suất vay", label: "Lãi suất vay (%/năm)" },
-    { key: "HĐTD.Lãi suất quá hạn", label: "Lãi suất quá hạn" },
-    { key: "HĐTD.Lãi suất chậm trả", label: "Lãi suất chậm trả" },
-    { key: "Địa danh", label: "Địa danh", placeholder: "VD: Lâm Đồng" },
   ],
   danh_muc_ho_so: [
     { key: "Số điện thoại", label: "Số điện thoại" },
     { key: "Tên người dùng", label: "Tên người giao/nhận" },
-  ],
-  in_unc: [],
-  cam_ket_bo_sung_chung_tu: [
-    { key: "Loại giấy tờ tùy thân", label: "Loại giấy tờ tùy thân", placeholder: "CMND / CCCD" },
-    { key: "CMND", label: "Số CMND/CCCD" },
-    { key: "nơi cấp", label: "Nơi cấp" },
-    { key: "ngày cấp", label: "Ngày cấp", placeholder: "dd/mm/yyyy" },
-    { key: "Tên chi nhánh/PGD", label: "Tên chi nhánh/PGD" },
   ],
 };
 
@@ -87,6 +81,29 @@ function saveOverrides(loanId: string, overrides: Record<string, string>) {
   } catch { /* quota exceeded — silently ignore */ }
 }
 
+function FieldInput({
+  field,
+  value,
+  onChange,
+}: {
+  field: OverrideField;
+  value: string;
+  onChange: (key: string, value: string, isCurrency?: boolean) => void;
+}) {
+  return (
+    <div>
+      <label className="block text-xs text-zinc-500 dark:text-slate-400 mb-1">{field.label}</label>
+      <input
+        type="text"
+        value={value}
+        onChange={(e) => onChange(field.key, e.target.value, field.type === "currency")}
+        placeholder={field.placeholder}
+        className="w-full rounded-md border border-zinc-200 dark:border-white/10 bg-white dark:bg-[#1a1a1a] px-3 py-1.5 text-sm text-zinc-800 dark:text-slate-200 placeholder:text-zinc-400 dark:placeholder:text-slate-500 focus:border-brand-400 focus:outline-none focus:ring-1 focus:ring-brand-500/40"
+      />
+    </div>
+  );
+}
+
 export function DisbursementReportModal({ loanId, disbursementId, onClose }: Props) {
   const { t } = useLanguage();
   const [selectedTemplate, setSelectedTemplate] = useState<TemplateKey>("bcdx");
@@ -94,16 +111,14 @@ export function DisbursementReportModal({ loanId, disbursementId, onClose }: Pro
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState("");
 
-  // Persist overrides to localStorage on change
   useEffect(() => {
     saveOverrides(loanId, overrides);
   }, [loanId, overrides]);
 
-  const overrideFields = OVERRIDE_FIELDS[selectedTemplate];
+  const specificFields = SPECIFIC_FIELDS[selectedTemplate] ?? [];
 
   const handleOverrideChange = useCallback((key: string, value: string, isCurrency?: boolean) => {
     if (isCurrency) {
-      // Strip non-digits, format with dot separators
       const digits = value.replace(/\D/g, "");
       const formatted = digits.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
       setOverrides((prev) => ({ ...prev, [key]: formatted }));
@@ -127,7 +142,6 @@ export function DisbursementReportModal({ loanId, disbursementId, onClose }: Pro
         throw new Error(data?.error ?? "Tạo báo cáo thất bại");
       }
 
-      // Download the DOCX file
       const blob = await res.blob();
       const disposition = res.headers.get("Content-Disposition") ?? "";
       const filenameMatch = disposition.match(/filename="?([^"]+)"?/);
@@ -210,30 +224,42 @@ export function DisbursementReportModal({ loanId, disbursementId, onClose }: Pro
           </div>
         </fieldset>
 
-        {/* Override fields */}
-        {overrideFields.length > 0 && (
+        {/* Common fields — always visible */}
+        <fieldset>
+          <legend className="text-sm font-medium text-zinc-700 dark:text-slate-300 mb-2">
+            Thông tin chung
+          </legend>
+          <div className="grid grid-cols-2 gap-3">
+            {COMMON_FIELDS.map((field) => (
+              <FieldInput
+                key={field.key}
+                field={field}
+                value={overrides[field.key] ?? ""}
+                onChange={handleOverrideChange}
+              />
+            ))}
+          </div>
+        </fieldset>
+
+        {/* Template-specific fields */}
+        {specificFields.length > 0 && (
           <fieldset>
             <legend className="text-sm font-medium text-zinc-700 dark:text-slate-300 mb-2">
-              Thông tin bổ sung
+              Thông tin theo mẫu
             </legend>
-            <div className="grid grid-cols-2 gap-3 max-h-60 overflow-y-auto pr-1">
-              {overrideFields.map((field) => (
-                <div key={field.key} className={overrideFields.length <= 4 ? "col-span-2 sm:col-span-1" : ""}>
-                  <label className="block text-xs text-zinc-500 dark:text-slate-400 mb-1">{field.label}</label>
-                  <input
-                    type="text"
-                    value={overrides[field.key] ?? ""}
-                    onChange={(e) => handleOverrideChange(field.key, e.target.value, field.type === "currency")}
-                    placeholder={field.placeholder}
-                    className="w-full rounded-md border border-zinc-200 dark:border-white/10 bg-white dark:bg-[#1a1a1a] px-3 py-1.5 text-sm text-zinc-800 dark:text-slate-200 placeholder:text-zinc-400 dark:placeholder:text-slate-500 focus:border-brand-400 focus:outline-none focus:ring-1 focus:ring-brand-500/40"
-                  />
-                </div>
+            <div className="grid grid-cols-2 gap-3">
+              {specificFields.map((field) => (
+                <FieldInput
+                  key={field.key}
+                  field={field}
+                  value={overrides[field.key] ?? ""}
+                  onChange={handleOverrideChange}
+                />
               ))}
             </div>
           </fieldset>
         )}
 
-        {/* Error message */}
         {error && (
           <div className="rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/40 px-3 py-2 text-sm text-red-700 dark:text-red-400">
             {error}
