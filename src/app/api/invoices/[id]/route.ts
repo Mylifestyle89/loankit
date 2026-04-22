@@ -14,7 +14,7 @@ const updateSchema = z.object({
   dueDate: z.string().min(1).optional(),
   customDeadline: z.string().optional().nullable(),
   notes: z.string().optional().nullable(),
-  status: z.enum(["pending", "paid", "overdue"]).optional(),
+  status: z.enum(["pending", "overdue"]).optional(),
 });
 
 export async function GET(

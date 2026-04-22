@@ -28,10 +28,6 @@ type Props = {
   groups: GroupedDisbursement[];
   collapsedGroups: Set<string>;
   onToggleGroup: (id: string) => void;
-  selectedIds: Set<string>;
-  onToggleSelect: (id: string) => void;
-  onToggleSelectAll: () => void;
-  onMarkPaid: (invoiceId: string) => void;
   onSupplement: (inv: Invoice) => void;
 };
 
@@ -39,10 +35,6 @@ export function InvoiceGroupedView({
   groups,
   collapsedGroups,
   onToggleGroup,
-  selectedIds,
-  onToggleSelect,
-  onToggleSelectAll,
-  onMarkPaid,
   onSupplement,
 }: Props) {
   if (groups.length === 0) {
@@ -141,12 +133,7 @@ export function InvoiceGroupedView({
             {!isCollapsed && (
               <InvoiceTable
                 invoices={g.invoices}
-                onMarkPaid={onMarkPaid}
                 onSupplement={onSupplement}
-                selectable
-                selectedIds={selectedIds}
-                onToggleSelect={onToggleSelect}
-                onToggleSelectAll={onToggleSelectAll}
               />
             )}
           </div>

@@ -1,15 +1,19 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { AlertTriangle, Banknote, Clock, XCircle } from "lucide-react";
+import { useSearchParams } from "next/navigation";
+import { AlertTriangle, Banknote, Bell, Clock, XCircle } from "lucide-react";
 
 import { useLanguage } from "@/components/language-provider";
-import { InvoiceTable, isSelectable } from "@/components/invoice-tracking/invoice-table";
+import { InvoiceTable } from "@/components/invoice-tracking/invoice-table";
 import { fmtDisplay as fmt } from "@/lib/invoice-tracking-format-helpers";
 import { CustomerSummaryCards } from "@/components/invoice-tracking/customer-summary-cards";
 import { useCustomerStore } from "@/stores/use-customer-store";
 import { useCustomerData } from "@/hooks/use-customer-data";
 import { InvoiceFormModal } from "@/components/invoice-tracking/invoice-form-modal";
+import { NotificationHistoryModal } from "@/components/invoice-tracking/notification-history-modal";
+import { CustomerEmailSettingsModal } from "@/components/invoice-tracking/customer-email-settings-modal";
+import { useNotificationStore } from "@/components/invoice-tracking/use-notification-store";
 import { InvoiceFiltersBar } from "./components/invoice-filters-bar";
 import { InvoiceGroupedView, type GroupedDisbursement } from "./components/invoice-grouped-view";
 
@@ -31,10 +35,14 @@ import type { Invoice } from "./types";
 
 export default function InvoicesOverviewPage() {
   const { t } = useLanguage();
+  const searchParams = useSearchParams();
   const storeCustomerId = useCustomerStore((s) => s.selectedCustomerId);
   const { customers: storeCustomers } = useCustomerData();
+  const unreadCount = useNotificationStore((s) => s.unreadCount);
   const [summary, setSummary] = useState<SummaryItem[]>([]);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [showEmailSettings, setShowEmailSettings] = useState(false);
   const [supplementTarget, setSupplementTarget] = useState<{ disbursementId: string; lineId: string; name: string; amount: number } | null>(null);
   // Map store customers to local type (add email from summary if available)
   const customers = storeCustomers as Array<{ id: string; customer_name: string; email?: string | null }>;
@@ -43,19 +51,16 @@ export default function InvoicesOverviewPage() {
   const [groupBy, setGroupBy] = useState<"none" | "disbursement">("none");
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [bulkLoading, setBulkLoading] = useState(false);
+
+  // Auto-open notification history when redirected from notification panel
+  useEffect(() => {
+    if (searchParams.get("notifications") === "1") setShowNotifications(true);
+  }, [searchParams]);
 
   // Sync store -> local filter
   useEffect(() => {
     setCustomerFilter(storeCustomerId);
   }, [storeCustomerId]);
-
-  useEffect(() => {
-    fetch("/api/invoices/summary").then((r) => r.json()).then((d) => {
-      if (d.ok) setSummary(d.summary ?? []);
-    });
-  }, []);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -77,62 +82,6 @@ export default function InvoicesOverviewPage() {
   useEffect(() => {
     void loadData();
   }, [loadData]);
-
-  // Clear selection when filters change
-  useEffect(() => { setSelectedIds(new Set()); }, [statusFilter, customerFilter]);
-
-  function toggleSelect(id: string) {
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
-      return next;
-    });
-  }
-
-  function toggleSelectAll() {
-    const eligible = invoices.filter(isSelectable);
-    const allSelected = eligible.every((inv) => selectedIds.has(inv.id));
-    setSelectedIds(allSelected ? new Set() : new Set(eligible.map((inv) => inv.id)));
-  }
-
-  async function handleBulkMarkPaid() {
-    const ids = Array.from(selectedIds);
-    if (ids.length === 0) return;
-    setBulkLoading(true);
-    try {
-      const res = await fetch("/api/invoices/bulk-mark-paid", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ids }),
-      });
-      if (!res.ok) {
-        const data = await res.json().catch(() => null);
-        alert(data?.error ?? "Cập nhật trạng thái thất bại");
-      }
-    } catch {
-      alert("Lỗi kết nối. Vui lòng thử lại.");
-    }
-    setSelectedIds(new Set());
-    setBulkLoading(false);
-    void loadData();
-  }
-
-  async function handleMarkPaid(invoiceId: string) {
-    try {
-      const res = await fetch(`/api/invoices/${invoiceId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: "paid" }),
-      });
-      if (!res.ok) {
-        const data = await res.json().catch(() => null);
-        alert(data?.error ?? "Cập nhật trạng thái thất bại");
-      }
-    } catch {
-      alert("Lỗi kết nối. Vui lòng thử lại.");
-    }
-    void loadData();
-  }
 
   // Group invoices by disbursement for grouped view
   const groupedByDisbursement = useMemo((): GroupedDisbursement[] => {
@@ -180,6 +129,10 @@ export default function InvoicesOverviewPage() {
     }
   }
 
+  const activeSummary = useMemo(
+    () => summary.filter((s) => s.totalInvoices > 0 || s.needsSupplementCount > 0),
+    [summary],
+  );
   const totalPending = summary.reduce((s, c) => s + c.pendingCount, 0);
   const totalOverdue = summary.reduce((s, c) => s + c.overdueCount, 0);
   const totalAmount = summary.reduce((s, c) => s + c.totalAmount, 0);
@@ -190,11 +143,25 @@ export default function InvoicesOverviewPage() {
       {/* Header with gradient accent */}
       <div className="relative overflow-hidden rounded-2xl border border-brand-100 dark:border-brand-500/10 bg-gradient-to-br from-brand-50 via-white to-brand-100 dark:from-brand-950/30 dark:via-[#242220] dark:to-brand-900/20 p-5">
         <div className="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-brand-200/30 blur-2xl dark:bg-brand-500/10" />
-        <div className="relative">
-          <h2 className="text-xl font-bold tracking-tight text-brand-600 dark:text-brand-400">
-            {t("invoices.title")}
-          </h2>
-          <p className="mt-1 text-sm text-zinc-500 dark:text-slate-400">{t("invoices.desc")}</p>
+        <div className="relative flex items-start justify-between gap-3">
+          <div>
+            <h2 className="text-xl font-bold tracking-tight text-brand-600 dark:text-brand-400">
+              {t("invoices.title")}
+            </h2>
+            <p className="mt-1 text-sm text-zinc-500 dark:text-slate-400">{t("invoices.desc")}</p>
+          </div>
+          <button
+            onClick={() => setShowNotifications(true)}
+            className="relative cursor-pointer shrink-0 flex items-center gap-2 rounded-xl border border-brand-200/60 dark:border-brand-500/20 bg-white/70 dark:bg-white/[0.05] px-3 py-2 text-xs font-medium text-brand-600 dark:text-brand-400 hover:bg-brand-50 dark:hover:bg-brand-500/10 transition-colors"
+          >
+            <Bell className="h-3.5 w-3.5" />
+            Thông báo đến hạn
+            {unreadCount > 0 && (
+              <span className="absolute -top-1.5 -right-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
+                {unreadCount > 99 ? "99+" : unreadCount}
+              </span>
+            )}
+          </button>
         </div>
 
         {/* Summary stats */}
@@ -241,16 +208,16 @@ export default function InvoicesOverviewPage() {
       </div>
 
       {/* Customer summary cards */}
-      {summary.filter((s) => s.totalInvoices > 0 || s.needsSupplementCount > 0).length > 0 && (
+      {activeSummary.length > 0 && (
         <CustomerSummaryCards
-          customers={summary.filter((s) => s.totalInvoices > 0 || s.needsSupplementCount > 0)}
+          customers={activeSummary}
           selectedCustomerId={customerFilter}
           onSelectCustomer={setCustomerFilter}
-          onEmailUpdated={loadData}
+          onOpenEmailSettings={() => setShowEmailSettings(true)}
         />
       )}
 
-      {/* Filters + bulk toolbar */}
+      {/* Filters */}
       <InvoiceFiltersBar
         statusFilter={statusFilter}
         onStatusFilterChange={setStatusFilter}
@@ -259,10 +226,6 @@ export default function InvoicesOverviewPage() {
         customers={customers}
         groupBy={groupBy}
         onToggleGroupBy={() => setGroupBy((g) => g === "none" ? "disbursement" : "none")}
-        selectedCount={selectedIds.size}
-        bulkLoading={bulkLoading}
-        onBulkMarkPaid={handleBulkMarkPaid}
-        onClearSelection={() => setSelectedIds(new Set())}
       />
 
       {/* Invoice table / grouped view */}
@@ -278,10 +241,6 @@ export default function InvoicesOverviewPage() {
           groups={groupedByDisbursement}
           collapsedGroups={collapsedGroups}
           onToggleGroup={toggleGroup}
-          selectedIds={selectedIds}
-          onToggleSelect={toggleSelect}
-          onToggleSelectAll={toggleSelectAll}
-          onMarkPaid={handleMarkPaid}
           onSupplement={handleSupplement}
         />
       ) : (
@@ -289,12 +248,7 @@ export default function InvoicesOverviewPage() {
         <div className="rounded-2xl border border-zinc-200 dark:border-white/[0.07] bg-white dark:bg-[#161616] shadow-sm overflow-hidden">
           <InvoiceTable
             invoices={invoices}
-            onMarkPaid={handleMarkPaid}
             onSupplement={handleSupplement}
-            selectable
-            selectedIds={selectedIds}
-            onToggleSelect={toggleSelect}
-            onToggleSelectAll={toggleSelectAll}
           />
         </div>
       )}
@@ -308,6 +262,20 @@ export default function InvoicesOverviewPage() {
           defaultAmount={supplementTarget.amount}
           onClose={() => setSupplementTarget(null)}
           onCreated={() => { setSupplementTarget(null); void loadData(); }}
+        />
+      )}
+
+      {/* Notification history modal */}
+      {showNotifications && (
+        <NotificationHistoryModal onClose={() => setShowNotifications(false)} />
+      )}
+
+      {/* Email settings modal */}
+      {showEmailSettings && (
+        <CustomerEmailSettingsModal
+          customers={summary}
+          onClose={() => setShowEmailSettings(false)}
+          onEmailUpdated={() => void loadData()}
         />
       )}
     </section>

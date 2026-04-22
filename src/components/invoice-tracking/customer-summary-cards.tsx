@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Settings } from "lucide-react";
 import { fmtDisplay as fmt } from "@/lib/invoice-tracking-format-helpers";
 
 type CustomerSummary = {
@@ -11,128 +11,88 @@ type CustomerSummary = {
   totalAmount: number;
   pendingCount: number;
   overdueCount: number;
+  needsSupplementCount?: number;
 };
 
 type Props = {
   customers: CustomerSummary[];
   selectedCustomerId: string;
   onSelectCustomer: (id: string) => void;
-  onEmailUpdated: () => void;
+  onOpenEmailSettings: () => void;
 };
 
-export function CustomerSummaryCards({ customers, selectedCustomerId, onSelectCustomer, onEmailUpdated }: Props) {
-  return (
-    <div className="space-y-2">
-      <h3 className="text-sm font-semibold text-zinc-700 dark:text-slate-300">Theo khách hàng</h3>
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {customers.map((c) => (
-          <CustomerCard
-            key={c.customerId}
-            customer={c}
-            isSelected={selectedCustomerId === c.customerId}
-            onSelect={onSelectCustomer}
-            onEmailUpdated={onEmailUpdated}
-          />
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function CustomerCard({
-  customer: c,
-  isSelected,
-  onSelect,
-  onEmailUpdated,
-}: {
-  customer: CustomerSummary;
-  isSelected: boolean;
-  onSelect: (id: string) => void;
-  onEmailUpdated: () => void;
-}) {
-  const [editingEmail, setEditingEmail] = useState(false);
-  const [emailValue, setEmailValue] = useState(c.customerEmail ?? "");
-  const [saving, setSaving] = useState(false);
-
-  async function saveEmail() {
-    setSaving(true);
-    try {
-      const res = await fetch(`/api/customers/${c.customerId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: emailValue || null }),
-      });
-      if (!res.ok) {
-        const data = await res.json().catch(() => null);
-        alert(data?.error ?? "Lưu email thất bại");
-        return;
-      }
-      setEditingEmail(false);
-      onEmailUpdated();
-    } catch {
-      alert("Lỗi kết nối. Vui lòng thử lại.");
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  const borderColor = isSelected
-    ? "border-brand-400 dark:border-brand-500/50 ring-2 ring-brand-500/20"
-    : "border-zinc-200 dark:border-white/[0.07]";
+export function CustomerSummaryCards({
+  customers,
+  selectedCustomerId,
+  onSelectCustomer,
+  onOpenEmailSettings,
+}: Props) {
+  const totalOverdue = customers.reduce((s, c) => s + c.overdueCount, 0);
 
   return (
-    <div
-      role="button"
-      tabIndex={0}
-      onClick={() => onSelect(isSelected ? "" : c.customerId)}
-      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onSelect(isSelected ? "" : c.customerId); } }}
-      className={`cursor-pointer text-left rounded-xl border ${borderColor} bg-white dark:bg-[#161616] p-4 shadow-sm transition-all duration-200 hover:shadow-md hover:border-brand-200 dark:hover:border-brand-500/20`}
-    >
-      <div className="flex items-start justify-between">
-        <p className="font-semibold text-sm truncate">{c.customerName}</p>
-        {c.overdueCount > 0 && (
-          <span className="ml-2 shrink-0 rounded-full bg-red-100 dark:bg-red-500/20 px-2 py-0.5 text-xs font-medium text-red-700 dark:text-red-400">
-            {c.overdueCount} quá hạn
-          </span>
-        )}
+    <div className="space-y-1.5">
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-medium text-zinc-500 dark:text-slate-400">
+          Lọc theo khách hàng
+        </span>
+        <button
+          type="button"
+          onClick={onOpenEmailSettings}
+          className="cursor-pointer flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs text-zinc-500 dark:text-slate-400 hover:bg-zinc-100 dark:hover:bg-white/[0.06] hover:text-zinc-700 dark:hover:text-slate-300 transition-colors"
+        >
+          <Settings className="h-3.5 w-3.5" />
+          Email thông báo
+        </button>
       </div>
 
-      <div className="mt-2 flex gap-3 text-xs text-zinc-500 dark:text-slate-400">
-        <span>{c.totalInvoices} HĐ</span>
-        <span>{c.pendingCount} chờ</span>
-        <span className="font-medium text-zinc-700 dark:text-slate-300">{fmt(c.totalAmount)} VND</span>
-      </div>
+      {/* Chip row — horizontally scrollable */}
+      <div className="flex flex-wrap gap-2">
+        {/* "Tất cả" chip */}
+        <button
+          type="button"
+          onClick={() => onSelectCustomer("")}
+          className={`cursor-pointer flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
+            !selectedCustomerId
+              ? "border-brand-400 bg-brand-50 text-brand-700 dark:border-brand-500/60 dark:bg-brand-500/10 dark:text-brand-300"
+              : "border-zinc-200 dark:border-white/[0.08] text-zinc-600 dark:text-slate-400 hover:border-zinc-300 dark:hover:border-white/20 hover:bg-zinc-50 dark:hover:bg-white/[0.04]"
+          }`}
+        >
+          Tất cả
+          {totalOverdue > 0 && !selectedCustomerId && (
+            <span className="rounded-full bg-red-100 dark:bg-red-500/20 px-1.5 py-0.5 text-[10px] font-semibold text-red-600 dark:text-red-400">
+              {totalOverdue}⚠
+            </span>
+          )}
+        </button>
 
-      {/* Email section */}
-      <div className="mt-2" onClick={(e) => e.stopPropagation()}>
-        {editingEmail ? (
-          <div className="flex gap-1.5">
-            <input
-              type="email"
-              value={emailValue}
-              onChange={(e) => setEmailValue(e.target.value)}
-              placeholder="email@example.com"
-              className="flex-1 rounded border border-zinc-300 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] px-2 py-1 text-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-brand-500/50"
-              onKeyDown={(e) => { if (e.key === "Enter") void saveEmail(); if (e.key === "Escape") setEditingEmail(false); }}
-            />
-            <button type="button" onClick={() => void saveEmail()} disabled={saving}
-              className="cursor-pointer rounded bg-brand-500 px-2 py-1 text-xs text-white hover:bg-brand-500 disabled:opacity-50">
-              {saving ? "..." : "Lưu"}
+        {customers.map((c) => {
+          const isSelected = selectedCustomerId === c.customerId;
+          return (
+            <button
+              key={c.customerId}
+              type="button"
+              onClick={() => onSelectCustomer(isSelected ? "" : c.customerId)}
+              title={`${c.totalInvoices} HĐ · ${fmt(c.totalAmount)} VND`}
+              className={`cursor-pointer flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
+                isSelected
+                  ? "border-brand-400 bg-brand-50 text-brand-700 dark:border-brand-500/60 dark:bg-brand-500/10 dark:text-brand-300"
+                  : "border-zinc-200 dark:border-white/[0.08] text-zinc-600 dark:text-slate-400 hover:border-zinc-300 dark:hover:border-white/20 hover:bg-zinc-50 dark:hover:bg-white/[0.04]"
+              }`}
+            >
+              <span className="max-w-[160px] truncate">{c.customerName}</span>
+              {c.overdueCount > 0 && (
+                <span className="rounded-full bg-red-100 dark:bg-red-500/20 px-1.5 py-0.5 text-[10px] font-semibold text-red-600 dark:text-red-400">
+                  {c.overdueCount}⚠
+                </span>
+              )}
+              {c.pendingCount > 0 && !c.overdueCount && (
+                <span className="rounded-full bg-zinc-100 dark:bg-white/[0.06] px-1.5 py-0.5 text-[10px] text-zinc-500 dark:text-slate-400">
+                  {c.pendingCount}
+                </span>
+              )}
             </button>
-            <button type="button" onClick={() => setEditingEmail(false)}
-              className="cursor-pointer rounded border border-zinc-300 dark:border-white/[0.09] px-2 py-1 text-xs hover:bg-zinc-50 dark:hover:bg-white/[0.05]">
-              Hủy
-            </button>
-          </div>
-        ) : (
-          <button
-            type="button"
-            onClick={() => setEditingEmail(true)}
-            className="cursor-pointer text-xs text-brand-500 dark:text-brand-400 hover:underline"
-          >
-            {c.customerEmail ? `✉ ${c.customerEmail}` : "+ Thêm email"}
-          </button>
-        )}
+          );
+        })}
       </div>
     </div>
   );
