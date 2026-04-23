@@ -90,13 +90,17 @@ export const loanService = {
     const where: any = {};
     if (opts?.customerId) where.customerId = opts.customerId;
     if (opts?.status) where.status = opts.status;
-    if (opts?.customerType) where.customer = { ...where.customer, customer_type: opts.customerType };
     if (opts?.search) {
       const term = opts.search.trim();
+      // SQLite/LibSQL: mode:"insensitive" không hỗ trợ — dùng contains thuần (LIKE, case-insensitive cho ASCII)
+      // customerType filter được đưa vào từng nhánh OR để tránh conflict WHERE clause
+      const customerFilter = opts?.customerType ? { customer_type: opts.customerType } : {};
       where.OR = [
-        { contractNumber: { contains: term, mode: "insensitive" } },
-        { customer: { customer_name: { contains: term, mode: "insensitive" } } },
+        { contractNumber: { contains: term } },
+        { customer: { ...customerFilter, customer_name: { contains: term } } },
       ];
+    } else if (opts?.customerType) {
+      where.customer = { customer_type: opts.customerType };
     }
 
     // Build orderBy
