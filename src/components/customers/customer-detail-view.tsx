@@ -224,8 +224,8 @@ export function CustomerDetailView({ customerType, basePath }: CustomerDetailVie
           cic_product_name: form.cic_product_name.trim() || null,
           cic_product_code: form.cic_product_code.trim() || null,
           documents_pa_json: JSON.stringify(documentsPa),
+          // Only send the fields this form edits — server merges with existing data_json
           data_json: {
-            ...((customer?.data_json as Record<string, unknown>) ?? {}),
             occupation: form.occupation.trim() || undefined,
             nationality: form.nationality.trim() || undefined,
             id_type: form.id_type || undefined,

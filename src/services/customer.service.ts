@@ -158,9 +158,17 @@ export const customerService = {
   async updateCustomer(id: string, input: UpdateCustomerInput): Promise<Customer> {
     const existing = await prisma.customer.findUnique({ where: { id } });
     if (!existing) throw new NotFoundError("Customer not found.");
+    // Merge data_json patch with existing — prevent client from needing to send entire data_json back
+    const mergedInput = input;
+    if (input.data_json !== undefined && existing.data_json) {
+      try {
+        const existingJson = JSON.parse(existing.data_json) as Record<string, unknown>;
+        mergedInput.data_json = { ...existingJson, ...input.data_json };
+      } catch { /* malformed existing JSON — overwrite */ }
+    }
     return prisma.customer.update({
       where: { id },
-      data: toUpdateDbData(input),
+      data: toUpdateDbData(mergedInput),
     });
   },
 
