@@ -34,6 +34,8 @@ type InfoGridProps = {
   onLandAreaSauChange: (v: number) => void;
   farmAddress: string;
   onFarmAddressChange: (v: string) => void;
+  flowerType: string;
+  onFlowerTypeChange: (v: string) => void;
   turnoverAnalysis: string;
   onTurnoverAnalysisChange: (v: string) => void;
   // Tiêu dùng-only fields
@@ -53,6 +55,7 @@ export function LoanPlanInfoGrid({
   loanAmount, onLoanAmountChange,
   landAreaSau, onLandAreaSauChange,
   farmAddress, onFarmAddressChange,
+  flowerType, onFlowerTypeChange,
   turnoverAnalysis, onTurnoverAnalysisChange,
   termMonths, onTermMonthsChange,
   repaymentFrequency, onRepaymentFrequencyChange,
@@ -129,6 +132,10 @@ export function LoanPlanInfoGrid({
               className={inputCls}
               placeholder="VD: xã ABC, huyện XYZ"
             />
+          </label>
+          <label className="block">
+            <span className="text-xs font-medium text-zinc-500">Loại hoa/cây trồng</span>
+            <SmartField fieldKey="loan_plan.flower_type" value={flowerType} onChange={onFlowerTypeChange} className={inputCls} placeholder="VD: cát tường, cẩm chướng" />
           </label>
         </>
       )}

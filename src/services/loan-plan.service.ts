@@ -51,7 +51,7 @@ function sanitizeRevenueItems(items: RevenueItem[]): RevenueItem[] {
 const EXTENDED_FINANCIAL_KEYS = [
   "depreciation_years", "asset_unit_price", "land_area_sau",
   "preferential_rate", "term_months", "repayment_frequency", "principal_rounding", "construction_contract_no",
-  "construction_contract_date", "farmAddress",
+  "construction_contract_date", "farmAddress", "flower_type",
   "legal_assessment", "market_input", "market_output",
   "labor_capability", "machinery_capability", "other_factors",
   "turnover_analysis",

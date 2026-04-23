@@ -119,6 +119,7 @@ export type LoanPlanFinancialsExtended = LoanPlanFinancials & {
   repayment_frequency?: number;        // Kỳ hạn trả gốc (tháng): 1, 3, 6, 12
   principal_rounding?: "none" | "up_100k" | "down_100k"; // Làm tròn gốc mỗi kỳ (kỳ cuối tự điều chỉnh)
   farmAddress?: string;                // Địa chỉ đất NN
+  flower_type?: string;                // Loại hoa/cây trồng (e.g. "cát tường", "cẩm chướng")
   income_source_type?: IncomeSourceType; // Nguồn thu nhập chính trả nợ (chuẩn bị cho bộ hồ sơ tiêu dùng)
 
   // ── Tiêu dùng (consumer loan) fields ──

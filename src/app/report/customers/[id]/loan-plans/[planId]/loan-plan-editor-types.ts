@@ -41,6 +41,7 @@ export type Financials = {
   construction_contract_no?: string;
   construction_contract_date?: string;
   farmAddress?: string;
+  flower_type?: string;
   income_source_type?: IncomeSourceType;
   // Tiêu dùng - nông nghiệp / kinh doanh
   agriculture_items?: AgricultureItem[];

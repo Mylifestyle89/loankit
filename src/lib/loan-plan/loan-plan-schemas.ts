@@ -65,6 +65,7 @@ export const createPlanSchema = z.object({
   construction_contract_no: z.string().optional(),
   construction_contract_date: z.string().optional(),
   farmAddress: z.string().optional(),
+  flower_type: z.string().optional(),
   // Đánh giá tín dụng
   legal_assessment: z.string().optional(),
   market_input: z.string().optional(),

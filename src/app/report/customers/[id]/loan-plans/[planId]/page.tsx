@@ -47,6 +47,7 @@ export default function LoanPlanEditorPage() {
   const [constructionContractDate, setConstructionContractDate] = useState("");
   // Common SXKD fields
   const [farmAddress, setFarmAddress] = useState("");
+  const [flowerType, setFlowerType] = useState("");
   // Tiêu dùng fields
   const [incomeSourceType, setIncomeSourceType] = useState<IncomeSourceType | "">("");
   const [tieuDungSubtype, setTieuDungSubtype] = useState<TieuDungSubtype | "">("");
@@ -135,6 +136,7 @@ export default function LoanPlanEditorPage() {
       setConstructionContractNo(fin.construction_contract_no ?? "");
       setConstructionContractDate(fin.construction_contract_date ?? "");
       setFarmAddress(fin.farmAddress ?? "");
+      setFlowerType(fin.flower_type ?? "");
       // Tiêu dùng
       setIncomeSourceType(fin.income_source_type ?? "");
       setTieuDungSubtype(fin.tieu_dung_subtype ?? "");
@@ -206,7 +208,7 @@ export default function LoanPlanEditorPage() {
           name, loan_method: loanMethod,
           cost_items: costItems, revenue_items: revenueItems,
           loanAmount, interestRate, turnoverCycles, tax,
-          land_area_sau: landAreaSau, farmAddress,
+          land_area_sau: landAreaSau, farmAddress, flower_type: flowerType || undefined,
           // trung_dai extended
           ...(loanMethod === "trung_dai" ? {
             depreciation_years: depreciationYears, asset_unit_price: assetUnitPrice,
@@ -348,6 +350,7 @@ export default function LoanPlanEditorPage() {
         loanAmount={loanAmount} onLoanAmountChange={setLoanAmount}
         landAreaSau={landAreaSau} onLandAreaSauChange={setLandAreaSau}
         farmAddress={farmAddress} onFarmAddressChange={setFarmAddress}
+        flowerType={flowerType} onFlowerTypeChange={setFlowerType}
         turnoverAnalysis={turnoverAnalysis} onTurnoverAnalysisChange={setTurnoverAnalysis}
         termMonths={termMonths} onTermMonthsChange={setTermMonths}
         repaymentFrequency={repaymentFrequency} onRepaymentFrequencyChange={setRepaymentFrequency}

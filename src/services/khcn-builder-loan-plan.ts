@@ -46,6 +46,7 @@ export function buildLoanPlanExtendedData(
   data["PA.Sản lượng"] = financials.yield ?? "";
   data["PA.Số sào đất"] = financials.landArea ?? "";
   data["PA.Địa chỉ đất NN"] = financials.farmAddress ?? "";
+  data["PA.Loại hoa"] = financials.flower_type ?? "";
   data["PA.Số tiền vay bằng chữ"] = financials.loanAmount
     ? numberToVietnameseWords(financials.loanAmount as number)
     : "";
