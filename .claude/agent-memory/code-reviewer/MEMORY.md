@@ -26,6 +26,16 @@
 - No focus trapping in custom modals
 - DRY violation: customer new/edit pages share identical form markup
 
+## Critical Data-Model Guardrail (2026-04-01)
+- `Loan.contractNumber` is a business/draft field and may be duplicated before official contract issuance.
+- Reviewers must reject changes that:
+  - re-introduce UNIQUE constraints on `contractNumber` (global or per customer),
+  - use `upsert` with `where: { contractNumber }` (invalid when non-unique).
+- Expected pattern:
+  - use `loan.id` as technical identity for updates/deletes,
+  - keep non-unique indexes only for search performance (`contractNumber`, `customerId+contractNumber`).
+- When schema/migration touches `loans`, verify actual DB indexes (not only schema) to avoid drift/regression.
+
 ## File Paths
 - Pages: `src/app/report/{mapping,customers,loans,disbursements,invoices,template,runs,system-operations}/`
 - Shared components: `src/components/invoice-tracking/` (16 files), `src/components/ui/`
