@@ -253,7 +253,11 @@ export default function LoanPlanEditorPage() {
           } : {}),
         }),
       });
-      const data = await res.json();
+      let data: { ok: boolean; error?: string };
+      try { data = await res.json(); } catch {
+        setError(res.status === 413 ? "Dữ liệu quá lớn, không thể lưu." : `Lỗi máy chủ (${res.status})`);
+        setSaving(false); return;
+      }
       if (!data.ok) setError(data.error ?? "Lỗi lưu");
     } catch (err) { setError(err instanceof Error ? err.message : "Lỗi lưu"); }
     setSaving(false);

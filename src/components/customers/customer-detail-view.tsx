@@ -232,14 +232,23 @@ export function CustomerDetailView({ customerType, basePath }: CustomerDetailVie
           },
         }),
       });
-      const data = (await res.json()) as { ok: boolean; error?: string };
       setSaving(false);
-      if (!data.ok) { setError(data.error ?? "Failed to update."); return; }
+      // Parse response safely — non-JSON responses (413, gateway errors) should show a clear message
+      let data: { ok: boolean; error?: string };
+      try {
+        data = (await res.json()) as { ok: boolean; error?: string };
+      } catch {
+        if (res.status === 413) setError("Dữ liệu quá lớn, không thể lưu. Vui lòng liên hệ quản trị viên.");
+        else if (res.status === 401) setError("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.");
+        else setError(`Lỗi máy chủ (${res.status}). Vui lòng thử lại.`);
+        return;
+      }
+      if (!data.ok) { setError(data.error ?? "Lỗi không xác định."); return; }
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
       void loadCustomer();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Network error");
+      setError(err instanceof Error ? err.message : "Lỗi kết nối");
       setSaving(false);
     }
   }
