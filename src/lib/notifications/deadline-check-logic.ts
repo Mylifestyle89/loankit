@@ -108,6 +108,7 @@ export async function runDeadlineCheck(): Promise<DeadlineCheckResult> {
       title: `HD sap den han: ${inv.invoiceNumber}`,
       message: `HD ${inv.invoiceNumber} (${customer.customer_name}) den han ${effectiveDate.toLocaleDateString("vi-VN")}`,
       metadata: { invoiceId: inv.id, disbursementId: inv.disbursementId, customerId: customer.id },
+      customerId: customer.id,
     });
     notificationsCreated++;
     addToBucket(customer, {
@@ -141,6 +142,7 @@ export async function runDeadlineCheck(): Promise<DeadlineCheckResult> {
       title: `HD qua han: ${inv.invoiceNumber}`,
       message: `HD ${inv.invoiceNumber} (${customer.customer_name}) da qua han`,
       metadata: { invoiceId: inv.id, disbursementId: inv.disbursementId, customerId: customer.id },
+      customerId: customer.id,
     });
     notificationsCreated++;
     addToBucket(customer, {
@@ -240,6 +242,7 @@ async function collectSupplementItems(ctx: {
       title: isOverdue ? `HD can bo sung qua han: ${b.beneficiaryName}` : `HD can bo sung sap den han: ${b.beneficiaryName}`,
       message: `${b.beneficiaryName} (${customer.customer_name}) ${isOverdue ? "da qua han" : "sap den han"} bo sung (${dueDate.toLocaleDateString("vi-VN")})`,
       metadata: { invoiceId: `virtual-${b.id}`, disbursementId: b.disbursementId, customerId: customer.id, virtual: true },
+      customerId: customer.id,
     });
     supNotifs++;
     addToBucket(customer, {

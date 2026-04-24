@@ -361,12 +361,14 @@ model AppNotification {
   title       String
   message     String
   metadata    String?   @default("{}") // JSON: { invoiceId, disbursementId, customerId }
+  customerId  String?   // FK for efficient per-user filtering
   emailSentAt DateTime? // Thoi diem gui email
   emailError  String? // Loi gui email (neu co)
 
   @@index([readAt])
   @@index([type])
   @@index([type, createdAt])
+  @@index([customerId])
   @@map("app_notifications")
 }
 

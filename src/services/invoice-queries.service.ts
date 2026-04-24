@@ -21,10 +21,18 @@ export async function listByDisbursement(disbursementId: string) {
 }
 
 /** Generate virtual invoice entries for beneficiary lines that still need invoices (pending or supplementing) */
-export async function getVirtualInvoiceEntries(customerId?: string) {
+export async function getVirtualInvoiceEntries(customerId?: string, userId?: string, isAdmin?: boolean) {
   const beneficiaryWhere: Record<string, unknown> = { invoiceStatus: { in: ["pending", "supplementing"] } };
   if (customerId) {
     beneficiaryWhere.disbursement = { loan: { customerId } };
+  } else if (!isAdmin && userId) {
+    beneficiaryWhere.disbursement = {
+      loan: {
+        customer: {
+          OR: [{ createdById: userId }, { grants: { some: { userId } } }],
+        },
+      },
+    };
   }
 
   const lines = await prisma.disbursementBeneficiary.findMany({
@@ -64,15 +72,29 @@ export async function getVirtualInvoiceEntries(customerId?: string) {
   }));
 }
 
-export async function listAll(filters?: { status?: string; customerId?: string }) {
+export async function listAll(filters?: { status?: string; customerId?: string; userId?: string; isAdmin?: boolean }) {
   const where: Record<string, unknown> = {};
   if (filters?.status && filters.status !== "needs_supplement") {
     where.status = filters.status;
   }
 
+  // Customer filter (explicit) or ownership filter (non-admin)
   const customerWhere = filters?.customerId
     ? { disbursement: { loan: { customerId: filters.customerId } } }
-    : {};
+    : (!filters?.isAdmin && filters?.userId)
+      ? {
+          disbursement: {
+            loan: {
+              customer: {
+                OR: [
+                  { createdById: filters.userId },
+                  { grants: { some: { userId: filters.userId } } },
+                ],
+              },
+            },
+          },
+        }
+      : {};
 
   const disbursementInclude = {
     select: {
@@ -100,7 +122,7 @@ export async function listAll(filters?: { status?: string; customerId?: string }
     orderBy: { createdAt: "desc" },
   });
 
-  const virtualEntries = await getVirtualInvoiceEntries(filters?.customerId);
+  const virtualEntries = await getVirtualInvoiceEntries(filters?.customerId, filters?.userId, filters?.isAdmin);
 
   if (filters?.status && filters.status !== "needs_supplement") {
     return realInvoices;

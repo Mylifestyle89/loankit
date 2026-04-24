@@ -4,6 +4,7 @@ import { z } from "zod";
 import { toHttpError, ValidationError } from "@/core/errors/app-error";
 import { requireSession, requireEditorOrAdmin, requireAdmin, handleAuthError } from "@/lib/auth-guard";
 import { TRACKING_STATUSES } from "@/lib/invoice-tracking-format-helpers";
+import { customerService } from "@/services/customer.service";
 import { loanService } from "@/services/loan.service";
 
 export const runtime = "nodejs";
@@ -56,8 +57,12 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    await requireSession();
+    const session = await requireSession();
     const { id } = await params;
+    if (session.user.role !== "admin") {
+      const hasAccess = await customerService.checkLoanAccess(id, session.user.id);
+      if (!hasAccess) return NextResponse.json({ ok: false, error: "Forbidden" }, { status: 403 });
+    }
     const loan = await loanService.getById(id);
     return NextResponse.json({ ok: true, loan });
   } catch (error) {
@@ -73,8 +78,12 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    await requireEditorOrAdmin();
+    const session = await requireEditorOrAdmin();
     const { id } = await params;
+    if (session.user.role !== "admin") {
+      const hasAccess = await customerService.checkLoanAccess(id, session.user.id);
+      if (!hasAccess) return NextResponse.json({ ok: false, error: "Forbidden" }, { status: 403 });
+    }
     const body = await req.json();
     const parsed = updateSchema.parse(body);
     const loan = await loanService.update(id, parsed);

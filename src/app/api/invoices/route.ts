@@ -8,11 +8,12 @@ export const runtime = "nodejs";
 
 export async function GET(req: NextRequest) {
   try {
-    await requireSession();
+    const session = await requireSession();
+    const isAdmin = session.user.role === "admin";
     const { searchParams } = req.nextUrl;
     const status = searchParams.get("status") || undefined;
     const customerId = searchParams.get("customerId") || undefined;
-    const invoices = await invoiceService.listAll({ status, customerId });
+    const invoices = await invoiceService.listAll({ status, customerId, userId: session.user.id, isAdmin });
     return NextResponse.json({ ok: true, invoices });
   } catch (error) {
     const authResponse = handleAuthError(error);

@@ -142,6 +142,13 @@ export const customerService = {
     return decryptCustomerPii(customer);
   },
 
+  /** Returns true if userId has access to the customer that owns this loan. Admin check is caller's responsibility. */
+  async checkLoanAccess(loanId: string, userId: string): Promise<boolean> {
+    const loan = await prisma.loan.findUnique({ where: { id: loanId }, select: { customerId: true } });
+    if (!loan) return false;
+    return this.checkCustomerAccess(loan.customerId, userId);
+  },
+
   /** Returns true if userId is the owner of or has a grant on this customer. Admin check is caller's responsibility. */
   async checkCustomerAccess(customerId: string, userId: string): Promise<boolean> {
     const hit = await prisma.customer.findFirst({

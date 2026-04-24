@@ -81,6 +81,8 @@ export const loanService = {
     sortOrder?: "asc" | "desc";
     page?: number;
     limit?: number;
+    userId?: string;
+    isAdmin?: boolean;
   }) {
     const take = Math.min(opts?.limit ?? 50, 200);
     const skip = ((opts?.page ?? 1) - 1) * take;
@@ -90,6 +92,13 @@ export const loanService = {
     const where: any = {};
     if (opts?.customerId) where.customerId = opts.customerId;
     if (opts?.status) where.status = opts.status;
+
+    // Ownership filter: non-admin sees only loans of accessible customers
+    if (!opts?.isAdmin && opts?.userId) {
+      where.AND = [
+        { customer: { OR: [{ createdById: opts.userId }, { grants: { some: { userId: opts.userId } } }] } },
+      ];
+    }
     if (opts?.search) {
       const term = opts.search.trim();
       // SQLite/LibSQL: mode:"insensitive" không hỗ trợ — dùng contains thuần (LIKE, case-insensitive cho ASCII)

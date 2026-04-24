@@ -30,7 +30,8 @@ const createSchema = z.object({
 
 export async function GET(req: NextRequest) {
   try {
-    await requireSession();
+    const session = await requireSession();
+    const isAdmin = session.user.role === "admin";
     const sp = req.nextUrl.searchParams;
     const customerId = sp.get("customerId") ?? undefined;
     const search = sp.get("search") ?? undefined;
@@ -41,7 +42,7 @@ export async function GET(req: NextRequest) {
     const sortOrder = rawOrder === "asc" || rawOrder === "desc" ? rawOrder : undefined;
     const page = Number(sp.get("page")) || 1;
     const limit = Number(sp.get("limit")) || 50;
-    const result = await loanService.list({ customerId, search, status, customerType, sortBy, sortOrder, page, limit });
+    const result = await loanService.list({ customerId, search, status, customerType, sortBy, sortOrder, page, limit, userId: session.user.id, isAdmin });
     return NextResponse.json({ ok: true, loans: result.data, total: result.total, page: result.page, limit: result.limit });
   } catch (error) {
     const authResponse = handleAuthError(error);

@@ -85,6 +85,10 @@ export async function createInvoice(input: CreateInvoiceInput) {
     : null;
 
   if (duplicateWarning) {
+    const disbForNotif = await prisma.disbursement.findUnique({
+      where: { id: input.disbursementId },
+      select: { loan: { select: { customerId: true } } },
+    });
     await notificationService.create({
       type: "duplicate_invoice",
       title: "Trùng lặp hóa đơn",
@@ -94,6 +98,7 @@ export async function createInvoice(input: CreateInvoiceInput) {
         supplierName: input.supplierName,
         disbursementId: input.disbursementId,
       },
+      customerId: disbForNotif?.loan.customerId ?? null,
     });
   }
 
