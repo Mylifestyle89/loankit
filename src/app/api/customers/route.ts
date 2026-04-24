@@ -4,7 +4,7 @@ import { z } from "zod";
 import { toHttpError, ValidationError } from "@/core/errors/app-error";
 import { maskCustomerResponse } from "@/lib/field-encryption";
 import { customerService } from "@/services/customer.service";
-import { requireSession, requireAdmin, handleAuthError } from "@/lib/auth-guard";
+import { requireSession, requireAdmin, requireEditorOrAdmin, handleAuthError } from "@/lib/auth-guard";
 
 export const runtime = "nodejs";
 
@@ -42,12 +42,13 @@ const createCustomerSchema = z.object({
 
 export async function GET(req: NextRequest) {
   try {
-    await requireSession();
+    const session = await requireSession();
+    const isAdmin = session.user.role === "admin";
     const rawType = req.nextUrl.searchParams.get("type");
     const type = rawType === "corporate" || rawType === "individual" ? rawType : undefined;
     const page = Number(req.nextUrl.searchParams.get("page")) || 1;
     const limit = Number(req.nextUrl.searchParams.get("limit")) || 50;
-    const result = await customerService.listCustomers({ customer_type: type, page, limit });
+    const result = await customerService.listCustomers({ customer_type: type, page, limit, userId: session.user.id, isAdmin });
     // Mask PII in list responses (no reveal in list view)
     const maskedCustomers = result.data.map((c) => maskCustomerResponse(c));
     return NextResponse.json({ ok: true, customers: maskedCustomers, total: result.total, page: result.page, limit: result.limit });
@@ -67,10 +68,11 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    await requireAdmin();
+    const session = await requireEditorOrAdmin();
     const body = await req.json();
     const parsed = createCustomerSchema.parse(body);
     const customer = await customerService.createCustomer({
+      createdById: session.user.id,
       customer_code: parsed.customer_code,
       customer_name: parsed.customer_name,
       customer_type: parsed.customer_type,

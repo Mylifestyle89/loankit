@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import * as XLSX from "xlsx";
 
 import { toHttpError } from "@/core/errors/app-error";
+import { requireEditorOrAdmin, handleAuthError } from "@/lib/auth-guard";
 import { beneficiaryService } from "@/services/beneficiary.service";
 
 export const runtime = "nodejs";
@@ -21,6 +22,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
+    await requireEditorOrAdmin();
     const { id: loanId } = await params;
     const contentType = req.headers.get("content-type") ?? "";
 
@@ -72,6 +74,8 @@ export async function POST(
     const result = await beneficiaryService.bulkCreate(loanId, items);
     return NextResponse.json({ ok: true, ...result }, { status: 201 });
   } catch (error) {
+    const authResponse = handleAuthError(error);
+    if (authResponse) return authResponse;
     const httpError = toHttpError(error, "Failed to import beneficiaries.");
     return NextResponse.json({ ok: false, error: httpError.message }, { status: httpError.status });
   }

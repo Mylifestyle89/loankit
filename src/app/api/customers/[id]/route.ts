@@ -44,8 +44,14 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    await requireSession(); // Base read access — logged-in user only
+    const session = await requireSession();
     const { id } = await params;
+
+    // Non-admin: verify ownership or grant before returning data
+    if (session.user.role !== "admin") {
+      const hasAccess = await customerService.checkCustomerAccess(id, session.user.id);
+      if (!hasAccess) return NextResponse.json({ ok: false, error: "Forbidden" }, { status: 403 });
+    }
     const full = req.nextUrl.searchParams.get("full") === "true";
     // ?reveal=all or ?reveal=customer_code,phone,cccd to show raw PII (requires elevated role)
     const revealParam = req.nextUrl.searchParams.get("reveal");
@@ -91,8 +97,13 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    await requireEditorOrAdmin();
+    const session = await requireEditorOrAdmin();
     const { id } = await params;
+
+    if (session.user.role !== "admin") {
+      const hasAccess = await customerService.checkCustomerAccess(id, session.user.id);
+      if (!hasAccess) return NextResponse.json({ ok: false, error: "Forbidden" }, { status: 403 });
+    }
     const body = await req.json();
     const parsed = updateCustomerSchema.parse(body);
     const customer = await customerService.updateCustomer(id, parsed);

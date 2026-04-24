@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { requireEditorOrAdmin, handleAuthError } from "@/lib/auth-guard";
 import { encryptCollateralOwners } from "@/lib/field-encryption";
 import { prisma } from "@/lib/prisma";
 
@@ -7,6 +8,7 @@ type Ctx = { params: Promise<{ id: string; collateralId: string }> };
 /** PATCH /api/customers/:id/collaterals/:collateralId — update collateral */
 export async function PATCH(req: NextRequest, ctx: Ctx) {
   try {
+    await requireEditorOrAdmin();
     const { id, collateralId } = await ctx.params;
     const body = await req.json();
     const data: Record<string, unknown> = {};
@@ -39,6 +41,8 @@ export async function PATCH(req: NextRequest, ctx: Ctx) {
     });
     return NextResponse.json({ ok: true, collateral });
   } catch (e: unknown) {
+    const authResponse = handleAuthError(e);
+    if (authResponse) return authResponse;
     const msg = e instanceof Error ? e.message : "Unknown error";
     return NextResponse.json({ ok: false, error: msg }, { status: 500 });
   }
@@ -47,11 +51,14 @@ export async function PATCH(req: NextRequest, ctx: Ctx) {
 /** DELETE /api/customers/:id/collaterals/:collateralId — delete collateral */
 export async function DELETE(_req: NextRequest, ctx: Ctx) {
   try {
+    await requireEditorOrAdmin();
     const { id, collateralId } = await ctx.params;
     // Verify ownership before delete
     await prisma.collateral.delete({ where: { id: collateralId, customerId: id } });
     return NextResponse.json({ ok: true });
   } catch (e: unknown) {
+    const authResponse = handleAuthError(e);
+    if (authResponse) return authResponse;
     const msg = e instanceof Error ? e.message : "Unknown error";
     return NextResponse.json({ ok: false, error: msg }, { status: 500 });
   }

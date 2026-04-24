@@ -39,10 +39,24 @@ const FIELD_TO_COLUMN: Record<string, string> = {
 };
 
 export const customerService = {
-  async listCustomers(filter?: { customer_type?: string; page?: number; limit?: number }) {
+  async listCustomers(filter?: { customer_type?: string; page?: number; limit?: number; userId?: string; isAdmin?: boolean }) {
     const take = Math.min(filter?.limit ?? 50, 200);
     const skip = ((filter?.page ?? 1) - 1) * take;
-    const where = filter?.customer_type ? { customer_type: filter.customer_type } : undefined;
+
+    // Build ownership filter: admin sees all; others see only owned or granted customers
+    const ownershipWhere = filter?.isAdmin
+      ? {}
+      : {
+          OR: [
+            { createdById: filter?.userId ?? null },
+            { grants: { some: { userId: filter?.userId ?? "" } } },
+          ],
+        };
+    const where = {
+      ...(filter?.customer_type ? { customer_type: filter.customer_type } : {}),
+      ...ownershipWhere,
+    };
+
     const [data, total] = await Promise.all([
       prisma.customer.findMany({
         where,
@@ -65,6 +79,7 @@ export const customerService = {
           cccd: true,
           spouse_cccd: true,
           loans: { where: { status: "active" }, select: { loanAmount: true } },
+          collaterals: { select: { total_value: true } },
         },
       }),
       prisma.customer.count({ where }),
@@ -101,7 +116,7 @@ export const customerService = {
     merge(latestPlans, "loan_plan");
     return {
       data: data.map((c) => {
-        const { loans, ...rest } = c;
+        const { loans, collaterals, ...rest } = c;
         const decrypted = decryptCustomerPii(rest);
         const latest = latestByCustomer.get(c.id);
         // lastActivityAt = latest of customer.updatedAt vs related entities
@@ -111,6 +126,8 @@ export const customerService = {
           ...decrypted,
           activeLoanCount: loans.length,
           activeLoanTotal: loans.reduce((s, l) => s + l.loanAmount, 0),
+          collateralCount: collaterals.length,
+          collateralTotal: collaterals.reduce((s, col) => s + (col.total_value ?? 0), 0),
           lastActivityAt,
           lastActivityType,
         };
@@ -123,6 +140,21 @@ export const customerService = {
     const customer = await prisma.customer.findUnique({ where: { id } });
     if (!customer) throw new NotFoundError("Customer not found.");
     return decryptCustomerPii(customer);
+  },
+
+  /** Returns true if userId is the owner of or has a grant on this customer. Admin check is caller's responsibility. */
+  async checkCustomerAccess(customerId: string, userId: string): Promise<boolean> {
+    const hit = await prisma.customer.findFirst({
+      where: {
+        id: customerId,
+        OR: [
+          { createdById: userId },
+          { grants: { some: { userId } } },
+        ],
+      },
+      select: { id: true },
+    });
+    return !!hit;
   },
 
   async createCustomer(input: CreateCustomerInput): Promise<Customer> {
@@ -151,6 +183,7 @@ export const customerService = {
           customer_name: input.customer_name.trim(),
         }),
         ...branchStaff,
+        createdById: input.createdById ?? null,
       },
     });
   },
@@ -211,6 +244,7 @@ export const customerService = {
             },
           },
         },
+        createdBy: { select: { id: true, name: true } },
         co_borrowers: { select: { id: true } },
         collaterals: { select: { id: true, total_value: true, obligation: true } },
         mapping_instances: {

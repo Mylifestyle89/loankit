@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
 import { toHttpError } from "@/core/errors/app-error";
+import { requireSession, requireEditorOrAdmin, handleAuthError } from "@/lib/auth-guard";
 import { withValidatedBody } from "@/lib/api-helpers";
 import { withErrorHandling } from "@/lib/api/with-error-handling";
 import { reportService } from "@/services/report.service";
@@ -10,6 +11,7 @@ export const runtime = "nodejs";
 
 export async function GET(req: NextRequest) {
   try {
+    await requireSession();
     const mappingInstanceId = req.nextUrl.searchParams.get("mapping_instance_id") ?? undefined;
     const result = await reportService.getFieldValues({ mappingInstanceId });
     return NextResponse.json({
@@ -17,6 +19,8 @@ export async function GET(req: NextRequest) {
       ...result,
     });
   } catch (error) {
+    const authResponse = handleAuthError(error);
+    if (authResponse) return authResponse;
     const httpError = toHttpError(error, "Failed to load field values.");
     return NextResponse.json(
       {
@@ -39,6 +43,7 @@ const valuesPutSchema = z.object({
 
 export const PUT = withErrorHandling(
   withValidatedBody(valuesPutSchema, async (body) => {
+    await requireEditorOrAdmin();
     const result = await reportService.saveFieldValues({
       manualValues: body.manual_values,
       fieldFormulas: body.field_formulas,

@@ -71,7 +71,7 @@ export default function DashboardPage() {
 
       {/* Footer */}
       <p className="text-center text-xs text-zinc-400 dark:text-slate-500 pt-4">
-        Loankit v0.2 · Agribank
+        Loankit v0.3 · Agribank
       </p>
     </div>
   );

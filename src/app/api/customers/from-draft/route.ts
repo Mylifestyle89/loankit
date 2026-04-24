@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { toHttpError } from "@/core/errors/app-error";
+import { requireEditorOrAdmin, handleAuthError } from "@/lib/auth-guard";
 import { customerService } from "@/services/customer.service";
 
 export const runtime = "nodejs";
 
 export async function POST(req: NextRequest) {
   try {
+    await requireEditorOrAdmin();
     const body = (await req.json()) as {
       values?: Record<string, unknown>;
       assetGroups?: Record<string, Record<string, string>[]>;
@@ -20,6 +22,8 @@ export async function POST(req: NextRequest) {
       message: result.message,
     });
   } catch (error) {
+    const authResponse = handleAuthError(error);
+    if (authResponse) return authResponse;
     const httpError = toHttpError(error, "Failed to save customer from draft.");
     return NextResponse.json(
       {

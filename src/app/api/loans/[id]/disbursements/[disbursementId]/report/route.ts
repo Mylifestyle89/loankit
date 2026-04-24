@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
 import { toHttpError } from "@/core/errors/app-error";
+import { requireEditorOrAdmin, handleAuthError } from "@/lib/auth-guard";
 import { generateReport, DISBURSEMENT_TEMPLATES } from "@/services/disbursement-report.service";
 
 export const runtime = "nodejs";
@@ -15,6 +16,7 @@ const bodySchema = z.object({
 
 export async function POST(req: NextRequest, { params }: RouteParams) {
   try {
+    await requireEditorOrAdmin();
     const { disbursementId } = await params;
     const body = await req.json();
     const { templateKey, overrides } = bodySchema.parse(body);
@@ -30,6 +32,8 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
       },
     });
   } catch (error) {
+    const authResponse = handleAuthError(error);
+    if (authResponse) return authResponse;
     console.error("[Report API] Error:", error);
     const httpError = toHttpError(error, "Failed to generate report.");
     const detail = error instanceof Error ? error.message : String(error);

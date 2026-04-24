@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
 import { toHttpError } from "@/core/errors/app-error";
+import { requireSession, requireEditorOrAdmin, handleAuthError } from "@/lib/auth-guard";
 import { disbursementService } from "@/services/disbursement.service";
 
 export const runtime = "nodejs";
@@ -47,10 +48,13 @@ const updateSchema = z.object({
 
 export async function GET(_req: NextRequest, { params }: RouteParams) {
   try {
+    await requireSession();
     const { disbursementId } = await params;
     const disbursement = await disbursementService.getById(disbursementId);
     return NextResponse.json({ ok: true, disbursement });
   } catch (error) {
+    const authResponse = handleAuthError(error);
+    if (authResponse) return authResponse;
     const httpError = toHttpError(error, "Failed to fetch disbursement.");
     return NextResponse.json({ ok: false, error: httpError.message }, { status: httpError.status });
   }
@@ -58,12 +62,15 @@ export async function GET(_req: NextRequest, { params }: RouteParams) {
 
 export async function PATCH(req: NextRequest, { params }: RouteParams) {
   try {
+    await requireEditorOrAdmin();
     const { disbursementId } = await params;
     const body = await req.json();
     const parsed = updateSchema.parse(body);
     const updated = await disbursementService.fullUpdate(disbursementId, parsed);
     return NextResponse.json({ ok: true, disbursement: updated });
   } catch (error) {
+    const authResponse = handleAuthError(error);
+    if (authResponse) return authResponse;
     const httpError = toHttpError(error, "Failed to update disbursement.");
     return NextResponse.json({ ok: false, error: httpError.message }, { status: httpError.status });
   }

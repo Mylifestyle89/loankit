@@ -96,6 +96,12 @@ export function InvoiceTable({ invoices, onDelete, onSupplement }: Props) {
               <td className="px-4 py-2.5 whitespace-nowrap">
                 {fmtDate(inv.customDeadline ?? inv.dueDate)}
                 {(() => {
+                  // Skip countdown for paid/complete invoices — no action needed
+                  const b = inv.disbursementBeneficiary;
+                  const isComplete =
+                    inv.status === "paid" ||
+                    (b && b.invoiceAmount >= b.amount && b.amount > 0 && !inv.id.startsWith("virtual-"));
+                  if (isComplete) return null;
                   const cd = deadlineCountdown(inv.customDeadline ?? inv.dueDate, inv.status);
                   if (!cd) return null;
                   const isOverdue = cd.startsWith("Quá hạn");

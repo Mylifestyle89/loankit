@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import * as XLSX from "xlsx";
+import { requireEditorOrAdmin, handleAuthError } from "@/lib/auth-guard";
 
 /**
  * POST /api/loan-plans/[id]/ai-analyze
@@ -18,6 +19,7 @@ export async function POST(
   }
 
   try {
+    await requireEditorOrAdmin();
     const apiKey = process.env.GEMINI_API_KEY ?? process.env.GOOGLE_API_KEY;
     if (!apiKey) {
       return NextResponse.json({ ok: false, error: "GEMINI_API_KEY chưa cấu hình" }, { status: 500 });
@@ -92,6 +94,8 @@ Quy tắc:
       revenueItems: parsed.revenueItems ?? [],
     });
   } catch (error) {
+    const authResponse = handleAuthError(error);
+    if (authResponse) return authResponse;
     const message = error instanceof Error ? error.message : "AI analysis failed";
     return NextResponse.json({ ok: false, error: message }, { status: 500 });
   }

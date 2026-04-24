@@ -1,7 +1,7 @@
 /* Customer card component for card view in CustomerListView */
 
 import Link from "next/link";
-import { ArrowRight, Banknote, Check, FileText, Trash2 } from "lucide-react";
+import { ArrowRight, Banknote, Building2, Check, FileText, Trash2 } from "lucide-react";
 
 import type { Customer } from "./customer-list-table";
 
@@ -29,6 +29,8 @@ export function CustomerCard({
 }) {
   const loanCount = c.activeLoanCount ?? 0;
   const loanTotal = c.activeLoanTotal ?? 0;
+  const collateralCount = c.collateralCount ?? 0;
+  const collateralTotal = c.collateralTotal ?? 0;
 
   return (
     <div
@@ -50,26 +52,19 @@ export function CustomerCard({
         <p className="mt-1 text-sm text-zinc-500 dark:text-slate-400 line-clamp-1">{c.address ?? "—"}</p>
       </div>
 
-      {/* Stats */}
-      <div className="mx-4 grid grid-cols-2 gap-3 rounded-lg bg-zinc-50 dark:bg-white/[0.03] p-3">
-        <div className="flex items-center gap-2">
-          <div className="flex h-7 w-7 items-center justify-center rounded-md bg-brand-100 dark:bg-brand-500/10">
-            <FileText className="h-3.5 w-3.5 text-brand-500 dark:text-brand-400" />
+      {/* Stats — single row */}
+      <div className="mx-4 flex items-center divide-x divide-zinc-200 dark:divide-white/[0.06] rounded-lg bg-zinc-50 dark:bg-white/[0.03] px-1">
+        {[
+          { label: "Vay active", value: loanCount, icon: <FileText className="h-3 w-3 text-brand-400" /> },
+          { label: "Dư nợ", value: fmtVND(loanTotal), icon: <Banknote className="h-3 w-3 text-brand-400" /> },
+          { label: "Tài sản", value: collateralCount, icon: <Building2 className="h-3 w-3 text-emerald-500" /> },
+          { label: "Giá trị TS", value: fmtVND(collateralTotal), icon: <Banknote className="h-3 w-3 text-emerald-500" /> },
+        ].map(({ label, value, icon }) => (
+          <div key={label} className="flex flex-1 flex-col items-center py-2 gap-0.5 min-w-0">
+            <div className="flex items-center gap-1 text-[10px] text-zinc-400 dark:text-slate-500">{icon}{label}</div>
+            <p className="text-xs font-semibold text-zinc-800 dark:text-slate-200 truncate w-full text-center">{value}</p>
           </div>
-          <div>
-            <p className="text-[10px] text-zinc-400 dark:text-slate-500">Khoản vay</p>
-            <p className="text-sm font-semibold text-zinc-800 dark:text-slate-200">{loanCount}</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="flex h-7 w-7 items-center justify-center rounded-md bg-brand-100 dark:bg-brand-500/10">
-            <Banknote className="h-3.5 w-3.5 text-brand-500 dark:text-brand-400" />
-          </div>
-          <div>
-            <p className="text-[10px] text-zinc-400 dark:text-slate-500">Tổng dư nợ</p>
-            <p className="text-sm font-semibold text-zinc-800 dark:text-slate-200">{fmtVND(loanTotal)}</p>
-          </div>
-        </div>
+        ))}
       </div>
 
       {/* Actions */}

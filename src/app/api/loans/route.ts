@@ -3,7 +3,7 @@ import { z } from "zod";
 
 import { toHttpError, ValidationError } from "@/core/errors/app-error";
 import { loanService } from "@/services/loan.service";
-import { requireAdmin, handleAuthError } from "@/lib/auth-guard";
+import { requireSession, requireAdmin, handleAuthError } from "@/lib/auth-guard";
 
 export const runtime = "nodejs";
 
@@ -30,6 +30,7 @@ const createSchema = z.object({
 
 export async function GET(req: NextRequest) {
   try {
+    await requireSession();
     const sp = req.nextUrl.searchParams;
     const customerId = sp.get("customerId") ?? undefined;
     const search = sp.get("search") ?? undefined;
@@ -43,6 +44,8 @@ export async function GET(req: NextRequest) {
     const result = await loanService.list({ customerId, search, status, customerType, sortBy, sortOrder, page, limit });
     return NextResponse.json({ ok: true, loans: result.data, total: result.total, page: result.page, limit: result.limit });
   } catch (error) {
+    const authResponse = handleAuthError(error);
+    if (authResponse) return authResponse;
     const httpError = toHttpError(error, "Failed to list loans.");
     return NextResponse.json({ ok: false, error: httpError.message }, { status: httpError.status });
   }

@@ -20,7 +20,7 @@ export default function LoginLayout({ children }: { children: React.ReactNode })
       </div>
 
       {/* Version footer */}
-      <p className="relative z-10 mt-8 text-[10px] text-brand-700/50 animate-[fadeIn_1.2s_ease-out]">Loankit v0.2</p>
+      <p className="relative z-10 mt-8 text-[10px] text-brand-700/50 animate-[fadeIn_1.2s_ease-out]">Loankit v0.3</p>
 
       {/* Keyframes */}
       <style>{`

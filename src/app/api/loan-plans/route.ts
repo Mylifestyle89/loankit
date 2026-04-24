@@ -3,13 +3,14 @@ import { z } from "zod";
 
 import { toHttpError, ValidationError } from "@/core/errors/app-error";
 import { loanPlanService } from "@/services/loan-plan.service";
-import { requireAdmin, handleAuthError } from "@/lib/auth-guard";
+import { requireSession, requireAdmin, handleAuthError } from "@/lib/auth-guard";
 import { createPlanSchema } from "@/lib/loan-plan/loan-plan-schemas";
 
 export const runtime = "nodejs";
 
 export async function GET(req: NextRequest) {
   try {
+    await requireSession();
     const customerId = req.nextUrl.searchParams.get("customerId");
     if (!customerId) {
       return NextResponse.json({ ok: false, error: "customerId is required" }, { status: 400 });
@@ -17,6 +18,8 @@ export async function GET(req: NextRequest) {
     const plans = await loanPlanService.listPlansForCustomer(customerId);
     return NextResponse.json({ ok: true, plans });
   } catch (error) {
+    const authResponse = handleAuthError(error);
+    if (authResponse) return authResponse;
     const httpError = toHttpError(error, "Failed to list loan plans.");
     return NextResponse.json({ ok: false, error: httpError.message }, { status: httpError.status });
   }

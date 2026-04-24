@@ -1,13 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireEditorOrAdmin } from "@/lib/auth-guard";
+import { requireSession, requireEditorOrAdmin, handleAuthError } from "@/lib/auth-guard";
 import { prisma } from "@/lib/prisma";
 
 /** GET /api/branches — list all branches */
 export async function GET() {
   try {
+    await requireSession();
     const items = await prisma.branch.findMany({ orderBy: { createdAt: "asc" } });
     return NextResponse.json({ ok: true, items });
   } catch (e: unknown) {
+    const authResponse = handleAuthError(e);
+    if (authResponse) return authResponse;
     const msg = e instanceof Error ? e.message : "Unknown error";
     return NextResponse.json({ ok: false, error: msg }, { status: 500 });
   }
@@ -38,6 +41,8 @@ export async function POST(req: NextRequest) {
     });
     return NextResponse.json({ ok: true, item });
   } catch (e: unknown) {
+    const authResponse = handleAuthError(e);
+    if (authResponse) return authResponse;
     const msg = e instanceof Error ? e.message : "Unknown error";
     return NextResponse.json({ ok: false, error: msg }, { status: 500 });
   }

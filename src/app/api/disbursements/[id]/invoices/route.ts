@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
 import { toHttpError, ValidationError } from "@/core/errors/app-error";
+import { requireSession, requireEditorOrAdmin, handleAuthError } from "@/lib/auth-guard";
 import { invoiceService } from "@/services/invoice.service";
 
 export const runtime = "nodejs";
@@ -22,10 +23,13 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
+    await requireSession();
     const { id: disbursementId } = await params;
     const invoices = await invoiceService.listByDisbursement(disbursementId);
     return NextResponse.json({ ok: true, invoices });
   } catch (error) {
+    const authResponse = handleAuthError(error);
+    if (authResponse) return authResponse;
     const httpError = toHttpError(error, "Failed to list invoices.");
     return NextResponse.json({ ok: false, error: httpError.message }, { status: httpError.status });
   }
@@ -36,6 +40,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
+    await requireEditorOrAdmin();
     const { id: disbursementId } = await params;
     const body = await req.json();
     const parsed = createSchema.parse(body);
@@ -45,6 +50,8 @@ export async function POST(
     });
     return NextResponse.json({ ok: true, invoice, duplicateWarning });
   } catch (error) {
+    const authResponse = handleAuthError(error);
+    if (authResponse) return authResponse;
     if (error instanceof z.ZodError) {
       const ve = new ValidationError("Invalid request body.", error.flatten().fieldErrors);
       return NextResponse.json({ ok: false, error: ve.message, details: ve.details }, { status: ve.status });

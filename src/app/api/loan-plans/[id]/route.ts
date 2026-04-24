@@ -3,17 +3,20 @@ import { z } from "zod";
 
 import { toHttpError, ValidationError } from "@/core/errors/app-error";
 import { loanPlanService } from "@/services/loan-plan.service";
-import { requireAdmin, handleAuthError } from "@/lib/auth-guard";
+import { requireSession, requireAdmin, handleAuthError } from "@/lib/auth-guard";
 import { updatePlanSchema } from "@/lib/loan-plan/loan-plan-schemas";
 
 export const runtime = "nodejs";
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    await requireSession();
     const { id } = await params;
     const plan = await loanPlanService.getPlan(id);
     return NextResponse.json({ ok: true, plan });
   } catch (error) {
+    const authResponse = handleAuthError(error);
+    if (authResponse) return authResponse;
     const httpError = toHttpError(error, "Failed to get loan plan.");
     return NextResponse.json({ ok: false, error: httpError.message }, { status: httpError.status });
   }

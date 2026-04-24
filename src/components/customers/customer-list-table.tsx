@@ -21,6 +21,8 @@ export type Customer = {
   updatedAt: string;
   activeLoanCount?: number;
   activeLoanTotal?: number;
+  collateralCount?: number;
+  collateralTotal?: number;
   lastActivityAt?: string;
   lastActivityType?: "customer" | "loan" | "collateral" | "loan_plan";
 };

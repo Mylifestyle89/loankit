@@ -122,6 +122,8 @@ export async function markOverdue(): Promise<{ count: number; newlyOverdueIds: s
         { customDeadline: { not: null, lt: now } },
         { AND: [{ customDeadline: null }, { dueDate: { lt: now } }] },
       ],
+      // Skip invoices whose beneficiary line is already fully covered
+      NOT: { disbursementBeneficiary: { invoiceStatus: "has_invoice" } },
     },
     select: { id: true },
   });

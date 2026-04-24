@@ -33,6 +33,10 @@ model User {
   accounts  Account[]
   twoFactor TwoFactor?
 
+  ownedCustomers  Customer[]      @relation("CustomerOwner")
+  customerGrants  CustomerGrant[] @relation("CustomerGrantee")
+  grantedGrants   CustomerGrant[] @relation("GrantedBy")
+
   @@map("user")
 }
 
@@ -147,6 +151,11 @@ model Customer {
   /// JSON array: documents related to loan plan (PA) - GCN đăng ký kinh doanh, ATTP, etc.
   documents_pa_json String? @default("[]")
 
+  // Ownership: user who created this customer record
+  createdById String?
+  createdBy   User?           @relation("CustomerOwner", fields: [createdById], references: [id], onDelete: SetNull)
+  grants      CustomerGrant[]
+
   mapping_instances MappingInstance[]
   loans             Loan[]
   loan_plans        LoanPlan[]
@@ -158,7 +167,24 @@ model Customer {
 
   @@index([customer_type])
   @@index([active_branch_id])
+  @@index([createdById])
   @@map("customers")
+}
+
+model CustomerGrant {
+  id          String   @id @default(cuid())
+  customerId  String
+  userId      String
+  grantedById String
+  createdAt   DateTime @default(now())
+
+  customer  Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  user      User     @relation("CustomerGrantee", fields: [userId], references: [id], onDelete: Cascade)
+  grantedBy User     @relation("GrantedBy", fields: [grantedById], references: [id], onDelete: Cascade)
+
+  @@unique([customerId, userId])
+  @@index([userId])
+  @@index([customerId])
 }
 
 model Loan {

@@ -35,6 +35,8 @@ export type CreateCustomerInput = {
    *  [#TLPA]...[/TLPA] loop. Stored as stringified JSON on the Customer row. */
   documents_pa_json?: string | null;
   data_json?: Record<string, unknown>;
+  /** ID of the user who created this customer record (set by API route) */
+  createdById?: string | null;
 };
 
-export type UpdateCustomerInput = Partial<CreateCustomerInput>;
+export type UpdateCustomerInput = Partial<Omit<CreateCustomerInput, "createdById">>;

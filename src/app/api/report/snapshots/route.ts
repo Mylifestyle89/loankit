@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { toHttpError } from "@/core/errors/app-error";
+import { requireSession, requireEditorOrAdmin, handleAuthError } from "@/lib/auth-guard";
 import { withValidatedBody } from "@/lib/api-helpers";
 import { withErrorHandling } from "@/lib/api/with-error-handling";
 import { reportService } from "@/services/report.service";
@@ -10,9 +11,12 @@ export const runtime = "nodejs";
 /** GET /api/report/snapshots — list all editor snapshots */
 export async function GET() {
   try {
+    await requireSession();
     const snapshots = await reportService.listSnapshots();
     return NextResponse.json({ ok: true, snapshots });
   } catch (error) {
+    const authResponse = handleAuthError(error);
+    if (authResponse) return authResponse;
     const httpError = toHttpError(error, "Không thể liệt kê snapshot.");
     return NextResponse.json({ ok: false, error: httpError.message }, { status: httpError.status });
   }
@@ -33,6 +37,7 @@ const createSnapshotSchema = z.object({
 /** POST /api/report/snapshots — create a new editor snapshot */
 export const POST = withErrorHandling(
   withValidatedBody(createSnapshotSchema, async (body) => {
+    await requireEditorOrAdmin();
     const meta = await reportService.createSnapshot(
       {
         manualValues: body.manualValues,

@@ -39,7 +39,19 @@
       "Bash(npx vercel ls --prod)",
       "Bash(npx vercel logs cong-cu-tao-bcdxcv-uplhzcshh-mylifestyle89s-projects.vercel.app --output raw)",
       "Bash(git show:*)",
-      "Bash(npx vercel:*)"
+      "Bash(npx vercel:*)",
+      "Read(//tmp/lending/lending/loan_management/doctype/loan_application/**)",
+      "Read(//tmp/**)",
+      "Bash(npx tsx:*)",
+      "Bash(gh api:*)",
+      "Bash(npm run:*)",
+      "Bash(turso --version)"
+    ],
+    "additionalDirectories": [
+      "C:\\Users\\Quan\\cong-cu-tao-bcdxcv\\src\\app\\report\\loans\\[id]\\components",
+      "c:\\Users\\Quan\\cong-cu-tao-bcdxcv\\plans",
+      "c:\\Users\\Quan\\cong-cu-tao-bcdxcv\\src\\app\\api\\loan-products",
+      "c:\\Users\\Quan\\cong-cu-tao-bcdxcv\\src\\lib"
     ]
   }
 }

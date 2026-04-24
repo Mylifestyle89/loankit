@@ -21,6 +21,7 @@ import {
   individualTabs,
   type TabKey,
 } from "./customer-detail-tabs-config";
+import { CustomerAccessGrantsSection } from "@/app/report/customers/[id]/components/customer-access-grants-section";
 
 type FullCustomer = {
   id: string;
@@ -51,6 +52,7 @@ type FullCustomer = {
   appraiser: string | null;
   approver_name: string | null;
   approver_title: string | null;
+  createdBy?: { id: string; name: string } | null;
   loans: any[];
   mapping_instances: any[];
   summary: {
@@ -378,6 +380,12 @@ export function CustomerDetailView({ customerType, basePath }: CustomerDetailVie
           )}
         </div>
       )}
+
+      {/* Admin-only: access grants panel — self-hides for non-admin */}
+      <CustomerAccessGrantsSection
+        customerId={id}
+        ownerName={customer?.createdBy?.name}
+      />
     </section>
   );
 }

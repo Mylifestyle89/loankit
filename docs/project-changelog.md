@@ -4,20 +4,52 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ## [Unreleased]
 
-### Added - Type B XLSX Parser with Smart Section Detection
-- **New Modules**
-  - `xlsx-number-utils.ts` - Shared parseNum/parseDecimal for Vietnamese number formatting (thousand-sep dots, comma decimals)
-  - `xlsx-section-detector.ts` - Smart section detection for generic PAKD files (cost items, revenue items, summary metadata)
-- **Parser Enhancement**
-  - Type B parser now auto-detects cost/revenue/summary sections using Vietnamese section markers
-  - Extracts financial metadata (lãi vay, thuế, vốn tự có, nhu cầu vốn) from summary rows
-  - Supports generic PAKD Excel files beyond typed formats
-  - Column mapping shared across Types A, B, S via `xlsx-number-utils`
-- **Types A & S Updated**
-  - Use shared `parseNum/parseDecimal` functions from `xlsx-number-utils.ts`
-  - Improved consistency across all XLSX parsers
+## [v0.3.0] - 2026-04-25
 
-## [v2.0.0] - 2026-03-19
+### Added
+
+- **KHCN Templates mở rộng** — tiêu dùng (có/không TSBĐ), nông nghiệp, cầm cố TTK, PASDV ngắn/trung dài hạn
+- **Lộc Việt credit card loan type** — template và conditional UI riêng cho thẻ tín dụng
+- **Loan method selector** — 36-month review section, Mẫu 20 template
+- **Notification history modal** — pagination, filtering, đánh dấu đã đọc
+- **Collateral selection cho KHCN asset templates** — chọn TSBĐ từ tab trong form
+- **P0+P1 contract validation rules** — 6 validation rules cho core module contracts
+- **6 module contracts** — customer, loan, disbursement, invoice, collateral, auth
+- **Type B XLSX Parser** — smart section detection cho generic PAKD files (cost/revenue/summary)
+  - `xlsx-number-utils.ts` — shared parseNum/parseDecimal cho Vietnamese number format
+  - `xlsx-section-detector.ts` — auto-detect cost/revenue/summary sections
+- **flower_type field** `[PA.Loại hoa]` — generalize nông nghiệp template label
+- **asset_usage_status + owner fields** cho vehicle collateral form
+- **36-month review section** và Mẫu 20 template
+
+### Fixed
+
+- Invoice "Đủ hóa đơn" badge: hiển thị đúng khi beneficiary coverage đủ; legacy `paid` → map sang badge xanh
+- Invoice overdue logic: không đánh `overdue` cho invoice đã đủ hóa đơn (beneficiary `has_invoice`)
+- Invoice countdown: không hiển thị đỏ "(Quá hạn X ngày)" cho invoice đã hoàn tất
+- Overdue notification: gửi daily cho tất cả overdue, không chỉ first transition
+- Loan search: bỏ `mode:insensitive` không hỗ trợ SQLite; fix conflict `customerType+search` WHERE
+- Server PATCH: merge `data_json` phía server thay client-side spread, tránh 413 request
+- Non-JSON server responses (413, 401): xử lý rõ ràng với error message
+- `Danh xưng`: resolve từ mọi gender format (Ông/Bà/male/female/Nam/Nữ)
+- Co-borrower + related-person PII fields: decrypt đúng trong KHCN report loader
+- Disbursement report: decrypt customer PII trước khi render
+- `documents_pa_json`: persist để TLPA loop render đúng
+- `customer_type` (KHCN/KHDN): preserve khi import BK data
+- Browser cache: fix ẩn KHCN templates mới thêm
+- `loanPlanId` migration: thêm missing migration cho Turso production
+- NLQ/TV loop: fix render cùng 1 người cho mọi row
+- BaseModal: thêm nút X đóng modal
+
+### Changed
+
+- Disbursement page: refactor sang template alias system
+- Invoice page: modernize UI với compact customer chips, email settings
+- Customer info form: restyle 2-col grid nhất quán với SmartField
+- Loan detail: inline status, contract edit, plan card UX improvements
+- `months` calc: remove duplicate, cleanup trivial comments
+
+## [v0.2.0] - 2026-03-19
 
 ### Major Release - KHCN Implementation Complete
 

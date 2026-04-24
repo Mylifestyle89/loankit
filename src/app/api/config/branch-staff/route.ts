@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireEditorOrAdmin } from "@/lib/auth-guard";
+import { requireSession, requireEditorOrAdmin, handleAuthError } from "@/lib/auth-guard";
 import { prisma } from "@/lib/prisma";
 
 const CONFIG_KEY = "branch_staff_config";
@@ -15,6 +15,7 @@ type BranchStaffConfig = {
 /** GET /api/config/branch-staff — get global branch & staff config */
 export async function GET() {
   try {
+    await requireSession();
     const row = await prisma.reportConfig.findUnique({ where: { key: CONFIG_KEY } });
     const config: BranchStaffConfig = row
       ? JSON.parse(row.valueJson)

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { requireSession, requireEditorOrAdmin, handleAuthError } from "@/lib/auth-guard";
 import { prisma } from "@/lib/prisma";
 
 /**
@@ -7,6 +8,7 @@ import { prisma } from "@/lib/prisma";
  */
 export async function GET(req: NextRequest) {
   try {
+    await requireSession();
     const fieldKey = req.nextUrl.searchParams.get("field_key");
     const prefix = req.nextUrl.searchParams.get("prefix");
 
@@ -33,6 +35,8 @@ export async function GET(req: NextRequest) {
     });
     return NextResponse.json({ ok: true, items });
   } catch (e: unknown) {
+    const authResponse = handleAuthError(e);
+    if (authResponse) return authResponse;
     const msg = e instanceof Error ? e.message : "Unknown error";
     return NextResponse.json({ ok: false, error: msg }, { status: 500 });
   }
@@ -44,6 +48,7 @@ export async function GET(req: NextRequest) {
  */
 export async function POST(req: NextRequest) {
   try {
+    await requireEditorOrAdmin();
     const body = await req.json();
     const { field_key, label, sort_order } = body;
     if (!field_key || !label) {
@@ -54,6 +59,8 @@ export async function POST(req: NextRequest) {
     });
     return NextResponse.json({ ok: true, item });
   } catch (e: unknown) {
+    const authResponse = handleAuthError(e);
+    if (authResponse) return authResponse;
     const msg = e instanceof Error ? e.message : "Unknown error";
     const status = msg.includes("Unique constraint") ? 409 : 500;
     return NextResponse.json({ ok: false, error: status === 409 ? "Option already exists" : msg }, { status });
