@@ -12,6 +12,7 @@ export async function PATCH(req: NextRequest) {
       userId?: string;
       email?: string;
       newPassword?: string;
+      globalCustomerAccess?: boolean;
     };
 
     if (!body.userId) {
@@ -42,6 +43,14 @@ export async function PATCH(req: NextRequest) {
       await prisma.account.updateMany({
         where: { userId: body.userId, providerId: "credential" },
         data: { password: hashed },
+      });
+    }
+
+    // Toggle globalCustomerAccess
+    if (body.globalCustomerAccess !== undefined) {
+      await prisma.user.update({
+        where: { id: body.userId },
+        data: { globalCustomerAccess: body.globalCustomerAccess },
       });
     }
 

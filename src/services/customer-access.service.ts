@@ -6,6 +6,10 @@
 import { prisma } from "@/lib/prisma";
 
 export async function checkCustomerAccess(customerId: string, userId: string): Promise<boolean> {
+  // Fast path: user has global access to all customers
+  const user = await prisma.user.findUnique({ where: { id: userId }, select: { globalCustomerAccess: true } });
+  if (user?.globalCustomerAccess) return true;
+
   const hit = await prisma.customer.findFirst({
     where: {
       id: customerId,

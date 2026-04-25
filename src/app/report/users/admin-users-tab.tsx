@@ -13,6 +13,7 @@ type UserRecord = {
   role: string;
   banned?: boolean;
   createdAt: string;
+  globalCustomerAccess: boolean;
 };
 
 /** Admin-only user management panel */
@@ -22,6 +23,7 @@ export function AdminUsersTab() {
   const [users, setUsers] = useState<UserRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [search, setSearch] = useState("");
 
   const fetchUsers = useCallback(async () => {
     setLoading(true);
@@ -35,6 +37,7 @@ export function AdminUsersTab() {
           role: u.role ?? "viewer",
           banned: u.banned ?? false,
           createdAt: u.createdAt ? new Date(u.createdAt).toLocaleDateString("vi-VN") : "",
+          globalCustomerAccess: (u as unknown as { globalCustomerAccess?: boolean }).globalCustomerAccess ?? false,
         })),
       );
     }
@@ -54,9 +57,23 @@ export function AdminUsersTab() {
     );
   }
 
+  const filteredUsers = search.trim()
+    ? users.filter(u =>
+        u.name.toLowerCase().includes(search.toLowerCase()) ||
+        u.email.toLowerCase().includes(search.toLowerCase())
+      )
+    : users;
+
   return (
-    <div className="mx-auto max-w-3xl">
-      <div className="mb-5 flex items-center justify-end">
+    <div className="mx-auto max-w-3xl space-y-4">
+      <div className="flex items-center gap-3">
+        <input
+          type="search"
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          placeholder="Tìm user theo tên hoặc email..."
+          className="flex-1 rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] px-3 py-1.5 text-sm text-zinc-800 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-brand-500/40"
+        />
         <button type="button" onClick={() => setShowCreateForm(!showCreateForm)}
           className="flex items-center gap-1.5 rounded-lg bg-brand-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-brand-600">
           <UserPlus className="h-3.5 w-3.5" />
@@ -78,14 +95,17 @@ export function AdminUsersTab() {
                 <th className="px-4 py-2.5 text-left font-medium text-slate-600 dark:text-slate-400">Name</th>
                 <th className="px-4 py-2.5 text-left font-medium text-slate-600 dark:text-slate-400">Email</th>
                 <th className="px-4 py-2.5 text-left font-medium text-slate-600 dark:text-slate-400">Role</th>
-                <th className="px-4 py-2.5 text-left font-medium text-slate-600 dark:text-slate-400">Created</th>
+                <th className="px-4 py-2.5 text-center font-medium text-slate-600 dark:text-slate-400">Toàn quyền KH</th>
                 <th className="px-4 py-2.5 text-right font-medium text-slate-600 dark:text-slate-400">Actions</th>
               </tr>
             </thead>
             <tbody>
-              {users.map((user) => (
+              {filteredUsers.map((user) => (
                 <UserRow key={user.id} user={user} currentUserId={session.user.id} onUpdated={fetchUsers} />
               ))}
+              {filteredUsers.length === 0 && (
+                <tr><td colSpan={5} className="px-4 py-6 text-center text-sm text-zinc-400">Không tìm thấy user</td></tr>
+              )}
             </tbody>
           </table>
         </div>
@@ -97,6 +117,18 @@ export function AdminUsersTab() {
 function UserRow({ user, currentUserId, onUpdated }: { user: UserRecord; currentUserId: string; onUpdated: () => void }) {
   const isSelf = user.id === currentUserId;
   const [editing, setEditing] = useState(false);
+  const [togglingAccess, setTogglingAccess] = useState(false);
+
+  async function toggleGlobalAccess() {
+    setTogglingAccess(true);
+    await fetch("/api/user/admin-manage", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId: user.id, globalCustomerAccess: !user.globalCustomerAccess }),
+    });
+    setTogglingAccess(false);
+    onUpdated();
+  }
 
   async function toggleRole() {
     const cycle: Record<string, string> = { admin: "editor", editor: "viewer", viewer: "admin" };
@@ -128,7 +160,21 @@ function UserRow({ user, currentUserId, onUpdated }: { user: UserRecord; current
             {user.role}
           </span>
         </td>
-        <td className="px-4 py-2.5 text-zinc-400 dark:text-slate-500">{user.createdAt}</td>
+        <td className="px-4 py-2.5 text-center">
+          {!isSelf && user.role !== "admin" ? (
+            <button
+              type="button"
+              onClick={toggleGlobalAccess}
+              disabled={togglingAccess}
+              title={user.globalCustomerAccess ? "Thu hồi toàn quyền KH" : "Cấp toàn quyền KH"}
+              className={`inline-flex h-5 w-9 cursor-pointer items-center rounded-full transition-colors disabled:opacity-50 ${user.globalCustomerAccess ? "bg-emerald-500" : "bg-zinc-300 dark:bg-white/20"}`}
+            >
+              <span className={`ml-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform ${user.globalCustomerAccess ? "translate-x-4" : ""}`} />
+            </button>
+          ) : (
+            <span className="text-xs text-zinc-300 dark:text-slate-600">—</span>
+          )}
+        </td>
         <td className="px-4 py-2.5 text-right">
           {!isSelf && (
             <div className="flex items-center justify-end gap-1">

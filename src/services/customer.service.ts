@@ -44,12 +44,12 @@ const FIELD_TO_COLUMN: Record<string, string> = {
 };
 
 export const customerService = {
-  async listCustomers(filter?: { customer_type?: string; page?: number; limit?: number; userId?: string; isAdmin?: boolean }) {
+  async listCustomers(filter?: { customer_type?: string; page?: number; limit?: number; userId?: string; isAdmin?: boolean; globalAccess?: boolean }) {
     const take = Math.min(filter?.limit ?? 50, 200);
     const skip = ((filter?.page ?? 1) - 1) * take;
 
-    // Build ownership filter: admin sees all; others see only owned or granted customers
-    const ownershipWhere = filter?.isAdmin
+    // Build ownership filter: admin or globalAccess sees all; others see only owned or granted
+    const ownershipWhere = (filter?.isAdmin || filter?.globalAccess)
       ? {}
       : {
           OR: [

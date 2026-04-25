@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import { toHttpError, ValidationError } from "@/core/errors/app-error";
 import { maskCustomerResponse } from "@/lib/field-encryption";
+import { prisma } from "@/lib/prisma";
 import { customerService } from "@/services/customer.service";
 import { requireSession, requireAdmin, requireEditorOrAdmin, handleAuthError } from "@/lib/auth-guard";
 
@@ -44,11 +45,15 @@ export async function GET(req: NextRequest) {
   try {
     const session = await requireSession();
     const isAdmin = session.user.role === "admin";
+    // Check globalCustomerAccess flag for non-admin users
+    const globalAccess = !isAdmin
+      ? (await prisma.user.findUnique({ where: { id: session.user.id }, select: { globalCustomerAccess: true } }))?.globalCustomerAccess ?? false
+      : false;
     const rawType = req.nextUrl.searchParams.get("type");
     const type = rawType === "corporate" || rawType === "individual" ? rawType : undefined;
     const page = Number(req.nextUrl.searchParams.get("page")) || 1;
     const limit = Number(req.nextUrl.searchParams.get("limit")) || 50;
-    const result = await customerService.listCustomers({ customer_type: type, page, limit, userId: session.user.id, isAdmin });
+    const result = await customerService.listCustomers({ customer_type: type, page, limit, userId: session.user.id, isAdmin, globalAccess });
     // Mask PII in list responses (no reveal in list view)
     const maskedCustomers = result.data.map((c) => maskCustomerResponse(c));
     return NextResponse.json({ ok: true, customers: maskedCustomers, total: result.total, page: result.page, limit: result.limit });

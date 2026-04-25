@@ -27,7 +27,8 @@ model User {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  twoFactorEnabled Boolean? @default(false)
+  twoFactorEnabled        Boolean? @default(false)
+  globalCustomerAccess    Boolean  @default(false) // Grants access to ALL customers
 
   sessions  Session[]
   accounts  Account[]
