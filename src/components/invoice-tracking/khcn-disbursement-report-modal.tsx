@@ -4,6 +4,7 @@ import { useState, useCallback } from "react";
 import { Download, Loader2 } from "lucide-react";
 import { BaseModal } from "@/components/ui/base-modal";
 import { KHCN_DISBURSEMENT_TEMPLATES, type KhcnDisbursementTemplateKey } from "@/services/khcn-disbursement-template-config";
+import type { RetailTemplateKey } from "@/services/retail-invoice-report.service";
 import { saveFileWithPicker } from "@/lib/save-file-with-picker";
 
 type Props = {
@@ -12,10 +13,21 @@ type Props = {
   onClose: () => void;
 };
 
-const TEMPLATE_LIST = Object.entries(KHCN_DISBURSEMENT_TEMPLATES) as [KhcnDisbursementTemplateKey, { label: string; path: string }][];
+type TemplateMode =
+  | { kind: "report"; key: KhcnDisbursementTemplateKey }
+  | { kind: "retail"; key: RetailTemplateKey };
+
+const TEMPLATE_LIST = Object.entries(KHCN_DISBURSEMENT_TEMPLATES) as [KhcnDisbursementTemplateKey, { label: string }][];
+
+const RETAIL_TEMPLATES: { key: RetailTemplateKey; label: string }[] = [
+  { key: "tap_hoa",  label: "Hóa đơn tạp hóa / Đồ uống" },
+  { key: "vlxd",    label: "Hóa đơn vật liệu xây dựng" },
+  { key: "y_te",    label: "Hóa đơn thiết bị y tế" },
+  { key: "nong_san",label: "Phiếu bán hàng nông sản" },
+];
 
 export function KhcnDisbursementReportModal({ loanId, disbursementId, onClose }: Props) {
-  const [selectedKey, setSelectedKey] = useState<KhcnDisbursementTemplateKey>("bcdxgn");
+  const [selected, setSelected] = useState<TemplateMode>({ kind: "report", key: "bcdxgn" });
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState("");
 
@@ -23,20 +35,34 @@ export function KhcnDisbursementReportModal({ loanId, disbursementId, onClose }:
     setGenerating(true);
     setError("");
     try {
-      const res = await fetch("/api/report/templates/khcn/disbursement", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ loanId, disbursementId, templateKey: selectedKey }),
-      });
+      let res: Response;
+
+      if (selected.kind === "report") {
+        res = await fetch("/api/report/templates/khcn/disbursement", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ loanId, disbursementId, templateKey: selected.key }),
+        });
+      } else {
+        res = await fetch(`/api/disbursements/${disbursementId}/retail-doc`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ templateType: selected.key }),
+        });
+      }
+
       if (!res.ok) {
         const data = await res.json().catch(() => null);
         throw new Error(data?.error ?? "Tạo báo cáo thất bại");
       }
-      // Direct download (same as KHDN flow)
+
       const blob = await res.blob();
       const disposition = res.headers.get("Content-Disposition") ?? "";
       const match = disposition.match(/filename\*?=(?:UTF-8'')?([^;\s]+)/);
-      const fileName = match ? decodeURIComponent(match[1]) : `${KHCN_DISBURSEMENT_TEMPLATES[selectedKey].label}.docx`;
+      const fallbackName = selected.kind === "report"
+        ? `${KHCN_DISBURSEMENT_TEMPLATES[selected.key].label}.docx`
+        : `HoaDon_${selected.key}.docx`;
+      const fileName = match ? decodeURIComponent(match[1]) : fallbackName;
       await saveFileWithPicker(blob, fileName);
       onClose();
     } catch (err) {
@@ -44,31 +70,45 @@ export function KhcnDisbursementReportModal({ loanId, disbursementId, onClose }:
     } finally {
       setGenerating(false);
     }
-  }, [loanId, disbursementId, selectedKey, onClose]);
+  }, [loanId, disbursementId, selected, onClose]);
+
+  const isSelected = (mode: TemplateMode) =>
+    mode.kind === selected.kind && mode.key === selected.key;
+
+  const radioItem = (mode: TemplateMode, label: string) => (
+    <label
+      key={`${mode.kind}-${mode.key}`}
+      className={`flex cursor-pointer items-center gap-3 rounded-lg border p-3 transition ${
+        isSelected(mode)
+          ? "border-brand-500 bg-brand-50/30 dark:bg-brand-800/20"
+          : "border-zinc-200 hover:border-zinc-300 dark:border-slate-600"
+      }`}
+    >
+      <input
+        type="radio"
+        name="khcn-template"
+        checked={isSelected(mode)}
+        onChange={() => setSelected(mode)}
+        className="accent-brand-500"
+      />
+      <span className="text-sm font-medium">{label}</span>
+    </label>
+  );
 
   return (
     <BaseModal open title="Tạo báo cáo giải ngân (KHCN)" onClose={onClose}>
       <div className="space-y-3">
         <p className="text-sm font-medium text-zinc-600 dark:text-slate-300">Chọn mẫu báo cáo</p>
-        {TEMPLATE_LIST.map(([key, tpl]) => (
-          <label
-            key={key}
-            className={`flex cursor-pointer items-center gap-3 rounded-lg border p-3 transition ${
-              selectedKey === key
-                ? "border-brand-500 bg-brand-50/30 dark:bg-brand-800/20"
-                : "border-zinc-200 hover:border-zinc-300 dark:border-slate-600"
-            }`}
-          >
-            <input
-              type="radio"
-              name="khcn-template"
-              checked={selectedKey === key}
-              onChange={() => setSelectedKey(key)}
-              className="accent-brand-500"
-            />
-            <span className="text-sm font-medium">{tpl.label}</span>
-          </label>
-        ))}
+
+        {TEMPLATE_LIST.map(([key, tpl]) => radioItem({ kind: "report", key }, tpl.label))}
+
+        {/* Retail invoice section */}
+        <div className="pt-1">
+          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-400 dark:text-slate-500">
+            Hóa đơn bán lẻ
+          </p>
+          {RETAIL_TEMPLATES.map(({ key, label }) => radioItem({ kind: "retail", key }, label))}
+        </div>
 
         {error && (
           <div className="rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/40 px-3 py-2 text-sm text-red-700 dark:text-red-400">
