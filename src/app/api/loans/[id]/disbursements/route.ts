@@ -15,6 +15,8 @@ const invoiceLineSchema = z.object({
   amount: z.number().positive(),
   qty: z.number().optional(),
   unitPrice: z.number().optional(),
+  itemsJson: z.string().optional(),
+  templateType: z.string().optional(),
 });
 
 const beneficiaryLineSchema = z.object({

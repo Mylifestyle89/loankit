@@ -22,7 +22,13 @@ export async function GET(
       if (!ok) return NextResponse.json({ ok: false, error: "Forbidden" }, { status: 403 });
     }
     const invoice = await prisma.invoice.findFirst({
-      where: { disbursementId, items_json: { not: null } },
+      where: {
+        disbursementId,
+        OR: [
+          { items_json: { not: null } },
+          { templateType: { not: null } },
+        ],
+      },
       select: { templateType: true },
       orderBy: { createdAt: "desc" },
     });

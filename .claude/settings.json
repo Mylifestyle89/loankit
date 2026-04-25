@@ -18,7 +18,9 @@
       "Bash(node -e ':*)",
       "Bash(node scripts/fix-giay-nhan-no-template.cjs)",
       "Bash(npm test)",
-      "Bash(wc -l src/core/use-cases/extraction/*.ts src/core/use-cases/extract-fields-from-docx-report.ts src/core/use-cases/extract-fields-from-ocr.ts src/services/document-extraction.service.ts)"
+      "Bash(wc -l src/core/use-cases/extraction/*.ts src/core/use-cases/extract-fields-from-docx-report.ts src/core/use-cases/extract-fields-from-ocr.ts src/services/document-extraction.service.ts)",
+      "Skill(ai-multimodal)",
+      "Skill(ai-multimodal:*)"
     ],
     "additionalDirectories": [
       "c:\\Users\\Quan\\cong-cu-tao-bcdxcv\\src\\app\\api\\loans\\[id]\\disbursements\\[disbursementId]"

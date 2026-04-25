@@ -88,13 +88,15 @@ export function DisbursementFormModal({ loanId, loanAmount = 0, loanPlanId, edit
             bankName: bl.bankName ?? "",
             amount: fmtNumber(String(bl.amount)),
             invoiceStatus: (bl.invoiceStatus === "has_invoice" ? "has_invoice" : bl.invoiceStatus === "bang_ke" ? "bang_ke" : "pending") as "pending" | "has_invoice" | "bang_ke",
-            invoices: (bl.invoices ?? []).map((inv: { invoiceNumber: string; supplierName: string; issueDate: string; amount: number; qty?: number; unitPrice?: number }) => ({
+            invoices: (bl.invoices ?? []).map((inv: { invoiceNumber: string; supplierName: string; issueDate: string; amount: number; qty?: number; unitPrice?: number; templateType?: string | null; items_json?: string | null }) => ({
               tempId: tempId(),
               invoiceNumber: inv.invoiceNumber,
               supplierName: inv.supplierName,
               issueDate: isoToDisplay(inv.issueDate),
               amount: fmtNumber(String(inv.amount)),
               qty: inv.qty != null ? fmtNumber(String(inv.qty)) : "",
+              templateType: inv.templateType ?? undefined,
+              itemsJson: inv.items_json ?? undefined,
               unitPrice: inv.unitPrice != null ? fmtNumber(String(inv.unitPrice)) : "",
             })),
           })));
@@ -213,7 +215,8 @@ export function DisbursementFormModal({ loanId, loanAmount = 0, loanPlanId, edit
   }
 
   function addRetailInvoice(bIdx: number, result: RetailInvoiceConfirmResult) {
-    const today = new Date().toLocaleDateString("vi-VN").split("/").reverse().join("-");
+    const now = new Date();
+    const today = `${String(now.getDate()).padStart(2, "0")}/${String(now.getMonth() + 1).padStart(2, "0")}/${now.getFullYear()}`;
     setBeneficiaries((prev) => prev.map((b, bi) => bi !== bIdx ? b : ({
       ...b,
       invoices: [...b.invoices, {
