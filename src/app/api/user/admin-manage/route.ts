@@ -46,7 +46,6 @@ export async function PATCH(req: NextRequest) {
       });
     }
 
-    // Toggle globalCustomerAccess
     if (body.globalCustomerAccess !== undefined) {
       await prisma.user.update({
         where: { id: body.userId },

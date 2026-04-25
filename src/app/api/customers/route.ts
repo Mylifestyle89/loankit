@@ -45,7 +45,6 @@ export async function GET(req: NextRequest) {
   try {
     const session = await requireSession();
     const isAdmin = session.user.role === "admin";
-    // Check globalCustomerAccess flag for non-admin users
     const globalAccess = !isAdmin
       ? (await prisma.user.findUnique({ where: { id: session.user.id }, select: { globalCustomerAccess: true } }))?.globalCustomerAccess ?? false
       : false;
