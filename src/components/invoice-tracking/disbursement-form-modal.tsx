@@ -5,7 +5,7 @@ import { ChevronDown, Plus, X } from "lucide-react";
 import { useLanguage } from "@/components/language-provider";
 import { fmtNumber, formatDateInput, dmy2iso, fmtDisplay, isoToDisplay } from "@/lib/invoice-tracking-format-helpers";
 import { numberToVietnameseWords } from "@/lib/number-to-vietnamese-words";
-import { BeneficiarySection, type BeneficiaryLine, type InvoiceLine, type SavedBeneficiary } from "./beneficiary-section-form";
+import { BeneficiarySection, type BeneficiaryLine, type InvoiceLine, type SavedBeneficiary, type RetailInvoiceConfirmResult } from "./beneficiary-section-form";
 import { inputCls, readonlyCls, labelCls, sectionCls } from "./form-styles";
 import {
   tempId, emptyBeneficiaryLine, emptyInvoiceLine, num,
@@ -17,12 +17,13 @@ import type { DisbursementFieldSuggestions } from "@/services/disbursement.servi
 type Props = {
   loanId: string;
   loanAmount?: number;
+  loanPlanId?: string | null;
   editDisbursementId?: string;
   onClose: () => void;
   onCreated: () => void;
 };
 
-export function DisbursementFormModal({ loanId, loanAmount = 0, editDisbursementId, onClose, onCreated }: Props) {
+export function DisbursementFormModal({ loanId, loanAmount = 0, loanPlanId, editDisbursementId, onClose, onCreated }: Props) {
   const { t } = useLanguage();
   const isEdit = !!editDisbursementId;
 
@@ -211,6 +212,22 @@ export function DisbursementFormModal({ loanId, loanAmount = 0, editDisbursement
     }));
   }
 
+  function addRetailInvoice(bIdx: number, result: RetailInvoiceConfirmResult) {
+    const today = new Date().toLocaleDateString("vi-VN").split("/").reverse().join("-");
+    setBeneficiaries((prev) => prev.map((b, bi) => bi !== bIdx ? b : ({
+      ...b,
+      invoices: [...b.invoices, {
+        tempId: crypto.randomUUID(),
+        invoiceNumber: `HDB-${Date.now()}`,
+        supplierName: result.templateType,
+        issueDate: today,
+        amount: String(result.total),
+        itemsJson: JSON.stringify(result.items),
+        templateType: result.templateType,
+      } satisfies InvoiceLine],
+    })));
+  }
+
   function selectSavedBeneficiary(idx: number, saved: SavedBeneficiary) {
     updateBeneficiary(idx, {
       beneficiaryId: saved.id,
@@ -263,6 +280,8 @@ export function DisbursementFormModal({ loanId, loanAmount = 0, editDisbursement
               invoiceNumber: i.invoiceNumber.trim(),
               issueDate: dmy2iso(i.issueDate) || isoDate,
               amount: num(i.amount),
+              itemsJson: i.itemsJson,
+              templateType: i.templateType,
             }))
           : b.invoiceStatus === "bang_ke"
           ? b.invoices.filter((i) => i.supplierName.trim()).map((i, idx) => ({
@@ -418,10 +437,12 @@ export function DisbursementFormModal({ loanId, loanAmount = 0, editDisbursement
               savedBeneficiaries={savedBeneficiaries}
               canRemove={beneficiaries.length > 1}
               formatDateInput={formatDateInput}
+              loanPlanId={loanPlanId}
               onUpdate={(patch) => updateBeneficiary(bIdx, patch)}
               onRemove={() => removeBeneficiary(bIdx)}
               onSelectSaved={(saved) => selectSavedBeneficiary(bIdx, saved)}
               onAddInvoice={() => addInvoice(bIdx)}
+              onAddRetailInvoice={(result) => addRetailInvoice(bIdx, result)}
               onUpdateInvoice={(iIdx, patch) => updateInvoice(bIdx, iIdx, patch)}
               onRemoveInvoice={(iIdx) => removeInvoice(bIdx, iIdx)}
             />

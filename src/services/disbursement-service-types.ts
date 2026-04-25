@@ -16,6 +16,8 @@ export type BeneficiaryLineInput = {
     amount: number;
     qty?: number;
     unitPrice?: number;
+    itemsJson?: string;    // Retail invoice line items JSON
+    templateType?: string; // Retail invoice template type
   }[];
 };
 

@@ -5,6 +5,8 @@ import { ChevronDown, ChevronUp, Plus, Trash2 } from "lucide-react";
 import { fmtNumber, fmtDisplay } from "@/lib/invoice-tracking-format-helpers";
 import { numberToVietnameseWords } from "@/lib/number-to-vietnamese-words";
 import { inputCls, readonlyCls, labelCls, sectionCls } from "./form-styles";
+import { RetailInvoiceCreateModal, type RetailInvoiceConfirmResult } from "./retail-invoice-create-modal";
+export type { RetailInvoiceConfirmResult };
 
 /* ── Types (shared with disbursement-form-modal) ── */
 export type InvoiceLine = {
@@ -15,6 +17,8 @@ export type InvoiceLine = {
   amount: string;
   qty?: string;       // Bảng kê: số lượng
   unitPrice?: string; // Bảng kê: đơn giá
+  itemsJson?: string;    // Retail invoice line items JSON (từ RetailInvoiceCreateModal)
+  templateType?: string; // Retail invoice template type
 };
 
 export type BeneficiaryLine = {
@@ -46,10 +50,12 @@ type Props = {
   savedBeneficiaries: SavedBeneficiary[];
   canRemove: boolean;
   formatDateInput: (raw: string) => string;
+  loanPlanId?: string | null;
   onUpdate: (patch: Partial<BeneficiaryLine>) => void;
   onRemove: () => void;
   onSelectSaved: (b: SavedBeneficiary) => void;
   onAddInvoice: () => void;
+  onAddRetailInvoice: (result: RetailInvoiceConfirmResult) => void;
   onUpdateInvoice: (iIdx: number, patch: Partial<InvoiceLine>) => void;
   onRemoveInvoice: (iIdx: number) => void;
 };
@@ -57,10 +63,11 @@ type Props = {
 /** Collapsible beneficiary section with inline invoice editing */
 export function BeneficiarySection({
   line, index, savedBeneficiaries, canRemove, formatDateInput: fmtDateInput,
-  onUpdate, onRemove, onSelectSaved, onAddInvoice, onUpdateInvoice, onRemoveInvoice,
+  loanPlanId, onUpdate, onRemove, onSelectSaved, onAddInvoice, onAddRetailInvoice, onUpdateInvoice, onRemoveInvoice,
 }: Props) {
   const [showSearch, setShowSearch] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
+  const [showRetailModal, setShowRetailModal] = useState(false);
 
   const filteredSaved = savedBeneficiaries.filter((s) =>
     s.name.toLowerCase().includes(line.name.toLowerCase())
@@ -173,7 +180,7 @@ export function BeneficiarySection({
                   </button>
                 </div>
               ))}
-              <button type="button" onClick={onAddInvoice} className="cursor-pointer flex items-center gap-1 text-xs text-brand-500 hover:text-brand-500 transition-colors duration-150 mt-1">
+              <button type="button" onClick={() => setShowRetailModal(true)} className="cursor-pointer flex items-center gap-1 text-xs text-brand-500 hover:text-brand-600 transition-colors duration-150 mt-1">
                 <Plus className="h-3.5 w-3.5" /> Thêm hóa đơn
               </button>
             </div>
@@ -212,6 +219,17 @@ export function BeneficiarySection({
             </div>
           )}
         </>
+      )}
+
+      {showRetailModal && (
+        <RetailInvoiceCreateModal
+          loanPlanId={loanPlanId}
+          onConfirm={(result) => {
+            onAddRetailInvoice(result);
+            setShowRetailModal(false);
+          }}
+          onClose={() => setShowRetailModal(false)}
+        />
       )}
     </div>
   );

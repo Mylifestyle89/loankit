@@ -83,6 +83,8 @@ export async function createBeneficiaryLines(
           dueDate: disbursementDate ? addOneMonthClamped(disbursementDate) : new Date(inv.issueDate),
           qty: inv.qty ?? null,
           unitPrice: inv.unitPrice ?? null,
+          items_json: inv.itemsJson ?? null,
+          templateType: inv.templateType ?? null,
         })),
       });
 
