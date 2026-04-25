@@ -13,6 +13,7 @@ export async function getById(id: string) {
           id: true,
           contractNumber: true,
           loanAmount: true,
+          loanPlanId: true,
           customer: { select: { id: true, customer_name: true } },
         },
       },

@@ -19,20 +19,30 @@ export async function checkCustomerAccess(customerId: string, userId: string): P
   return !!hit;
 }
 
+const CUSTOMER_OWNERSHIP = (userId: string) => ({
+  OR: [{ createdById: userId }, { grants: { some: { userId } } }],
+});
+
 export async function checkLoanAccess(loanId: string, userId: string): Promise<boolean> {
-  const loan = await prisma.loan.findUnique({ where: { id: loanId }, select: { customerId: true } });
-  if (!loan) return false;
-  return checkCustomerAccess(loan.customerId, userId);
+  const hit = await prisma.loan.findFirst({
+    where: { id: loanId, customer: CUSTOMER_OWNERSHIP(userId) },
+    select: { id: true },
+  });
+  return !!hit;
 }
 
 export async function checkDisbursementAccess(disbursementId: string, userId: string): Promise<boolean> {
-  const d = await prisma.disbursement.findUnique({ where: { id: disbursementId }, select: { loanId: true } });
-  if (!d) return false;
-  return checkLoanAccess(d.loanId, userId);
+  const hit = await prisma.disbursement.findFirst({
+    where: { id: disbursementId, loan: { customer: CUSTOMER_OWNERSHIP(userId) } },
+    select: { id: true },
+  });
+  return !!hit;
 }
 
 export async function checkInvoiceAccess(invoiceId: string, userId: string): Promise<boolean> {
-  const inv = await prisma.invoice.findUnique({ where: { id: invoiceId }, select: { disbursementId: true } });
-  if (!inv) return false;
-  return checkDisbursementAccess(inv.disbursementId, userId);
+  const hit = await prisma.invoice.findFirst({
+    where: { id: invoiceId, disbursement: { loan: { customer: CUSTOMER_OWNERSHIP(userId) } } },
+    select: { id: true },
+  });
+  return !!hit;
 }

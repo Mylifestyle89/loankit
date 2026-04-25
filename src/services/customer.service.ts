@@ -8,6 +8,7 @@ import { NotFoundError, ValidationError } from "@/core/errors/app-error";
 import { decryptCustomerPii } from "@/lib/field-encryption";
 import { prisma } from "@/lib/prisma";
 import { checkCustomerAccess, checkLoanAccess, checkDisbursementAccess, checkInvoiceAccess } from "./customer-access.service";
+import { saveFromDraft, toDraft } from "./customer-draft.service";
 import { getFullProfile } from "./customer-profile.service";
 import { toCreateDbData, toUpdateDbData } from "./customer-service-helpers";
 
@@ -88,7 +89,6 @@ export const customerService = {
       }),
       prisma.customer.count({ where }),
     ]);
-    // Fetch latest activity timestamp per customer (loans, collaterals, loan plans)
     const customerIds = data.map((c) => c.id);
     const [latestLoans, latestCollaterals, latestPlans] = await Promise.all([
       prisma.loan.groupBy({
@@ -123,7 +123,6 @@ export const customerService = {
         const { loans, collaterals, ...rest } = c;
         const decrypted = decryptCustomerPii(rest);
         const latest = latestByCustomer.get(c.id);
-        // lastActivityAt = latest of customer.updatedAt vs related entities
         const lastActivityAt = latest && latest.at > c.updatedAt ? latest.at : c.updatedAt;
         const lastActivityType = latest && latest.at > c.updatedAt ? latest.type : "customer";
         return {
@@ -205,20 +204,8 @@ export const customerService = {
     await prisma.customer.delete({ where: { id } });
   },
 
-  async saveFromDraft(
-    values: Record<string, unknown>,
-    assetGroups?: Record<string, Record<string, string>[]>,
-  ) {
-    const { saveFromDraft: _saveFromDraft } = await import("./customer-draft.service");
-    return _saveFromDraft(values, assetGroups);
-  },
-
-  async toDraft(params: { customerId?: string; customerName?: string }) {
-    const { toDraft: _toDraft } = await import("./customer-draft.service");
-    return _toDraft(params);
-  },
-
-  /** Fetch customer with ALL relations: loans, disbursements, invoices, beneficiaries, mapping instances */
+  saveFromDraft,
+  toDraft,
   getFullProfile,
 };
 

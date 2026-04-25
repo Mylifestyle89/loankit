@@ -71,7 +71,7 @@ export async function getFullProfile(id: string) {
     debtGroup: debtGroups[0] ?? null,
     nearestMaturity: nearestEndDate?.toISOString() ?? null,
     coBorrowerCount: customer.co_borrowers.length,
-    outstandingBalance: activeLoans.reduce((s: number, l: { loanAmount: number }) => s + l.loanAmount, 0),
+    activeLoanAmount: activeLoans.reduce((s: number, l: { loanAmount: number }) => s + l.loanAmount, 0),
     totalCollateralValue: customer.collaterals.reduce((s: number, c: { total_value: number | null }) => s + (c.total_value ?? 0), 0),
     totalObligation: customer.collaterals.reduce((s: number, c: { obligation: number | null }) => s + (c.obligation ?? 0), 0),
   };

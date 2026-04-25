@@ -276,6 +276,7 @@ export default function LoanDetailPage() {
         <DisbursementFormModal
           loanId={loan.id}
           loanAmount={loan.loanAmount}
+          loanPlanId={loan.loanPlan?.id}
           onClose={() => setShowModal(false)}
           onCreated={handleCreated}
         />
@@ -302,6 +303,7 @@ export default function LoanDetailPage() {
         <DisbursementFormModal
           loanId={loan.id}
           loanAmount={loan.loanAmount}
+          loanPlanId={loan.loanPlan?.id}
           editDisbursementId={editingDisbursementId}
           onClose={() => setEditingDisbursementId(null)}
           onCreated={handleCreated}

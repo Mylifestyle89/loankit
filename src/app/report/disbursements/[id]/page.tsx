@@ -40,6 +40,7 @@ type Disbursement = {
   loan: {
     id: string;
     contractNumber: string;
+    loanPlanId: string | null;
     customer: { id: string; customer_name: string };
   };
   invoices: Invoice[];
@@ -148,6 +149,7 @@ export default function DisbursementDetailPage() {
         <InvoiceTable
           invoices={disbursement.invoices}
           onDelete={handleDeleteInvoice}
+          loanPlanId={disbursement.loan.loanPlanId}
         />
       </div>
 
