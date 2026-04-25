@@ -113,17 +113,24 @@ export async function createInvoice(input: CreateInvoiceInput) {
     }
   }
 
+  // When retail line items provided, compute total from items
+  const effectiveAmount = input.items?.length
+    ? input.items.reduce((s, i) => s + i.amount, 0)
+    : input.amount;
+
   const invoice = await prisma.invoice.create({
     data: {
       disbursementId: input.disbursementId,
       disbursementBeneficiaryId: input.disbursementBeneficiaryId ?? null,
       invoiceNumber: input.invoiceNumber,
       supplierName: input.supplierName,
-      amount: input.amount,
+      amount: effectiveAmount,
       issueDate: new Date(input.issueDate),
       dueDate: new Date(input.dueDate),
       customDeadline: input.customDeadline ? new Date(input.customDeadline) : null,
       notes: input.notes ?? null,
+      items_json: input.items?.length ? JSON.stringify(input.items) : null,
+      templateType: input.templateType ?? null,
     },
   });
 
@@ -149,6 +156,12 @@ export async function updateInvoice(id: string, input: UpdateInvoiceInput) {
   }
   if (input.notes !== undefined) data.notes = input.notes;
   if (input.status !== undefined) data.status = input.status;
+  if (input.items !== undefined) {
+    data.items_json = input.items.length ? JSON.stringify(input.items) : null;
+    // Recompute amount from items when items provided
+    if (input.items.length) data.amount = input.items.reduce((s, i) => s + i.amount, 0);
+  }
+  if (input.templateType !== undefined) data.templateType = input.templateType;
 
   const updated = await prisma.invoice.update({ where: { id }, data });
   if (existing.disbursementBeneficiaryId) {

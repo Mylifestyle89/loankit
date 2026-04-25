@@ -8,6 +8,14 @@ import { invoiceService } from "@/services/invoice.service";
 
 export const runtime = "nodejs";
 
+const retailLineItemSchema = z.object({
+  name: z.string(),
+  unit: z.string(),
+  qty: z.number(),
+  unitPrice: z.number(),
+  amount: z.number(),
+});
+
 const updateSchema = z.object({
   invoiceNumber: z.string().min(1).optional(),
   supplierName: z.string().min(1).optional(),
@@ -17,6 +25,8 @@ const updateSchema = z.object({
   customDeadline: z.string().optional().nullable(),
   notes: z.string().optional().nullable(),
   status: z.enum(["pending", "overdue"]).optional(),
+  items: z.array(retailLineItemSchema).optional(),
+  templateType: z.string().optional().nullable(),
 });
 
 export async function GET(

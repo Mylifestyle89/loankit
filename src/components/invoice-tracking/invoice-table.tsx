@@ -1,7 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import { useLanguage } from "@/components/language-provider";
 import { InvoiceStatusBadge } from "./invoice-status-badge";
+import { RetailInvoiceModal } from "./retail-invoice-modal";
 import { fmtDisplay as fmt, fmtDateDisplay as fmtDate } from "@/lib/invoice-tracking-format-helpers";
 
 type Invoice = {
@@ -24,6 +26,7 @@ type Props = {
   onDelete?: (id: string) => void;
   /** Called when user clicks "Bổ sung" on a needs_supplement virtual entry */
   onSupplement?: (inv: Invoice) => void;
+  loanPlanId?: string | null;
 };
 
 function isDueSoon(dueDate: string): boolean {
@@ -43,8 +46,9 @@ function deadlineCountdown(dueDate: string, status: string): string | null {
   return null;
 }
 
-export function InvoiceTable({ invoices, onDelete, onSupplement }: Props) {
+export function InvoiceTable({ invoices, onDelete, onSupplement, loanPlanId }: Props) {
   const { t } = useLanguage();
+  const [retailInvoiceTarget, setRetailInvoiceTarget] = useState<Invoice | null>(null);
 
   if (invoices.length === 0) {
     return <p className="p-6 text-sm text-zinc-500 dark:text-slate-400">{t("invoices.noData")}</p>;
@@ -135,6 +139,15 @@ export function InvoiceTable({ invoices, onDelete, onSupplement }: Props) {
                       Bổ sung
                     </button>
                   )}
+                  {!inv.id.startsWith("virtual-") && (
+                    <button
+                      type="button"
+                      onClick={() => setRetailInvoiceTarget(inv)}
+                      className="cursor-pointer rounded border border-emerald-200 dark:border-emerald-500/30 px-2 py-1 text-xs text-emerald-700 dark:text-emerald-400 transition-colors duration-150 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50"
+                    >
+                      Tạo HĐ
+                    </button>
+                  )}
                   {onDelete && !inv.id.startsWith("virtual-") && (
                     <button
                       type="button"
@@ -150,6 +163,16 @@ export function InvoiceTable({ invoices, onDelete, onSupplement }: Props) {
           ))}
         </tbody>
       </table>
+
+      {retailInvoiceTarget && (
+        <RetailInvoiceModal
+          invoiceId={retailInvoiceTarget.id}
+          invoiceNumber={retailInvoiceTarget.invoiceNumber}
+          supplierName={retailInvoiceTarget.supplierName}
+          loanPlanId={loanPlanId}
+          onClose={() => setRetailInvoiceTarget(null)}
+        />
+      )}
     </div>
   );
 }

@@ -16,6 +16,14 @@ import {
   markOverdue,
 } from "./invoice-queries.service";
 
+export type RetailLineItem = {
+  name: string;
+  unit: string;
+  qty: number;
+  unitPrice: number;
+  amount: number;
+};
+
 export type CreateInvoiceInput = {
   disbursementId: string;
   disbursementBeneficiaryId?: string;
@@ -26,6 +34,9 @@ export type CreateInvoiceInput = {
   dueDate: string;
   customDeadline?: string;
   notes?: string;
+  /** Retail invoice line items — when provided, amount is auto-computed as Σ item.amount */
+  items?: RetailLineItem[];
+  templateType?: string;
 };
 
 export type UpdateInvoiceInput = {
@@ -37,6 +48,8 @@ export type UpdateInvoiceInput = {
   customDeadline?: string | null;
   notes?: string | null;
   status?: string;
+  items?: RetailLineItem[];
+  templateType?: string | null;
 };
 
 export const invoiceService = {

@@ -344,6 +344,8 @@ model Invoice {
   notes                     String?
   qty                       Float? // Bảng kê: số lượng
   unitPrice                 Float? // Bảng kê: đơn giá
+  items_json                String? // Retail invoice line items: CostItem[] JSON
+  templateType              String? // Retail invoice template: tap_hoa | vlxd | y_te | nong_san
 
   @@index([invoiceNumber, supplierName])
   @@index([disbursementId])
