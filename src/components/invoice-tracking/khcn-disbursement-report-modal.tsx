@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Download, Loader2 } from "lucide-react";
 import { BaseModal } from "@/components/ui/base-modal";
 import { KHCN_DISBURSEMENT_TEMPLATES, type KhcnDisbursementTemplateKey } from "@/services/khcn-disbursement-template-config";
@@ -19,17 +19,26 @@ type TemplateMode =
 
 const TEMPLATE_LIST = Object.entries(KHCN_DISBURSEMENT_TEMPLATES) as [KhcnDisbursementTemplateKey, { label: string }][];
 
-const RETAIL_TEMPLATES: { key: RetailTemplateKey; label: string }[] = [
-  { key: "tap_hoa",  label: "Hóa đơn tạp hóa / Đồ uống" },
-  { key: "vlxd",    label: "Hóa đơn vật liệu xây dựng" },
-  { key: "y_te",    label: "Hóa đơn thiết bị y tế" },
-  { key: "nong_san",label: "Phiếu bán hàng nông sản" },
-];
+const RETAIL_LABEL: Record<RetailTemplateKey, string> = {
+  tap_hoa:  "Hóa đơn tạp hóa / Đồ uống",
+  vlxd:    "Hóa đơn vật liệu xây dựng",
+  y_te:    "Hóa đơn thiết bị y tế",
+  nong_san:"Phiếu bán hàng nông sản",
+};
 
 export function KhcnDisbursementReportModal({ loanId, disbursementId, onClose }: Props) {
   const [selected, setSelected] = useState<TemplateMode>({ kind: "report", key: "bcdxgn" });
+  const [retailType, setRetailType] = useState<RetailTemplateKey | null>(null);
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState("");
+
+  // Detect stored retail invoice template type for this disbursement
+  useEffect(() => {
+    fetch(`/api/disbursements/${disbursementId}/retail-doc`)
+      .then(r => r.json())
+      .then(d => { if (d.ok && d.templateType) setRetailType(d.templateType as RetailTemplateKey); })
+      .catch(() => {});
+  }, [disbursementId]);
 
   const handleGenerate = useCallback(async () => {
     setGenerating(true);
@@ -62,8 +71,7 @@ export function KhcnDisbursementReportModal({ loanId, disbursementId, onClose }:
       const fallbackName = selected.kind === "report"
         ? `${KHCN_DISBURSEMENT_TEMPLATES[selected.key].label}.docx`
         : `HoaDon_${selected.key}.docx`;
-      const fileName = match ? decodeURIComponent(match[1]) : fallbackName;
-      await saveFileWithPicker(blob, fileName);
+      await saveFileWithPicker(blob, match ? decodeURIComponent(match[1]) : fallbackName);
       onClose();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Lỗi không xác định");
@@ -102,13 +110,15 @@ export function KhcnDisbursementReportModal({ loanId, disbursementId, onClose }:
 
         {TEMPLATE_LIST.map(([key, tpl]) => radioItem({ kind: "report", key }, tpl.label))}
 
-        {/* Retail invoice section */}
-        <div className="pt-1">
-          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-400 dark:text-slate-500">
-            Hóa đơn bán lẻ
-          </p>
-          {RETAIL_TEMPLATES.map(({ key, label }) => radioItem({ kind: "retail", key }, label))}
-        </div>
+        {/* Retail invoice — only show the type that was already stored for this disbursement */}
+        {retailType && (
+          <div className="pt-1">
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-400 dark:text-slate-500">
+              Hóa đơn bán lẻ
+            </p>
+            {radioItem({ kind: "retail", key: retailType }, RETAIL_LABEL[retailType])}
+          </div>
+        )}
 
         {error && (
           <div className="rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/40 px-3 py-2 text-sm text-red-700 dark:text-red-400">

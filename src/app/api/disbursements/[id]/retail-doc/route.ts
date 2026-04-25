@@ -2,12 +2,37 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
 import { toHttpError } from "@/core/errors/app-error";
-import { requireEditorOrAdmin, handleAuthError } from "@/lib/auth-guard";
+import { requireSession, requireEditorOrAdmin, handleAuthError } from "@/lib/auth-guard";
 import { checkDisbursementAccess } from "@/services/customer-access.service";
 import { generateRetailInvoiceDoc } from "@/services/retail-invoice-report.service";
 import { prisma } from "@/lib/prisma";
 
 export const runtime = "nodejs";
+
+/** GET /api/disbursements/[id]/retail-doc — return templateType of the stored retail invoice (if any) */
+export async function GET(
+  _req: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  try {
+    const session = await requireSession();
+    const { id: disbursementId } = await params;
+    if (session.user.role !== "admin") {
+      const ok = await checkDisbursementAccess(disbursementId, session.user.id);
+      if (!ok) return NextResponse.json({ ok: false, error: "Forbidden" }, { status: 403 });
+    }
+    const invoice = await prisma.invoice.findFirst({
+      where: { disbursementId, items_json: { not: null } },
+      select: { templateType: true },
+      orderBy: { createdAt: "desc" },
+    });
+    return NextResponse.json({ ok: true, templateType: invoice?.templateType ?? null });
+  } catch (error) {
+    const authResponse = handleAuthError(error);
+    if (authResponse) return authResponse;
+    return NextResponse.json({ ok: false, error: toHttpError(error, "Failed").message }, { status: 500 });
+  }
+}
 
 const bodySchema = z.object({
   templateType: z.enum(["tap_hoa", "vlxd", "y_te", "nong_san"]),
