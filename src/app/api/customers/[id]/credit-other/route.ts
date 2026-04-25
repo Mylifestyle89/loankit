@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireEditorOrAdmin } from "@/lib/auth-guard";
+import { requireSession, requireEditorOrAdmin, handleAuthError } from "@/lib/auth-guard";
+import { customerService } from "@/services/customer.service";
 import { prisma } from "@/lib/prisma";
 
 type Ctx = { params: Promise<{ id: string }> };
@@ -11,13 +12,20 @@ const FIELDS = [
 
 export async function GET(_req: NextRequest, ctx: Ctx) {
   try {
+    const session = await requireSession();
     const { id } = await ctx.params;
+    if (session.user.role !== "admin") {
+      const ok = await customerService.checkCustomerAccess(id, session.user.id);
+      if (!ok) return NextResponse.json({ ok: false, error: "Forbidden" }, { status: 403 });
+    }
     const items = await prisma.creditAtOther.findMany({
       where: { customerId: id },
       orderBy: { createdAt: "asc" },
     });
     return NextResponse.json({ ok: true, items });
   } catch (e: unknown) {
+    const authResponse = handleAuthError(e);
+    if (authResponse) return authResponse;
     const msg = e instanceof Error ? e.message : "Unknown error";
     return NextResponse.json({ ok: false, error: msg }, { status: 500 });
   }

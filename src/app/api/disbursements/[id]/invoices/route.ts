@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import { toHttpError, ValidationError } from "@/core/errors/app-error";
 import { requireSession, requireEditorOrAdmin, handleAuthError } from "@/lib/auth-guard";
+import { customerService } from "@/services/customer.service";
 import { invoiceService } from "@/services/invoice.service";
 
 export const runtime = "nodejs";
@@ -23,8 +24,12 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    await requireSession();
+    const session = await requireSession();
     const { id: disbursementId } = await params;
+    if (session.user.role !== "admin") {
+      const ok = await customerService.checkDisbursementAccess(disbursementId, session.user.id);
+      if (!ok) return NextResponse.json({ ok: false, error: "Forbidden" }, { status: 403 });
+    }
     const invoices = await invoiceService.listByDisbursement(disbursementId);
     return NextResponse.json({ ok: true, invoices });
   } catch (error) {

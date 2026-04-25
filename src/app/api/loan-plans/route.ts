@@ -4,16 +4,21 @@ import { z } from "zod";
 import { toHttpError, ValidationError } from "@/core/errors/app-error";
 import { loanPlanService } from "@/services/loan-plan.service";
 import { requireSession, requireAdmin, handleAuthError } from "@/lib/auth-guard";
+import { customerService } from "@/services/customer.service";
 import { createPlanSchema } from "@/lib/loan-plan/loan-plan-schemas";
 
 export const runtime = "nodejs";
 
 export async function GET(req: NextRequest) {
   try {
-    await requireSession();
+    const session = await requireSession();
     const customerId = req.nextUrl.searchParams.get("customerId");
     if (!customerId) {
       return NextResponse.json({ ok: false, error: "customerId is required" }, { status: 400 });
+    }
+    if (session.user.role !== "admin") {
+      const ok = await customerService.checkCustomerAccess(customerId, session.user.id);
+      if (!ok) return NextResponse.json({ ok: false, error: "Forbidden" }, { status: 403 });
     }
     const plans = await loanPlanService.listPlansForCustomer(customerId);
     return NextResponse.json({ ok: true, plans });

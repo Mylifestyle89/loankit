@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import { toHttpError, ValidationError } from "@/core/errors/app-error";
 import { requireSession, requireEditorOrAdmin, handleAuthError } from "@/lib/auth-guard";
+import { customerService } from "@/services/customer.service";
 import { beneficiaryService } from "@/services/beneficiary.service";
 
 export const runtime = "nodejs";
@@ -18,8 +19,12 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    await requireSession();
+    const session = await requireSession();
     const { id } = await params;
+    if (session.user.role !== "admin") {
+      const ok = await customerService.checkLoanAccess(id, session.user.id);
+      if (!ok) return NextResponse.json({ ok: false, error: "Forbidden" }, { status: 403 });
+    }
     const beneficiaries = await beneficiaryService.listByLoan(id);
     return NextResponse.json({ ok: true, beneficiaries });
   } catch (error) {

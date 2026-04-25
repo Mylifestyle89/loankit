@@ -149,6 +149,20 @@ export const customerService = {
     return this.checkCustomerAccess(loan.customerId, userId);
   },
 
+  /** Returns true if userId has access to the customer that owns this disbursement's loan. */
+  async checkDisbursementAccess(disbursementId: string, userId: string): Promise<boolean> {
+    const d = await prisma.disbursement.findUnique({ where: { id: disbursementId }, select: { loanId: true } });
+    if (!d) return false;
+    return this.checkLoanAccess(d.loanId, userId);
+  },
+
+  /** Returns true if userId has access to the customer that owns this invoice's disbursement chain. */
+  async checkInvoiceAccess(invoiceId: string, userId: string): Promise<boolean> {
+    const inv = await prisma.invoice.findUnique({ where: { id: invoiceId }, select: { disbursementId: true } });
+    if (!inv) return false;
+    return this.checkDisbursementAccess(inv.disbursementId, userId);
+  },
+
   /** Returns true if userId is the owner of or has a grant on this customer. Admin check is caller's responsibility. */
   async checkCustomerAccess(customerId: string, userId: string): Promise<boolean> {
     const hit = await prisma.customer.findFirst({

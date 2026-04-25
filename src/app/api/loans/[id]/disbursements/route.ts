@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import { toHttpError, ValidationError } from "@/core/errors/app-error";
 import { requireSession, requireEditorOrAdmin, handleAuthError } from "@/lib/auth-guard";
+import { customerService } from "@/services/customer.service";
 import { disbursementService } from "@/services/disbursement.service";
 
 export const runtime = "nodejs";
@@ -49,8 +50,12 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    await requireSession();
+    const session = await requireSession();
     const { id: loanId } = await params;
+    if (session.user.role !== "admin") {
+      const ok = await customerService.checkLoanAccess(loanId, session.user.id);
+      if (!ok) return NextResponse.json({ ok: false, error: "Forbidden" }, { status: 403 });
+    }
     const sp = req.nextUrl.searchParams;
     const page = sp.get("page") ? Number(sp.get("page")) : undefined;
     const pageSize = sp.get("pageSize") ? Number(sp.get("pageSize")) : undefined;

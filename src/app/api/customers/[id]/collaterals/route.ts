@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireEditorOrAdmin } from "@/lib/auth-guard";
+import { requireSession, requireEditorOrAdmin, handleAuthError } from "@/lib/auth-guard";
 import { encryptCollateralOwners, decryptCollateralOwners } from "@/lib/field-encryption";
+import { customerService } from "@/services/customer.service";
 import { prisma } from "@/lib/prisma";
 
 type Ctx = { params: Promise<{ id: string }> };
@@ -8,7 +9,12 @@ type Ctx = { params: Promise<{ id: string }> };
 /** GET /api/customers/:id/collaterals — list all collaterals for a customer */
 export async function GET(_req: NextRequest, ctx: Ctx) {
   try {
+    const session = await requireSession();
     const { id } = await ctx.params;
+    if (session.user.role !== "admin") {
+      const ok = await customerService.checkCustomerAccess(id, session.user.id);
+      if (!ok) return NextResponse.json({ ok: false, error: "Forbidden" }, { status: 403 });
+    }
     const collaterals = await prisma.collateral.findMany({
       where: { customerId: id },
       orderBy: { createdAt: "desc" },
@@ -21,6 +27,8 @@ export async function GET(_req: NextRequest, ctx: Ctx) {
     });
     return NextResponse.json({ ok: true, collaterals: items });
   } catch (e: unknown) {
+    const authResponse = handleAuthError(e);
+    if (authResponse) return authResponse;
     const msg = e instanceof Error ? e.message : "Unknown error";
     return NextResponse.json({ ok: false, error: msg }, { status: 500 });
   }

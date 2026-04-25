@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { handleAuthError, requireEditorOrAdmin, requireSession } from "@/lib/auth-guard";
 import { decryptRelatedPersonPii, encryptRelatedPersonPii } from "@/lib/field-encryption";
+import { customerService } from "@/services/customer.service";
 import { prisma } from "@/lib/prisma";
 
 type Ctx = { params: Promise<{ id: string }> };
@@ -8,8 +9,12 @@ type Ctx = { params: Promise<{ id: string }> };
 /** GET /api/customers/:id/related-persons */
 export async function GET(_req: NextRequest, ctx: Ctx) {
   try {
-    await requireSession();
+    const session = await requireSession();
     const { id } = await ctx.params;
+    if (session.user.role !== "admin") {
+      const ok = await customerService.checkCustomerAccess(id, session.user.id);
+      if (!ok) return NextResponse.json({ ok: false, error: "Forbidden" }, { status: 403 });
+    }
     const rows = await prisma.relatedPerson.findMany({
       where: { customerId: id },
       orderBy: { createdAt: "asc" },
