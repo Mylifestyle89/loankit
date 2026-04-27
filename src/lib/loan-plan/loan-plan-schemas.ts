@@ -28,6 +28,11 @@ export const costItemSchema = z.object({
   amount: z.number(),
 });
 
+export const expenseItemSchema = z.object({
+  name: z.string(),
+  amount: z.number(),
+});
+
 export const revenueItemSchema = z.object({
   description: z.string(),
   unit: z.string().optional(),
@@ -94,6 +99,7 @@ export const createPlanSchema = z.object({
   other_costs_period: z.number().optional(),
   // Tiêu dùng - nguồn nông nghiệp / kinh doanh
   agriculture_items: z.array(agricultureItemSchema).optional(),
+  agriculture_expense_items: z.array(expenseItemSchema).optional(),
   agriculture_living_expenses_annual: z.number().optional(),
   business_rows: z.array(businessRevenueRowSchema).optional(),
   business_other_costs_annual: z.number().optional(),

@@ -97,6 +97,9 @@ export type AgricultureItem = {
   isGroupHeader?: boolean; // true → dòng nhóm đậm (I.TỔNG CHI PHÍ, II.THU NHẬP...)
 };
 
+/** Khoản chi phí khấu trừ khỏi nguồn trả nợ (tên + số tiền) */
+export type ExpenseItem = { name: string; amount: number };
+
 /** Dòng doanh thu kinh doanh trong bảng kinh doanh (5 cột) */
 export type BusinessRevenueRow = {
   order?: string;
@@ -127,7 +130,8 @@ export type LoanPlanFinancialsExtended = LoanPlanFinancials & {
   tieu_dung_subtype?: TieuDungSubtype;
   // Nguồn trả nợ nông nghiệp (agriculture)
   agriculture_items?: AgricultureItem[];
-  agriculture_living_expenses_annual?: number; // Chi phí sinh hoạt BQ/năm
+  agriculture_expense_items?: ExpenseItem[]; // Các khoản chi phí khấu trừ (thay thế agriculture_living_expenses_annual)
+  agriculture_living_expenses_annual?: number; // deprecated — fallback cho record cũ
   // Nguồn trả nợ kinh doanh (business)
   business_rows?: BusinessRevenueRow[];
   business_other_costs_annual?: number;          // Chi phí mặt bằng/nhân công/thuế /năm

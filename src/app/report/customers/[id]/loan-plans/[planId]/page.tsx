@@ -9,7 +9,7 @@ import { CostItemsTable, type CostItem } from "./cost-items-table";
 import { NumericInput } from "./numeric-input";
 import { inputCls } from "@/components/invoice-tracking/form-styles";
 import { SmartField } from "@/components/smart-field";
-import { type Financials, type RevenueItem, type TieuDungSubtype, type EarnerTitle, type IncomeSourceType, type AgricultureItem, type BusinessRevenueRow } from "./loan-plan-editor-types";
+import { type Financials, type RevenueItem, type TieuDungSubtype, type EarnerTitle, type IncomeSourceType, type AgricultureItem, type BusinessRevenueRow, type ExpenseItem } from "./loan-plan-editor-types";
 import { fmtVND, formatPercentInputFromRate, parsePercentInputToRate } from "./loan-plan-editor-utils";
 import { TreeRow, Stat } from "./loan-plan-financial-display";
 import { RepaymentScheduleTable } from "./loan-plan-repayment-schedule-table";
@@ -17,8 +17,8 @@ import { CreditAssessmentSection } from "./loan-plan-credit-assessment-section";
 import { LoanPlanInfoGrid, LoanPlanTrungDaiSection } from "./loan-plan-form-sections";
 import { LoanPlanTieuDungSection } from "./loan-plan-tieu-dung-section";
 import { LoanPlanAgricultureIncomeForm } from "./loan-plan-agriculture-income-form";
-import { LoanPlanBusinessIncomeForm } from "./loan-plan-business-income-form";
 import { LoanPlanReview36Section } from "./loan-plan-review-36-section";
+import { parseTsvToRevenueItems } from "@/lib/import/tsv-paste-parser";
 import { METHOD_SHORT_LABELS, METHOD_OPTIONS } from "@/lib/loan-plan/loan-plan-constants";
 
 export default function LoanPlanEditorPage() {
@@ -65,7 +65,7 @@ export default function LoanPlanEditorPage() {
   const [loanCapitalNeed, setLoanCapitalNeed] = useState(0);
   // Tiêu dùng - nông nghiệp / kinh doanh
   const [agricultureItems, setAgricultureItems] = useState<AgricultureItem[]>([]);
-  const [agricultureLivingExpenses, setAgricultureLivingExpenses] = useState(0);
+  const [agricultureExpenseItems, setAgricultureExpenseItems] = useState<ExpenseItem[]>([]);
   const [businessRows, setBusinessRows] = useState<BusinessRevenueRow[]>([]);
   const [businessOtherCosts, setBusinessOtherCosts] = useState(0);
   const [businessLivingExpenses, setBusinessLivingExpenses] = useState(0);
@@ -153,7 +153,7 @@ export default function LoanPlanEditorPage() {
       setOtherCostsPeriod(fin.other_costs_period ?? 0);
       setLoanCapitalNeed(fin.loan_capital_need ?? 0);
       setAgricultureItems(fin.agriculture_items ?? []);
-      setAgricultureLivingExpenses(fin.agriculture_living_expenses_annual ?? 0);
+      setAgricultureExpenseItems(fin.agriculture_expense_items ?? []);
       setBusinessRows(fin.business_rows ?? []);
       setBusinessOtherCosts(fin.business_other_costs_annual ?? 0);
       setBusinessLivingExpenses(fin.business_living_expenses_monthly ?? 0);
@@ -238,7 +238,7 @@ export default function LoanPlanEditorPage() {
             avg_other_loan_rate: avgOtherLoanRate,
             other_costs_period: otherCostsPeriod,
             agriculture_items: agricultureItems,
-            agriculture_living_expenses_annual: agricultureLivingExpenses,
+            agriculture_expense_items: agricultureExpenseItems,
             business_rows: businessRows,
             business_other_costs_annual: businessOtherCosts,
             business_living_expenses_monthly: businessLivingExpenses,
@@ -409,26 +409,17 @@ export default function LoanPlanEditorPage() {
           principalRounding={principalRounding} onPrincipalRoundingChange={setPrincipalRounding}
         />
       )}
-      {loanMethod === "tieu_dung" && incomeSourceType === "agriculture" && (
+      {loanMethod === "tieu_dung" && (incomeSourceType === "agriculture" || incomeSourceType === "business") && (
         <div className="rounded-2xl border border-zinc-200 dark:border-white/[0.07] bg-white dark:bg-[#161616] p-5 shadow-sm space-y-2">
-          <h3 className="text-sm font-semibold">Bảng chi phí / doanh thu nông nghiệp</h3>
+          <h3 className="text-sm font-semibold">
+            {incomeSourceType === "agriculture" ? "Bảng chi phí / doanh thu nông nghiệp" : "Bảng chi phí / doanh thu kinh doanh"}
+          </h3>
           <LoanPlanAgricultureIncomeForm
             items={agricultureItems} onItemsChange={setAgricultureItems}
-            livingExpenses={agricultureLivingExpenses} onLivingExpensesChange={setAgricultureLivingExpenses}
+            expenseItems={agricultureExpenseItems} onExpenseItemsChange={setAgricultureExpenseItems}
             narrative={repaymentNarrative} onNarrativeChange={setRepaymentNarrative}
             loanAmount={loanAmount} termMonths={termMonths}
             interestRate={interestRate} preferentialRate={preferentialRate || undefined}
-          />
-        </div>
-      )}
-      {loanMethod === "tieu_dung" && incomeSourceType === "business" && (
-        <div className="rounded-2xl border border-zinc-200 dark:border-white/[0.07] bg-white dark:bg-[#161616] p-5 shadow-sm space-y-2">
-          <h3 className="text-sm font-semibold">Bảng doanh thu kinh doanh</h3>
-          <LoanPlanBusinessIncomeForm
-            rows={businessRows} onRowsChange={setBusinessRows}
-            otherCosts={businessOtherCosts} onOtherCostsChange={setBusinessOtherCosts}
-            livingExpenses={businessLivingExpenses} onLivingExpensesChange={setBusinessLivingExpenses}
-            narrative={repaymentNarrative} onNarrativeChange={setRepaymentNarrative}
           />
         </div>
       )}
@@ -446,6 +437,13 @@ export default function LoanPlanEditorPage() {
       {loanMethod !== "tieu_dung" && (
       <div className="rounded-2xl border border-zinc-200 dark:border-white/[0.07] bg-white dark:bg-[#161616] p-5 shadow-sm">
         <h3 className="text-sm font-semibold mb-3">Doanh thu dự kiến</h3>
+        <textarea
+          onPaste={(e) => { e.preventDefault(); const parsed = parseTsvToRevenueItems(e.clipboardData.getData("text/plain")); if (parsed.length > 0) setRevenueItems(parsed); }}
+          readOnly
+          rows={2}
+          className="w-full mb-3 rounded-lg border border-dashed border-zinc-300 dark:border-white/10 bg-zinc-50 dark:bg-white/[0.02] px-3 py-2 text-xs text-zinc-400 resize-none focus:outline-none focus:border-brand-400"
+          placeholder="Click vào đây rồi Ctrl+V để dán bảng từ Excel / Google Sheets"
+        />
         <div className="overflow-x-auto">
           <table className="w-full border-collapse text-sm">
             <thead>

@@ -1,9 +1,11 @@
 "use client";
 
+import { useRef } from "react";
 import { Plus, Trash2 } from "lucide-react";
 import { NumericInput } from "./numeric-input";
-
-export type CostItem = { name: string; unit: string; qty: number; unitPrice: number; amount: number };
+import { parseTsvToCostItems } from "@/lib/import/tsv-paste-parser";
+export type { CostItem } from "@/lib/loan-plan/loan-plan-types";
+import type { CostItem } from "@/lib/loan-plan/loan-plan-types";
 
 const cellCls = "px-2 py-1.5 border border-zinc-200 dark:border-white/[0.07] text-sm";
 const inputCls = "w-full bg-transparent outline-none text-right tabular-nums";
@@ -15,6 +17,14 @@ export function CostItemsTable({
   items: CostItem[];
   onChange: (items: CostItem[]) => void;
 }) {
+  const pasteRef = useRef<HTMLTextAreaElement>(null);
+
+  function handlePaste(e: React.ClipboardEvent<HTMLTextAreaElement>) {
+    e.preventDefault();
+    const parsed = parseTsvToCostItems(e.clipboardData.getData("text/plain"));
+    if (parsed.length > 0) onChange(parsed);
+  }
+
   function updateItem(idx: number, field: keyof CostItem, raw: string) {
     const next = [...items];
     const item = { ...next[idx] };
@@ -40,6 +50,15 @@ export function CostItemsTable({
   const totalAmount = items.reduce((s, i) => s + i.amount, 0);
 
   return (
+    <div className="space-y-2">
+      <textarea
+        ref={pasteRef}
+        onPaste={handlePaste}
+        readOnly
+        rows={2}
+        className="w-full rounded-lg border border-dashed border-zinc-300 dark:border-white/10 bg-zinc-50 dark:bg-white/[0.02] px-3 py-2 text-xs text-zinc-400 resize-none focus:outline-none focus:border-brand-400"
+        placeholder="Click vào đây rồi Ctrl+V để dán bảng từ Excel / Google Sheets"
+      />
     <div className="overflow-x-auto">
       <table className="w-full border-collapse text-sm">
         <thead>
@@ -93,6 +112,7 @@ export function CostItemsTable({
       >
         <Plus className="h-3 w-3" /> Thêm hạng mục
       </button>
+    </div>
     </div>
   );
 }

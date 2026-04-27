@@ -14,7 +14,7 @@ import { parseNum } from "@/lib/import/xlsx-number-utils";
 import { numberToVietnameseWords } from "@/lib/number-to-vietnamese-words";
 import { formatPeriodLabel, roundPrincipal, type PrincipalRounding } from "@/lib/loan-plan/loan-plan-calculator";
 import { fmtN } from "@/lib/report/format-number-vn";
-import { buildAgricultureIncomeData, buildBusinessIncomeData } from "./khcn-builder-tieu-dung-income-helpers";
+import { buildAgricultureIncomeData } from "./khcn-builder-tieu-dung-income-helpers";
 
 type Data = Record<string, unknown>;
 type Fin = Record<string, unknown>;
@@ -165,7 +165,8 @@ export function buildTieuDungLoanPlanData(fin: Fin, data: Data): void {
     data["HĐTD.Cụ thể về thu nhập khác"] = "";
     data["HĐTD.Nơi công tác"] = "";
   } else if (source === "business") {
-    Object.assign(data, buildBusinessIncomeData(fin, loanAmt));
+    // Dùng chung agriculture form/data cho kinh doanh — cùng cấu trúc bảng chi phí/doanh thu
+    Object.assign(data, buildAgricultureIncomeData(fin, loanAmt));
     data["HĐTD.Tiền lương hàng tháng"] = fmtN(0);
     data["HĐTD.Tổng thu nhập từ lương"] = fmtN(0);
     data["HĐTD.Tổng thu nhập từ SXKD"] = fmtN(0);
