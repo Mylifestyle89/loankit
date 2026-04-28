@@ -87,7 +87,7 @@ export function DisbursementFormModal({ loanId, loanAmount = 0, loanPlanId, edit
             accountNumber: bl.accountNumber ?? "",
             bankName: bl.bankName ?? "",
             amount: fmtNumber(String(bl.amount)),
-            invoiceStatus: (bl.invoiceStatus === "has_invoice" ? "has_invoice" : bl.invoiceStatus === "bang_ke" ? "bang_ke" : "pending") as "pending" | "has_invoice" | "bang_ke",
+            invoiceStatus: (bl.invoiceStatus === "has_invoice" ? "has_invoice" : bl.invoiceStatus === "bang_ke" ? "bang_ke" : bl.invoiceStatus === "hoa_don_vat" ? "hoa_don_vat" : "pending") as "pending" | "has_invoice" | "bang_ke" | "hoa_don_vat",
             invoices: (bl.invoices ?? []).map((inv: { invoiceNumber: string; supplierName: string; issueDate: string; amount: number; qty?: number; unitPrice?: number; templateType?: string | null; items_json?: string | null }) => ({
               tempId: tempId(),
               invoiceNumber: inv.invoiceNumber,
@@ -277,7 +277,7 @@ export function DisbursementFormModal({ loanId, loanAmount = 0, loanPlanId, edit
         bankName: b.bankName || undefined,
         amount: num(b.amount),
         invoiceStatus: b.invoiceStatus,
-        invoices: b.invoiceStatus === "has_invoice"
+        invoices: (b.invoiceStatus === "has_invoice" || b.invoiceStatus === "hoa_don_vat")
           ? b.invoices.filter((i) => i.invoiceNumber.trim()).map((i) => ({
               supplierName: i.supplierName || b.name.trim(),
               invoiceNumber: i.invoiceNumber.trim(),

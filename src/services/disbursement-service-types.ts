@@ -8,7 +8,7 @@ export type BeneficiaryLineInput = {
   accountNumber?: string;
   bankName?: string;
   amount: number;
-  invoiceStatus?: "pending" | "has_invoice" | "bang_ke";
+  invoiceStatus?: "pending" | "has_invoice" | "bang_ke" | "hoa_don_vat";
   invoices?: {
     supplierName: string;
     invoiceNumber: string;

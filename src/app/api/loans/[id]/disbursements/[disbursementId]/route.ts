@@ -27,7 +27,7 @@ const beneficiaryLineSchema = z.object({
   accountNumber: z.string().optional(),
   bankName: z.string().optional(),
   amount: z.number().positive(),
-  invoiceStatus: z.enum(["pending", "has_invoice", "bang_ke"]).optional(),
+  invoiceStatus: z.enum(["pending", "has_invoice", "bang_ke", "hoa_don_vat"]).optional(),
   invoices: z.array(invoiceLineSchema).optional(),
 });
 
