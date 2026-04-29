@@ -39,7 +39,7 @@ export const CO_BORROWER_LABELS: Record<string, string> = {
 export const LOAN_LABELS: Record<string, string> = {
   contract_number: "Số hợp đồng",
   loan_amount: "Số tiền vay",
-  interest_rate: "Lãi suất (%)",
+  interest_rate: "Lãi suất (%/năm)",
   purpose: "Mục đích vay",
   start_date: "Ngày bắt đầu",
   end_date: "Ngày kết thúc",
@@ -49,8 +49,13 @@ export const LOAN_LABELS: Record<string, string> = {
   interest_schedule: "Kỳ trả lãi",
   total_capital_need: "Tổng nhu cầu vốn",
   equity_amount: "Vốn đối ứng",
+  equity_ratio: "Tỷ lệ vốn đối ứng",
   expected_revenue: "Doanh thu dự kiến",
   expected_profit: "Lợi nhuận dự kiến",
+  turnover_cycles: "Vòng quay vốn",
+  credit_rating: "Xếp hạng tín dụng",
+  credit_rating_date: "Ngày xếp hạng",
+  debt_group: "Nhóm nợ",
 };
 
 /** Common collateral fields shown for every type. */

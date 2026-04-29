@@ -42,8 +42,13 @@ export type ExtractedLoan = {
   interest_schedule: string;
   total_capital_need: number;
   equity_amount: number;
+  equity_ratio: string;          // Tỷ lệ vốn đối ứng (e.g. "10,92%")
   expected_revenue: number;
   expected_profit: number;
+  turnover_cycles: string;       // Vòng quay vốn lưu động (e.g. "2 vòng/năm")
+  credit_rating: string;         // Xếp hạng tín dụng nội bộ (e.g. "A4")
+  credit_rating_date: string;    // Thời điểm xếp hạng (YYYY-MM-DD)
+  debt_group: string;            // Nhóm nợ (e.g. "1")
 };
 
 export type CollateralType = "qsd_dat" | "dong_san" | "tiet_kiem" | "tai_san_khac";
@@ -199,15 +204,27 @@ QSD ĐẤT (type="qsd_dat") — fields cần extract:
 TIẾT KIỆM (type="tiet_kiem"):
 - savings_book_number: Số sổ TK. deposit_bank_name: Tên NH. deposit_amount: Số tiền. deposit_date: Ngày gửi.
 
-QUY TẮC NGƯỜI ĐỒNG VAY (CO_BORROWER):
-- Trích xuất cả vợ/chồng và người đồng trả nợ khác. Quan hệ ghi rõ: "Vợ", "Chồng", "Con", "Anh", "Em"...
-- Nếu tài liệu không đề cập người đồng vay, trả mảng rỗng [].
-- Vợ/chồng của khách hàng chính (dù chỉ ký tên đồng ý vay) cũng tính là người đồng vay nếu có thông tin CCCD/địa chỉ.
+QUY TẮC NGƯỜI ĐỒNG VAY / NGƯỜI LIÊN QUAN (CO_BORROWER):
+- Trích xuất vợ/chồng và người đồng trả nợ. Quan hệ ghi rõ: "Vợ", "Chồng", "Con", "Đồng sở hữu tài sản"...
+- Người đồng sở hữu tài sản (trong bảng TT/Người có liên quan hoặc mục "Người sử dụng đồng thời là chủ sở hữu") → cũng trích xuất vào co_borrowers.
+- Nếu không có, trả mảng rỗng [].
 
 QUY TẮC KHOẢN VAY:
-- loan_method bắt buộc là 1 trong: "tung_lan" (cho vay từng lần), "han_muc" (hạn mức), "trung_dai" (trung dài hạn), "tieu_dung" (tiêu dùng).
-- Nếu tài liệu không rõ, suy đoán từ mục đích vay.
-- total_capital_need = tổng nhu cầu vốn của phương án, equity_amount = vốn tự có.
+- loan_method bắt buộc: "tung_lan" (từng lần), "han_muc" (hạn mức — thường có "Thời hạn duy trì hạn mức"), "trung_dai" (trung dài hạn), "tieu_dung" (tiêu dùng).
+- interest_rate: Tìm "lãi suất [X]%/năm" hoặc trong bảng chi phí dòng "Lãi vay NH | [X]%/năm". Chia 100 → float. Ví dụ "8,8%" → 0.088.
+- total_capital_need: "Tổng nhu cầu vốn" hoặc "Tổng nhu cầu vốn bình quân trong 01 năm".
+- equity_amount: "Vốn đối ứng: X đồng".
+- equity_ratio: "tỷ lệ vốn đối ứng X%" → lưu dạng string "10,92%".
+- turnover_cycles: "X vòng/năm" từ "Vòng quay vốn lưu động". Ví dụ: "2 vòng/năm".
+- credit_rating: Từ bảng "Thời điểm đánh giá | Xếp hạng" → cột 2. Ví dụ: "A4".
+- credit_rating_date: Cột 1 của bảng trên (YYYY-MM-DD).
+- debt_group: Từ "Nhóm nợ: Nhóm [X]" hoặc "Nhóm [HĐTD.Nhóm nợ]". Ví dụ: "1".
+
+QUY TẮC KHÁCH HÀNG:
+- marital_status: Tìm trong đoạn văn giới thiệu 1.1. các cụm như:
+  + "Độc thân theo..." → "single"
+  + "Kết hôn", "Đăng ký kết hôn" → "married"
+  + "Giấy xác nhận tình trạng hôn nhân" → "single" (nếu là xác nhận độc thân)
 
 Trả về JSON theo schema chính xác:
 {
@@ -230,8 +247,9 @@ Trả về JSON theo schema chính xác:
     "purpose": "", "start_date": "", "end_date": "",
     "loan_method": "", "lending_method": "",
     "principal_schedule": "", "interest_schedule": "",
-    "total_capital_need": 0, "equity_amount": 0,
-    "expected_revenue": 0, "expected_profit": 0
+    "total_capital_need": 0, "equity_amount": 0, "equity_ratio": "",
+    "expected_revenue": 0, "expected_profit": 0,
+    "turnover_cycles": "", "credit_rating": "", "credit_rating_date": "", "debt_group": ""
   }],
   "collaterals": [{
     "name": "", "type": "qsd_dat", "total_value": 0, "obligation": 0,
