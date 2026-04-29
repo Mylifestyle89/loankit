@@ -2,6 +2,8 @@
 
 import { SmartField } from "@/components/smart-field";
 import { DropdownOptionsProvider } from "@/lib/hooks/dropdown-options-context";
+import { AiPasteExtractor } from "@/components/ui/ai-paste-extractor";
+import type { ExtractedCustomer } from "@/services/customer-docx-extraction.service";
 import { CustomerCoBorrowerSection } from "./customer-co-borrower-section";
 import { CustomerRelatedPersonSection } from "./customer-related-person-section";
 import { DocumentScannerDialog } from "./document-scanner-dialog";
@@ -108,6 +110,26 @@ export function CustomerInfoForm({
       {/* Subtab: Thông tin chung */}
       {infoSubTab === "general" && (
         <>
+        <AiPasteExtractor
+          entityType="customer"
+          onExtracted={(data: Partial<ExtractedCustomer>) => {
+            setForm((prev) => ({
+              ...prev,
+              ...(data.customer_name && { customer_name: data.customer_name }),
+              ...(data.cccd && { cccd: data.cccd }),
+              ...(data.cccd_old && { cccd_old: data.cccd_old }),
+              ...(data.cccd_issued_date && { cccd_issued_date: data.cccd_issued_date }),
+              ...(data.cccd_issued_place && { cccd_issued_place: data.cccd_issued_place }),
+              ...(data.date_of_birth && { date_of_birth: data.date_of_birth }),
+              ...(data.gender && { gender: data.gender }),
+              ...(data.phone && { phone: data.phone }),
+              ...(data.address && { address: data.address }),
+              ...(data.bank_account && { bank_account: data.bank_account }),
+              ...(data.bank_name && { bank_name: data.bank_name }),
+            }));
+          }}
+          placeholder="Dán mục 1. Thông tin khách hàng từ BCĐX / HĐTD vào đây..."
+        />
         <DropdownOptionsProvider prefix="customer.">
         <form
           onSubmit={handleSubmit}

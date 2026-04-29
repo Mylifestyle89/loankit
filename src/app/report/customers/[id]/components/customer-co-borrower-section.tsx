@@ -6,6 +6,8 @@ import { inputCls, btnCls } from "./shared-form-styles";
 import { SmartField } from "@/components/smart-field";
 import { DropdownOptionsProvider } from "@/lib/hooks/dropdown-options-context";
 import { DocumentScannerDialog } from "./document-scanner-dialog";
+import { AiPasteExtractor } from "@/components/ui/ai-paste-extractor";
+import type { ExtractedCoBorrower } from "@/services/customer-docx-extraction.service";
 
 type CoBorrowerItem = {
   id: string;
@@ -88,6 +90,27 @@ function CoBorrowerForm({
 
   return (
     <div className="rounded-xl border border-brand-200 dark:border-brand-500/20 bg-brand-50/30 dark:bg-brand-500/5 p-4 space-y-3">
+      <AiPasteExtractor
+        entityType="co_borrower"
+        onExtracted={(data: Partial<ExtractedCoBorrower> | Partial<ExtractedCoBorrower>[]) => {
+          const cob = Array.isArray(data) ? data[0] : data;
+          if (!cob) return;
+          setForm((prev) => ({
+            ...prev,
+            ...(cob.full_name && { full_name: cob.full_name }),
+            ...(cob.id_number && { id_number: cob.id_number }),
+            ...(cob.id_old && { id_old: cob.id_old }),
+            ...(cob.id_issued_date && { id_issued_date: cob.id_issued_date }),
+            ...(cob.id_issued_place && { id_issued_place: cob.id_issued_place }),
+            ...(cob.birth_year && { birth_year: cob.birth_year }),
+            ...(cob.phone && { phone: cob.phone }),
+            ...(cob.current_address && { current_address: cob.current_address }),
+            ...(cob.permanent_address && { permanent_address: cob.permanent_address }),
+            ...(cob.relationship && { relationship: cob.relationship }),
+          }));
+        }}
+        placeholder="Dán thông tin người đồng vay từ BCĐX / HĐTD vào đây..."
+      />
       <div className="grid grid-cols-2 gap-3">
         {FIELDS.map((f) => (
           <label key={f.key} className="block">
