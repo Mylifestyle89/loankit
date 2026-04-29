@@ -84,10 +84,10 @@ function buildPaTranoAnnual(
   });
   return rows.map((r) => ({
     "Năm": r.periodLabel ?? `Năm ${r.year}`,
-    "Số tiền vay": fmtN(r.balance),
+    "Thu nhập trả nợ": fmtN(r.income),
+    "Dư nợ": fmtN(r.balance),
     "Gốc trả": fmtN(r.principal),
     "Lãi trả": fmtN(r.interest),
-    "Thu nhập trả nợ": fmtN(r.income),
-    "Thu nhập còn lại": fmtN(r.remaining),
+    "TN còn lại": fmtN(r.remaining),
   }));
 }

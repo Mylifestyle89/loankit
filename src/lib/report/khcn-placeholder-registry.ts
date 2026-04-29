@@ -277,13 +277,10 @@ export const KHCN_PLACEHOLDER_GROUPS: PlaceholderGroup[] = [
     prefix: "HĐTD",
     items: [
       "HĐTD.Mô tả nguồn trả nợ",
+      "HĐTD.Nguồn trả nợ", "HĐTD.Tổng chi phí khấu trừ", "HĐTD.Thu nhập trả nợ cho Agribank",
       "HĐTD.Tổng chi phí nông nghiệp", "HĐTD.Tổng thu nhập nông nghiệp",
       "HĐTD.Lợi nhuận nông nghiệp", "HĐTD.Chi phí sinh hoạt/năm",
       "HĐTD.Thu nhập trả nợ/năm",
-      "HĐTD.Tổng giá trị nhập", "HĐTD.Tổng doanh thu",
-      "HĐTD.Lợi nhuận kinh doanh/năm", "HĐTD.Chi phí khác/năm",
-      "HĐTD.Thu nhập bình quân/tháng", "HĐTD.Chi phí sinh hoạt/tháng",
-      "HĐTD.Thu nhập trả nợ/tháng", "HĐTD.Số gốc trả/tháng",
     ],
   },
   {
