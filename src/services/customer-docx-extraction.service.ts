@@ -120,11 +120,28 @@ QUY TẮC CHUNG:
 7. marital_status: "Độc thân"→"single", "Đã kết hôn"→"married".
 
 QUY TẮC TSBĐ (COLLATERAL):
-- type bắt buộc là 1 trong: "qsd_dat" (quyền sử dụng đất), "dong_san" (xe, máy móc), "tiet_kiem" (sổ tiết kiệm), "tai_san_khac".
+- type bắt buộc là 1 trong: "qsd_dat" (quyền sử dụng đất/nhà ở), "dong_san" (xe, máy móc), "tiet_kiem" (sổ tiết kiệm), "tai_san_khac".
 - Mỗi TSBĐ chỉ fill fields tương ứng với type, còn lại để rỗng/0.
-- QSD đất: ưu tiên extract certificate_serial, land_address, land_area, loại đất (ONT, CLN, LUC...), đơn giá.
-- Động sản: ưu tiên biển số (registration_number), hãng/model/năm, số khung/máy.
-- Tiết kiệm: số sổ, tên NH, số tiền, ngày gửi.
+- Tài liệu thường trình bày TSBĐ dạng bảng — đọc kỹ từng dòng bảng.
+- Nếu có nhiều TSBĐ (ví dụ 2 thửa đất khác nhau), tạo 2 object riêng biệt.
+
+QSD ĐẤT (type="qsd_dat"):
+- certificate_serial: Số/ký hiệu GCN (Giấy chứng nhận QSDĐ). Ví dụ: "BS 123456", "AF 654321", "BQ 000789".
+- land_address: Địa chỉ/vị trí thửa đất. Ví dụ: "Phường 3, Tp. Đà Lạt, Lâm Đồng".
+- land_area: Diện tích (chỉ số, không kèm đơn vị). Ví dụ: "500", "1250.5".
+- land_type_1: Loại đất chính. Ví dụ: "ONT" (đất ở nội thị), "CLN" (cây lâu năm), "LUC" (lúa nước).
+- land_unit_price_1: Đơn giá loại đất chính (đồng/m²). Ví dụ: 5000000.
+- land_type_2, land_unit_price_2: Loại đất phụ nếu có (nhiều mục đích sử dụng trên cùng thửa).
+- lot_number: Số thửa đất. Ví dụ: "128", "52".
+- sheet_number: Số tờ bản đồ. Ví dụ: "5", "12".
+- total_value: Giá trị định giá TSBĐ (đồng). obligation: Nghĩa vụ bảo đảm (đồng).
+
+ĐỘNG SẢN (type="dong_san"):
+- registration_number: Biển số xe/máy. Ví dụ: "51A-123.45".
+- brand/model/year: Hãng/model/năm sản xuất. chassis_number/engine_number: Số khung/máy.
+
+TIẾT KIỆM (type="tiet_kiem"):
+- savings_book_number: Số sổ tiết kiệm. deposit_bank_name: Tên NH. deposit_amount: Số tiền. deposit_date: Ngày gửi.
 
 QUY TẮC NGƯỜI ĐỒNG VAY (CO_BORROWER):
 - Trích xuất cả vợ/chồng và người đồng trả nợ khác. Quan hệ ghi rõ: "Vợ", "Chồng", "Con", "Anh", "Em"...
@@ -183,10 +200,37 @@ TÀI LIỆU:
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-/** Head 30k + tail 10k to fit token limits */
+/**
+ * Smart truncation: giữ toàn bộ sections có TSBĐ (GCN, biển số, sổ TK),
+ * truncate phần còn lại theo head+tail.
+ */
 function truncateText(text: string): string {
   if (text.length <= 40_000) return text;
-  return `${text.slice(0, 30_000)}\n\n...(rút gọn)...\n\n${text.slice(-10_000)}`;
+
+  // Tìm các line có keyword TSBĐ → giữ lại cùng context ±20 lines
+  const COLLATERAL_KEYWORDS = /GCN|Giấy chứng nhận|số thửa|tờ bản đồ|biển số|số khung|số máy|sổ tiết kiệm|QSDĐ|đất ở|CLN|ONT|LUC|TSBĐ|tài sản bảo đảm/i;
+  const lines = text.split("\n");
+  const keepLines = new Set<number>();
+
+  for (let i = 0; i < lines.length; i++) {
+    if (COLLATERAL_KEYWORDS.test(lines[i])) {
+      for (let j = Math.max(0, i - 20); j <= Math.min(lines.length - 1, i + 20); j++) {
+        keepLines.add(j);
+      }
+    }
+  }
+
+  const collateralSection = lines
+    .filter((_, i) => keepLines.has(i))
+    .join("\n");
+
+  // Head (customer/loan info) + collateral sections + tail
+  const headText = text.slice(0, 20_000);
+  const tailText = text.slice(-5_000);
+  const combined = `${headText}\n\n...\n\n${collateralSection}\n\n...\n\n${tailText}`;
+
+  // If combined still too large, fallback
+  return combined.length <= 60_000 ? combined : `${text.slice(0, 30_000)}\n\n...(rút gọn)...\n\n${text.slice(-10_000)}`;
 }
 
 const EMPTY_RESULT: ExtractionResult = { customer: {}, loans: [], collaterals: [], co_borrowers: [] };
