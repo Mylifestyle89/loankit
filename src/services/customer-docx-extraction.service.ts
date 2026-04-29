@@ -54,25 +54,50 @@ export type ExtractedCollateral = {
   type: CollateralType;
   total_value: number;
   obligation: number;
+  // Thông tin GCN / giấy tờ (dùng cho cả qsd_dat và dong_san)
+  certificate_serial: string;    // Số GCN / số đăng ký xe
+  gcn_name: string;              // Tên đầy đủ của GCN
+  gcn_issued_by: string;         // Cơ quan cấp GCN / đăng ký xe
+  gcn_issued_date: string;       // Ngày cấp GCN / đăng ký xe (YYYY-MM-DD)
+  // Tình trạng & thẩm định (dùng cho cả qsd_dat và dong_san)
+  asset_condition: string;       // Tình trạng sử dụng TS
+  asset_owner: string;           // Tên chủ sở hữu TS
+  liquidity_note: string;        // Tính thanh khoản
+  insurance_note: string;        // Mua bảo hiểm TSBĐ
+  remaining_duration: string;    // Thời hạn sử dụng còn lại
 
-  // QSD đất
-  certificate_serial: string;
-  land_address: string;
-  land_area: string;
-  land_type_1: string;
-  land_unit_price_1: number;
-  land_type_2: string;
-  land_unit_price_2: number;
-  lot_number: string;
-  sheet_number: string;
+  // QSD đất — thửa đất
+  lot_number: string;            // Số thửa đất
+  sheet_number: string;          // Số tờ bản đồ
+  land_address: string;          // Địa chỉ thửa đất
+  land_area: string;             // Diện tích (m², chỉ số)
+  land_usage_form: string;       // Hình thức sử dụng (riêng/chung và m²)
+  land_usage_purpose: string;    // Mục đích sử dụng đất (ONT, CLN, LUC...)
+  land_usage_duration: string;   // Thời hạn sử dụng đất
+  land_origin: string;           // Nguồn gốc sử dụng đất
+  land_type_1: string;           // Loại đất chính (tên loại)
+  land_unit_price_1: number;     // Đơn giá loại đất chính (đồng/m²)
+  land_type_2: string;           // Loại đất phụ (nếu có)
+  land_unit_price_2: number;     // Đơn giá loại đất phụ
+
+  // QSD đất — nhà gắn liền với đất
+  building_type: string;         // Loại nhà ở (Nhà ở riêng lẻ, căn hộ...)
+  building_built_area: string;   // Diện tích xây dựng (m², chỉ số)
+  building_floor_area: string;   // Diện tích sàn (m², chỉ số)
+  building_structure: string;    // Kết cấu nhà
+  building_ownership_form: string; // Hình thức sở hữu (riêng/chung)
+  building_grade: string;        // Cấp/hạng nhà
+  building_floors: string;       // Số tầng
 
   // Động sản (xe, máy móc)
-  registration_number: string;
-  brand: string;
-  model: string;
-  year: string;
-  chassis_number: string;
-  engine_number: string;
+  registration_number: string;   // Biển kiểm soát / biển số
+  brand: string;                 // Nhãn hiệu xe
+  model: string;                 // Số loại xe
+  color: string;                 // Màu sơn
+  year: string;                  // Năm sản xuất
+  chassis_number: string;        // Số khung
+  engine_number: string;         // Số máy
+  seat_count: string;            // Số chỗ ngồi
 
   // Tiết kiệm
   savings_book_number: string;
@@ -121,27 +146,58 @@ QUY TẮC CHUNG:
 
 QUY TẮC TSBĐ (COLLATERAL):
 - type bắt buộc là 1 trong: "qsd_dat" (quyền sử dụng đất/nhà ở), "dong_san" (xe, máy móc), "tiet_kiem" (sổ tiết kiệm), "tai_san_khac".
-- Mỗi TSBĐ chỉ fill fields tương ứng với type, còn lại để rỗng/0.
-- Tài liệu thường trình bày TSBĐ dạng bảng — đọc kỹ từng dòng bảng.
-- Nếu có nhiều TSBĐ (ví dụ 2 thửa đất khác nhau), tạo 2 object riêng biệt.
+- Tài liệu Agribank trình bày TSBĐ theo cấu trúc a) b) c) d) e) f) g) — đọc toàn bộ các mục.
+- Nếu có nhiều TSBĐ (nhiều thửa đất / xe), tạo object riêng cho mỗi tài sản.
+- Trích xuất TỐI ĐA thông tin có thể từ tài liệu, không bỏ sót.
 
-QSD ĐẤT (type="qsd_dat"):
-- certificate_serial: Số/ký hiệu GCN (Giấy chứng nhận QSDĐ). Ví dụ: "BS 123456", "AF 654321", "BQ 000789".
-- land_address: Địa chỉ/vị trí thửa đất. Ví dụ: "Phường 3, Tp. Đà Lạt, Lâm Đồng".
-- land_area: Diện tích (chỉ số, không kèm đơn vị). Ví dụ: "500", "1250.5".
-- land_type_1: Loại đất chính. Ví dụ: "ONT" (đất ở nội thị), "CLN" (cây lâu năm), "LUC" (lúa nước).
-- land_unit_price_1: Đơn giá loại đất chính (đồng/m²). Ví dụ: 5000000.
-- land_type_2, land_unit_price_2: Loại đất phụ nếu có (nhiều mục đích sử dụng trên cùng thửa).
-- lot_number: Số thửa đất. Ví dụ: "128", "52".
-- sheet_number: Số tờ bản đồ. Ví dụ: "5", "12".
-- total_value: Giá trị định giá TSBĐ (đồng). obligation: Nghĩa vụ bảo đảm (đồng).
+QSD ĐẤT (type="qsd_dat") — fields cần extract:
+- certificate_serial: Số GCN. Ví dụ: "AA 01224578", "BS 123456". Nằm trong câu "số [Số seri]".
+- gcn_name: Tên đầy đủ GCN. Ví dụ: "Giấy chứng nhận quyền sử dụng đất, quyền sở hữu tài sản gắn liền với đất".
+- gcn_issued_by: Cơ quan cấp GCN. Ví dụ: "Chi nhánh văn phòng đăng ký đất đai thành phố Đà Lạt".
+- gcn_issued_date: Ngày cấp (YYYY-MM-DD). Ví dụ: "2025-06-30".
+- lot_number: Số thửa đất. Ví dụ: "18", "128". Nằm sau "Thửa đất số:".
+- sheet_number: Số tờ bản đồ. Ví dụ: "11", "5". Nằm sau "Tờ bản đồ số:".
+- land_address: Địa chỉ thửa đất. Ví dụ: "16/9 Nam Kỳ Khởi Nghĩa, phường 1, Đà Lạt, Lâm Đồng".
+- land_area: Diện tích (chỉ số, bỏ "m2"). Ví dụ: "88.3", "500".
+- land_usage_form: Hình thức sử dụng. Ví dụ: "Sử dụng riêng: 0 m2; Sử dụng chung: 88,3 m2".
+- land_usage_purpose: Mục đích sử dụng đất. Ví dụ: "Đất ở tại đô thị", "CLN", "ONT".
+- land_usage_duration: Thời hạn sử dụng đất. Ví dụ: "Lâu dài", "50 năm".
+- land_origin: Nguồn gốc sử dụng đất. Ví dụ: "Nhà nước giao có thu tiền".
+- land_type_1: Loại đất chính (mã loại). Ví dụ: "ONT", "CLN", "LUC", "Đất ở tại đô thị".
+- land_unit_price_1: Đơn giá loại đất chính (đồng/m²). Ví dụ: 80000000.
+- land_type_2, land_unit_price_2: Loại đất phụ và đơn giá nếu có.
+- total_value: Tổng giá trị TSBĐ (đồng). Nằm trong bảng định giá "Tổng cộng" hoặc "Giá trị làm tròn". Ví dụ: 7064000000.
+- obligation: Nghĩa vụ bảo đảm (đồng). Tìm "không vượt quá X đồng". Ví dụ: 1000000000.
+- building_type: Loại nhà gắn liền. Ví dụ: "Nhà ở riêng lẻ", "Căn hộ chung cư".
+- building_built_area: Diện tích xây dựng (chỉ số m²). Ví dụ: "62.9".
+- building_floor_area: Diện tích sàn (chỉ số m²). Ví dụ: "62.9".
+- building_structure: Kết cấu nhà. Ví dụ: "Bê tông cốt thép".
+- building_ownership_form: Hình thức sở hữu nhà. Ví dụ: "Sở hữu chung", "Sở hữu riêng".
+- building_grade: Cấp/hạng nhà. Ví dụ: "Cấp 3", "Cấp 4".
+- building_floors: Số tầng. Ví dụ: "3", "01 trệt 02 lầu".
+- asset_condition: Tình trạng TS (mục c). Ví dụ: "căn nhà cũ đã được tháo dỡ, hiện có nhà 01 trệt 02 lầu".
+- asset_owner: Tên chủ sở hữu TS (mục d). Ví dụ: "Ông Nguyễn Hoàng Quân - bà Nguyễn Hoàng Phúc An".
+- liquidity_note: Tính thanh khoản (mục e). Tóm tắt.
+- insurance_note: Mua bảo hiểm (mục f). Ví dụ: "Tài sản không thuộc danh mục phải mua bảo hiểm".
+- remaining_duration: Thời hạn sử dụng còn lại (mục g). Ví dụ: "Lâu dài", "30 năm".
 
-ĐỘNG SẢN (type="dong_san"):
-- registration_number: Biển số xe/máy. Ví dụ: "51A-123.45".
-- brand/model/year: Hãng/model/năm sản xuất. chassis_number/engine_number: Số khung/máy.
+ĐỘNG SẢN (type="dong_san") — fields cần extract:
+- certificate_serial: Số giấy đăng ký xe. Tìm "Giấy chứng nhận đăng ký xe... số [số]".
+- gcn_issued_by: Cơ quan cấp đăng ký xe.
+- gcn_issued_date: Ngày cấp đăng ký xe (YYYY-MM-DD).
+- registration_number: Biển kiểm soát. Ví dụ: "51A-123.45".
+- brand: Nhãn hiệu xe. Ví dụ: "Toyota", "Honda".
+- model: Số loại xe. Ví dụ: "Camry", "CR-V 1.5L".
+- color: Màu sơn. Ví dụ: "Trắng", "Đen".
+- year: Năm sản xuất. Ví dụ: "2020".
+- chassis_number: Số khung.
+- engine_number: Số máy.
+- seat_count: Số chỗ ngồi. Ví dụ: "5", "7".
+- asset_condition, asset_owner, liquidity_note, insurance_note, remaining_duration: tương tự qsd_dat.
+- total_value, obligation: tương tự qsd_dat.
 
 TIẾT KIỆM (type="tiet_kiem"):
-- savings_book_number: Số sổ tiết kiệm. deposit_bank_name: Tên NH. deposit_amount: Số tiền. deposit_date: Ngày gửi.
+- savings_book_number: Số sổ TK. deposit_bank_name: Tên NH. deposit_amount: Số tiền. deposit_date: Ngày gửi.
 
 QUY TẮC NGƯỜI ĐỒNG VAY (CO_BORROWER):
 - Trích xuất cả vợ/chồng và người đồng trả nợ khác. Quan hệ ghi rõ: "Vợ", "Chồng", "Con", "Anh", "Em"...
@@ -178,16 +234,17 @@ Trả về JSON theo schema chính xác:
     "expected_revenue": 0, "expected_profit": 0
   }],
   "collaterals": [{
-    "name": "", "type": "qsd_dat",
-    "total_value": 0, "obligation": 0,
-    "certificate_serial": "", "land_address": "", "land_area": "",
-    "land_type_1": "", "land_unit_price_1": 0,
-    "land_type_2": "", "land_unit_price_2": 0,
-    "lot_number": "", "sheet_number": "",
-    "registration_number": "", "brand": "", "model": "", "year": "",
-    "chassis_number": "", "engine_number": "",
-    "savings_book_number": "", "deposit_bank_name": "",
-    "deposit_amount": 0, "deposit_date": "",
+    "name": "", "type": "qsd_dat", "total_value": 0, "obligation": 0,
+    "certificate_serial": "", "gcn_name": "", "gcn_issued_by": "", "gcn_issued_date": "",
+    "asset_condition": "", "asset_owner": "", "liquidity_note": "", "insurance_note": "", "remaining_duration": "",
+    "lot_number": "", "sheet_number": "", "land_address": "", "land_area": "",
+    "land_usage_form": "", "land_usage_purpose": "", "land_usage_duration": "", "land_origin": "",
+    "land_type_1": "", "land_unit_price_1": 0, "land_type_2": "", "land_unit_price_2": 0,
+    "building_type": "", "building_built_area": "", "building_floor_area": "",
+    "building_structure": "", "building_ownership_form": "", "building_grade": "", "building_floors": "",
+    "registration_number": "", "brand": "", "model": "", "color": "", "year": "",
+    "chassis_number": "", "engine_number": "", "seat_count": "",
+    "savings_book_number": "", "deposit_bank_name": "", "deposit_amount": 0, "deposit_date": "",
     "description": ""
   }]
 }

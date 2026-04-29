@@ -6,8 +6,8 @@
  * FieldSection actually prevents cross-section re-renders.
  */
 
-import { AlertTriangle, Check, Loader2, X } from "lucide-react";
-import { useCallback } from "react";
+import { AlertTriangle, Check, Loader2 } from "lucide-react";
+import { useCallback, useMemo } from "react";
 
 import type {
   ExtractedCoBorrower,
@@ -64,11 +64,20 @@ export function CustomerDocxImportReviewStep(props: Props) {
   } = props;
 
   // Stable forwarding callback — because `onUpdateField` is already memoized
-  // by the parent modal, this `handleSectionChange` reference stays stable
-  // across renders, preserving FieldSection.memo.
+  // by the parent modal, this reference stays stable, preserving FieldSection.memo.
   const handleSectionChange = useCallback<SectionChangeHandler>(
     (kind, index, key, value) => onUpdateField(kind, index, key, value),
     [onUpdateField],
+  );
+
+  // Pre-compute collateral labels once per collateral list reference.
+  // Avoids creating a new object on every render (which defeats React.memo on FieldSection).
+  const collateralLabelsList = useMemo(
+    () => extracted.collaterals.map((col) => ({
+      ...COLLATERAL_COMMON_LABELS,
+      ...getCollateralTypeLabels(col.type),
+    })),
+    [extracted.collaterals],
   );
 
   return (
@@ -114,16 +123,7 @@ export function CustomerDocxImportReviewStep(props: Props) {
               sectionIndex={i}
               onSectionChange={handleSectionChange}
               numberFieldKeys={NUMBER_FIELD_KEYS}
-              headerAction={
-                <button
-                  type="button"
-                  onClick={() => onRemoveCoBorrower(i)}
-                  className="text-zinc-400 hover:text-red-500"
-                  aria-label="Xoá"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              }
+              onRemoveSection={onRemoveCoBorrower}
             />
           ))}
         </div>
@@ -141,21 +141,18 @@ export function CustomerDocxImportReviewStep(props: Props) {
           />
         ))}
 
-        {extracted.collaterals.map((col, i) => {
-          const mergedLabels = { ...COLLATERAL_COMMON_LABELS, ...getCollateralTypeLabels(col.type) };
-          return (
-            <FieldSection
-              key={`col-${i}`}
-              title={`Tài sản bảo đảm ${extracted.collaterals.length > 1 ? i + 1 : ""}`.trim()}
-              labels={mergedLabels}
-              data={col as Record<string, FieldValue>}
-              sectionKind="collateral"
-              sectionIndex={i}
-              onSectionChange={handleSectionChange}
-              numberFieldKeys={NUMBER_FIELD_KEYS}
-            />
-          );
-        })}
+        {extracted.collaterals.map((col, i) => (
+          <FieldSection
+            key={`col-${i}`}
+            title={`Tài sản bảo đảm ${extracted.collaterals.length > 1 ? i + 1 : ""}`.trim()}
+            labels={collateralLabelsList[i] ?? COLLATERAL_COMMON_LABELS}
+            data={col as Record<string, FieldValue>}
+            sectionKind="collateral"
+            sectionIndex={i}
+            onSectionChange={handleSectionChange}
+            numberFieldKeys={NUMBER_FIELD_KEYS}
+          />
+        ))}
       </div>
 
       {error && <p className="text-sm text-red-500">{error}</p>}

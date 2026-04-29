@@ -13,7 +13,7 @@
  */
 
 import { memo } from "react";
-
+import { X } from "lucide-react";
 import { formatVndNumber, parseVndNumber } from "@/lib/format-vnd-number";
 
 export type FieldValue = string | number | undefined;
@@ -36,7 +36,8 @@ type Props = {
   sectionIndex: number;
   onSectionChange: SectionChangeHandler;
   numberFieldKeys?: ReadonlySet<string>;
-  headerAction?: React.ReactNode;
+  /** Stable remove callback — preferred over headerAction to avoid breaking memo */
+  onRemoveSection?: (index: number) => void;
 };
 
 function FieldSectionImpl({
@@ -47,7 +48,7 @@ function FieldSectionImpl({
   sectionIndex,
   onSectionChange,
   numberFieldKeys,
-  headerAction,
+  onRemoveSection,
 }: Props) {
   const entries = Object.entries(labels);
 
@@ -55,7 +56,18 @@ function FieldSectionImpl({
     <div>
       <div className="mb-2 flex items-center justify-between">
         <h4 className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">{title}</h4>
-        {headerAction}
+        {onRemoveSection && (
+          // Use data-index to avoid inline arrow — onClick reads from DOM attribute
+          <button
+            type="button"
+            data-index={sectionIndex}
+            onClick={() => onRemoveSection(sectionIndex)}
+            className="text-zinc-400 hover:text-red-500"
+            aria-label="Xoá"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        )}
       </div>
       <div className="grid gap-2">
         {entries.map(([key, label]) => {

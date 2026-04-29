@@ -63,25 +63,58 @@ export const COLLATERAL_COMMON_LABELS: Record<string, string> = {
 
 /** Extra fields shown only when collateral.type === "qsd_dat". */
 export const COLLATERAL_LAND_LABELS: Record<string, string> = {
+  // GCN
   certificate_serial: "Số GCN",
-  land_address: "Địa chỉ thửa đất",
-  land_area: "Diện tích (m²)",
-  land_type_1: "Loại đất chính",
-  land_unit_price_1: "Đơn giá chính (VNĐ/m²)",
-  land_type_2: "Loại đất phụ",
-  land_unit_price_2: "Đơn giá phụ (VNĐ/m²)",
+  gcn_name: "Tên GCN",
+  gcn_issued_by: "Cơ quan cấp",
+  gcn_issued_date: "Ngày cấp GCN",
+  // Thửa đất
   lot_number: "Số thửa",
   sheet_number: "Tờ bản đồ",
+  land_address: "Địa chỉ thửa đất",
+  land_area: "Diện tích (m²)",
+  land_usage_form: "Hình thức sử dụng",
+  land_usage_purpose: "Mục đích sử dụng",
+  land_usage_duration: "Thời hạn sử dụng đất",
+  land_origin: "Nguồn gốc",
+  land_type_1: "Loại đất chính",
+  land_unit_price_1: "Đơn giá chính (đ/m²)",
+  land_type_2: "Loại đất phụ",
+  land_unit_price_2: "Đơn giá phụ (đ/m²)",
+  // Nhà gắn liền
+  building_type: "Loại nhà ở",
+  building_built_area: "DT xây dựng (m²)",
+  building_floor_area: "DT sàn (m²)",
+  building_structure: "Kết cấu nhà",
+  building_ownership_form: "Hình thức sở hữu",
+  building_grade: "Cấp/hạng nhà",
+  building_floors: "Số tầng",
+  // Thẩm định
+  asset_condition: "Tình trạng TS",
+  asset_owner: "Chủ sở hữu TS",
+  liquidity_note: "Tính thanh khoản",
+  insurance_note: "Bảo hiểm TSBĐ",
+  remaining_duration: "Thời hạn còn lại",
 };
 
 /** Extra fields shown only when collateral.type === "dong_san". */
 export const COLLATERAL_MOVABLE_LABELS: Record<string, string> = {
-  registration_number: "Biển số/Đăng ký",
-  brand: "Hãng",
-  model: "Model",
-  year: "Năm SX",
+  certificate_serial: "Số giấy đăng ký xe",
+  gcn_issued_by: "Cơ quan cấp ĐKX",
+  gcn_issued_date: "Ngày cấp ĐKX",
+  registration_number: "Biển kiểm soát",
+  brand: "Nhãn hiệu",
+  model: "Số loại",
+  color: "Màu sơn",
+  year: "Năm sản xuất",
   chassis_number: "Số khung",
   engine_number: "Số máy",
+  seat_count: "Số chỗ ngồi",
+  asset_condition: "Tình trạng TS",
+  asset_owner: "Chủ sở hữu TS",
+  liquidity_note: "Tính thanh khoản",
+  insurance_note: "Bảo hiểm TSBĐ",
+  remaining_duration: "Thời hạn còn lại",
 };
 
 /** Extra fields shown only when collateral.type === "tiet_kiem". */
