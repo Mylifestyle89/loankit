@@ -4,6 +4,9 @@ import { useState, useEffect } from "react";
 import { Plus } from "lucide-react";
 import { inputCls, btnCls } from "./shared-form-styles";
 import { SmartField } from "@/components/smart-field";
+import { AiPasteExtractor } from "@/components/ui/ai-paste-extractor";
+import { mapExtractedToFormProperties } from "@/lib/collateral/map-extracted-collateral";
+import type { ExtractedCollateral } from "@/services/customer-docx-extraction.service";
 import {
   COLLATERAL_TYPES, FORM_FIELDS, EMPTY_OWNER, EMPTY_AMENDMENT,
   QSD_CERT_KEYS, QSD_LAND_KEYS, QSD_HOUSE_KEYS, QSD_CONTRACT_KEYS,
@@ -62,6 +65,30 @@ export function CollateralForm({ customerId, initial, onSaved, onCancel }: {
   });
 
   const fields = FORM_FIELDS[type] ?? [];
+
+  // AI paste extractor callback — pre-fills form from pasted DOCX text
+  function handleAiExtracted(data: Partial<ExtractedCollateral> | Partial<ExtractedCollateral>[]) {
+    const col = Array.isArray(data) ? data[0] : data;
+    if (!col) return;
+
+    const detectedType = col.type ?? type;
+    setType(detectedType);
+    if (col.name) setName(col.name);
+    if (col.total_value) setTotalValue(String(col.total_value));
+    if (col.obligation) setObligation(String(col.obligation));
+
+    const mapped = mapExtractedToFormProperties(detectedType, col as Record<string, unknown>);
+    // Only fill non-empty values to avoid clearing existing manual edits
+    setProps((prev) => ({
+      ...prev,
+      ...Object.fromEntries(Object.entries(mapped).filter(([, v]) => v)),
+    }));
+
+    // Auto-enable "nhà gắn liền với đất" section if house fields present
+    if (mapped.house_type || mapped.construction_area || mapped.floor_area) {
+      setHasAssetOnLand(true);
+    }
+  }
 
   // Auto-calc: Tổng giá trị TS = Σ land_value_N + house_appraisal_value (for BĐS only)
   useEffect(() => {
@@ -189,6 +216,13 @@ export function CollateralForm({ customerId, initial, onSaved, onCancel }: {
 
   return (
     <div className="rounded-xl border border-brand-200 dark:border-brand-500/20 bg-brand-50/30 dark:bg-brand-500/5 p-4 space-y-3">
+      {/* AI paste extractor */}
+      <AiPasteExtractor
+        entityType="collateral"
+        onExtracted={handleAiExtracted}
+        placeholder="Dán nội dung mục 4. Tài sản bảo đảm từ BCĐX / HĐTD vào đây..."
+      />
+
       {/* Common header fields */}
       <div className="grid grid-cols-2 gap-3">
         <label className="block">
