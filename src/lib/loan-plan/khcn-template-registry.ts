@@ -31,7 +31,8 @@ export const KHCN_TEMPLATES: KhcnDocTemplate[] = [
   { path: `${BASE}/Danh mục hồ sơ/2899.01.CV Danh muc ho so vay von(2).docx`, name: "Danh mục hồ sơ vay vốn (mẫu 3)", category: "danh_muc", methods: [] },
 
   // Giấy tờ pháp lý — all methods
-  { path: `${BASE}/Giấy tờ pháp lý/3333.02C Thu thap TT KH ca nhan khong DKKD.docx`, name: "Thu thập TT KH cá nhân", category: "phap_ly", methods: [] },
+  { path: `${BASE}/Giấy tờ pháp lý/3333.02C Thu thap TT KH ca nhan khong DKKD.docx`, name: "Thu thập TT KH cá nhân không DKKD", category: "phap_ly", methods: [] },
+  { path: `${BASE}/Giấy tờ pháp lý/3333.02C Thu thập TT KH cá nhân có DKKD.docx`, name: "Thu thập TT KH cá nhân có DKKD", category: "phap_ly", methods: [] },
   { path: `${BASE}/Giấy tờ pháp lý/1255 Cam ket khong co tai khoan.docx`, name: "Cam kết không có tài khoản", category: "phap_ly", methods: [] },
   { path: `${BASE}/Giấy tờ pháp lý/711.01 SMS nhac no vay.docx`, name: "SMS nhắc nợ vay", category: "phap_ly", methods: [] },
   { path: `${BASE}/Giấy tờ pháp lý/Cam ket tai san cua ben thu 3.docx`, name: "Cam kết tài sản bên thứ 3", category: "phap_ly", methods: [] },
