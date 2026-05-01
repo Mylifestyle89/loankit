@@ -4,6 +4,7 @@ import path from "node:path";
 
 import { toHttpError } from "@/core/errors/app-error";
 import { withRateLimit } from "@/lib/api-helpers";
+import { requireEditorOrAdmin, handleAuthError } from "@/lib/auth-guard";
 import { analyzeDocument } from "@/services/auto-tagging.service";
 
 export const runtime = "nodejs";
@@ -12,6 +13,7 @@ const ALLOWED_EXT = new Set([".docx", ".doc"]);
 
 export const POST = withRateLimit("tagging-analyze")(async (req: NextRequest) => {
   try {
+    await requireEditorOrAdmin();
     const formData = await req.formData();
     const file = formData.get("file");
     const headersJson = formData.get("headers");
@@ -79,6 +81,8 @@ export const POST = withRateLimit("tagging-analyze")(async (req: NextRequest) =>
       paragraphCount: paragraphs.length,
     });
   } catch (error) {
+    const authResp = handleAuthError(error);
+    if (authResp) return authResp;
     const httpError = toHttpError(error, "Auto-tagging analysis failed.");
     return NextResponse.json(
       { ok: false, error: httpError.message, details: httpError.details },

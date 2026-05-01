@@ -2,12 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { toHttpError } from "@/core/errors/app-error";
 import { withRateLimit } from "@/lib/api-helpers";
+import { requireEditorOrAdmin, handleAuthError } from "@/lib/auth-guard";
 import { parseExtractRequestForm, runExtractProcess } from "@/app/api/report/mapping/_extract-helper";
 
 export const runtime = "nodejs";
 
 export const POST = withRateLimit("extract-process")(async (req: NextRequest) => {
   try {
+    await requireEditorOrAdmin();
     const form = await req.formData();
     const context = await parseExtractRequestForm(form);
     const result = await runExtractProcess({
@@ -22,6 +24,8 @@ export const POST = withRateLimit("extract-process")(async (req: NextRequest) =>
       meta: result.meta,
     });
   } catch (error) {
+    const authResp = handleAuthError(error);
+    if (authResp) return authResp;
     const httpError = toHttpError(error, "Extract process failed.");
     return NextResponse.json(
       { ok: false, error: httpError.message, details: httpError.details },

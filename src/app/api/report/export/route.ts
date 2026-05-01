@@ -3,6 +3,7 @@ import path from "node:path";
 import { z } from "zod";
 
 import { toHttpError, ValidationError } from "@/core/errors/app-error";
+import { requireEditorOrAdmin, handleAuthError } from "@/lib/auth-guard";
 import { REPORT_ASSETS_BASE, validatePathUnderBase } from "@/lib/report/path-validation";
 import { reportService } from "@/services/report.service";
 
@@ -37,6 +38,7 @@ const exportSchema = z.object({
 
 export async function POST(req: NextRequest) {
   try {
+    await requireEditorOrAdmin();
     const raw = await req.json().catch(() => {
       throw new ValidationError("Request body phải là JSON hợp lệ.");
     });
@@ -65,6 +67,8 @@ export async function POST(req: NextRequest) {
       ...result,
     });
   } catch (error) {
+    const authResp = handleAuthError(error);
+    if (authResp) return authResp;
     console.error("[Export API] Caught error:", error);
     console.error("[Export API] Error type:", error?.constructor?.name);
     console.error("[Export API] Error message:", error instanceof Error ? error.message : String(error));

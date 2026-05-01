@@ -7,6 +7,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { NextRequest, NextResponse } from "next/server";
+import { requireSession, handleAuthError } from "@/lib/auth-guard";
 
 export const runtime = "nodejs";
 
@@ -17,6 +18,12 @@ function getSamplesAbsDir(): string {
 }
 
 export async function GET(req: NextRequest) {
+  try {
+    await requireSession();
+  } catch (err) {
+    const authResp = handleAuthError(err);
+    if (authResp) return authResp;
+  }
   const file = req.nextUrl.searchParams.get("file");
 
   // Download specific file

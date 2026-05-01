@@ -40,6 +40,8 @@ export const auth = betterAuth({
     disableSignUp: true,
   },
   session: {
+    expiresIn: 8 * 60 * 60,  // 8h — 1 ca làm việc
+    updateAge: 1 * 60 * 60,  // renew mỗi 1h nếu user active
     cookieCache: {
       enabled: true,
       maxAge: 5 * 60, // 5 min cache before DB re-check

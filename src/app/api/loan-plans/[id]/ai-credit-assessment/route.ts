@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { requireAdmin, handleAuthError } from "@/lib/auth-guard";
+import { checkRateLimit, getClientIp } from "@/lib/rate-limiter";
 
 export const runtime = "nodejs";
 
@@ -13,6 +14,8 @@ export const runtime = "nodejs";
 export async function POST(req: NextRequest) {
   try {
     await requireAdmin();
+    const rl = checkRateLimit(`ai-credit:${getClientIp(req)}`, 10, 60_000);
+    if (!rl.allowed) return NextResponse.json({ ok: false, error: "Rate limit exceeded" }, { status: 429 });
     const apiKey = process.env.GEMINI_API_KEY ?? process.env.GOOGLE_API_KEY;
     if (!apiKey) {
       return NextResponse.json({ ok: false, error: "GEMINI_API_KEY chưa cấu hình" }, { status: 500 });

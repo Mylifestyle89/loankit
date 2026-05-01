@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import * as XLSX from "xlsx";
 import { requireEditorOrAdmin, handleAuthError } from "@/lib/auth-guard";
+import { checkRateLimit, getClientIp } from "@/lib/rate-limiter";
 
 /**
  * POST /api/loan-plans/[id]/ai-analyze
@@ -20,6 +21,8 @@ export async function POST(
 
   try {
     await requireEditorOrAdmin();
+    const rl = checkRateLimit(`ai-analyze:${getClientIp(request)}`, 10, 60_000);
+    if (!rl.allowed) return NextResponse.json({ ok: false, error: "Rate limit exceeded" }, { status: 429 });
     const apiKey = process.env.GEMINI_API_KEY ?? process.env.GOOGLE_API_KEY;
     if (!apiKey) {
       return NextResponse.json({ ok: false, error: "GEMINI_API_KEY chưa cấu hình" }, { status: 500 });

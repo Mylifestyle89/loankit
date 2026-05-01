@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { toHttpError } from "@/core/errors/app-error";
 import { withRateLimit } from "@/lib/api-helpers";
+import { requireEditorOrAdmin, handleAuthError } from "@/lib/auth-guard";
 import { autoProcessService } from "@/services/auto-process.service";
 
 export const runtime = "nodejs";
@@ -15,6 +16,7 @@ type StartBody = {
 export const POST = withRateLimit("auto-process-start")(async (req: NextRequest) => {
   let body: StartBody = {};
   try {
+    await requireEditorOrAdmin();
     body = (await req.json()) as StartBody;
     const result = await autoProcessService.startUniversalAutoProcess({
       excelPath: String(body.excel_path ?? ""),
@@ -26,6 +28,8 @@ export const POST = withRateLimit("auto-process-start")(async (req: NextRequest)
       job: result,
     });
   } catch (error) {
+    const authResp = handleAuthError(error);
+    if (authResp) return authResp;
     const httpError = toHttpError(error, "Không thể khởi tạo Auto-Process.");
     console.error("[auto-process/start]", {
       status: httpError.status,

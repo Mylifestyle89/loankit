@@ -5,6 +5,7 @@
  */
 import path from "node:path";
 import { NextRequest, NextResponse } from "next/server";
+import { requireEditorOrAdmin, handleAuthError } from "@/lib/auth-guard";
 import { generateKhcnReport } from "@/services/khcn-report.service";
 
 export const runtime = "nodejs";
@@ -14,6 +15,7 @@ const ALLOWED_PREFIX = "report_assets/";
 
 export async function POST(req: NextRequest) {
   try {
+    await requireEditorOrAdmin();
     const body = await req.json();
     const { customerId, templatePath, templateLabel, loanId, overrides, collateralIds } = body;
 
@@ -50,6 +52,8 @@ export async function POST(req: NextRequest) {
       },
     });
   } catch (e: unknown) {
+    const authResp = handleAuthError(e);
+    if (authResp) return authResp;
     const msg = e instanceof Error ? e.message : "Unknown error";
     const status = msg.includes("not found") ? 404 : 500;
     return NextResponse.json({ ok: false, error: msg }, { status });

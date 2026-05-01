@@ -17,6 +17,7 @@ export function NotificationBell({ expanded }: { expanded: boolean }) {
 
   useEffect(() => {
     startPolling();
+    return () => useNotificationStore.getState().stopPolling();
   }, [startPolling]);
 
   // Compute fixed position from button bounding rect

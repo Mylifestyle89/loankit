@@ -4,12 +4,19 @@
  */
 import { NextRequest, NextResponse } from "next/server";
 
+import { requireSession, handleAuthError } from "@/lib/auth-guard";
 import { getTemplatesForMethodAndSource, groupByCategory, DOC_CATEGORY_LABELS, ASSET_CATEGORY_KEYS } from "@/lib/loan-plan/khcn-template-registry";
 import type { IncomeSourceType } from "@/lib/loan-plan/loan-plan-types";
 
 export const runtime = "nodejs";
 
 export async function GET(req: NextRequest) {
+  try {
+    await requireSession();
+  } catch (err) {
+    const authResp = handleAuthError(err);
+    if (authResp) return authResp;
+  }
   const method = req.nextUrl.searchParams.get("loan_method") ?? "tung_lan";
   const source = (req.nextUrl.searchParams.get("income_source") ?? "") as IncomeSourceType | "";
   const templates = getTemplatesForMethodAndSource(method, source);

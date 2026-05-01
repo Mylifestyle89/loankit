@@ -3,6 +3,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 
 import { toHttpError } from "@/core/errors/app-error";
+import { requireSession, handleAuthError } from "@/lib/auth-guard";
 import { parseDocxPlaceholdersFromBuffer } from "@/lib/report/template-parser";
 import { reportService } from "@/services/report.service";
 
@@ -15,6 +16,7 @@ export const runtime = "nodejs";
  */
 export async function GET(req: NextRequest) {
   try {
+    await requireSession();
     const { searchParams } = req.nextUrl;
     const returnAll = searchParams.get("all") === "true";
     const templateId = searchParams.get("template_id");
@@ -47,6 +49,8 @@ export async function GET(req: NextRequest) {
     const placeholders = await extractPlaceholdersFromProfile(profile.docx_path);
     return NextResponse.json({ ok: true, placeholders, template_name: profile.template_name });
   } catch (error) {
+    const authResp = handleAuthError(error);
+    if (authResp) return authResp;
     const httpError = toHttpError(error, "Lỗi đọc placeholders từ template.");
     return NextResponse.json({ ok: false, error: httpError.message }, { status: httpError.status });
   }

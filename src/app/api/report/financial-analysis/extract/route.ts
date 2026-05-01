@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import path from "node:path";
 
 import { ValidationError, toHttpError } from "@/core/errors/app-error";
+import { requireSession, handleAuthError } from "@/lib/auth-guard";
 import { extractBctc } from "@/lib/bctc-extractor";
 
 export const runtime = "nodejs";
@@ -10,6 +11,7 @@ const ALLOWED_EXTS = new Set([".xlsx", ".xls"]);
 
 export async function POST(req: NextRequest) {
   try {
+    await requireSession();
     const formData = await req.formData();
     const file = formData.get("file");
 
@@ -27,6 +29,8 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ ok: true, data });
   } catch (error) {
+    const authResp = handleAuthError(error);
+    if (authResp) return authResp;
     const httpError = toHttpError(error, "Không thể trích xuất dữ liệu BCTC.");
     return NextResponse.json(
       { ok: false, error: httpError.message },

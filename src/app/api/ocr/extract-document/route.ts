@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireEditorOrAdmin } from "@/lib/auth-guard";
+import { checkRateLimit, getClientIp } from "@/lib/rate-limiter";
 import { ocrService } from "@/services/ocr.service";
 import { isValidDocumentType } from "@/services/ocr-document-prompts";
 import { toHttpError } from "@/core/errors/app-error";
@@ -16,6 +17,8 @@ const ALLOWED_MIMES = ["image/png", "image/jpeg", "image/jpg", "image/webp", "ap
 export async function POST(request: NextRequest) {
   try {
     await requireEditorOrAdmin();
+    const rl = checkRateLimit(`ocr-extract:${getClientIp(request)}`, 10, 60_000);
+    if (!rl.allowed) return NextResponse.json({ ok: false, error: "Rate limit exceeded" }, { status: 429 });
 
     const formData = await request.formData();
     const files = formData.getAll("file") as File[];

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { toHttpError } from "@/core/errors/app-error";
 import { withRateLimit } from "@/lib/api-helpers";
+import { requireSession, handleAuthError } from "@/lib/auth-guard";
 import { parseDocxPlaceholdersFromBuffer } from "@/lib/report/template-parser";
 
 export const runtime = "nodejs";
@@ -11,6 +12,7 @@ const MAX_TEMPLATE_SIZE = 10 * 1024 * 1024;
 
 export const POST = withRateLimit("suggest")(async (req: NextRequest) => {
   try {
+    await requireSession();
     const formData = await req.formData();
     const file = formData.get("file");
 
@@ -31,6 +33,8 @@ export const POST = withRateLimit("suggest")(async (req: NextRequest) => {
     if (process.env.NODE_ENV === "development") {
       console.error("[template-fields] Error:", error);
     }
+    const authResp = handleAuthError(error);
+    if (authResp) return authResp;
     const httpError = toHttpError(error, "Failed to extract template fields.");
     return NextResponse.json(
       { ok: false, error: httpError.message },

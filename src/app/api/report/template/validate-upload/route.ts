@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { toHttpError } from "@/core/errors/app-error";
+import { requireSession, handleAuthError } from "@/lib/auth-guard";
 import { parseDocxPlaceholdersFromBuffer } from "@/lib/report/template-parser";
 import { suggestAliasForPlaceholder } from "@/lib/report/placeholder-utils";
 import { reportService } from "@/services/report.service";
@@ -21,6 +22,7 @@ function isLikelyPlaceholder(ph: string): boolean {
 
 export async function POST(req: NextRequest) {
   try {
+    await requireSession();
     const formData = await req.formData();
     const file = formData.get("file") as File | null;
     const fieldTemplateId = formData.get("field_template_id") as string | null;
@@ -85,6 +87,8 @@ export async function POST(req: NextRequest) {
     });
   } catch (error) {
     // [RT-7] Proper error handling
+    const authResp = handleAuthError(error);
+    if (authResp) return authResp;
     const httpError = toHttpError(error, "Lỗi kiểm tra template.");
     return NextResponse.json({ ok: false, error: httpError.message }, { status: httpError.status });
   }

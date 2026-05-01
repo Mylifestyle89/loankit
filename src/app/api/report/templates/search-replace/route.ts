@@ -4,6 +4,8 @@ import path from "node:path";
 import { NextRequest, NextResponse } from "next/server";
 import PizZip from "pizzip";
 
+import { requireAdmin, handleAuthError } from "@/lib/auth-guard";
+
 export const runtime = "nodejs";
 
 const TEMPLATES_DIR = path.resolve(process.cwd(), "report_assets/KHCN templates");
@@ -51,6 +53,7 @@ function searchReplaceInXml(xml: string, search: string, replace: string): { xml
 
 export async function POST(req: NextRequest) {
   try {
+    await requireAdmin();
     const body = await req.json();
     const { search, replace, mode } = body as { search: string; replace?: string; mode: "search" | "replace" };
 
@@ -112,6 +115,8 @@ export async function POST(req: NextRequest) {
       results,
     });
   } catch (error) {
+    const authResp = handleAuthError(error);
+    if (authResp) return authResp;
     return NextResponse.json({ ok: false, error: (error as Error).message }, { status: 500 });
   }
 }

@@ -44,6 +44,7 @@ export type FieldHint = {
 // ---------------------------------------------------------------------------
 
 const OPENAI_ENDPOINT = "https://api.openai.com/v1/chat/completions";
+const AI_CALL_TIMEOUT_MS = 30_000; // 30s timeout for AI API calls
 
 // ---------------------------------------------------------------------------
 // Provider implementations
@@ -66,6 +67,7 @@ async function suggestViaOpenAI(
       "Content-Type": "application/json",
       Authorization: `Bearer ${apiKey}`,
     },
+    signal: AbortSignal.timeout(AI_CALL_TIMEOUT_MS),
     body: JSON.stringify({
       model,
       temperature: 0,
@@ -110,10 +112,17 @@ async function suggestViaGemini(
 
   let text: string;
   try {
-    const result = await geminiModel.generateContent({
+    const generatePromise = geminiModel.generateContent({
       generationConfig: { temperature: 0 },
       contents: [{ role: "user", parts: [{ text: prompt }] }],
     });
+    let timer: ReturnType<typeof setTimeout>;
+    const result = await Promise.race([
+      generatePromise,
+      new Promise<never>((_, reject) => {
+        timer = setTimeout(() => reject(new SystemError("Gemini mapping call timed out.")), AI_CALL_TIMEOUT_MS);
+      }),
+    ]).finally(() => clearTimeout(timer));
     text = result.response.text().trim();
   } catch (error) {
     throw new SystemError("Gemini mapping suggestion request failed.", error);

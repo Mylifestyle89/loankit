@@ -4,6 +4,7 @@ import path from "node:path";
 import { NextRequest, NextResponse } from "next/server";
 
 import { toHttpError, ValidationError } from "@/core/errors/app-error";
+import { requireEditorOrAdmin, handleAuthError } from "@/lib/auth-guard";
 import { validateFileSize } from "@/lib/report/upload-limits";
 
 export const runtime = "nodejs";
@@ -33,6 +34,7 @@ function sanitizeName(input: string): string {
 
 export async function POST(req: NextRequest) {
   try {
+    await requireEditorOrAdmin();
     const formData = await req.formData();
     const file = formData.get("file");
     const kind = String(formData.get("kind") ?? "data").toLowerCase();
@@ -77,6 +79,8 @@ export async function POST(req: NextRequest) {
       name: original,
     });
   } catch (error) {
+    const authResp = handleAuthError(error);
+    if (authResp) return authResp;
     const httpError = toHttpError(error, "Upload thất bại.");
     return NextResponse.json(
       {

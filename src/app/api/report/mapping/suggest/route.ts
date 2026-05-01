@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { toHttpError } from "@/core/errors/app-error";
 import { withRateLimit } from "@/lib/api-helpers";
+import { requireEditorOrAdmin, handleAuthError } from "@/lib/auth-guard";
 import { aiMappingService, type FieldHint } from "@/services/ai-mapping.service";
 
 export const runtime = "nodejs";
@@ -15,6 +16,7 @@ type SuggestBody = {
 
 export const POST = withRateLimit("suggest")(async (req: NextRequest) => {
   try {
+    await requireEditorOrAdmin();
     const body = (await req.json()) as SuggestBody;
     const excelHeaders = Array.isArray(body.excelHeaders) ? body.excelHeaders.map((v) => String(v)) : [];
     const wordPlaceholders = Array.isArray(body.wordPlaceholders)
@@ -38,6 +40,8 @@ export const POST = withRateLimit("suggest")(async (req: NextRequest) => {
       grouping: suggestion.grouping,
     });
   } catch (error) {
+    const authResp = handleAuthError(error);
+    if (authResp) return authResp;
     const httpError = toHttpError(error, "Failed to suggest mapping.");
     return NextResponse.json(
       { ok: false, error: httpError.message, details: httpError.details },

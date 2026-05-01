@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireEditorOrAdmin } from "@/lib/auth-guard";
+import { checkRateLimit, getClientIp } from "@/lib/rate-limiter";
 import {
   extractCollateralsFromText,
   extractCustomerFromText,
@@ -18,6 +19,8 @@ export const runtime = "nodejs";
 export async function POST(request: NextRequest) {
   try {
     await requireEditorOrAdmin();
+    const rl = checkRateLimit(`ai-extract:${getClientIp(request)}`, 10, 60_000);
+    if (!rl.allowed) return NextResponse.json({ ok: false, error: "Rate limit exceeded" }, { status: 429 });
 
     const { entityType, text } = (await request.json()) as { entityType: AiExtractEntityType; text: string };
 

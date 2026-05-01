@@ -100,7 +100,10 @@ export function CustomerListView({ customerType, basePath, showSelect = false }:
     const res = await fetch(`/api/customers/${id}`, { method: "DELETE" });
     const data = (await res.json()) as ApiResponse;
     setDeletingId(null);
-    if (data.ok) { void loadCustomers(); }
+    if (data.ok) {
+      if (selectedCustomerId === id) setSelectedCustomerId("");
+      void loadCustomers();
+    }
     else { setError(data.error ?? "Delete failed."); }
   }
 

@@ -3,6 +3,7 @@ import path from "node:path";
 import { NextRequest, NextResponse } from "next/server";
 
 import { ValidationError, toHttpError } from "@/core/errors/app-error";
+import { requireSession, handleAuthError } from "@/lib/auth-guard";
 import { mergeDocxBuffers } from "@/lib/docx-merge";
 
 export const runtime = "nodejs";
@@ -15,6 +16,7 @@ function sanitizeFileName(input: string): string {
 
 export async function POST(req: NextRequest) {
   try {
+    await requireSession();
     const form = await req.formData();
     const files = form
       .getAll("files")
@@ -52,6 +54,8 @@ export async function POST(req: NextRequest) {
       },
     });
   } catch (error) {
+    const authResp = handleAuthError(error);
+    if (authResp) return authResp;
     const httpError = toHttpError(error, "Không thể nối các file DOCX.");
     return NextResponse.json(
       { ok: false, error: httpError.message },
