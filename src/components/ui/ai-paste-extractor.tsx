@@ -10,18 +10,16 @@ import { useState, useRef } from "react";
 import { ChevronDown, ChevronUp, Loader2, Sparkles } from "lucide-react";
 import type { AiExtractEntityType } from "@/services/ai-text-extraction.service";
 
-/** Union of all possible extraction result shapes returned by /api/ai/extract-text */
-// Using unknown instead of any: callers cast to their specific type via their own annotations
-type Props = {
+// Generic over the extracted shape so callers can pass typed handlers without casts.
+// Using `any` (not `unknown`) avoids breaking contravariance on the callback parameter.
+type Props<T = unknown> = {
   entityType: AiExtractEntityType;
-  // Callers annotate their own handler type (e.g. (data: Partial<ExtractedCustomer>) => void)
-  // Using unknown here forces explicit type narrowing at call site, eliminating the `any` escape hatch
-  onExtracted: (data: unknown) => void;
+  onExtracted: (data: T) => void;
   label?: string;
   placeholder?: string;
 };
 
-export function AiPasteExtractor({ entityType, onExtracted, label, placeholder }: Props) {
+export function AiPasteExtractor<T = unknown>({ entityType, onExtracted, label, placeholder }: Props<T>) {
   const [open, setOpen] = useState(false);
   const [text, setText] = useState("");
   const [loading, setLoading] = useState(false);
@@ -46,7 +44,7 @@ export function AiPasteExtractor({ entityType, onExtracted, label, placeholder }
       });
       const json = await res.json() as { ok: boolean; data?: unknown; error?: string };
       if (!json.ok) { setError(json.error ?? "Lỗi trích xuất."); return; }
-      onExtracted(json.data);
+      onExtracted(json.data as T);
       // Collapse and clear after success
       setText("");
       setOpen(false);

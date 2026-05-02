@@ -40,8 +40,8 @@ export type {
 // ---------------------------------------------------------------------------
 const importPayloadSchema = z.object({
   version: z.union([z.string(), z.number()]),
-  customers: z.array(z.record(z.unknown())),
-  field_templates: z.array(z.record(z.unknown())),
+  customers: z.array(z.record(z.string(), z.unknown())),
+  field_templates: z.array(z.record(z.string(), z.unknown())),
 });
 
 // ---------------------------------------------------------------------------

@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
         customerIds: Array.isArray(body.customerIds) ? body.customerIds : [],
         templateIds: Array.isArray(body.templateIds) ? body.templateIds : [],
       });
-      const xlsxBuffer = exportCustomersToXlsx(data.customers);
+      const xlsxBuffer = exportCustomersToXlsx(data.customers as unknown as Parameters<typeof exportCustomersToXlsx>[0]);
       return new NextResponse(new Uint8Array(xlsxBuffer), {
         headers: {
           "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
