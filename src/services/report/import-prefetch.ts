@@ -37,26 +37,12 @@ export async function prefetchImportMaps(
     )
     .filter(Boolean);
 
-  const allInvoiceNumbers = customersInput
-    .flatMap((c) => {
-      if (!isV2 || !Array.isArray(c.loans)) return [];
-      return c.loans.flatMap((l) => {
-        if (!Array.isArray(l.disbursements)) return [];
-        return l.disbursements.flatMap((d) => {
-          const invs = Array.isArray(d.invoices) ? d.invoices.map((i) => i.invoiceNumber) : [];
-          const lines = Array.isArray(d.beneficiaryLines)
-            ? d.beneficiaryLines.flatMap((bl) =>
-                Array.isArray(bl.invoices) ? bl.invoices.map((i) => i.invoiceNumber) : [],
-              )
-            : [];
-          return [...invs, ...lines];
-        });
-      });
-    })
-    .filter(Boolean);
+  // NOTE: invoiceMap is intentionally NOT pre-fetched.
+  // Disbursements are wiped+recreated on each import (cascade-deletes their invoices),
+  // so pre-fetching old invoice IDs would cause stale-ID collisions across loans.
 
-  // --- Fire all 4 lookups in parallel ---
-  const [existingCustomers, existingLoans, existingBens, existingInvoices] = await Promise.all([
+  // --- Fire 3 lookups in parallel (invoices skipped — see note above) ---
+  const [existingCustomers, existingLoans, existingBens] = await Promise.all([
     tx.customer.findMany({
       where: { customer_code_hash: { in: allHashes } },
       select: { id: true, customer_code_hash: true },
@@ -71,12 +57,6 @@ export async function prefetchImportMaps(
       ? tx.beneficiary.findMany({
           where: { name: { in: allBenNames } },
           select: { id: true, loanId: true, name: true, accountNumber: true },
-        })
-      : Promise.resolve([]),
-    allInvoiceNumbers.length
-      ? tx.invoice.findMany({
-          where: { invoiceNumber: { in: allInvoiceNumbers } },
-          select: { id: true, invoiceNumber: true, supplierName: true },
         })
       : Promise.resolve([]),
   ]);
@@ -95,7 +75,8 @@ export async function prefetchImportMaps(
     existingBens.map((b) => [`${b.loanId}_${b.name}_${b.accountNumber ?? ""}`, b]),
   );
 
-  const invoiceMap = new Map(existingInvoices.map((i) => [`${i.invoiceNumber}_${i.supplierName}`, i]));
+  // invoiceMap is always empty — invoices are created fresh per disbursement after wipe+recreate
+  const invoiceMap = new Map<string, { id: string }>();
 
   return { customerMap, loanMap, benMap, invoiceMap };
 }

@@ -245,10 +245,15 @@ export function CustomerCoBorrowerSection({ customerId }: { customerId: string }
 
   const load = useCallback(async () => {
     setLoading(true);
-    const res = await fetch(`/api/customers/${customerId}/co-borrowers`);
-    const data = await res.json();
-    if (data.ok) setItems(data.items ?? []);
-    setLoading(false);
+    try {
+      const res = await fetch(`/api/customers/${customerId}/co-borrowers`);
+      const data = await res.json();
+      if (data.ok) setItems(data.items ?? []);
+    } catch {
+      // silently fail — list remains empty
+    } finally {
+      setLoading(false);
+    }
   }, [customerId]);
 
   useEffect(() => { void load(); }, [load]);

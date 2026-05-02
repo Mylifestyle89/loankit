@@ -19,18 +19,27 @@ export function StaffSection({ initial }: { initial: StaffData }) {
   const [form, setForm] = useState<StaffData>(initial);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [saveError, setSaveError] = useState("");
 
   async function handleSave() {
     setSaving(true);
+    setSaveError("");
     try {
       // Save to global config → syncs all customers
-      await fetch("/api/config/branch-staff", {
+      const res = await fetch("/api/config/branch-staff", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
       });
+      const data = await res.json();
+      if (!res.ok || !data.ok) {
+        setSaveError(data.error ?? "Lưu thất bại");
+        return;
+      }
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
+    } catch {
+      setSaveError("Lỗi kết nối");
     } finally {
       setSaving(false);
     }
@@ -86,6 +95,7 @@ export function StaffSection({ initial }: { initial: StaffData }) {
           {saving ? "..." : "Lưu"}
         </button>
         {saved && <span className="text-xs text-emerald-600 dark:text-emerald-400">Đã lưu</span>}
+        {saveError && <span className="text-xs text-red-600 dark:text-red-400">{saveError}</span>}
       </div>
     </div>
   );

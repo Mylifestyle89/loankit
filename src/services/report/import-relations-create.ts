@@ -280,35 +280,27 @@ async function upsertInvoiceBatch(
   disbursementId: string,
   disbursementBeneficiaryId: string | null,
   invoices: ImportInvoiceRecord[],
-  invoiceMap: Map<string, { id: string }>,
+  _invoiceMap: Map<string, { id: string }>,
 ): Promise<number> {
+  // Disbursements are wiped+recreated before this runs (cascade deletes their invoices),
+  // so we always INSERT — no update path needed. Key uses disbursementId to prevent
+  // cross-loan collisions when same invoiceNumber+supplierName appears in multiple loans.
   let count = 0;
-  for (const invRaw of invoices) {
-    const mapKey = `${invRaw.invoiceNumber}_${invRaw.supplierName}`;
-    const existing = invoiceMap.get(mapKey);
-    const invData = {
-      amount: invRaw.amount,
-      issueDate: new Date(invRaw.issueDate),
-      dueDate: new Date(invRaw.dueDate),
-      customDeadline: invRaw.customDeadline ? new Date(invRaw.customDeadline) : null,
-      status: invRaw.status ?? "pending",
-      notes: invRaw.notes ?? null,
-    };
-    if (existing) {
-      await tx.invoice.update({ where: { id: existing.id }, data: invData });
-    } else {
-      const created = await tx.invoice.create({
-        data: {
-          ...invData,
-          invoiceNumber: invRaw.invoiceNumber,
-          supplierName: invRaw.supplierName,
-          disbursementId,
-          disbursementBeneficiaryId,
-        },
-      });
-      invoiceMap.set(mapKey, { id: created.id });
-    }
-    count++;
+  const data: Prisma.InvoiceCreateManyInput[] = invoices.map((invRaw) => ({
+    invoiceNumber: invRaw.invoiceNumber,
+    supplierName: invRaw.supplierName,
+    disbursementId,
+    disbursementBeneficiaryId,
+    amount: invRaw.amount,
+    issueDate: new Date(invRaw.issueDate),
+    dueDate: new Date(invRaw.dueDate),
+    customDeadline: invRaw.customDeadline ? new Date(invRaw.customDeadline) : null,
+    status: invRaw.status ?? "pending",
+    notes: invRaw.notes ?? null,
+  }));
+  if (data.length) {
+    await tx.invoice.createMany({ data });
+    count = data.length;
   }
   return count;
 }

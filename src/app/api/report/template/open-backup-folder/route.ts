@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server";
 import { toHttpError } from "@/core/errors/app-error";
-import { requireSession, handleAuthError } from "@/lib/auth-guard";
+import { requireEditorOrAdmin, handleAuthError } from "@/lib/auth-guard";
 import { reportService } from "@/services/report.service";
 
 export const runtime = "nodejs";
 
 export async function POST() {
   try {
-    await requireSession();
+    await requireEditorOrAdmin();
     const result = await reportService.openBackupFolder();
     return NextResponse.json({
       ok: true,

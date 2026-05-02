@@ -144,7 +144,7 @@ export function BuildExportTab({ templates, activeTemplateId, onMessage, onError
 
   async function handleDownloadDocx() {
     if (!exportedDocxPath) return;
-    try { const url = await getSignedFileUrl(exportedDocxPath, true); window.open(url, "_blank"); }
+    try { const url = await getSignedFileUrl(exportedDocxPath, true); window.open(url, "_blank", "noopener,noreferrer"); }
     catch { onError("Failed to generate download URL."); }
   }
 
@@ -251,7 +251,7 @@ export function BuildExportTab({ templates, activeTemplateId, onMessage, onError
               <div className="mt-2 flex flex-wrap gap-2">
                 {run.output_paths.map((p) => (
                   <button key={p}
-                    onClick={async () => { try { const url = await getSignedFileUrl(p, true); window.open(url, "_blank"); } catch { onError("Failed to download file."); } }}
+                    onClick={async () => { try { const url = await getSignedFileUrl(p, true); window.open(url, "_blank", "noopener,noreferrer"); } catch { onError("Failed to download file."); } }}
                     className="inline-flex items-center gap-1 rounded-lg bg-brand-100 dark:bg-brand-500/10 px-2 py-1 text-[11px] font-mono text-brand-700 dark:text-brand-300 hover:bg-brand-100 dark:hover:bg-brand-500/20 transition-colors"
                     title="Tải về">
                     <Download className="h-3 w-3" /> {p.split("/").pop()}

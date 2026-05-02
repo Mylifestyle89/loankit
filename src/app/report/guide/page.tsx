@@ -80,7 +80,7 @@ export default function GuidePage() {
   }
 
   function handleDownloadMarkdown() {
-    window.open("/api/report/guide?format=download", "_blank");
+    window.open("/api/report/guide?format=download", "_blank", "noopener,noreferrer");
   }
 
   if (loading) {

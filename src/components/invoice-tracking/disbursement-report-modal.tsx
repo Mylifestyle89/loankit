@@ -65,11 +65,24 @@ type Props = {
 };
 
 const STORAGE_KEY_PREFIX = "disbursement-report-overrides";
+const TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
 
 function loadSavedOverrides(loanId: string): Record<string, string> {
   try {
-    const raw = localStorage.getItem(`${STORAGE_KEY_PREFIX}:${loanId}`);
-    return raw ? JSON.parse(raw) : {};
+    const key = `${STORAGE_KEY_PREFIX}:${loanId}`;
+    const raw = localStorage.getItem(key);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw) as { data?: Record<string, string>; expiresAt?: number };
+    // Support both old format (plain object) and new format (wrapped with TTL)
+    if (parsed.expiresAt !== undefined) {
+      if (Date.now() > parsed.expiresAt) {
+        localStorage.removeItem(key);
+        return {};
+      }
+      return parsed.data ?? {};
+    }
+    // Legacy format — return as-is (will be re-saved in new format on next change)
+    return parsed as Record<string, string>;
   } catch {
     return {};
   }
@@ -77,7 +90,8 @@ function loadSavedOverrides(loanId: string): Record<string, string> {
 
 function saveOverrides(loanId: string, overrides: Record<string, string>) {
   try {
-    localStorage.setItem(`${STORAGE_KEY_PREFIX}:${loanId}`, JSON.stringify(overrides));
+    const payload = { data: overrides, expiresAt: Date.now() + TTL_MS };
+    localStorage.setItem(`${STORAGE_KEY_PREFIX}:${loanId}`, JSON.stringify(payload));
   } catch { /* quota exceeded — silently ignore */ }
 }
 

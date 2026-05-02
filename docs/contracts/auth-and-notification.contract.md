@@ -79,7 +79,7 @@ Default cho user mới: `viewer` (schema `@default("viewer")`).
 ### 4.1 Route Protection
 
 - `src/proxy.ts` (Next.js proxy, **thay thế middleware.ts**) — intercept request, check cookie `better-auth.session_token`
-- Public routes (không require auth): `/login`, `/2fa-setup`, `/api/cron/**` (secret-gated)
+- Public routes (không require auth): `/login`, `/2fa-setup`, `/api/cron/**` (secret-gated qua `Authorization: Bearer` hoặc `x-cron-secret` header)
 - Authenticated routes: tất cả trang và API còn lại
 
 **Note:** proxy.ts **không** kiểm tra role — chỉ check logged-in. Role check ở service/API layer qua auth-guard.
@@ -137,12 +137,13 @@ Logic ở `src/lib/notifications/deadline-check-logic.ts`, endpoint `/api/cron/i
 
 ### 4.7 Cron Authentication
 
-Endpoint `/api/cron/invoice-deadlines` hỗ trợ **3 cách** pass secret:
-| Method | Header/Query | Use case |
+Endpoint `/api/cron/invoice-deadlines` hỗ trợ **2 cách** pass secret (header only — query param đã bị loại bỏ vì PII leak trong server logs):
+| Method | Header | Use case |
 |---|---|---|
 | Bearer token | `Authorization: Bearer ${CRON_SECRET}` | Vercel Cron (default) |
 | Custom header | `x-cron-secret: ${CRON_SECRET}` | External cron services hỗ trợ custom headers |
-| Query param | `?secret=${CRON_SECRET}` | Services chỉ support simple GET (fallback) |
+
+**Không chấp nhận** `?secret=` query param — tránh secret lộ trong access logs và referrer headers.
 
 Comparison: `timingSafeEqual()` — chống timing attack. 401 nếu missing hoặc mismatch. 500 nếu `CRON_SECRET` env chưa set.
 
