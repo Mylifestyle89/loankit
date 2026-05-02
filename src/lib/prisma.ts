@@ -83,7 +83,9 @@ function getPrismaConfig(): { key: string; factory: () => PrismaClient } {
 
   // Local: use better-sqlite3 adapter
   const dbUrl = resolveSqliteUrl(configuredDbUrl);
-  console.log("[PRISMA] DB:", dbUrl);
+  if (process.env.NODE_ENV !== "production") {
+    console.log("[PRISMA] DB:", dbUrl);
+  }
   return {
     key: `sqlite:${dbUrl}`,
     factory: () => {

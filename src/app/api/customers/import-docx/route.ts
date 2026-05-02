@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { requireEditorOrAdmin } from "@/lib/auth-guard";
+import { toHttpError } from "@/core/errors/app-error";
+import { requireEditorOrAdmin, handleAuthError } from "@/lib/auth-guard";
 import { extractParagraphs } from "@/services/auto-tagging-docx-parser";
 import {
   extractCustomerDataFromText,
@@ -26,6 +27,10 @@ export async function POST(request: NextRequest) {
 
     if (files.length === 0) {
       return NextResponse.json({ ok: false, error: "Chưa chọn file nào." }, { status: 400 });
+    }
+
+    if (files.length > 5) {
+      return NextResponse.json({ ok: false, error: "Tối đa 5 file mỗi lần tải lên." }, { status: 400 });
     }
 
     // Validate files: .docx extension + size limit
@@ -81,8 +86,10 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ ok: true, extracted: merged, sources });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Lỗi không xác định";
+    const authResponse = handleAuthError(error);
+    if (authResponse) return authResponse;
     console.error("[import-docx] Error:", error);
-    return NextResponse.json({ ok: false, error: message }, { status: 500 });
+    const httpError = toHttpError(error, "Lỗi không xác định.");
+    return NextResponse.json({ ok: false, error: httpError.message }, { status: httpError.status });
   }
 }

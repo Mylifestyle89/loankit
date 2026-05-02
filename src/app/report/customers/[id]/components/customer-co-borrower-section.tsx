@@ -81,9 +81,11 @@ function CoBorrowerForm({
         body: JSON.stringify(form),
       });
       const data = await res.json();
-      if (!data.ok) { setError(data.error ?? "Lỗi không xác định"); return; }
+      if (!res.ok || !data.ok) { setError(data.error ?? "Lỗi không xác định"); return; }
       onSaved();
-    } catch { setError("Lỗi kết nối"); } finally {
+    } catch {
+      setError("Lỗi kết nối");
+    } finally {
       setSaving(false);
     }
   }

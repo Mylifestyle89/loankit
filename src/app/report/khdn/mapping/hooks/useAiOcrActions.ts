@@ -114,6 +114,10 @@ export function useAiOcrActions({
     }, []);
 
     /** Áp dụng matched fields vào field_catalog của field template đang chọn */
+    // Empty deps intentional: Zustand store accessed via .getState() to avoid
+    // re-creating callback on every store mutation. HMR-safe because stores are
+    // module singletons.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     const handleApplyToFieldTemplate = useCallback(
         (newFields: import("@/lib/report/config-schema").FieldCatalogItem[]) => {
             const { fieldCatalog, setFieldCatalog } = useMappingDataStore.getState();
@@ -165,6 +169,8 @@ export function useAiOcrActions({
         uploadAutoProcessFile,
     ]);
 
+    // Same rationale as handleApplyToFieldTemplate above.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     const handleOcrFileSelected = useCallback(async (file: File) => {
         const { selectedFieldTemplateId: tplId } = useFieldTemplateStore.getState();
         const {

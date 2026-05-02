@@ -88,16 +88,20 @@ export const mappingService = {
       if (fieldCatalog) {
         const serializedCatalog = JSON.stringify(fieldCatalog);
         dbUpdateData.fieldCatalogJson = serializedCatalog;
-        if (instance.masterId) {
-          await prisma.fieldTemplateMaster.update({
+      }
+
+      // Wrap both writes in a transaction to ensure atomicity (A-C1 fix)
+      await prisma.$transaction(async (tx) => {
+        if (fieldCatalog && instance.masterId) {
+          await tx.fieldTemplateMaster.update({
             where: { id: instance.masterId },
-            data: { fieldCatalogJson: serializedCatalog },
+            data: { fieldCatalogJson: JSON.stringify(fieldCatalog) },
           });
         }
-      }
-      await prisma.mappingInstance.update({
-        where: { id: instance.id },
-        data: dbUpdateData,
+        await tx.mappingInstance.update({
+          where: { id: instance.id },
+          data: dbUpdateData,
+        });
       });
 
       return { version: { id: instance.id, status: "draft", created_at: instance.updatedAt.toISOString() }, activeVersionId: instance.id };

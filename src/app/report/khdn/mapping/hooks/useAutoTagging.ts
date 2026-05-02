@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 
 import type { TagFormat } from "@/services/auto-tagging.service";
 import type { ReverseTagSuggestion } from "../types";
@@ -33,6 +33,7 @@ const INITIAL: AutoTaggingState = {
 
 export function useAutoTagging(t: (key: string) => string) {
   const [state, setState] = useState<AutoTaggingState>(INITIAL);
+  const analyzeAbortRef = useRef<AbortController | null>(null);
 
   const setFile = useCallback((file: File | null) => {
     setState((s) => ({ ...s, file, docxPath: "", suggestions: [], accepted: [], resultPath: "", resultUrl: "", error: "" }));
@@ -68,6 +69,11 @@ export function useAutoTagging(t: (key: string) => string) {
         return;
       }
 
+      // Abort any in-flight analyze request before starting a new one
+      analyzeAbortRef.current?.abort();
+      const ctrl = new AbortController();
+      analyzeAbortRef.current = ctrl;
+
       setState((s) => ({ ...s, analyzing: true, error: "", suggestions: [], accepted: [], resultPath: "", resultUrl: "" }));
 
       try {
@@ -76,7 +82,7 @@ export function useAutoTagging(t: (key: string) => string) {
         form.append("headers", JSON.stringify(headers));
         if (fieldLabels) form.append("fieldLabels", JSON.stringify(fieldLabels));
 
-        const res = await fetch("/api/report/auto-tagging/analyze", { method: "POST", body: form });
+        const res = await fetch("/api/report/auto-tagging/analyze", { method: "POST", body: form, signal: ctrl.signal });
         const data = (await res.json()) as {
           ok: boolean;
           error?: string;
@@ -98,6 +104,8 @@ export function useAutoTagging(t: (key: string) => string) {
           analyzing: false,
         }));
       } catch (err) {
+        // Silently ignore abort errors — new analyze call started or file changed
+        if (err instanceof Error && err.name === "AbortError") return;
         setState((s) => ({
           ...s,
           analyzing: false,

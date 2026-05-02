@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowLeft } from "lucide-react";
 
 import { useLanguage } from "@/components/language-provider";
@@ -125,13 +125,18 @@ export function CustomerDetailView({ customerType, basePath }: CustomerDetailVie
     id_type: "CCCD",
   });
   const [documentsPa, setDocumentsPa] = useState<Array<{ document_type: string; number: string; issuing_authority: string; issue_date: string; notes: string }>>([]);
+  const loadAbortRef = useRef<AbortController | null>(null);
 
   const loadCustomer = useCallback(async () => {
+    loadAbortRef.current?.abort();
+    const ctrl = new AbortController();
+    loadAbortRef.current = ctrl;
+
     setLoading(true);
     setError("");
     try {
       // reveal=all: form needs raw PII values for editing
-      const res = await fetch(`/api/customers/${id}?full=true&reveal=all`, { cache: "no-store" });
+      const res = await fetch(`/api/customers/${id}?full=true&reveal=all`, { cache: "no-store", signal: ctrl.signal });
       const data = (await res.json()) as { ok: boolean; error?: string; customer?: FullCustomer };
       if (!data.ok || !data.customer) {
         setError(data.error ?? "Not found.");
@@ -174,6 +179,8 @@ export function CustomerDetailView({ customerType, basePath }: CustomerDetailVie
       }
       setLoading(false);
     } catch (err) {
+      // Silently ignore abort errors — user navigated away or new request started
+      if (err instanceof Error && err.name === "AbortError") return;
       setError(err instanceof Error ? err.message : "Network error");
       setLoading(false);
     }
@@ -181,16 +188,20 @@ export function CustomerDetailView({ customerType, basePath }: CustomerDetailVie
 
   useEffect(() => {
     const timer = window.setTimeout(() => { void loadCustomer(); }, 0);
-    return () => window.clearTimeout(timer);
+    return () => {
+      window.clearTimeout(timer);
+      loadAbortRef.current?.abort();
+    };
   }, [loadCustomer]);
 
-  // Remap old tab keys for KHCN
-  useEffect(() => {
-    if (isIndividual && (activeTab === "loans" || activeTab === "credit")) {
-      if (activeTab === "credit") setLoansCreditSubTab("credit");
+  const setActiveTabSafe = (tab: TabKey) => {
+    if (isIndividual && (tab === "loans" || tab === "credit")) {
+      if (tab === "credit") setLoansCreditSubTab("credit");
       setActiveTab("loans-credit");
+      return;
     }
-  }, [isIndividual, activeTab]);
+    setActiveTab(tab);
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -297,7 +308,7 @@ export function CustomerDetailView({ customerType, basePath }: CustomerDetailVie
             onClick={() =>
               tab.key === "loan-plans"
                 ? router.push(`/report/customers/${id}/loan-plans`)
-                : setActiveTab(tab.key)
+                : setActiveTabSafe(tab.key)
             }
             className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
               activeTab === tab.key

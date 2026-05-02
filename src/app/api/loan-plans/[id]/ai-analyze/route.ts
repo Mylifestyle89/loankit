@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import * as XLSX from "xlsx";
+import { toHttpError } from "@/core/errors/app-error";
 import { requireEditorOrAdmin, handleAuthError } from "@/lib/auth-guard";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limiter";
 
@@ -99,7 +100,8 @@ Quy tắc:
   } catch (error) {
     const authResponse = handleAuthError(error);
     if (authResponse) return authResponse;
-    const message = error instanceof Error ? error.message : "AI analysis failed";
-    return NextResponse.json({ ok: false, error: message }, { status: 500 });
+    console.error("[AI Analyze]", error);
+    const httpError = toHttpError(error, "AI analysis failed.");
+    return NextResponse.json({ ok: false, error: httpError.message }, { status: httpError.status });
   }
 }

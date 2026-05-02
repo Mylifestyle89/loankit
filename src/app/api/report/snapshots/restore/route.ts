@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import { toHttpError } from "@/core/errors/app-error";
 import { requireEditorOrAdmin, handleAuthError } from "@/lib/auth-guard";
 import { reportService } from "@/services/report.service";
 
@@ -26,9 +27,10 @@ export async function POST(req: NextRequest) {
         { status: 400 },
       );
     }
+    const httpError = toHttpError(error, "Không thể khôi phục snapshot.");
     return NextResponse.json(
-      { ok: false, error: error instanceof Error ? error.message : "Không thể khôi phục snapshot." },
-      { status: 500 },
+      { ok: false, error: httpError.message },
+      { status: httpError.status },
     );
   }
 }

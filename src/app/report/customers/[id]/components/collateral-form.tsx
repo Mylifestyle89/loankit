@@ -39,6 +39,7 @@ export function CollateralForm({ customerId, initial, onSaved, onCancel }: {
     return raw;
   });
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   // qsd_dat: "Có tài sản trên đất" toggle
   const [hasAssetOnLand, setHasAssetOnLand] = useState(() => {
@@ -119,6 +120,7 @@ export function CollateralForm({ customerId, initial, onSaved, onCancel }: {
   async function handleSave() {
     if (!name.trim()) return;
     setSaving(true);
+    setSaveError(null);
     try {
       const finalProps = { ...props };
       if (owners.length > 0) finalProps._owners = JSON.stringify(owners);
@@ -140,11 +142,17 @@ export function CollateralForm({ customerId, initial, onSaved, onCancel }: {
       const url = isEdit
         ? `/api/customers/${customerId}/collaterals/${initial.id}`
         : `/api/customers/${customerId}/collaterals`;
-      await fetch(url, {
+      const res = await fetch(url, {
         method: isEdit ? "PATCH" : "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
+      let data: { ok: boolean; error?: string } = { ok: false };
+      try { data = await res.json(); } catch { /* non-JSON body */ }
+      if (!res.ok || !data.ok) {
+        setSaveError(data.error ?? `Lỗi lưu TSBĐ (HTTP ${res.status}).`);
+        return;
+      }
       onSaved();
     } finally { setSaving(false); }
   }
@@ -503,6 +511,11 @@ export function CollateralForm({ customerId, initial, onSaved, onCancel }: {
         <div className="grid grid-cols-2 gap-3 pt-2 border-t border-zinc-200 dark:border-white/[0.07]">
           {fields.map((f) => renderField(f.key, f.label))}
         </div>
+      )}
+
+      {/* Save error */}
+      {saveError && (
+        <p className="text-xs text-red-600 dark:text-red-400 px-1">{saveError}</p>
       )}
 
       {/* Save/Cancel */}

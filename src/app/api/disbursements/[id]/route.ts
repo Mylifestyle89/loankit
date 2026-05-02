@@ -45,8 +45,13 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    await requireEditorOrAdmin();
+    const session = await requireEditorOrAdmin();
     const { id } = await params;
+    // Mirror GET ownership check: editors may only modify disbursements they have access to.
+    if (session.user.role !== "admin") {
+      const ok = await customerService.checkDisbursementAccess(id, session.user.id);
+      if (!ok) return NextResponse.json({ ok: false, error: "Forbidden" }, { status: 403 });
+    }
     const body = await req.json();
     const parsed = updateSchema.parse(body);
     const disbursement = await disbursementService.update(id, parsed);

@@ -88,11 +88,11 @@ export async function exportData(params?: { customerIds?: string[]; templateIds?
   const where: Prisma.CustomerWhereInput | undefined =
     customerIds.length > 0 ? { id: { in: customerIds } } : undefined;
 
-  const rawCustomers = await prisma.customer.findMany({
-    where,
-    include: fullCustomerInclude,
-  });
-  const customers = rawCustomers.map(decryptFullCustomer);
+  // Use cursor-based batching to avoid loading all customers into memory at once
+  const customers: Record<string, unknown>[] = [];
+  for await (const batch of fullCustomerBatches(where, 100)) {
+    customers.push(...batch);
+  }
 
   const state = await loadState();
   const field_templates =

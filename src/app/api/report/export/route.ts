@@ -84,20 +84,8 @@ export async function POST(req: NextRequest) {
     console.error("[Export API] HTTP Error status:", httpError.status);
     console.error("[Export API] HTTP Error message:", httpError.message);
 
-    // Extract detailed error info
-    let detailsStr = error instanceof Error ? error.message : String(error);
-    if (error && typeof error === "object" && "details" in error) {
-      const details = (error as any).details;
-      if (details && typeof details === "object") {
-        detailsStr = JSON.stringify(details, null, 2).slice(0, 500);
-      } else if (typeof details === "string") {
-        detailsStr = details;
-      }
-    }
-    console.error("[Export API] Details:", detailsStr);
-
     return NextResponse.json(
-      { ok: false, error: httpError.message, details: detailsStr },
+      { ok: false, error: httpError.message },
       { status: httpError.status },
     );
   }

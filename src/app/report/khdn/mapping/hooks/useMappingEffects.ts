@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useRef } from "react";
 import { useCustomerStore } from "../stores/use-customer-store";
 import { useFieldTemplateStore } from "../stores/use-field-template-store";
 import { useMappingDataStore } from "../stores/use-mapping-data-store";
@@ -30,12 +30,26 @@ export function useMappingEffects({
 }: UseMappingEffectsProps) {
     const ocrLogs = useOcrStore((s) => s.ocrLogs);
     const openedAiSuggestionFromQueryRef = useRef(false);
+    // Request-id counter to drop stale customer-template responses
+    const customerLoadRequestIdRef = useRef(0);
 
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    useEffect(() => { void loadData(); }, []);
+    // Latest-ref pattern: always keep refs in sync so effects with empty deps
+    // always call the current function without stale closures.
+    const loadDataRef = useRef(loadData);
+    const loadCustomersRef = useRef(loadCustomers);
+    const loadAllFieldTemplatesRef = useRef(loadAllFieldTemplates);
+    const loadFieldTemplatesRef = useRef(loadFieldTemplates);
 
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    useEffect(() => { void loadCustomers(); void loadAllFieldTemplates(); }, []);
+    useLayoutEffect(() => {
+        loadDataRef.current = loadData;
+        loadCustomersRef.current = loadCustomers;
+        loadAllFieldTemplatesRef.current = loadAllFieldTemplates;
+        loadFieldTemplatesRef.current = loadFieldTemplates;
+    });
+
+    useEffect(() => { void loadDataRef.current(); }, []);
+
+    useEffect(() => { void loadCustomersRef.current(); }, []);
 
     useEffect(() => {
         if (editingFieldTemplateId) return;
@@ -45,12 +59,24 @@ export function useMappingEffects({
             useMappingDataStore.getState().setTemplateData([], {}, {});
             return;
         }
-        // Clear stale data before loading to prevent flash of old customer data
+
+        // Increment request-id so any stale async response can detect it's outdated
+        const reqId = ++customerLoadRequestIdRef.current;
+
+        // Clear stale data + OCR suggestions before loading new customer to prevent
+        // flash of previous customer's data or OCR suggestions appearing briefly
         useFieldTemplateStore.getState().setSelectedFieldTemplateId("");
         useMappingDataStore.getState().setTemplateData([], {}, {});
-        void loadAllFieldTemplates();
-        void loadFieldTemplates(selectedCustomerId);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+        useOcrStore.getState().reset();
+
+        void (async () => {
+            await Promise.all([
+                loadAllFieldTemplatesRef.current(),
+                loadFieldTemplatesRef.current(selectedCustomerId),
+            ]);
+            // Drop result if another customer was selected while awaiting
+            if (reqId !== customerLoadRequestIdRef.current) return;
+        })();
     }, [editingFieldTemplateId, selectedCustomerId]);
 
     useEffect(() => {

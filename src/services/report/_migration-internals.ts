@@ -29,10 +29,12 @@ import {
 } from "./_shared";
 
 // ---------------------------------------------------------------------------
-// Module-level guard
+// Module-level guard (in-process cache to skip repeated DB reads)
 // ---------------------------------------------------------------------------
 
 let isMigrationChecked = false;
+
+const MIGRATION_KEY = "LEGACY_MIGRATION";
 
 // ---------------------------------------------------------------------------
 // Prisma model detection
@@ -97,8 +99,50 @@ export async function createInstanceDraftFiles(seed: {
 // ---------------------------------------------------------------------------
 
 export async function ensureMasterInstanceMigration(): Promise<void> {
+  // Fast path: in-process cache avoids repeated DB reads within same process
   if (isMigrationChecked) return;
   ensurePrismaModelsExist();
+
+  // A-C3: Use DB sentinel (MigrationState) inside a serializable transaction
+  // to prevent duplicate migration runs on concurrent cold-starts.
+  // SQLite Serializable isolation ensures second concurrent tx sees the sentinel row.
+  let shouldRunMigration = false;
+
+  try {
+    await prisma.$transaction(
+      async (tx) => {
+        // Check for existing sentinel row — if present, migration already ran
+        const existing = await tx.migrationState.findUnique({
+          where: { key: MIGRATION_KEY },
+        });
+        if (existing && existing.version >= LEGACY_MIGRATION_VERSION) {
+          // Already done — no-op; isMigrationChecked set after tx
+          return;
+        }
+
+        // Reserve the slot: insert sentinel before doing work.
+        // Concurrent tx will collide on @id unique constraint → skip.
+        await tx.migrationState.upsert({
+          where: { key: MIGRATION_KEY },
+          create: { key: MIGRATION_KEY, version: LEGACY_MIGRATION_VERSION },
+          update: { version: LEGACY_MIGRATION_VERSION },
+        });
+
+        shouldRunMigration = true;
+      },
+      { isolationLevel: "Serializable" },
+    );
+  } catch (err) {
+    // Unique constraint violation → another process won the race, skip
+    console.warn("[Migration] Concurrent migration detected, skipping:", (err as Error).message);
+    isMigrationChecked = true;
+    return;
+  }
+
+  if (!shouldRunMigration) {
+    isMigrationChecked = true;
+    return;
+  }
 
   const state = await loadState();
   if ((state.data_migration_version ?? 0) >= LEGACY_MIGRATION_VERSION) {

@@ -89,6 +89,8 @@ export async function PATCH(
     const loan = await loanService.update(id, parsed);
     return NextResponse.json({ ok: true, loan });
   } catch (error) {
+    const authResponse = handleAuthError(error);
+    if (authResponse) return authResponse;
     if (error instanceof z.ZodError) {
       const ve = new ValidationError("Invalid request body.", error.flatten().fieldErrors);
       return NextResponse.json({ ok: false, error: ve.message, details: ve.details }, { status: ve.status });
@@ -108,6 +110,8 @@ export async function DELETE(
     await loanService.delete(id);
     return NextResponse.json({ ok: true });
   } catch (error) {
+    const authResponse = handleAuthError(error);
+    if (authResponse) return authResponse;
     const httpError = toHttpError(error, "Failed to delete loan.");
     return NextResponse.json({ ok: false, error: httpError.message }, { status: httpError.status });
   }

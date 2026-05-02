@@ -95,6 +95,8 @@ model Verification {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
+  @@index([identifier])
+  @@index([expiresAt])
   @@map("verification")
 }
 
@@ -583,6 +585,15 @@ model CreditAtOther {
   @@map("credit_at_other")
 }
 
+/// Sentinel table for one-time DB migrations — prevents duplicate runs on concurrent cold-starts
+model MigrationState {
+  key       String   @id
+  version   Int
+  appliedAt DateTime @default(now())
+
+  @@map("migration_states")
+}
+
 /// Generic dropdown options - user-managed per field_key
 model DropdownOption {
   id         String @id @default(cuid())
@@ -634,5 +645,7 @@ model Branch {
 
   customers Customer[]
 
+  @@index([name])
+  @@index([branch_code])
   @@map("branches")
 }

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireEditorOrAdmin } from "@/lib/auth-guard";
+import { toHttpError } from "@/core/errors/app-error";
+import { requireEditorOrAdmin, handleAuthError } from "@/lib/auth-guard";
 import { importBkFileMulti } from "@/lib/import/bk-importer";
 
 /**
@@ -27,7 +28,10 @@ export async function POST(request: NextRequest) {
       status: result.status === "error" ? 400 : 200,
     });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Unknown error";
-    return NextResponse.json({ error: `Server error: ${message}` }, { status: 500 });
+    const authResponse = handleAuthError(error);
+    if (authResponse) return authResponse;
+    console.error("[import/bk]", error);
+    const httpError = toHttpError(error, "Server error.");
+    return NextResponse.json({ error: httpError.message }, { status: httpError.status });
   }
 }

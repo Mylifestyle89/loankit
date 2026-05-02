@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { toHttpError } from "@/core/errors/app-error";
 import { requireAdmin, handleAuthError } from "@/lib/auth-guard";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limiter";
 
@@ -87,9 +88,10 @@ export async function POST(req: NextRequest) {
     const authResponse = handleAuthError(error);
     if (authResponse) return authResponse;
     console.error("[AI Credit Assessment]", error);
+    const httpError = toHttpError(error, "AI phân tích thất bại.");
     return NextResponse.json(
-      { ok: false, error: error instanceof Error ? error.message : "AI phân tích thất bại" },
-      { status: 500 },
+      { ok: false, error: httpError.message },
+      { status: httpError.status },
     );
   }
 }

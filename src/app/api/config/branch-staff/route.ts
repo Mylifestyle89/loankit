@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+
+import { toHttpError } from "@/core/errors/app-error";
 import { requireSession, requireEditorOrAdmin, handleAuthError } from "@/lib/auth-guard";
 import { prisma } from "@/lib/prisma";
 
@@ -22,8 +24,10 @@ export async function GET() {
       : { active_branch_id: null, relationship_officer: null, appraiser: null, approver_name: null, approver_title: null };
     return NextResponse.json({ ok: true, config });
   } catch (e: unknown) {
-    const msg = e instanceof Error ? e.message : "Unknown error";
-    return NextResponse.json({ ok: false, error: msg }, { status: 500 });
+    const authResponse = handleAuthError(e);
+    if (authResponse) return authResponse;
+    const httpError = toHttpError(e, "Failed to get branch-staff config.");
+    return NextResponse.json({ ok: false, error: httpError.message }, { status: httpError.status });
   }
 }
 
@@ -66,7 +70,9 @@ export async function PUT(req: NextRequest) {
 
     return NextResponse.json({ ok: true, config });
   } catch (e: unknown) {
-    const msg = e instanceof Error ? e.message : "Unknown error";
-    return NextResponse.json({ ok: false, error: msg }, { status: 500 });
+    const authResponse = handleAuthError(e);
+    if (authResponse) return authResponse;
+    const httpError = toHttpError(e, "Failed to update branch-staff config.");
+    return NextResponse.json({ ok: false, error: httpError.message }, { status: httpError.status });
   }
 }

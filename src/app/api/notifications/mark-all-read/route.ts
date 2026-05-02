@@ -8,8 +8,9 @@ export const runtime = "nodejs";
 
 export async function POST() {
   try {
-    await requireSession();
-    await notificationService.markAllRead();
+    const session = await requireSession();
+    const isAdmin = session.user.role === "admin";
+    await notificationService.markAllRead({ userId: session.user.id, isAdmin });
     return NextResponse.json({ ok: true });
   } catch (error) {
     const authResponse = handleAuthError(error);

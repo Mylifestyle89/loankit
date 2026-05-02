@@ -28,6 +28,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ ok: false, error: "Vui lòng dán nội dung văn bản." }, { status: 400 });
     }
 
+    if (text.length > 50_000) {
+      return NextResponse.json({ ok: false, error: "Văn bản quá dài (tối đa 50.000 ký tự)." }, { status: 400 });
+    }
+
     switch (entityType) {
       case "collateral": {
         const data = await extractCollateralsFromText(text);

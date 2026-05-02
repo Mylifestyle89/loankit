@@ -22,6 +22,10 @@ export function useAutoSaveSnapshot() {
     }
     const mergedManual = { ...md.manualValues, ...repeaterData };
 
+    // Skip snapshot when fieldCatalog is empty — data hasn't loaded yet, nothing
+    // meaningful to persist. Only manual saves bypass this guard.
+    if (source === "auto" && md.fieldCatalog.length === 0) return;
+
     // Build a quick hash to detect changes
     const hash = JSON.stringify({
       mv: mergedManual,

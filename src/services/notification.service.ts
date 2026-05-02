@@ -55,6 +55,10 @@ export const notificationService = {
     });
   },
 
+  async getById(id: string) {
+    return prisma.appNotification.findUnique({ where: { id } });
+  },
+
   async markRead(id: string) {
     return prisma.appNotification.update({
       where: { id },
@@ -62,9 +66,27 @@ export const notificationService = {
     });
   },
 
-  async markAllRead() {
+  async markAllRead(opts?: { userId?: string; isAdmin?: boolean }) {
+    if (opts?.isAdmin || !opts?.userId) {
+      // Admin or unauthenticated context: mark all unread
+      return prisma.appNotification.updateMany({
+        where: { readAt: null },
+        data: { readAt: new Date() },
+      });
+    }
+    // Non-admin: scope to notifications accessible to this user.
+    // updateMany doesn't support relation filters, so resolve accessible customerIds first.
+    const userId = opts.userId;
+    const accessibleCustomers = await prisma.customer.findMany({
+      where: { OR: [{ createdById: userId }, { grants: { some: { userId } } }] },
+      select: { id: true },
+    });
+    const customerIds = accessibleCustomers.map((c) => c.id);
     return prisma.appNotification.updateMany({
-      where: { readAt: null },
+      where: {
+        readAt: null,
+        OR: [{ customerId: null }, { customerId: { in: customerIds } }],
+      },
       data: { readAt: new Date() },
     });
   },

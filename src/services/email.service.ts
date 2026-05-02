@@ -17,7 +17,10 @@ function getTransporter(): Transporter | null {
   }
 
   const port = Number(process.env.SMTP_PORT) || 587;
-  console.log(`[email-service] Initializing SMTP: host=${host} port=${port} user=${user}`);
+  if (process.env.NODE_ENV !== "production") {
+    // Mask user to avoid logging credentials in production
+    console.log(`[email-service] Initializing SMTP: host=${host} port=${port} user=${user?.slice(0, 3)}***`);
+  }
 
   transporter = nodemailer.createTransport({
     host,

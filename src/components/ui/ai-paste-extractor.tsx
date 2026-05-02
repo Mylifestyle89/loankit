@@ -10,10 +10,13 @@ import { useState, useRef } from "react";
 import { ChevronDown, ChevronUp, Loader2, Sparkles } from "lucide-react";
 import type { AiExtractEntityType } from "@/services/ai-text-extraction.service";
 
+/** Union of all possible extraction result shapes returned by /api/ai/extract-text */
+// Using unknown instead of any: callers cast to their specific type via their own annotations
 type Props = {
   entityType: AiExtractEntityType;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  onExtracted: (data: any) => void;
+  // Callers annotate their own handler type (e.g. (data: Partial<ExtractedCustomer>) => void)
+  // Using unknown here forces explicit type narrowing at call site, eliminating the `any` escape hatch
+  onExtracted: (data: unknown) => void;
   label?: string;
   placeholder?: string;
 };
@@ -24,9 +27,14 @@ export function AiPasteExtractor({ entityType, onExtracted, label, placeholder }
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const abortRef = useRef<AbortController | null>(null);
 
   async function handleExtract() {
     if (!text.trim()) return;
+    abortRef.current?.abort();
+    const ctrl = new AbortController();
+    abortRef.current = ctrl;
+
     setLoading(true);
     setError("");
     try {
@@ -34,6 +42,7 @@ export function AiPasteExtractor({ entityType, onExtracted, label, placeholder }
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ entityType, text }),
+        signal: ctrl.signal,
       });
       const json = await res.json() as { ok: boolean; data?: unknown; error?: string };
       if (!json.ok) { setError(json.error ?? "Lỗi trích xuất."); return; }
@@ -41,11 +50,18 @@ export function AiPasteExtractor({ entityType, onExtracted, label, placeholder }
       // Collapse and clear after success
       setText("");
       setOpen(false);
-    } catch {
+    } catch (err) {
+      // Silently ignore abort errors — user closed the panel or new request started
+      if (err instanceof Error && err.name === "AbortError") return;
       setError("Lỗi kết nối. Thử lại.");
     } finally {
       setLoading(false);
     }
+  }
+
+  function handleClose() {
+    abortRef.current?.abort();
+    setOpen(false);
   }
 
   return (
@@ -53,7 +69,8 @@ export function AiPasteExtractor({ entityType, onExtracted, label, placeholder }
       {/* Header toggle */}
       <button
         type="button"
-        onClick={() => { setOpen(!open); if (!open) setTimeout(() => textareaRef.current?.focus(), 50); }}
+        aria-expanded={open}
+        onClick={() => { if (open) { handleClose(); } else { setOpen(true); setTimeout(() => textareaRef.current?.focus(), 50); } }}
         className="w-full flex items-center gap-2 px-4 py-2.5 text-left text-sm font-medium text-brand-600 dark:text-brand-400 hover:bg-brand-50 dark:hover:bg-brand-500/10 transition-colors"
       >
         <Sparkles className="h-3.5 w-3.5 shrink-0" />
@@ -71,6 +88,7 @@ export function AiPasteExtractor({ entityType, onExtracted, label, placeholder }
             value={text}
             onChange={(e) => setText(e.target.value)}
             rows={6}
+            maxLength={50000}
             placeholder={placeholder ?? "Dán nội dung từ DOCX vào đây (Ctrl+V)..."}
             className="w-full rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] px-3 py-2 text-xs text-zinc-800 dark:text-slate-200 resize-y focus:outline-none focus:ring-1 focus:ring-brand-500/40"
           />

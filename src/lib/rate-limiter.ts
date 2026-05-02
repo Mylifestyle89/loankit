@@ -1,8 +1,18 @@
 /**
  * In-memory rate limiter — fixed window counter per key.
  * Suitable for single-instance Node.js runtime (not Edge/serverless).
+ *
+ * Single-instance assumption: this app runs on a dedicated offline workstation
+ * (per project_2fa_requirements.md — offline máy trạm). If ever deployed to
+ * Vercel or other multi-instance hosts, replace with Redis-backed limiter
+ * (e.g. @upstash/ratelimit) to avoid each instance having its own independent bucket.
  */
 import type { NextRequest } from "next/server";
+
+// Warn at module load time if running on a known multi-instance host.
+if (process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME) {
+  console.warn("[rate-limiter] In-memory limiter on multi-instance host — switch to Redis.");
+}
 
 type Window = { count: number; resetAt: number };
 

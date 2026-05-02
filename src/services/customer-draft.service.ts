@@ -72,12 +72,16 @@ export async function saveFromDraft(
   if (!customer_name) {
     throw new ValidationError("Tên khách hàng (A.general.customer_name) không được để trống.");
   }
+  // customer_code is required for hash-based dedup lookup
+  if (!customer_code) {
+    throw new ValidationError("Mã khách hàng (A.general.customer_code) không được để trống.");
+  }
 
   const cccd = toStringOrNull(values["A.general.cccd"]);
   const isIndividual = !!cccd || values["A.general.customer_type"] === "individual";
 
   const payload = {
-    customer_code: customer_code ?? customer_name,
+    customer_code: customer_code,
     customer_name,
     customer_type: isIndividual ? "individual" : "corporate",
     address: toStringOrNull(values["A.general.address"]),
@@ -106,9 +110,10 @@ export async function saveFromDraft(
   }
 
   return prisma.$transaction(async (tx) => {
-    const existing = await tx.customer.findFirst({
-      where: { customer_name: payload.customer_name },
-      orderBy: { updatedAt: "desc" },
+    // A-C2: Look up by customer_code_hash (unique) instead of customer_name (non-unique)
+    const lookupHash = hashCustomerCode(payload.customer_code);
+    const existing = await tx.customer.findUnique({
+      where: { customer_code_hash: lookupHash },
     });
 
     const sharedData = {
