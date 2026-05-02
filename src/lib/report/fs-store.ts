@@ -1,6 +1,6 @@
 /**
  * fs-store — framework state load/save + re-export barrel.
- * Sub-modules: fs-store-mapping-io.ts, fs-store-state-ops.ts.
+ * Sub-modules: fs-store-mapping-io.ts, fs-store-state-ops.ts, fs-store-fallback.ts.
  */
 import fs from "node:fs/promises";
 import path from "node:path";
@@ -26,19 +26,10 @@ import {
   pruneOldBackups,
   tsForFilename,
 } from "@/lib/report/fs-store-helpers";
-import {
-  buildCatalog,
-  mergeFinancialCatalog,
-  readMappingFile,
-  readAliasFile,
-} from "@/lib/report/fs-store-mapping-io";
-import {
-  DEFAULT_ALIAS_FILE,
-  DEFAULT_MAPPING_FILE,
-  DEFAULT_TEMPLATE_FILE,
-} from "@/lib/report/constants";
+import { mergeFinancialCatalog, readMappingFile, readAliasFile } from "@/lib/report/fs-store-mapping-io";
+import { bootstrapState, EMPTY_STATE } from "@/lib/report/fs-store-fallback";
 
-// Re-export all public API from sub-modules so consumers import from "@/lib/report/fs-store"
+// Re-export all public API from sub-modules
 export {
   readMappingFile,
   parseMappingJson,
@@ -56,78 +47,13 @@ export {
   appendRunLog,
 } from "@/lib/report/fs-store-state-ops";
 
+export { bootstrapTemplateProfiles, bootstrapState, EMPTY_STATE } from "@/lib/report/fs-store-fallback";
+
 // ---------------------------------------------------------------------------
 // Internal constants
 // ---------------------------------------------------------------------------
 
 const REPORT_CONFIG_DB_KEY = "framework_state";
-const nowIso = () => new Date().toISOString();
-
-// ---------------------------------------------------------------------------
-// Bootstrap helpers (internal)
-// ---------------------------------------------------------------------------
-
-function bootstrapTemplateProfiles(): TemplateProfile[] {
-  return [
-    {
-      id: "template-2268-no-prefix",
-      template_name: "Mau 2268 (no prefix placeholders)",
-      docx_path: DEFAULT_TEMPLATE_FILE,
-      placeholder_inventory_path: "",
-      active: true,
-    },
-    {
-      id: "template-2268-original",
-      template_name: "Mau 2268 (original)",
-      docx_path: "report_assets/2268.02A.PN BC de xuat cho vay ngan han.docx",
-      placeholder_inventory_path: "",
-      active: false,
-    },
-  ];
-}
-
-async function bootstrapState(): Promise<FrameworkState> {
-  const mapping = await readMappingFile(DEFAULT_MAPPING_FILE);
-  const versionId = `bootstrap-${Date.now()}`;
-  const draftMappingPath = `report_assets/config/versions/${versionId}.mapping.json`;
-  const draftAliasPath = `report_assets/config/versions/${versionId}.alias.json`;
-
-  const { writeJsonFile } = await import("@/lib/report/fs-store-helpers");
-  await writeJsonFile(path.join(process.cwd(), draftMappingPath), mapping);
-  const alias = await readAliasFile(DEFAULT_ALIAS_FILE);
-  await writeJsonFile(path.join(process.cwd(), draftAliasPath), alias);
-
-  const mappingVersion: MappingVersion = {
-    id: versionId,
-    status: "published",
-    created_by: "system",
-    created_at: nowIso(),
-    mapping_json_path: draftMappingPath,
-    alias_json_path: draftAliasPath,
-    notes: "Bootstrap from existing report assets.",
-  };
-
-  const state: FrameworkState = {
-    field_catalog: buildCatalog(mapping),
-    field_templates: [],
-    mapping_versions: [mappingVersion],
-    template_profiles: bootstrapTemplateProfiles(),
-    run_logs: [],
-    active_mapping_version_id: versionId,
-    active_template_id: "template-2268-no-prefix",
-  };
-  return frameworkStateSchema.parse(state);
-}
-
-const EMPTY_STATE: FrameworkState = frameworkStateSchema.parse({
-  field_catalog: [],
-  field_templates: [],
-  mapping_versions: [],
-  template_profiles: [],
-  run_logs: [],
-  active_mapping_version_id: "",
-  active_template_id: "",
-});
 
 // ---------------------------------------------------------------------------
 // DB persistence
@@ -162,9 +88,7 @@ async function saveStateToDb(state: FrameworkState): Promise<void> {
 
 async function normalizeAndPersist(parsed: FrameworkState): Promise<FrameworkState> {
   const mergedFinancial = mergeFinancialCatalog(parsed.field_catalog);
-  if (mergedFinancial.changed) {
-    parsed.field_catalog = mergedFinancial.catalog;
-  }
+  if (mergedFinancial.changed) parsed.field_catalog = mergedFinancial.catalog;
 
   const normalizedLabels = normalizeFieldCatalogLabelsVi(parsed.field_catalog);
   const normalizedGroups = normalizeFieldCatalogGroupsVi(normalizedLabels.catalog);
@@ -182,9 +106,7 @@ async function normalizeAndPersist(parsed: FrameworkState): Promise<FrameworkSta
 export async function loadState(): Promise<FrameworkState> {
   // 1. Try DB first (works on Vercel read-only FS)
   const fromDb = await loadStateFromDb();
-  if (fromDb) {
-    return normalizeAndPersist(fromDb);
-  }
+  if (fromDb) return normalizeAndPersist(fromDb);
 
   // 2. Fall back to filesystem (local dev)
   await ensureDirectories();
@@ -213,10 +135,8 @@ export async function loadState(): Promise<FrameworkState> {
 export async function saveState(state: FrameworkState): Promise<void> {
   const parsed = frameworkStateSchema.parse(state);
 
-  // Always save to DB (works on Vercel)
   await saveStateToDb(parsed);
 
-  // Also save to filesystem when possible (local dev, backup)
   await fileLockService.acquireLock("report_assets");
   try {
     await ensureDirectories();
@@ -250,20 +170,14 @@ export async function saveState(state: FrameworkState): Promise<void> {
 
 export async function getActiveMappingVersion(stateOverride?: FrameworkState): Promise<MappingVersion> {
   const state = stateOverride ?? (await loadState());
-  const activeId = state.active_mapping_version_id;
-  const active = state.mapping_versions.find((version) => version.id === activeId);
-  if (!active) {
-    throw new Error("Active mapping version not found.");
-  }
+  const active = state.mapping_versions.find((v) => v.id === state.active_mapping_version_id);
+  if (!active) throw new Error("Active mapping version not found.");
   return active;
 }
 
 export async function getActiveTemplateProfile(stateOverride?: FrameworkState): Promise<TemplateProfile> {
   const state = stateOverride ?? (await loadState());
-  const activeId = state.active_template_id;
-  const active = state.template_profiles.find((template) => template.id === activeId);
-  if (!active) {
-    throw new Error("Active template profile not found.");
-  }
+  const active = state.template_profiles.find((t) => t.id === state.active_template_id);
+  if (!active) throw new Error("Active template profile not found.");
   return active;
 }

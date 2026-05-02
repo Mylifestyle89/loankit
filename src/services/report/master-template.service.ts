@@ -13,31 +13,48 @@ import { ensureMasterInstanceMigration } from "./_migration-internals";
 // ---------------------------------------------------------------------------
 
 export const masterTemplateService = {
-  async listMasterTemplates(params?: { withUsage?: boolean }) {
+  async listMasterTemplates(params?: { withUsage?: boolean; page?: number; limit?: number }) {
     await ensureMasterInstanceMigration();
-    const masters = await prisma.fieldTemplateMaster.findMany({
-      orderBy: { createdAt: "desc" },
-    });
-    const hasDbMasterData = masters.length > 0;
+    const page = Math.max(1, params?.page ?? 1);
+    const limit = Math.min(500, Math.max(1, params?.limit ?? 100));
+    const skip = (page - 1) * limit;
+
+    const [masters, total] = await prisma.$transaction([
+      prisma.fieldTemplateMaster.findMany({
+        orderBy: { createdAt: "desc" },
+        skip,
+        take: limit,
+      }),
+      prisma.fieldTemplateMaster.count(),
+    ]);
+
+    const hasDbMasterData = total > 0;
     const hasDbInstanceData = (await prisma.mappingInstance.count()) > 0;
     if (!hasDbMasterData && !hasDbInstanceData) {
-      return [];
+      return { data: [], total: 0, page, limit };
     }
     if (!params?.withUsage) {
-      return masters.map((item) => mapMasterTemplateRecordToSummary(item));
+      return { data: masters.map((item) => mapMasterTemplateRecordToSummary(item)), total, page, limit };
     }
-    const grouped = await prisma.mappingInstance.groupBy({
-      by: ["masterId", "customerId"],
+    // Replace full-table groupBy: use _count aggregate scoped per master in current page
+    const masterIds = masters.map((m) => m.id);
+    const instanceCounts = await prisma.mappingInstance.groupBy({
+      by: ["masterId"],
+      where: { masterId: { in: masterIds } },
+      _count: { customerId: true },
     });
-    const usageMap = new Map<string, number>();
-    for (const row of grouped) {
-      if (!row.masterId) continue;
-      usageMap.set(row.masterId, (usageMap.get(row.masterId) ?? 0) + 1);
-    }
-    return masters.map((item) => ({
-      ...mapMasterTemplateRecordToSummary(item),
-      assigned_customer_count: usageMap.get(item.id) ?? 0,
-    }));
+    const usageMap = new Map<string, number>(
+      instanceCounts.map((row) => [row.masterId ?? "", row._count.customerId]),
+    );
+    return {
+      data: masters.map((item) => ({
+        ...mapMasterTemplateRecordToSummary(item),
+        assigned_customer_count: usageMap.get(item.id) ?? 0,
+      })),
+      total,
+      page,
+      limit,
+    };
   },
 
   async createMasterTemplate(input: { name: string; description?: string; fieldCatalog: unknown[]; createdBy?: string }) {

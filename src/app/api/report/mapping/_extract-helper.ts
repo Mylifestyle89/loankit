@@ -58,7 +58,7 @@ async function resolveFieldCatalog(input: {
     return mappingInstance.field_catalog;
   }
 
-  const masters = await reportService.listMasterTemplates({ withUsage: false });
+  const { data: masters } = await reportService.listMasterTemplates({ withUsage: false, limit: 500 });
   const selected = masters.find((item: { id: string }) => item.id === input.fieldTemplateId);
   if (!selected) throw new ValidationError("fieldTemplateId not found.");
   return selected.field_catalog;

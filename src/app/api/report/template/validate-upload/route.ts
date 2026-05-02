@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
     }
 
     // [RT-6] Validate field_template_id exists
-    const templates = await reportService.listFieldTemplates({});
+    const { data: templates } = await reportService.listFieldTemplates({ limit: 500 });
     const template = templates.find((t) => t.id === fieldTemplateId);
     if (!template) {
       return NextResponse.json({ ok: false, error: "Không tìm thấy field template." }, { status: 404 });

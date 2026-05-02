@@ -13,8 +13,17 @@ export async function GET(req: NextRequest) {
   try {
     await requireSession();
     const withUsage = req.nextUrl.searchParams.get("with_usage") === "1";
-    const masters = await reportService.listMasterTemplates({ withUsage });
-    return NextResponse.json({ ok: true, master_templates: masters });
+    const page = Number(req.nextUrl.searchParams.get("page") ?? "1");
+    const limit = Number(req.nextUrl.searchParams.get("limit") ?? "100");
+    const result = await reportService.listMasterTemplates({ withUsage, page, limit });
+    return NextResponse.json({
+      ok: true,
+      // backward-compat: keep master_templates as array for existing callers
+      master_templates: result.data,
+      total: result.total,
+      page: result.page,
+      limit: result.limit,
+    });
   } catch (error) {
     const authResp = handleAuthError(error);
     if (authResp) return authResp;

@@ -1,10 +1,7 @@
 /**
  * Build service — build, validate, export DOCX reports.
+ * Sub-module: build-service-bank-export.ts (grouped bank DOCX export).
  */
-import path from "node:path";
-
-import { ValidationError } from "@/core/errors/app-error";
-import { groupDataByField } from "@/core/use-cases/grouping-engine";
 import { validateReportPayload } from "@/core/use-cases/report-validation";
 import { docxEngine } from "@/lib/docx-engine";
 import { REPORT_MERGED_FLAT_FILE } from "@/lib/report/constants";
@@ -12,16 +9,14 @@ import { getActiveTemplateProfile, loadState } from "@/lib/report/fs-store";
 import { loadManualValues, mergeFlatWithManualValues } from "@/lib/report/manual-values";
 import { logRun, runBuildAndValidate } from "@/lib/report/pipeline-client";
 
-import {
-  mapDocxError,
-  resolveParentFromGroupedRecord,
-  sanitizeFilePart,
-  sourceIdFromResolved,
-} from "./_shared";
+import { mapDocxError, sourceIdFromResolved } from "./_shared";
 import { resolveMappingSource } from "./_migration-internals";
 import { safeWriteJson, writeBuildMeta } from "./build-service-helpers";
 import { getBuildFreshnessStatus } from "./build-service-freshness";
 import { addLabelViAliases, produceMergedFlat } from "./build-service-data-transform";
+import { processBankReportExport } from "./build-service-bank-export";
+
+export { processBankReportExport } from "./build-service-bank-export";
 
 // ---------------------------------------------------------------------------
 // Build Service
@@ -38,16 +33,12 @@ export const buildService = {
       templateProfileId: state.active_template_id ?? "unknown",
     });
 
-    // Immediately overlay manual values onto fresh pipeline output
-    // so repeater data entered by the user is preserved
+    // Overlay manual values onto fresh pipeline output so repeater data is preserved
     await produceMergedFlat(state.field_catalog);
 
     const durationMs = Date.now() - start;
     await logRun({
-      resultSummary: {
-        step: "build_validate",
-        validation: result.validation,
-      },
+      resultSummary: { step: "build_validate", validation: result.validation },
       outputPaths: [
         "report_assets/generated/report_draft.json",
         "report_assets/generated/report_draft_flat.json",
@@ -62,7 +53,12 @@ export const buildService = {
     return getBuildFreshnessStatus(params?.mappingInstanceId);
   },
 
-  async runReportExport(input: { outputPath?: string; reportPath?: string; templatePath?: string; mappingInstanceId?: string }) {
+  async runReportExport(input: {
+    outputPath?: string;
+    reportPath?: string;
+    templatePath?: string;
+    mappingInstanceId?: string;
+  }) {
     const start = Date.now();
     const state = await loadState();
     const source = await resolveMappingSource(input.mappingInstanceId);
@@ -75,13 +71,13 @@ export const buildService = {
     let autoBuildTriggered = false;
     if (stale.is_stale) {
       await runBuildAndValidate();
-      await writeBuildMeta({
-        source,
-        templateProfileId: state.active_template_id ?? "unknown",
-      });
+      await writeBuildMeta({ source, templateProfileId: state.active_template_id ?? "unknown" });
       autoBuildTriggered = true;
     }
-    const baseFlat = await docxEngine.readJson<Record<string, unknown>>("report_assets/generated/report_draft_flat.json");
+
+    const baseFlat = await docxEngine.readJson<Record<string, unknown>>(
+      "report_assets/generated/report_draft_flat.json",
+    );
     const aliasMap = await docxEngine.readJson<Record<string, unknown>>(source.aliasPath);
     const manualValues = await loadManualValues();
     const mergedFlat = mergeFlatWithManualValues(baseFlat, manualValues);
@@ -93,6 +89,7 @@ export const buildService = {
     } catch (error) {
       mapDocxError(error);
     }
+
     const report = {
       template_docx: templatePath,
       output_docx: outputPath,
@@ -124,121 +121,10 @@ export const buildService = {
     };
   },
 
-  async processBankReportExport(input?: {
-    reportPath?: string;
-    templatePath?: string;
-    outputDir?: string;
-    groupKey?: string;
-    repeatKey?: string;
-    customerNameKey?: string;
-    mappingInstanceId?: string;
-  }) {
-    const start = Date.now();
-    const state = await loadState();
-    const source = await resolveMappingSource(input?.mappingInstanceId);
-    const activeTemplate = await getActiveTemplateProfile(state);
-
-    const templatePath = input?.templatePath ?? activeTemplate.docx_path;
-    const reportPath = input?.reportPath ?? "report_assets/generated/template_export_report_bank.json";
-    const outputDir = input?.outputDir ?? "report_assets/exports/bank-rate-notices";
-    const groupKey = input?.groupKey?.trim() || "HĐTD";
-    const repeatKey = input?.repeatKey?.trim() || "items";
-    const customerNameKey = input?.customerNameKey?.trim() || "TÊN KH";
-
-    const stale = await getBuildFreshnessStatus(input?.mappingInstanceId);
-    let autoBuildTriggered = false;
-    if (stale.is_stale) {
-      await runBuildAndValidate();
-      await writeBuildMeta({
-        source,
-        templateProfileId: state.active_template_id ?? "unknown",
-      });
-      autoBuildTriggered = true;
-    }
-    const [baseFlat, aliasMapRaw, manualValues] = await Promise.all([
-      docxEngine.readJson<Record<string, unknown>>("report_assets/generated/report_draft_flat.json"),
-      docxEngine.readJson<Record<string, unknown>>(source.aliasPath),
-      loadManualValues(),
-    ]);
-    const aliasMap = aliasMapRaw as Record<string, unknown>;
-    const mergedFlat = mergeFlatWithManualValues(baseFlat, manualValues);
-    addLabelViAliases(mergedFlat, state.field_catalog);
-    await safeWriteJson(REPORT_MERGED_FLAT_FILE, mergedFlat);
-
-    const rowsRaw = mergedFlat[repeatKey];
-    if (!Array.isArray(rowsRaw)) {
-      throw new ValidationError(`Không tìm thấy mảng dữ liệu '${repeatKey}' trong report_draft_flat.json.`);
-    }
-    const rows = rowsRaw.filter((row): row is Record<string, unknown> => Boolean(row && typeof row === "object" && !Array.isArray(row)));
-    if (rows.length === 0) {
-      throw new ValidationError(`Mảng '${repeatKey}' không có dòng dữ liệu hợp lệ.`);
-    }
-
-    const groupedRecords = groupDataByField(rows, groupKey, repeatKey) as Array<Record<string, unknown>>;
-    if (groupedRecords.length === 0) {
-      throw new ValidationError(`Không thể gom nhóm theo khóa '${groupKey}'.`);
-    }
-
-    const outputPaths: string[] = [];
-    const renderErrors: Array<{ file: string; error: string }> = [];
-    const CONCURRENCY_LIMIT = 5;
-    for (let i = 0; i < groupedRecords.length; i += CONCURRENCY_LIMIT) {
-      const batch = groupedRecords.slice(i, i + CONCURRENCY_LIMIT);
-      const results = await Promise.allSettled(batch.map(async (groupedRecord) => {
-        const payload = resolveParentFromGroupedRecord(groupedRecord, repeatKey);
-        const contractNo = sanitizeFilePart(payload[groupKey], "unknown-contract");
-        const customerName = sanitizeFilePart(payload[customerNameKey], "unknown-customer");
-        const outputPath = path.posix.join(outputDir, `${customerName}__${contractNo}.docx`);
-        await docxEngine.generateDocx(
-          templatePath,
-          { flat: { ...mergedFlat, ...payload }, aliasMap },
-          outputPath,
-        );
-        return outputPath;
-      }));
-      for (const result of results) {
-        if (result.status === "fulfilled") {
-          outputPaths.push(result.value);
-        } else {
-          renderErrors.push({ file: `batch-${i}`, error: String(result.reason) });
-        }
-      }
-    }
-
-    const report = {
-      mode: "bank_grouped_export",
-      template_docx: templatePath,
-      output_dir: outputDir,
-      total_files: outputPaths.length,
-      group_key: groupKey,
-      repeat_key: repeatKey,
-      outputs: outputPaths,
-    };
-    await safeWriteJson(reportPath, report);
-
-    const durationMs = Date.now() - start;
-    await logRun({
-      resultSummary: {
-        step: "export_docx_bank_grouped",
-        auto_build_triggered: autoBuildTriggered,
-        stale_reasons: stale.reasons,
-        report,
-      },
-      outputPaths: [...outputPaths, reportPath],
-      durationMs,
-    });
-
-    return {
-      duration_ms: durationMs,
-      output_dir: outputDir,
-      output_paths: outputPaths,
-      report_path: reportPath,
-      report,
-      auto_build_triggered: autoBuildTriggered,
-      stale_reasons: stale.reasons,
-      render_errors: renderErrors,
-      command: { stdout: "Rendered grouped bank DOCX via DOCX engine.", stderr: "", exitCode: 0 },
-    };
+  async processBankReportExport(
+    input?: Parameters<typeof processBankReportExport>[0],
+  ) {
+    return processBankReportExport(input);
   },
 
   async validateReport(input: { runBuild?: boolean; mappingInstanceId?: string }) {
@@ -252,7 +138,6 @@ export const buildService = {
         source,
         templateProfileId: state.active_template_id ?? activeTemplate.id,
       });
-      // Overlay manual values onto fresh pipeline output
       await produceMergedFlat(state.field_catalog);
       const final = validateReportPayload({
         validation: result.validation,
@@ -263,7 +148,9 @@ export const buildService = {
       return { source: "pipeline", validation: final };
     }
 
-    const parsed = await docxEngine.readJson<unknown>("report_assets/generated/validation_report.json");
+    const parsed = await docxEngine.readJson<unknown>(
+      "report_assets/generated/validation_report.json",
+    );
     const final = validateReportPayload({
       validation: parsed,
       templatePath: activeTemplate.docx_path,

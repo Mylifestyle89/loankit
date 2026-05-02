@@ -12,11 +12,22 @@ export async function GET(req: NextRequest) {
     await requireSession();
     const customerId = req.nextUrl.searchParams.get("customer_id") ?? "";
     const withUsage = req.nextUrl.searchParams.get("with_usage") === "1";
-    const fieldTemplates = await reportService.listFieldTemplates({
+    const page = Number(req.nextUrl.searchParams.get("page") ?? "1");
+    const limit = Number(req.nextUrl.searchParams.get("limit") ?? "100");
+    const result = await reportService.listFieldTemplates({
       customerId: customerId || undefined,
       withUsage,
+      page,
+      limit,
     });
-    return NextResponse.json({ ok: true, field_templates: fieldTemplates });
+    return NextResponse.json({
+      ok: true,
+      // backward-compat: keep field_templates as array for existing callers
+      field_templates: result.data,
+      total: result.total,
+      page: result.page,
+      limit: result.limit,
+    });
   } catch (error) {
     const authResp = handleAuthError(error);
     if (authResp) return authResp;

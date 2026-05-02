@@ -1,0 +1,158 @@
+/**
+ * financial-field-catalog-ratios-activity-profitability.ts
+ * Catalog fields nhóm III (Khả năng hoạt động) và nhóm IV (Khả năng sinh lời).
+ */
+
+import type { FieldCatalogItem } from "@/lib/report/config-schema";
+
+export const CATALOG_RATIOS_ACTIVITY_PROFITABILITY: FieldCatalogItem[] = [
+  // ── III. Khả năng hoạt động ──────────────────────────────────────────────────
+  {
+    field_key: "B.financial.ratios.working_capital_turnover",
+    label_vi: "Vòng quay vốn lưu động (vòng)",
+    group: "B.financial.ratios",
+    type: "number",
+    required: true,
+    examples: [],
+    analysis_prompt: [
+      "Phân tích vòng quay vốn lưu động (Doanh thu thuần / TSNH bình quân).",
+      "So sánh năm hiện tại vs năm trước.",
+      "Ý nghĩa: phản ánh hiệu suất sử dụng tài sản lưu động — 1 đơn vị TSNH tạo ra bao nhiêu doanh thu.",
+      "Chỉ tiêu càng cao, tài sản ngắn hạn vận động nhanh, góp phần nâng cao lợi nhuận.",
+      "Tìm điểm tích cực: tăng vòng quay = DN sử dụng vốn hiệu quả hơn.",
+      "Nếu giảm, phân tích nguyên nhân (TSNH tăng nhanh hơn DT) và đề xuất hướng tối ưu.",
+    ].join(" "),
+  },
+  {
+    field_key: "B.financial.ratios.inventory_turnover",
+    label_vi: "Vòng quay hàng tồn kho (vòng)",
+    group: "B.financial.ratios",
+    type: "number",
+    required: true,
+    examples: [],
+    analysis_prompt: [
+      "Phân tích vòng quay hàng tồn kho (Giá vốn hàng bán / HTK bình quân).",
+      "So sánh năm hiện tại vs năm trước.",
+      "Ý nghĩa: phản ánh tốc độ luân chuyển hàng tồn kho để tạo ra doanh thu.",
+      "Chỉ tiêu càng cao, hàng tồn kho vận động nhanh — góp phần tăng DT và lợi nhuận.",
+      "Nếu thấp hoặc giảm, cần phân biệt: do tồn đọng hay do DN tích trữ nguyên vật liệu chiến lược.",
+      "Đề xuất giải pháp nếu tồn đọng: đẩy mạnh bán hàng, thanh lý hàng chậm luân chuyển.",
+    ].join(" "),
+  },
+  {
+    field_key: "B.financial.ratios.receivables_turnover",
+    label_vi: "Vòng quay khoản phải thu (vòng)",
+    group: "B.financial.ratios",
+    type: "number",
+    required: true,
+    examples: [],
+    analysis_prompt: [
+      "Phân tích vòng quay khoản phải thu (Doanh thu thuần / Phải thu bình quân).",
+      "So sánh năm hiện tại vs năm trước.",
+      "Ý nghĩa: phản ánh tốc độ chuyển đổi khoản phải thu thành tiền mặt.",
+      "Chỉ tiêu càng cao, DN thu hồi tiền hàng kịp thời, ít bị chiếm dụng vốn.",
+      "Tìm điểm tích cực: vòng quay cao hoặc tăng = thu hồi công nợ hiệu quả.",
+      "Nếu giảm, đề xuất: siết chặt chính sách tín dụng thương mại, đẩy mạnh thu hồi công nợ.",
+    ].join(" "),
+  },
+  {
+    field_key: "B.financial.ratios.fixed_asset_turnover",
+    label_vi: "Vòng quay tài sản cố định (vòng)",
+    group: "B.financial.ratios",
+    type: "number",
+    required: true,
+    examples: [],
+    analysis_prompt: [
+      "Phân tích vòng quay tài sản cố định (Doanh thu thuần / TSCĐ bình quân).",
+      "So sánh năm hiện tại vs năm trước.",
+      "Ý nghĩa: đo lường khả năng DN tạo ra doanh thu từ việc đầu tư vào TSCĐ.",
+      "Tỷ số càng cao, hiệu quả sử dụng TSCĐ càng lớn — DN tận dụng tốt cơ sở vật chất.",
+      "Nếu tăng: DN đang khai thác hiệu quả tài sản cố định hiện có.",
+      "Nếu giảm: có thể do đầu tư TSCĐ mới chưa đạt công suất — đánh giá triển vọng dài hạn.",
+    ].join(" "),
+  },
+  {
+    field_key: "B.financial.ratios.total_asset_turnover",
+    label_vi: "Vòng quay tổng tài sản (vòng)",
+    group: "B.financial.ratios",
+    type: "number",
+    required: true,
+    examples: [],
+    analysis_prompt: [
+      "Phân tích vòng quay tổng tài sản (Doanh thu thuần / Tổng TS bình quân).",
+      "So sánh năm hiện tại vs năm trước.",
+      "Ý nghĩa: đo lường khả năng DN tạo ra doanh thu từ việc đầu tư vào tổng tài sản.",
+      "Tỷ số càng cao, hiệu quả sử dụng tài sản cho HĐKD càng tốt.",
+      "Tìm điểm tích cực: vòng quay ổn định hoặc tăng cho thấy DN vận hành hiệu quả.",
+      "Nếu giảm, phân tích: do tài sản tăng nhanh (mở rộng) hay do doanh thu giảm.",
+    ].join(" "),
+  },
+
+  // ── IV. Khả năng sinh lời ────────────────────────────────────────────────────
+  {
+    field_key: "B.financial.ratios.ros",
+    label_vi: "Tỷ suất lợi nhuận biên – ROS",
+    group: "B.financial.ratios",
+    type: "percent",
+    required: true,
+    examples: [],
+    analysis_prompt: [
+      "Phân tích tỷ suất lợi nhuận biên ROS (Lợi nhuận sau thuế / Doanh thu thuần).",
+      "So sánh năm hiện tại vs năm trước.",
+      "Ý nghĩa: cứ 1 đồng doanh thu tạo ra bao nhiêu đồng lợi nhuận sau thuế.",
+      "Đây là tỷ lệ quan trọng nhất đánh giá khả năng sinh lời chung của DN.",
+      "ROS dương và ổn định/tăng là tín hiệu rất tốt cho khả năng trả nợ.",
+      "Nếu giảm, phân tích nguyên nhân (chi phí tăng, giá bán giảm) và đề xuất giải pháp kiểm soát chi phí.",
+    ].join(" "),
+  },
+  {
+    field_key: "B.financial.ratios.roa",
+    label_vi: "Khả năng sinh lời của tài sản – ROA",
+    group: "B.financial.ratios",
+    type: "percent",
+    required: true,
+    examples: [],
+    analysis_prompt: [
+      "Phân tích khả năng sinh lời của tài sản ROA (LNST / Tổng TS bình quân).",
+      "So sánh năm hiện tại vs năm trước.",
+      "Ý nghĩa: cứ 1 đồng tài sản bình quân tạo ra bao nhiêu đồng lợi nhuận sau thuế.",
+      "ROA cao cho thấy DN sử dụng tài sản hiệu quả để tạo lợi nhuận.",
+      "Tìm điểm tích cực: ROA dương và cải thiện = DN kinh doanh có lãi, tài sản sinh lợi tốt.",
+      "Nếu thấp hoặc giảm, đề xuất: tối ưu hóa tài sản, cắt giảm tài sản không hiệu quả.",
+    ].join(" "),
+  },
+  {
+    field_key: "B.financial.ratios.roe",
+    label_vi: "Khả năng sinh lời của vốn chủ sở hữu – ROE",
+    group: "B.financial.ratios",
+    type: "percent",
+    required: true,
+    examples: [],
+    analysis_prompt: [
+      "Phân tích khả năng sinh lời của VCSH – ROE (LNST / VCSH bình quân).",
+      "So sánh năm hiện tại vs năm trước.",
+      "Ý nghĩa: cứ 1 đồng vốn chủ sở hữu đầu tư vào SXKD tạo ra bao nhiêu đồng LNST.",
+      "QUAN TRỌNG khi đánh giá ROE từ góc nhìn cho vay:",
+      "- ROE tăng + LN tăng + VCSH ổn/tăng = tín hiệu rất tốt (DN kinh doanh hiệu quả hơn).",
+      "- ROE tăng nhưng do VCSH giảm (lỗ vốn) = tín hiệu xấu — cần cảnh báo.",
+      "- ROE giảm nhưng cả LN và VCSH đều tăng (VCSH tăng nhanh hơn LN) = bình thường, DN đang tích lũy vốn.",
+      "Nếu ROE thấp, đề xuất: tối ưu chi phí, tăng hiệu quả sử dụng đòn bẩy tài chính hợp lý.",
+    ].join(" "),
+  },
+  {
+    field_key: "B.financial.ratios.bep",
+    label_vi: "Tỷ số sinh lời cơ sở – BEP",
+    group: "B.financial.ratios",
+    type: "percent",
+    required: true,
+    examples: [],
+    analysis_prompt: [
+      "Phân tích tỷ số sinh lời cơ sở BEP ((LNTT + Chi phí lãi vay) / Tổng tài sản).",
+      "So sánh năm hiện tại vs năm trước.",
+      "Ý nghĩa: phản ánh khả năng tạo lợi nhuận trước khi trả lãi và thuế trên tổng tài sản.",
+      "BEP phải lớn hơn lãi suất vay vốn để đảm bảo DN có khả năng trả lãi vay.",
+      "Tìm điểm tích cực: BEP > lãi suất vay = DN kinh doanh đủ lãi để chi trả chi phí tài chính.",
+      "Nếu BEP thấp hoặc giảm, đề xuất: tối ưu hóa hoạt động SXKD để nâng cao hiệu quả sinh lời.",
+    ].join(" "),
+  },
+];
