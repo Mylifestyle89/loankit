@@ -20,17 +20,18 @@ export async function listFieldTemplates(params: {
   const limit = Math.min(500, Math.max(1, params.limit ?? 100));
   const skip = (page - 1) * limit;
 
-  const [masters, total] = await prisma.$transaction([
+  const [masters, total, instanceCount] = await prisma.$transaction([
     prisma.fieldTemplateMaster.findMany({
       orderBy: { createdAt: "desc" },
       skip,
       take: limit,
     }),
     prisma.fieldTemplateMaster.count(),
+    prisma.mappingInstance.count(),
   ]);
 
   const hasDbMasterData = total > 0;
-  const hasDbInstanceData = (await prisma.mappingInstance.count()) > 0;
+  const hasDbInstanceData = instanceCount > 0;
 
   if (hasDbMasterData || hasDbInstanceData) {
     const usageMap = new Map<string, number>();

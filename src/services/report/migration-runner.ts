@@ -39,15 +39,19 @@ export async function runLegacyMigration(
 
   // 1. Templates → FieldTemplateMaster DB rows
   const masterIdByLegacyId = new Map<string, string>();
+  // Also cache catalog JSON by legacy id to avoid O(n×m) find in step 3
+  const catalogJsonByLegacyId = new Map<string, string>();
   for (const legacy of legacyTemplates) {
+    const catalogJson = JSON.stringify(legacy.field_catalog ?? []);
     const created = await prisma.fieldTemplateMaster.create({
       data: {
         name: legacy.name,
         status: "active",
-        fieldCatalogJson: JSON.stringify(legacy.field_catalog ?? []),
+        fieldCatalogJson: catalogJson,
       },
     });
     masterIdByLegacyId.set(legacy.id, created.id);
+    catalogJsonByLegacyId.set(legacy.id, catalogJson);
   }
 
   // 2. Fetch active mapping once (shared across all customer instances)
@@ -87,9 +91,7 @@ export async function runLegacyMigration(
               mappingJson: draftFiles.mappingJson,
               aliasJson: draftFiles.aliasJson,
               masterSnapshotName: "migrated instance",
-              fieldCatalogJson: JSON.stringify(
-                legacyTemplates.find((t) => t.id === legacyId)?.field_catalog ?? [],
-              ),
+              fieldCatalogJson: catalogJsonByLegacyId.get(legacyId) ?? "[]",
               customerId: customer.id,
               masterId,
             },

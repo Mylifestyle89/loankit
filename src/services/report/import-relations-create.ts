@@ -200,8 +200,9 @@ export async function createLoanTree(
       }
     }
 
-    // Disbursements — always recreate per import (no stable key available)
+    // Disbursements — wipe existing then recreate (no stable dedup key available)
     if (Array.isArray(loanRaw.disbursements)) {
+      await tx.disbursement.deleteMany({ where: { loanId } });
       for (const disbRaw of loanRaw.disbursements) {
         const createdDisb = await tx.disbursement.create({
           data: {
