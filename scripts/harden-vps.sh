@@ -12,8 +12,11 @@
 set -euo pipefail
 
 # ── Config ────────────────────────────────────────────────────────────────────
-APP_DIR="${APP_DIR:-$HOME/loankit}"
-APP_USER="${APP_USER:-$(whoami)}"
+# When invoked via sudo, $HOME=/root and whoami=root — fall back to SUDO_USER
+RESOLVED_USER="${SUDO_USER:-$(whoami)}"
+RESOLVED_HOME=$(getent passwd "$RESOLVED_USER" | cut -d: -f6)
+APP_DIR="${APP_DIR:-${RESOLVED_HOME:-$HOME}/loankit}"
+APP_USER="${APP_USER:-$RESOLVED_USER}"
 DATA_DIR="${APP_DIR}/data"
 BACKUP_DIR="${APP_DIR}/backups"
 ENV_FILE="${APP_DIR}/.env.production"
