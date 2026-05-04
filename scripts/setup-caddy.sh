@@ -61,7 +61,6 @@ $TS_HOSTNAME:443 {
   reverse_proxy 127.0.0.1:3000 {
     header_up X-Real-IP {remote_host}
     header_up X-Forwarded-Proto https
-    header_up X-Forwarded-Host {host}
   }
 
   # Caddy access log (rotated by journald)
@@ -77,8 +76,15 @@ $TS_HOSTNAME:443 {
 }
 EOF
 
+# Log dir — must be owned by caddy user (which only exists AFTER apt install caddy)
 mkdir -p /var/log/caddy
-chown caddy:caddy /var/log/caddy 2>/dev/null || true
+if id caddy >/dev/null 2>&1; then
+  chown -R caddy:caddy /var/log/caddy
+  chmod 755 /var/log/caddy
+else
+  echo "[err] user 'caddy' not found — apt install must have failed" >&2
+  exit 1
+fi
 
 # ── Validate + reload ─────────────────────────────────────────────────────────
 echo "[setup-caddy] Validating Caddyfile"
