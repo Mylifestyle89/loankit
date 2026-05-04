@@ -2,11 +2,18 @@ import type { NextConfig } from "next";
 
 const ONLYOFFICE_URL = process.env.ONLYOFFICE_URL || "http://localhost:8080";
 
+// HSTS only emitted when behind HTTPS (e.g. Tailscale Serve). Harmless on plain HTTP.
+const HSTS_ENABLED = process.env.ENABLE_HSTS === "true";
+
 const SECURITY_HEADERS = [
   { key: "X-Content-Type-Options", value: "nosniff" },
   { key: "X-Frame-Options", value: "DENY" },
   { key: "X-XSS-Protection", value: "1; mode=block" },
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+  { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), payment=()" },
+  ...(HSTS_ENABLED
+    ? [{ key: "Strict-Transport-Security", value: "max-age=31536000; includeSubDomains" }]
+    : []),
   {
     key: "Content-Security-Policy",
     value: [
@@ -25,6 +32,7 @@ const SECURITY_HEADERS = [
 ];
 
 const nextConfig: NextConfig = {
+  output: "standalone",
   serverExternalPackages: [
     "better-sqlite3",
     "@prisma/adapter-better-sqlite3",
