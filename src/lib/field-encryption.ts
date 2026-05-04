@@ -107,9 +107,10 @@ export function maskPiiField(
 
 // ── Batch encrypt/decrypt for Customer model ────────────────────────
 
-/** PII fields on Customer that need encryption. Extended 2026-04-08
- *  to cover the full Agribank compliance surface. date_of_birth is
- *  intentionally excluded (year-only, not sensitive).
+/** PII fields on Customer that need encryption. date_of_birth excluded
+ *  (year-only). email excluded 2026-05-04 — used in plaintext for SMTP
+ *  digest, low sensitivity, and decrypt path was missed on relation
+ *  includes (cron deadline-check) causing "Invalid email address" errors.
  *
  *  INVARIANT: every field here MUST also appear in `maskMap` inside
  *  `maskCustomerResponse` below — otherwise decrypt paths will leak
@@ -122,7 +123,6 @@ const PII_CUSTOMER_FIELDS = [
   "cccd_old",
   "bank_account",
   "spouse_name",
-  "email",
 ] as const;
 
 /** PII fields on CoBorrower that need encryption. birth_year excluded. */
@@ -267,7 +267,6 @@ export function maskCustomerResponse<T extends Record<string, unknown>>(
     cccd_old: "cccd",
     bank_account: "account",
     spouse_name: "name",
-    email: "email",
   };
   for (const [field, type] of Object.entries(maskMap)) {
     if (revealFields?.has(field) || revealFields?.has("all")) continue;
