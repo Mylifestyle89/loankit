@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { AlertTriangle, Banknote, Bell, Clock, XCircle } from "lucide-react";
+import { AlertTriangle, Banknote, Bell, Clock, Download, XCircle } from "lucide-react";
 
 import { useLanguage } from "@/components/language-provider";
 import { InvoiceTable } from "@/components/invoice-tracking/invoice-table";
@@ -12,6 +12,7 @@ import { useCustomerStore } from "@/stores/use-customer-store";
 import { useCustomerData } from "@/hooks/use-customer-data";
 import { InvoiceFormModal } from "@/components/invoice-tracking/invoice-form-modal";
 import { NotificationHistoryModal } from "@/components/invoice-tracking/notification-history-modal";
+import { OverdueExportModal } from "@/components/invoice-tracking/overdue-export-modal";
 import { CustomerEmailSettingsModal } from "@/components/invoice-tracking/customer-email-settings-modal";
 import { useNotificationStore } from "@/components/invoice-tracking/use-notification-store";
 import { InvoiceFiltersBar } from "./components/invoice-filters-bar";
@@ -43,6 +44,7 @@ export default function InvoicesOverviewPage() {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showEmailSettings, setShowEmailSettings] = useState(false);
+  const [showExportModal, setShowExportModal] = useState(false);
   const [supplementTarget, setSupplementTarget] = useState<{ disbursementId: string; lineId: string; name: string; amount: number } | null>(null);
   // Map store customers to local type (add email from summary if available)
   const customers = storeCustomers as Array<{ id: string; customer_name: string; email?: string | null }>;
@@ -150,18 +152,28 @@ export default function InvoicesOverviewPage() {
             </h2>
             <p className="mt-1 text-sm text-zinc-500 dark:text-slate-400">{t("invoices.desc")}</p>
           </div>
-          <button
-            onClick={() => setShowNotifications(true)}
-            className="relative cursor-pointer shrink-0 flex items-center gap-2 rounded-xl border border-brand-200/60 dark:border-brand-500/20 bg-white/70 dark:bg-white/[0.05] px-3 py-2 text-xs font-medium text-brand-600 dark:text-brand-400 hover:bg-brand-50 dark:hover:bg-brand-500/10 transition-colors"
-          >
-            <Bell className="h-3.5 w-3.5" />
-            Thông báo đến hạn
-            {unreadCount > 0 && (
-              <span className="absolute -top-1.5 -right-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
-                {unreadCount > 99 ? "99+" : unreadCount}
-              </span>
-            )}
-          </button>
+          <div className="flex shrink-0 items-center gap-2">
+            <button
+              onClick={() => setShowExportModal(true)}
+              disabled={totalOverdue + totalNeedsSupplement + totalPending === 0}
+              className="cursor-pointer flex items-center gap-2 rounded-xl border border-brand-200/60 dark:border-brand-500/20 bg-white/70 dark:bg-white/[0.05] px-3 py-2 text-xs font-medium text-brand-600 dark:text-brand-400 hover:bg-brand-50 dark:hover:bg-brand-500/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Download className="h-3.5 w-3.5" />
+              Tải danh sách nợ
+            </button>
+            <button
+              onClick={() => setShowNotifications(true)}
+              className="relative cursor-pointer flex items-center gap-2 rounded-xl border border-brand-200/60 dark:border-brand-500/20 bg-white/70 dark:bg-white/[0.05] px-3 py-2 text-xs font-medium text-brand-600 dark:text-brand-400 hover:bg-brand-50 dark:hover:bg-brand-500/10 transition-colors"
+            >
+              <Bell className="h-3.5 w-3.5" />
+              Thông báo đến hạn
+              {unreadCount > 0 && (
+                <span className="absolute -top-1.5 -right-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
+                  {unreadCount > 99 ? "99+" : unreadCount}
+                </span>
+              )}
+            </button>
+          </div>
         </div>
 
         {/* Summary stats */}
@@ -268,6 +280,14 @@ export default function InvoicesOverviewPage() {
       {/* Notification history modal */}
       {showNotifications && (
         <NotificationHistoryModal onClose={() => setShowNotifications(false)} />
+      )}
+
+      {/* Overdue export modal */}
+      {showExportModal && (
+        <OverdueExportModal
+          customers={summary.filter((s) => s.overdueCount + s.needsSupplementCount + s.pendingCount > 0)}
+          onClose={() => setShowExportModal(false)}
+        />
       )}
 
       {/* Email settings modal */}

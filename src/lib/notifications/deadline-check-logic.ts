@@ -1,10 +1,12 @@
-import { addOneMonthClamped } from "@/lib/invoice-tracking-format-helpers";
 import { prisma } from "@/lib/prisma";
 import { invoiceService } from "@/services/invoice.service";
 import { notificationService } from "@/services/notification.service";
 import { emailService, type InvoiceDigestItem } from "@/services/email.service";
+import {
+  collectDigestItems,
+  type DigestItemWithRef,
+} from "@/lib/notifications/collect-digest-items";
 
-const SEVEN_DAYS = 7 * 24 * 60 * 60 * 1000;
 const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
 
 export type DeadlineCheckResult = {
@@ -18,174 +20,76 @@ export type DeadlineCheckResult = {
   emailErrors: number;
 };
 
-type DigestBucket = {
-  customerName: string;
-  email: string;
-  items: InvoiceDigestItem[];
-  notifIds: string[];
-};
-
-/** Shared logic: check due-soon + overdue invoices, create notifications, send ONE digest email per customer */
+/** Cron orchestrator: snapshot via collectDigestItems, dedup, notify, email. */
 export async function runDeadlineCheck(): Promise<DeadlineCheckResult> {
   const startTime = Date.now();
   const now = new Date();
-  const sevenDaysFromNow = new Date(now.getTime() + SEVEN_DAYS);
-  let emailsSent = 0;
-  let emailErrors = 0;
-  let notificationsCreated = 0;
-
   console.log(`[deadline-check] START at ${now.toISOString()}`);
-  console.log(`[deadline-check] SMTP configured: host=${!!process.env.SMTP_HOST} user=${!!process.env.SMTP_USER} pass=${!!process.env.SMTP_PASS}`);
+  console.log(
+    `[deadline-check] SMTP configured: host=${!!process.env.SMTP_HOST} user=${!!process.env.SMTP_USER} pass=${!!process.env.SMTP_PASS}`,
+  );
 
-  const invoiceInclude = {
-    disbursement: {
-      include: {
-        loan: {
-          include: {
-            customer: { select: { id: true, customer_name: true, email: true } },
-          },
-        },
-      },
-    },
-  } as const;
+  // Transition pending → overdue first so snapshot reflects new state
+  const { count: newlyOverdue } = await invoiceService.markOverdue();
+
+  // Snapshot all customers + items (no dedup, no side-effect)
+  const snapshot = await collectDigestItems();
 
   // Dedup: notifications created in last 24h
-  const recentNotifs = await prisma.appNotification.findMany({
-    where: {
-      type: { in: ["invoice_due_soon", "invoice_overdue"] },
-      createdAt: { gte: new Date(now.getTime() - TWENTY_FOUR_HOURS) },
-    },
-    select: { type: true, metadata: true },
-  });
-  const notifiedSet = new Set<string>();
-  for (const n of recentNotifs) {
-    if (!n.metadata) continue;
-    try {
-      const meta = JSON.parse(n.metadata) as { invoiceId?: string };
-      if (meta.invoiceId) {
-        const key = meta.invoiceId.startsWith("virtual-")
-          ? `${n.type}:supplement-${meta.invoiceId.slice("virtual-".length)}`
-          : `${n.type}:${meta.invoiceId}`;
-        notifiedSet.add(key);
-      }
-    } catch { /* skip */ }
-  }
+  const notifiedSet = await loadRecentNotifiedKeys(now);
 
-  // Digest buckets: group all items by customer email
-  const buckets = new Map<string, DigestBucket>();
-  const addToBucket = (customer: { id: string; customer_name: string; email: string | null }, item: InvoiceDigestItem, notifId: string) => {
-    if (!customer.email) return;
-    let bucket = buckets.get(customer.email);
-    if (!bucket) {
-      bucket = { customerName: customer.customer_name, email: customer.email, items: [], notifIds: [] };
-      buckets.set(customer.email, bucket);
+  let notificationsCreated = 0;
+  let emailsSent = 0;
+  let emailErrors = 0;
+  let dueSoonChecked = 0;
+  let totalOverdue = 0;
+  let supplementDueSoon = 0;
+  let supplementOverdue = 0;
+
+  for (const { customer, items } of snapshot.values()) {
+    const emailItems: InvoiceDigestItem[] = [];
+    const notifIds: string[] = [];
+
+    for (const item of items) {
+      // Counters mirror legacy DeadlineCheckResult shape
+      if (item.isSupplement) {
+        if (item.isOverdue) supplementOverdue++;
+        else supplementDueSoon++;
+      } else if (item.isOverdue) totalOverdue++;
+      else dueSoonChecked++;
+
+      const dedupKey = buildDedupKey(item);
+      if (notifiedSet.has(dedupKey)) continue;
+
+      const notif = await createNotification(customer, item);
+      notificationsCreated++;
+      notifIds.push(notif.id);
+      emailItems.push(stripRefs(item));
     }
-    bucket.items.push(item);
-    bucket.notifIds.push(notifId);
-  };
 
-  // 1. Real invoices due within 7 days
-  const dueSoon = await prisma.invoice.findMany({
-    where: {
-      status: "pending",
-      OR: [
-        { customDeadline: { not: null, lte: sevenDaysFromNow, gt: now } },
-        { AND: [{ customDeadline: null }, { dueDate: { lte: sevenDaysFromNow, gt: now } }] },
-      ],
-    },
-    include: invoiceInclude,
-  });
-  console.log(`[deadline-check] Found ${dueSoon.length} due-soon real invoices`);
+    if (!customer.email || emailItems.length === 0) continue;
 
-  for (const inv of dueSoon) {
-    const effectiveDate = inv.customDeadline ?? inv.dueDate;
-    if (effectiveDate > sevenDaysFromNow || effectiveDate <= now) continue;
-    if (notifiedSet.has(`invoice_due_soon:${inv.id}`)) continue;
-
-    const customer = inv.disbursement.loan.customer;
-    const notif = await notificationService.create({
-      type: "invoice_due_soon",
-      title: `HD sap den han: ${inv.invoiceNumber}`,
-      message: `HD ${inv.invoiceNumber} (${customer.customer_name}) den han ${effectiveDate.toLocaleDateString("vi-VN")}`,
-      metadata: { invoiceId: inv.id, disbursementId: inv.disbursementId, customerId: customer.id },
-      customerId: customer.id,
+    const result = await emailService.sendInvoiceDigest(customer.email, {
+      customerName: customer.customer_name,
+      items: emailItems,
     });
-    notificationsCreated++;
-    addToBucket(customer, {
-      invoiceNumber: inv.invoiceNumber,
-      amount: inv.amount,
-      dueDate: effectiveDate,
-      contractNumber: inv.disbursement.loan.contractNumber,
-      isOverdue: false,
-      isSupplement: false,
-    }, notif.id);
-  }
-
-  // 2. Real invoices overdue — mark newly overdue + notify ALL overdue invoices (not just newly transitioned)
-  // Newly transitioned: pending → overdue (status update)
-  const { count: newlyOverdue, newlyOverdueIds } = await invoiceService.markOverdue();
-
-  // Query ALL currently overdue invoices (includes previously marked ones) for daily repeat reminders
-  // Dedup 24h prevents notification spam — same invoice only fires once per day
-  const overdue = await prisma.invoice.findMany({
-    where: { status: "overdue" },
-    include: invoiceInclude,
-  });
-  console.log(`[deadline-check] Found ${overdue.length} total overdue invoices (${newlyOverdue} newly marked)`);
-
-  for (const inv of overdue) {
-    if (notifiedSet.has(`invoice_overdue:${inv.id}`)) continue;
-    const customer = inv.disbursement.loan.customer;
-    const effectiveDate = inv.customDeadline ?? inv.dueDate;
-    const notif = await notificationService.create({
-      type: "invoice_overdue",
-      title: `HD qua han: ${inv.invoiceNumber}`,
-      message: `HD ${inv.invoiceNumber} (${customer.customer_name}) da qua han`,
-      metadata: { invoiceId: inv.id, disbursementId: inv.disbursementId, customerId: customer.id },
-      customerId: customer.id,
-    });
-    notificationsCreated++;
-    addToBucket(customer, {
-      invoiceNumber: inv.invoiceNumber,
-      amount: inv.amount,
-      dueDate: effectiveDate,
-      contractNumber: inv.disbursement.loan.contractNumber,
-      isOverdue: true,
-      isSupplement: false,
-    }, notif.id);
-  }
-
-  // 3. Virtual "needs supplement" invoices
-  const { supplementDueSoon, supplementOverdue, supNotifs } = await collectSupplementItems({
-    now, sevenDaysFromNow, notifiedSet, addToBucket,
-  });
-  notificationsCreated += supNotifs;
-
-  // 4. Send ONE digest email per customer
-  console.log(`[deadline-check] Sending digest emails to ${buckets.size} customer(s)`);
-  for (const bucket of buckets.values()) {
-    const result = await emailService.sendInvoiceDigest(bucket.email, {
-      customerName: bucket.customerName,
-      items: bucket.items,
-    });
-    // Update all notifications for this customer with email status
     await prisma.appNotification.updateMany({
-      where: { id: { in: bucket.notifIds } },
+      where: { id: { in: notifIds } },
       data: result.success ? { emailSentAt: new Date() } : { emailError: result.error },
     });
     if (result.success) {
       emailsSent++;
-      console.log(`[deadline-check] DIGEST SENT to ${bucket.email} (${bucket.items.length} items)`);
+      console.log(`[deadline-check] DIGEST SENT to ${customer.email} (${emailItems.length} items)`);
     } else {
       emailErrors++;
-      console.error(`[deadline-check] DIGEST FAILED to ${bucket.email}: ${result.error}`);
+      console.error(`[deadline-check] DIGEST FAILED to ${customer.email}: ${result.error}`);
     }
   }
 
-  const result = {
-    dueSoonChecked: dueSoon.length,
+  const result: DeadlineCheckResult = {
+    dueSoonChecked,
     newlyOverdue,
-    totalOverdue: overdue.length,
+    totalOverdue,
     supplementDueSoon,
     supplementOverdue,
     notificationsCreated,
@@ -196,67 +100,85 @@ export async function runDeadlineCheck(): Promise<DeadlineCheckResult> {
   return result;
 }
 
-/** Collect DisbursementBeneficiary lines needing invoice supplement into customer buckets. */
-async function collectSupplementItems(ctx: {
-  now: Date;
-  sevenDaysFromNow: Date;
-  notifiedSet: Set<string>;
-  addToBucket: (c: { id: string; customer_name: string; email: string | null }, item: InvoiceDigestItem, notifId: string) => void;
-}) {
-  const { now, sevenDaysFromNow, notifiedSet, addToBucket } = ctx;
-  let supNotifs = 0;
-
-  const lines = await prisma.disbursementBeneficiary.findMany({
-    where: { invoiceStatus: { in: ["pending", "supplementing"] } },
-    include: {
-      disbursement: {
-        select: {
-          id: true, disbursementDate: true,
-          loan: {
-            select: {
-              contractNumber: true,
-              customer: { select: { id: true, customer_name: true, email: true } },
-            },
-          },
-        },
-      },
+async function loadRecentNotifiedKeys(now: Date): Promise<Set<string>> {
+  const recent = await prisma.appNotification.findMany({
+    where: {
+      type: { in: ["invoice_due_soon", "invoice_overdue"] },
+      createdAt: { gte: new Date(now.getTime() - TWENTY_FOUR_HOURS) },
     },
+    select: { type: true, metadata: true },
   });
-  console.log(`[deadline-check] Found ${lines.length} beneficiary lines awaiting supplement`);
-
-  let supplementDueSoon = 0;
-  let supplementOverdue = 0;
-
-  for (const b of lines) {
-    const dueDate = addOneMonthClamped(b.disbursement.disbursementDate);
-    const isOverdue = dueDate <= now;
-    const isDueSoon = !isOverdue && dueDate <= sevenDaysFromNow;
-    if (!isOverdue && !isDueSoon) continue;
-
-    const type = isOverdue ? "invoice_overdue" : "invoice_due_soon";
-    if (notifiedSet.has(`${type}:supplement-${b.id}`)) continue;
-
-    const customer = b.disbursement.loan.customer;
-    const notif = await notificationService.create({
-      type,
-      title: isOverdue ? `HD can bo sung qua han: ${b.beneficiaryName}` : `HD can bo sung sap den han: ${b.beneficiaryName}`,
-      message: `${b.beneficiaryName} (${customer.customer_name}) ${isOverdue ? "da qua han" : "sap den han"} bo sung (${dueDate.toLocaleDateString("vi-VN")})`,
-      metadata: { invoiceId: `virtual-${b.id}`, disbursementId: b.disbursementId, customerId: customer.id, virtual: true },
-      customerId: customer.id,
-    });
-    supNotifs++;
-    addToBucket(customer, {
-      invoiceNumber: b.beneficiaryName,
-      amount: b.amount - b.invoiceAmount,
-      dueDate,
-      contractNumber: b.disbursement.loan.contractNumber,
-      isOverdue,
-      isSupplement: true,
-    }, notif.id);
-
-    if (isOverdue) supplementOverdue++;
-    else supplementDueSoon++;
+  const set = new Set<string>();
+  for (const n of recent) {
+    if (!n.metadata) continue;
+    try {
+      const meta = JSON.parse(n.metadata) as { invoiceId?: string };
+      if (!meta.invoiceId) continue;
+      const key = meta.invoiceId.startsWith("virtual-")
+        ? `${n.type}:supplement-${meta.invoiceId.slice("virtual-".length)}`
+        : `${n.type}:${meta.invoiceId}`;
+      set.add(key);
+    } catch {
+      /* skip malformed */
+    }
   }
+  return set;
+}
 
-  return { supplementDueSoon, supplementOverdue, supNotifs };
+function buildDedupKey(item: DigestItemWithRef): string {
+  const type = item.isOverdue ? "invoice_overdue" : "invoice_due_soon";
+  if (item.isSupplement && item.beneficiaryId) return `${type}:supplement-${item.beneficiaryId}`;
+  return `${type}:${item.invoiceId}`;
+}
+
+async function createNotification(
+  customer: { id: string; customer_name: string },
+  item: DigestItemWithRef,
+) {
+  const type = item.isOverdue ? "invoice_overdue" : "invoice_due_soon";
+  const dateStr = item.dueDate.toLocaleDateString("vi-VN");
+
+  const title = item.isSupplement
+    ? item.isOverdue
+      ? `HD can bo sung qua han: ${item.invoiceNumber}`
+      : `HD can bo sung sap den han: ${item.invoiceNumber}`
+    : item.isOverdue
+      ? `HD qua han: ${item.invoiceNumber}`
+      : `HD sap den han: ${item.invoiceNumber}`;
+
+  const message = item.isSupplement
+    ? `${item.invoiceNumber} (${customer.customer_name}) ${item.isOverdue ? "da qua han" : "sap den han"} bo sung (${dateStr})`
+    : item.isOverdue
+      ? `HD ${item.invoiceNumber} (${customer.customer_name}) da qua han`
+      : `HD ${item.invoiceNumber} (${customer.customer_name}) den han ${dateStr}`;
+
+  // Legacy metadata shape: virtual-{beneficiaryId} for supplement items
+  const metaInvoiceId = item.isSupplement && item.beneficiaryId
+    ? `virtual-${item.beneficiaryId}`
+    : item.invoiceId!;
+
+  return notificationService.create({
+    type,
+    title,
+    message,
+    metadata: {
+      invoiceId: metaInvoiceId,
+      disbursementId: item.disbursementId,
+      customerId: customer.id,
+      ...(item.isSupplement ? { virtual: true } : {}),
+    },
+    customerId: customer.id,
+  });
+}
+
+/** Strip internal ref fields before sending to emailService (typed InvoiceDigestItem). */
+function stripRefs(item: DigestItemWithRef): InvoiceDigestItem {
+  return {
+    invoiceNumber: item.invoiceNumber,
+    amount: item.amount,
+    dueDate: item.dueDate,
+    contractNumber: item.contractNumber,
+    isOverdue: item.isOverdue,
+    isSupplement: item.isSupplement,
+  };
 }
