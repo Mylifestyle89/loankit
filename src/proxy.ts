@@ -8,12 +8,19 @@ const CRON_PATH = "/api/cron";
 /** OnlyOffice callback is server-to-server (has its own JWT auth) */
 const ONLYOFFICE_CALLBACK = "/api/onlyoffice/callback";
 
+/** Liveness probe — public, no auth (used by Docker healthcheck + uptime monitoring) */
+const HEALTH_PATH = "/api/health";
+
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const sessionCookie = getSessionCookie(request);
 
-  // Skip cron routes (secret-based auth) and OnlyOffice callback (JWT auth)
-  if (pathname.startsWith(CRON_PATH) || pathname.startsWith(ONLYOFFICE_CALLBACK)) {
+  // Skip cron routes (secret-based auth), OnlyOffice callback (JWT auth), health probe (public)
+  if (
+    pathname.startsWith(CRON_PATH) ||
+    pathname.startsWith(ONLYOFFICE_CALLBACK) ||
+    pathname === HEALTH_PATH
+  ) {
     return NextResponse.next();
   }
 
