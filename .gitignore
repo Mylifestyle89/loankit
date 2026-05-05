@@ -57,6 +57,14 @@ __pycache__/
 # DB backups (contain plaintext PII — never commit)
 /backups/
 
+# Migration outputs (Phase 2-3.5 report module — may contain PII / internal IDs)
+/migration-orphans.json
+/migration-summary.json
+/migration-completed.json
+/migration-loanid-backfill-*.json
+/backup-*.sql
+/dev.db.bak-*
+
 # report runtime outputs (generated)
 /report_assets/config/
 /report_assets/backups/

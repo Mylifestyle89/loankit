@@ -30,10 +30,12 @@ async function resolveScopedStorage(mappingInstanceId?: string): Promise<{
   fieldCatalog: Awaited<ReturnType<typeof loadState>>["field_catalog"];
   manualValuesPath?: string;
   fieldFormulasPath?: string;
+  /** Phase 3.5: resolved Loan FK for upcoming valuesService swap (Phase 4 full). */
+  loanId?: string | null;
 }> {
   if (!mappingInstanceId) {
     const state = await loadState();
-    return { fieldCatalog: state.field_catalog };
+    return { fieldCatalog: state.field_catalog, loanId: null };
   }
 
   const instance = await prisma.mappingInstance.findUnique({
@@ -53,6 +55,7 @@ async function resolveScopedStorage(mappingInstanceId?: string): Promise<{
     fieldCatalog: parseFieldCatalogJson(instance.fieldCatalogJson),
     manualValuesPath: `${stem}.manual_values.json`,
     fieldFormulasPath: `${stem}.field_formulas.json`,
+    loanId: instance.loanId,
   };
 }
 

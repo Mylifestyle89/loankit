@@ -154,6 +154,9 @@ model Customer {
   /// JSON array: documents related to loan plan (PA) - GCN đăng ký kinh doanh, ATTP, etc.
   documents_pa_json String? @default("[]")
 
+  /// Phase 1 v2: customer-level shared values (pháp lý + tài chính DN) — used across all loan dossiers
+  customerProfileValuesJson String @default("{}")
+
   // Ownership: user who created this customer record
   createdById String?
   createdBy   User?           @relation("CustomerOwner", fields: [createdById], references: [id], onDelete: SetNull)
@@ -248,14 +251,39 @@ model Loan {
   loanPlanId String?   // FK → LoanPlan
   loanPlan   LoanPlan? @relation(fields: [loanPlanId], references: [id], onDelete: SetNull)
 
-  disbursements Disbursement[]
-  beneficiaries Beneficiary[]
+  // Phase 1 v2: report module integration
+  masterTemplateId    String?
+  masterTemplate      MasterTemplate? @relation(fields: [masterTemplateId], references: [id], onDelete: SetNull)
+  dossierValuesJson   String          @default("{}") // free-form values cho phương án vay (per-loan)
+  exportedDocxBlobRef String? // FS path (VPS) hoặc R2/S3 key — Phase 3
+
+  disbursements    Disbursement[]
+  beneficiaries    Beneficiary[]
+  reportExports    LoanReportExport[]
+  mappingInstances MappingInstance[]
 
   @@index([contractNumber])
   @@index([customerId])
   @@index([status])
   @@index([loan_method])
+  @@index([masterTemplateId])
   @@map("loans")
+}
+
+/// Phase 1 v2: audit trail cho mỗi lần export DOCX báo cáo (rotate-5 logic ở Phase 3)
+model LoanReportExport {
+  id             String   @id @default(cuid())
+  loanId         String
+  loan           Loan     @relation(fields: [loanId], references: [id], onDelete: Cascade)
+  exportedAt     DateTime @default(now())
+  exportedBy     String
+  docxPath       String? // FS path on VPS, NULL on Vercel (stream-only)
+  valuesSnapshot String // JSON snapshot — reproducibility
+  status         String   @default("active") // active | rotated_out
+
+  @@index([loanId, exportedAt])
+  @@index([status])
+  @@map("loan_report_exports")
 }
 
 model Beneficiary {
@@ -377,7 +405,7 @@ model AppNotification {
   @@map("app_notifications")
 }
 
-model FieldTemplateMaster {
+model MasterTemplate {
   id               String   @id @default(cuid())
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
@@ -387,9 +415,20 @@ model FieldTemplateMaster {
   fieldCatalogJson String   @default("[]")
   createdBy        String   @default("system")
 
+  // Phase 1 v2 additions — non-breaking, default values
+  // Empty string "" = "not yet classified" (legacy templates pre-classification).
+  // Nullable would be cleaner but SQLite ALTER COLUMN DROP NOT NULL requires RedefineTable.
+  companyType           String @default("") // CTCP|TNHH1TV|TNHH2TV|HKD|CN_individual|""=unset
+  reportKind            String @default("") // BCDX|GiayNhanNo|DanhMucHoSo|UNC|""=unset
+  /// Canonical placeholder list parsed from .docx — drives validation + builder UI suggestions.
+  /// Differs from fieldCatalogJson which holds field metadata (label_vi, group, type).
+  placeholderSchemaJson String @default("[]")
+
   mapping_instances MappingInstance[]
+  loans             Loan[]
 
   @@index([status])
+  @@index([companyType, reportKind])
   @@map("field_template_masters")
 }
 
@@ -412,9 +451,14 @@ model MappingInstance {
 
   masterId   String?
   customerId String
-  master     FieldTemplateMaster? @relation(fields: [masterId], references: [id], onDelete: SetNull)
-  customer   Customer             @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  // Phase 3.5: link to Loan (nullable, backfill, NOT NULL Phase 5).
+  // SetNull = config tái dùng, không cascade khi xóa loan.
+  loanId     String?
+  master     MasterTemplate? @relation(fields: [masterId], references: [id], onDelete: SetNull)
+  customer   Customer        @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  loan       Loan?           @relation(fields: [loanId], references: [id], onDelete: SetNull)
 
+  @@index([loanId])
   @@index([masterId])
   @@index([customerId])
   @@index([customerId, masterId, status])

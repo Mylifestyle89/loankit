@@ -13,7 +13,7 @@ export async function DELETE(_: NextRequest, { params }: Params) {
   try {
     const { id } = await params;
     // Ownership check: editor can only delete own master templates
-    const master = await prisma.fieldTemplateMaster.findUnique({ where: { id } });
+    const master = await prisma.masterTemplate.findUnique({ where: { id } });
     await requireOwnerOrAdmin(master?.createdBy ?? "");
     const result = await reportService.deleteMasterTemplate(id);
     return NextResponse.json({ ok: true, ...result });

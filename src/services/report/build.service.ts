@@ -4,6 +4,7 @@
  */
 import { validateReportPayload } from "@/core/use-cases/report-validation";
 import { docxEngine } from "@/lib/docx-engine";
+import { prisma } from "@/lib/prisma";
 import { REPORT_MERGED_FLAT_FILE } from "@/lib/report/constants";
 import { getActiveTemplateProfile, loadState } from "@/lib/report/fs-store";
 import { loadManualValues, mergeFlatWithManualValues } from "@/lib/report/manual-values";
@@ -64,6 +65,15 @@ export const buildService = {
     const source = await resolveMappingSource(input.mappingInstanceId);
     const activeTemplate = await getActiveTemplateProfile(state);
 
+    // Phase 3.5: resolve loanId from mapping instance for upcoming valuesService swap (Phase 4 full).
+    // Currently unused in build pipeline — stored for diagnostics + future wiring.
+    const resolvedLoanId = input.mappingInstanceId
+      ? (await prisma.mappingInstance.findUnique({
+          where: { id: input.mappingInstanceId },
+          select: { loanId: true },
+        }))?.loanId ?? null
+      : null;
+
     const outputPath = input.outputPath ?? "report_assets/report_preview.docx";
     const reportPath = input.reportPath ?? "report_assets/template_export_report.json";
     const templatePath = input.templatePath ?? activeTemplate.docx_path;
@@ -104,6 +114,7 @@ export const buildService = {
         auto_build_triggered: autoBuildTriggered,
         stale_reasons: stale.reasons,
         mapping_source_id: sourceIdFromResolved(source),
+        loan_id: resolvedLoanId,
         report,
       },
       outputPaths: [outputPath, reportPath],

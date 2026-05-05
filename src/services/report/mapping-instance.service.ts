@@ -24,7 +24,7 @@ export const mappingInstanceService = {
     if (!masterId || !customerId) throw new ValidationError("master_id and customer_id are required.");
     await ensureMasterInstanceMigration();
     const [master, customer] = await Promise.all([
-      prisma.fieldTemplateMaster.findUnique({ where: { id: masterId } }),
+      prisma.masterTemplate.findUnique({ where: { id: masterId } }),
       prisma.customer.findUnique({ where: { id: customerId } }),
     ]);
     if (!master) throw new NotFoundError("Master template not found.");

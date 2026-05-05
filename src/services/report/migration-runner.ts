@@ -43,7 +43,7 @@ export async function runLegacyMigration(
   const catalogJsonByLegacyId = new Map<string, string>();
   for (const legacy of legacyTemplates) {
     const catalogJson = JSON.stringify(legacy.field_catalog ?? []);
-    const created = await prisma.fieldTemplateMaster.create({
+    const created = await prisma.masterTemplate.create({
       data: {
         name: legacy.name,
         status: "active",

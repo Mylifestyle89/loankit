@@ -38,11 +38,11 @@ function hasPrismaModel(modelName: string): boolean {
 export function ensurePrismaModelsExist(): void {
   const { SystemError } = require("@/core/errors/app-error");
   if (
-    !hasPrismaModel("fieldTemplateMaster") ||
+    !hasPrismaModel("masterTemplate") ||
     !hasPrismaModel("mappingInstance")
   ) {
     throw new SystemError(
-      "Prisma client thiếu model FieldTemplateMaster/MappingInstance. Chạy: npx prisma generate",
+      "Prisma client thiếu model MasterTemplate/MappingInstance. Chạy: npx prisma generate",
     );
   }
 }

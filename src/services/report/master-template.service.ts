@@ -20,12 +20,12 @@ export const masterTemplateService = {
     const skip = (page - 1) * limit;
 
     const [masters, total] = await prisma.$transaction([
-      prisma.fieldTemplateMaster.findMany({
+      prisma.masterTemplate.findMany({
         orderBy: { createdAt: "desc" },
         skip,
         take: limit,
       }),
-      prisma.fieldTemplateMaster.count(),
+      prisma.masterTemplate.count(),
     ]);
 
     const hasDbMasterData = total > 0;
@@ -63,7 +63,7 @@ export const masterTemplateService = {
     if (!Array.isArray(input.fieldCatalog)) throw new ValidationError("field_catalog must be an array.");
     const fieldCatalog = input.fieldCatalog.map((item) => fieldCatalogItemSchema.parse(item));
     await ensureMasterInstanceMigration();
-    const created = await prisma.fieldTemplateMaster.create({
+    const created = await prisma.masterTemplate.create({
       data: {
         name,
         description: input.description?.trim() || null,
@@ -79,12 +79,12 @@ export const masterTemplateService = {
     const masterId = input.masterId.trim();
     if (!masterId) throw new ValidationError("master_id is required.");
     await ensureMasterInstanceMigration();
-    const existing = await prisma.fieldTemplateMaster.findUnique({ where: { id: masterId } });
+    const existing = await prisma.masterTemplate.findUnique({ where: { id: masterId } });
     if (!existing) throw new NotFoundError("Master template not found.");
     const fieldCatalog = Array.isArray(input.fieldCatalog)
       ? input.fieldCatalog.map((item) => fieldCatalogItemSchema.parse(item))
       : undefined;
-    const updated = await prisma.fieldTemplateMaster.update({
+    const updated = await prisma.masterTemplate.update({
       where: { id: masterId },
       data: {
         ...(typeof input.name === "string" ? { name: input.name.trim() || existing.name } : {}),
@@ -100,9 +100,9 @@ export const masterTemplateService = {
     const id = masterId.trim();
     if (!id) throw new ValidationError("master_id is required.");
     await ensureMasterInstanceMigration();
-    const existing = await prisma.fieldTemplateMaster.findUnique({ where: { id } });
+    const existing = await prisma.masterTemplate.findUnique({ where: { id } });
     if (!existing) throw new NotFoundError("Master template not found.");
-    await prisma.fieldTemplateMaster.delete({ where: { id } });
+    await prisma.masterTemplate.delete({ where: { id } });
     return { id };
   },
 };

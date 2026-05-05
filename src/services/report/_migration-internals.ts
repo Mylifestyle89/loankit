@@ -88,7 +88,7 @@ export async function ensureMasterInstanceMigration(): Promise<void> {
   }
 
   const [existingMasterCount, existingInstanceCount] = await Promise.all([
-    prisma.fieldTemplateMaster.count(),
+    prisma.masterTemplate.count(),
     prisma.mappingInstance.count(),
   ]);
   if (existingMasterCount > 0 || existingInstanceCount > 0) {

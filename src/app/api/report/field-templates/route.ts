@@ -89,7 +89,7 @@ export async function PUT(req: NextRequest) {
       field_catalog?: unknown[];
     };
     // Ownership check: editor can only update own templates
-    const template = await prisma.fieldTemplateMaster.findUnique({ where: { id: body.template_id ?? "" } });
+    const template = await prisma.masterTemplate.findUnique({ where: { id: body.template_id ?? "" } });
     if (template) await requireOwnerOrAdmin(template.createdBy);
     else await requireEditorOrAdmin();
     const result = await reportService.updateFieldTemplate({

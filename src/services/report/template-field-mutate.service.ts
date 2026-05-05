@@ -37,7 +37,7 @@ export async function createFieldTemplate(input: {
 
   await ensureMasterInstanceMigration();
   if (await isDbTemplateModeEnabled()) {
-    const master = await prisma.fieldTemplateMaster.create({
+    const master = await prisma.masterTemplate.create({
       data: {
         name,
         status: "active",
@@ -77,7 +77,7 @@ export async function createFieldTemplate(input: {
       }
     }
     const created = mapMasterTemplateRecordToSummary(master);
-    const allMasters = await prisma.fieldTemplateMaster.findMany({ orderBy: { createdAt: "desc" } });
+    const allMasters = await prisma.masterTemplate.findMany({ orderBy: { createdAt: "desc" } });
     return { template: created, allTemplates: allMasters.map((item) => mapMasterTemplateRecordToSummary(item)) };
   }
 
@@ -128,16 +128,16 @@ export async function updateFieldTemplate(input: {
   const nextName = (input.name ?? "").trim();
   const parsedCatalog = input.fieldCatalog.map((item) => fieldCatalogItemSchema.parse(item));
   await ensureMasterInstanceMigration();
-  const master = await prisma.fieldTemplateMaster.findUnique({ where: { id: templateId } });
+  const master = await prisma.masterTemplate.findUnique({ where: { id: templateId } });
   if (master && (await isDbTemplateModeEnabled())) {
-    const updated = await prisma.fieldTemplateMaster.update({
+    const updated = await prisma.masterTemplate.update({
       where: { id: templateId },
       data: {
         ...(nextName ? { name: nextName } : {}),
         fieldCatalogJson: JSON.stringify(parsedCatalog),
       },
     });
-    const allMasters = await prisma.fieldTemplateMaster.findMany({ orderBy: { createdAt: "desc" } });
+    const allMasters = await prisma.masterTemplate.findMany({ orderBy: { createdAt: "desc" } });
     return {
       updated: mapMasterTemplateRecordToSummary(updated),
       allTemplates: allMasters.map((item) => mapMasterTemplateRecordToSummary(item)),
@@ -169,7 +169,7 @@ export async function attachTemplateToCustomer(input: { customerId: string; temp
   await ensureMasterInstanceMigration();
   const [customer, master] = await Promise.all([
     prisma.customer.findUnique({ where: { id: customerId } }),
-    prisma.fieldTemplateMaster.findUnique({ where: { id: templateId } }),
+    prisma.masterTemplate.findUnique({ where: { id: templateId } }),
   ]);
 
   if (customer && master && (await isDbTemplateModeEnabled())) {

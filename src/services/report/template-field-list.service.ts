@@ -21,12 +21,12 @@ export async function listFieldTemplates(params: {
   const skip = (page - 1) * limit;
 
   const [masters, total, instanceCount] = await prisma.$transaction([
-    prisma.fieldTemplateMaster.findMany({
+    prisma.masterTemplate.findMany({
       orderBy: { createdAt: "desc" },
       skip,
       take: limit,
     }),
-    prisma.fieldTemplateMaster.count(),
+    prisma.masterTemplate.count(),
     prisma.mappingInstance.count(),
   ]);
 

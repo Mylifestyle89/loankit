@@ -93,7 +93,7 @@ export const mappingService = {
       // Wrap both writes in a transaction to ensure atomicity (A-C1 fix)
       await prisma.$transaction(async (tx) => {
         if (fieldCatalog && instance.masterId) {
-          await tx.fieldTemplateMaster.update({
+          await tx.masterTemplate.update({
             where: { id: instance.masterId },
             data: { fieldCatalogJson: JSON.stringify(fieldCatalog) },
           });
