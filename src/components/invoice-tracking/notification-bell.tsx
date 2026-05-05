@@ -10,15 +10,35 @@ import { useLanguage } from "@/components/language-provider";
 import { NotificationPanel } from "./notification-panel";
 
 export function NotificationBell({ expanded }: { expanded: boolean }) {
-  const { unreadCount, isOpen, toggle, startPolling } = useNotificationStore();
+  const { unreadCount, isOpen, toggle, close, startPolling } = useNotificationStore();
   const { t } = useLanguage();
   const permissionRequested = useRef(false);
   const btnRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     startPolling();
     return () => useNotificationStore.getState().stopPolling();
   }, [startPolling]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    function handlePointerDown(e: MouseEvent) {
+      const target = e.target as Node;
+      if (panelRef.current?.contains(target)) return;
+      if (btnRef.current?.contains(target)) return;
+      close();
+    }
+    function handleKey(e: KeyboardEvent) {
+      if (e.key === "Escape") close();
+    }
+    document.addEventListener("mousedown", handlePointerDown);
+    document.addEventListener("keydown", handleKey);
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown);
+      document.removeEventListener("keydown", handleKey);
+    };
+  }, [isOpen, close]);
 
   // Compute fixed position from button bounding rect
   function getPanelPos() {
@@ -70,7 +90,7 @@ export function NotificationBell({ expanded }: { expanded: boolean }) {
 
       {/* Portal to document.body — escapes sidebar's stacking context (backdrop-blur creates new context) */}
       {isOpen && createPortal(
-        <NotificationPanel style={{ position: "fixed", zIndex: 9999, ...getPanelPos() }} />,
+        <NotificationPanel ref={panelRef} style={{ position: "fixed", zIndex: 9999, ...getPanelPos() }} />,
         document.body,
       )}
     </div>

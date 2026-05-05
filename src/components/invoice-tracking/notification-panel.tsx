@@ -1,8 +1,9 @@
 "use client";
 
+import { forwardRef } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { Bell, AlertTriangle, Clock } from "lucide-react";
+import { Bell, AlertTriangle, Clock, X } from "lucide-react";
 import { useNotificationStore } from "./use-notification-store";
 import { useLanguage } from "@/components/language-provider";
 import { formatRelativeTime } from "@/lib/format-relative-time";
@@ -13,7 +14,7 @@ const TYPE_ICONS: Record<string, typeof Bell> = {
   duplicate_invoice: AlertTriangle,
 };
 
-export function NotificationPanel({ style }: { style?: React.CSSProperties }) {
+export const NotificationPanel = forwardRef<HTMLDivElement, { style?: React.CSSProperties }>(function NotificationPanel({ style }, ref) {
   const { notifications, markRead, markAllRead, close } = useNotificationStore();
   const { t } = useLanguage();
   const router = useRouter();
@@ -33,19 +34,29 @@ export function NotificationPanel({ style }: { style?: React.CSSProperties }) {
 
   return (
     <motion.div
+      ref={ref}
       initial={{ opacity: 0, x: -8 }}
       animate={{ opacity: 1, x: 0 }}
       style={style}
       className="w-80 rounded-xl border border-slate-200/60 bg-white shadow-lg dark:border-white/[0.08] dark:bg-[#1a1a1a] z-[60]"
     >
-      <div className="flex items-center justify-between border-b border-slate-200/60 px-4 py-2.5 dark:border-white/[0.07]">
+      <div className="flex items-center justify-between gap-2 border-b border-slate-200/60 px-4 py-2.5 dark:border-white/[0.07]">
         <span className="text-sm font-semibold">{t("notifications.title")}</span>
-        <button
-          onClick={() => void markAllRead()}
-          className="cursor-pointer text-xs text-brand-500 dark:text-brand-400 rounded px-1.5 py-0.5 hover:bg-brand-100 dark:hover:bg-brand-1000/10 transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/50"
-        >
-          {t("notifications.markAllRead")}
-        </button>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={() => void markAllRead()}
+            className="cursor-pointer text-xs text-brand-500 dark:text-brand-400 rounded px-1.5 py-0.5 hover:bg-brand-100 dark:hover:bg-brand-1000/10 transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/50"
+          >
+            {t("notifications.markAllRead")}
+          </button>
+          <button
+            onClick={close}
+            aria-label="Close"
+            className="cursor-pointer rounded p-1 text-zinc-400 hover:bg-slate-100 hover:text-zinc-700 dark:text-slate-500 dark:hover:bg-white/[0.06] dark:hover:text-slate-300 transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/50"
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
+        </div>
       </div>
 
       <div className="max-h-72 overflow-y-auto">
@@ -89,4 +100,4 @@ export function NotificationPanel({ style }: { style?: React.CSSProperties }) {
       </div>
     </motion.div>
   );
-}
+});
