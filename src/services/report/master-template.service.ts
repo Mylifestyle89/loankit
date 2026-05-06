@@ -105,4 +105,72 @@ export const masterTemplateService = {
     await prisma.masterTemplate.delete({ where: { id } });
     return { id };
   },
+
+  // ─────────────────────────────────────────────────────────────────────
+  // Phase 6: per-master mapping/alias/formulas accessors
+  //
+  // Storage on the master replaces the per-customer MappingInstance.mappingJson
+  // pattern. Bodies are JSON strings — callers parse/validate at their layer.
+  // ─────────────────────────────────────────────────────────────────────
+
+  async getMappingForTemplate(masterId: string): Promise<string> {
+    const row = await prisma.masterTemplate.findUnique({
+      where: { id: masterId },
+      select: { defaultMappingJson: true },
+    });
+    if (!row) throw new NotFoundError(`Master template ${masterId} not found.`);
+    return row.defaultMappingJson;
+  },
+
+  async setMappingForTemplate(masterId: string, mappingJson: string): Promise<void> {
+    JSON.parse(mappingJson); // throws SyntaxError on bad input — fail before DB write
+    const result = await prisma.masterTemplate.updateMany({
+      where: { id: masterId },
+      data: { defaultMappingJson: mappingJson },
+    });
+    if (result.count === 0) throw new NotFoundError(`Master template ${masterId} not found.`);
+  },
+
+  async getAliasForTemplate(masterId: string): Promise<string> {
+    const row = await prisma.masterTemplate.findUnique({
+      where: { id: masterId },
+      select: { defaultAliasJson: true },
+    });
+    if (!row) throw new NotFoundError(`Master template ${masterId} not found.`);
+    return row.defaultAliasJson;
+  },
+
+  async setAliasForTemplate(masterId: string, aliasJson: string): Promise<void> {
+    JSON.parse(aliasJson);
+    const result = await prisma.masterTemplate.updateMany({
+      where: { id: masterId },
+      data: { defaultAliasJson: aliasJson },
+    });
+    if (result.count === 0) throw new NotFoundError(`Master template ${masterId} not found.`);
+  },
+
+  async getFormulasForTemplate(masterId: string): Promise<Record<string, string>> {
+    const row = await prisma.masterTemplate.findUnique({
+      where: { id: masterId },
+      select: { formulasJson: true },
+    });
+    if (!row) throw new NotFoundError(`Master template ${masterId} not found.`);
+    try {
+      const parsed = JSON.parse(row.formulasJson);
+      return parsed && typeof parsed === "object" ? (parsed as Record<string, string>) : {};
+    } catch {
+      return {};
+    }
+  },
+
+  async setFormulasForTemplate(masterId: string, formulas: Record<string, string>): Promise<void> {
+    if (!formulas || typeof formulas !== "object") {
+      throw new ValidationError("formulas must be a plain object of field_key → formula string.");
+    }
+    const result = await prisma.masterTemplate.updateMany({
+      where: { id: masterId },
+      data: { formulasJson: JSON.stringify(formulas) },
+    });
+    if (result.count === 0) throw new NotFoundError(`Master template ${masterId} not found.`);
+  },
 };
