@@ -1,16 +1,20 @@
 /**
  * Build freshness check — determines whether a cached build is stale.
+ *
+ * Phase 6: scope is master-template-aware. Caller passes `loanId` (preferred)
+ * or legacy `mappingInstanceId` (translated internally). Without a scope the
+ * legacy FS-backed active mapping version drives freshness.
  */
 import { loadState } from "@/lib/report/fs-store";
 
 import { type BuildFreshness } from "./_shared";
-import { resolveMappingSource } from "./_migration-internals";
+import { resolveBuildSource, type BuildScope } from "./build-source";
 import { hasFlatDraftFile, readBuildMeta } from "./build-service-helpers";
 
-export async function getBuildFreshnessStatus(mappingInstanceId?: string): Promise<BuildFreshness> {
+export async function getBuildFreshnessStatus(scope: BuildScope = {}): Promise<BuildFreshness> {
   const [state, source, buildMeta, hasFlatDraft] = await Promise.all([
     loadState(),
-    resolveMappingSource(mappingInstanceId),
+    resolveBuildSource(scope),
     readBuildMeta(),
     hasFlatDraftFile(),
   ]);
@@ -20,14 +24,13 @@ export async function getBuildFreshnessStatus(mappingInstanceId?: string): Promi
   if (!buildMeta) reasons.push("NO_BUILD_META");
   if (buildMeta) {
     if (buildMeta.mapping_source_mode !== source.mode) reasons.push("MAPPING_SOURCE_MODE_CHANGED");
-    const sourceId = source.mode === "instance" ? source.instanceId : source.versionId;
-    if (buildMeta.mapping_source_id !== sourceId) reasons.push("MAPPING_SOURCE_CHANGED");
-    if (buildMeta.mapping_source_updated_at !== source.mappingUpdatedAt) reasons.push("MAPPING_UPDATED");
+    if (buildMeta.mapping_source_id !== source.sourceId) reasons.push("MAPPING_SOURCE_CHANGED");
+    if (buildMeta.mapping_source_updated_at !== source.sourceUpdatedAt) reasons.push("MAPPING_UPDATED");
     if ((buildMeta.template_profile_id || "unknown") !== (state.active_template_id || "unknown")) {
       reasons.push("TEMPLATE_CHANGED");
     }
     const builtAtMs = Date.parse(buildMeta.built_at);
-    const mappingUpdatedMs = Date.parse(source.mappingUpdatedAt);
+    const mappingUpdatedMs = Date.parse(source.sourceUpdatedAt);
     if (Number.isFinite(builtAtMs) && Number.isFinite(mappingUpdatedMs) && builtAtMs < mappingUpdatedMs) {
       reasons.push("MAPPING_NEWER_THAN_BUILD");
     }
@@ -38,8 +41,8 @@ export async function getBuildFreshnessStatus(mappingInstanceId?: string): Promi
     reasons,
     has_flat_draft: hasFlatDraft,
     current_mapping_source_mode: source.mode,
-    current_mapping_source_id: source.mode === "instance" ? source.instanceId : source.versionId,
-    current_mapping_updated_at: source.mappingUpdatedAt,
+    current_mapping_source_id: source.sourceId,
+    current_mapping_updated_at: source.sourceUpdatedAt,
     last_build_at: buildMeta?.built_at,
   };
 }

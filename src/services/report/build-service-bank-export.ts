@@ -13,7 +13,12 @@ import { getActiveTemplateProfile, loadState } from "@/lib/report/fs-store";
 import { logRun, runBuildAndValidate } from "@/lib/report/pipeline-client";
 
 import { resolveParentFromGroupedRecord, sanitizeFilePart } from "./_shared";
-import { resolveMappingSource } from "./_migration-internals";
+import {
+  loadAliasMapFromBuildSource,
+  loanIdFromBuildSource,
+  resolveBuildSource,
+  type BuildScope,
+} from "./build-source";
 import { safeWriteJson, writeBuildMeta } from "./build-service-helpers";
 import { getBuildFreshnessStatus } from "./build-service-freshness";
 import { addLabelViAliases } from "./build-service-data-transform";
@@ -30,6 +35,7 @@ export type BankExportInput = {
   groupKey?: string;
   repeatKey?: string;
   customerNameKey?: string;
+  loanId?: string;
   mappingInstanceId?: string;
 };
 
@@ -52,7 +58,11 @@ export type BankExportResult = {
 export async function processBankReportExport(input?: BankExportInput): Promise<BankExportResult> {
   const start = Date.now();
   const state = await loadState();
-  const source = await resolveMappingSource(input?.mappingInstanceId);
+  const scope: BuildScope = {
+    loanId: input?.loanId,
+    mappingInstanceId: input?.mappingInstanceId,
+  };
+  const source = await resolveBuildSource(scope);
   const activeTemplate = await getActiveTemplateProfile(state);
 
   const templatePath = input?.templatePath ?? activeTemplate.docx_path;
@@ -62,7 +72,7 @@ export async function processBankReportExport(input?: BankExportInput): Promise<
   const repeatKey = input?.repeatKey?.trim() || "items";
   const customerNameKey = input?.customerNameKey?.trim() || "TÊN KH";
 
-  const stale = await getBuildFreshnessStatus(input?.mappingInstanceId);
+  const stale = await getBuildFreshnessStatus(scope);
   let autoBuildTriggered = false;
   if (stale.is_stale) {
     await runBuildAndValidate();
@@ -70,10 +80,10 @@ export async function processBankReportExport(input?: BankExportInput): Promise<
     autoBuildTriggered = true;
   }
 
-  const resolvedLoanId = source.mode === "instance" ? source.loanId : null;
+  const resolvedLoanId = loanIdFromBuildSource(source);
   const [baseFlat, aliasMapRaw, manualValues] = await Promise.all([
     docxEngine.readJson<Record<string, unknown>>("report_assets/generated/report_draft_flat.json"),
-    docxEngine.readJson<Record<string, unknown>>(source.aliasPath),
+    loadAliasMapFromBuildSource(source),
     resolveValuesForLoan(resolvedLoanId),
   ]);
   const aliasMap = aliasMapRaw as Record<string, unknown>;

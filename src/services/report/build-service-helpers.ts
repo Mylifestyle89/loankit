@@ -8,7 +8,8 @@ import { removeVietnameseTones } from "@/app/report/khdn/mapping/helpers";
 import { docxEngine } from "@/lib/docx-engine";
 import { REPORT_BUILD_META_FILE } from "@/lib/report/constants";
 
-import { type BuildMeta, type MappingSource } from "./_shared";
+import { type BuildMeta } from "./_shared";
+import { type BuildSource } from "./build-source";
 
 // ---------------------------------------------------------------------------
 // FS helpers
@@ -25,7 +26,7 @@ export async function readBuildMeta(): Promise<BuildMeta | null> {
     const parsed = JSON.parse(raw) as Partial<BuildMeta>;
     if (
       typeof parsed.built_at === "string" &&
-      (parsed.mapping_source_mode === "instance" || parsed.mapping_source_mode === "legacy") &&
+      (parsed.mapping_source_mode === "master" || parsed.mapping_source_mode === "legacy") &&
       typeof parsed.mapping_source_id === "string" &&
       typeof parsed.mapping_source_updated_at === "string" &&
       typeof parsed.template_profile_id === "string"
@@ -39,14 +40,14 @@ export async function readBuildMeta(): Promise<BuildMeta | null> {
 }
 
 export async function writeBuildMeta(params: {
-  source: MappingSource;
+  source: BuildSource;
   templateProfileId: string;
 }): Promise<BuildMeta> {
   const next: BuildMeta = {
     built_at: new Date().toISOString(),
     mapping_source_mode: params.source.mode,
-    mapping_source_id: params.source.mode === "instance" ? params.source.instanceId : params.source.versionId,
-    mapping_source_updated_at: params.source.mappingUpdatedAt,
+    mapping_source_id: params.source.sourceId,
+    mapping_source_updated_at: params.source.sourceUpdatedAt,
     template_profile_id: params.templateProfileId,
   };
   try {

@@ -10,7 +10,8 @@ export async function GET(req: NextRequest) {
   try {
     await requireSession();
     const mappingInstanceId = req.nextUrl.searchParams.get("mapping_instance_id") ?? undefined;
-    const freshness = await reportService.getBuildFreshness({ mappingInstanceId });
+    const loanId = req.nextUrl.searchParams.get("loan_id") ?? undefined;
+    const freshness = await reportService.getBuildFreshness({ loanId, mappingInstanceId });
     return NextResponse.json({
       ok: true,
       freshness,

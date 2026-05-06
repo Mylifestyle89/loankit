@@ -26,7 +26,7 @@ type FreshnessPayload = {
   is_stale: boolean;
   reasons: string[];
   has_flat_draft: boolean;
-  current_mapping_source_mode: "instance" | "legacy";
+  current_mapping_source_mode: "master" | "legacy";
   current_mapping_source_id: string;
   current_mapping_updated_at: string;
   last_build_at?: string;

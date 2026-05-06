@@ -34,6 +34,7 @@ const exportSchema = z.object({
   repeat_key: z.string().max(100).optional(),
   customer_name_key: z.string().max(100).optional(),
   mapping_instance_id: z.string().optional(),
+  loan_id: z.string().optional(),
 });
 
 export async function POST(req: NextRequest) {
@@ -53,12 +54,14 @@ export async function POST(req: NextRequest) {
             groupKey: body.group_key,
             repeatKey: body.repeat_key,
             customerNameKey: body.customer_name_key,
+            loanId: body.loan_id,
             mappingInstanceId: body.mapping_instance_id,
           })
         : await reportService.runReportExport({
             outputPath: body.output_path,
             reportPath: body.report_path,
             templatePath: body.template_path,
+            loanId: body.loan_id,
             mappingInstanceId: body.mapping_instance_id,
           });
 
