@@ -1,5 +1,9 @@
 /**
  * Mapping service — read, draft & publish mapping versions.
+ *
+ * Phase 6 transition: reads prefer MasterTemplate.{defaultMappingJson,
+ * defaultAliasJson}. MappingInstance + FS remain as fallback while the
+ * cascade is in progress; saveMappingDraft dual-writes to keep both in sync.
  */
 import { NotFoundError, ValidationError } from "@/core/errors/app-error";
 import { docxEngine } from "@/lib/docx-engine";
@@ -21,6 +25,9 @@ import {
 
 import { ensureMasterInstanceMigration, resolveMappingSource } from "./_migration-internals";
 
+const isEmptyJson = (s: string | null | undefined): boolean =>
+  !s || s.trim() === "" || s.trim() === "{}";
+
 // ---------------------------------------------------------------------------
 // Mapping Service
 // ---------------------------------------------------------------------------
@@ -30,13 +37,36 @@ export const mappingService = {
     const state = await loadState();
     const source = await resolveMappingSource(params?.mappingInstanceId);
 
-    // Prefer inline DB JSON (works on Vercel read-only FS)
-    const mapping = source.mode === "instance" && source.mappingJson
-      ? parseMappingJson(source.mappingJson)
-      : await readMappingFile(source.mappingPath);
-    const aliasMap = source.mode === "instance" && source.aliasJson
-      ? parseAliasJson(source.aliasJson)
-      : await readAliasFile(source.aliasPath);
+    // Phase 6: master-first reads. Empty master rows fall through to instance / FS.
+    let masterMapping: string | null = null;
+    let masterAlias: string | null = null;
+    if (source.mode === "instance" && params?.mappingInstanceId) {
+      const instance = await prisma.mappingInstance.findUnique({
+        where: { id: params.mappingInstanceId },
+        select: { masterId: true },
+      });
+      if (instance?.masterId) {
+        const master = await prisma.masterTemplate.findUnique({
+          where: { id: instance.masterId },
+          select: { defaultMappingJson: true, defaultAliasJson: true },
+        });
+        if (master) {
+          if (!isEmptyJson(master.defaultMappingJson)) masterMapping = master.defaultMappingJson;
+          if (!isEmptyJson(master.defaultAliasJson)) masterAlias = master.defaultAliasJson;
+        }
+      }
+    }
+
+    const mapping = masterMapping
+      ? parseMappingJson(masterMapping)
+      : source.mode === "instance" && source.mappingJson
+        ? parseMappingJson(source.mappingJson)
+        : await readMappingFile(source.mappingPath);
+    const aliasMap = masterAlias
+      ? parseAliasJson(masterAlias)
+      : source.mode === "instance" && source.aliasJson
+        ? parseAliasJson(source.aliasJson)
+        : await readAliasFile(source.aliasPath);
 
     return {
       active_version_id: source.mode === "legacy" ? source.versionId : source.instanceId,
@@ -90,12 +120,17 @@ export const mappingService = {
         dbUpdateData.fieldCatalogJson = serializedCatalog;
       }
 
-      // Wrap both writes in a transaction to ensure atomicity (A-C1 fix)
+      // Phase 6: dual-write — keep MasterTemplate canonical and MappingInstance in
+      // sync until the cascade drops the instance table.
       await prisma.$transaction(async (tx) => {
-        if (fieldCatalog && instance.masterId) {
+        if (instance.masterId) {
           await tx.masterTemplate.update({
             where: { id: instance.masterId },
-            data: { fieldCatalogJson: JSON.stringify(fieldCatalog) },
+            data: {
+              defaultMappingJson: mappingJsonStr,
+              defaultAliasJson: aliasJsonStr,
+              ...(fieldCatalog ? { fieldCatalogJson: JSON.stringify(fieldCatalog) } : {}),
+            },
           });
         }
         await tx.mappingInstance.update({
