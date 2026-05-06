@@ -77,3 +77,30 @@ export async function loanIdFromMappingInstance(
   });
   return inst?.loanId ?? null;
 }
+
+/**
+ * Boundary helper: translate `mappingInstanceId` to both `masterTemplateId`
+ * and `loanId`. Used by mapping/values services that need both scopes during
+ * the Phase 6 transition. Either field may be null on orphan rows.
+ */
+export async function masterAndLoanFromMappingInstance(
+  mappingInstanceId: string,
+): Promise<{ masterTemplateId: string | null; loanId: string | null }> {
+  const inst = await prisma.mappingInstance.findUnique({
+    where: { id: mappingInstanceId },
+    select: { masterId: true, loanId: true },
+  });
+  return {
+    masterTemplateId: inst?.masterId ?? null,
+    loanId: inst?.loanId ?? null,
+  };
+}
+
+/** Resolve the master template id from a loan (null if loan or assignment missing). */
+export async function masterIdFromLoan(loanId: string): Promise<string | null> {
+  const loan = await prisma.loan.findUnique({
+    where: { id: loanId },
+    select: { masterTemplateId: true },
+  });
+  return loan?.masterTemplateId ?? null;
+}

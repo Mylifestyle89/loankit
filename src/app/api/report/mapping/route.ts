@@ -14,7 +14,8 @@ export async function GET(req: NextRequest) {
     // Viewer (internal control) may read active mapping; mutations below require editor+.
     await requireSession();
     const mappingInstanceId = req.nextUrl.searchParams.get("mapping_instance_id") ?? undefined;
-    const result = await reportService.getMapping({ mappingInstanceId });
+    const masterTemplateId = req.nextUrl.searchParams.get("master_template_id") ?? undefined;
+    const result = await reportService.getMapping({ masterTemplateId, mappingInstanceId });
     return NextResponse.json({
       ok: true,
       active_version_id: result.active_version_id,
@@ -40,6 +41,7 @@ const mappingPutSchema = z.object({
   alias_map: z.unknown().optional(),
   field_catalog: z.array(z.unknown()).optional(),
   mapping_instance_id: z.string().optional(),
+  master_template_id: z.string().optional(),
 });
 
 export const PUT = withErrorHandling(
@@ -51,6 +53,7 @@ export const PUT = withErrorHandling(
       mapping: body.mapping,
       aliasMap: body.alias_map,
       fieldCatalog: body.field_catalog,
+      masterTemplateId: body.master_template_id,
       mappingInstanceId: body.mapping_instance_id,
     });
     return NextResponse.json({

@@ -1,26 +1,26 @@
 /**
  * Field-values service — auto/manual field values & formulas.
  *
- * Reads/writes dossier values via valuesService (DB) using the loanId
- * resolved from MappingInstance.loanId. Instances without a loanId cannot
- * persist manual values — saveFieldValues throws so the UI surfaces the
- * link-the-loan fix rather than silently dropping the user's edits.
- *
- * Formulas: Phase 6 added MasterTemplate.formulasJson. Reads prefer the
- * master when the instance links to one; FS path remains as fallback for
- * legacy instances and is retired together with MappingInstance.
+ * Phase 6: scope is master/loan-driven. Caller supplies `loanId` (preferred)
+ * or legacy `mappingInstanceId` (translated). Field catalog comes from
+ * `MasterTemplate.fieldCatalogJson` when a master is resolved; otherwise
+ * the legacy global `state.field_catalog`. Manual values + formulas live
+ * exclusively in DB (valuesService for dossier values, MasterTemplate.formulasJson
+ * for formulas). Per-instance FS overrides are gone.
  */
-import path from "node:path";
 import { NotFoundError, ValidationError } from "@/core/errors/app-error";
 import { enrichContextWithLabels } from "@/core/use-cases/formula-processor";
 import { docxEngine } from "@/lib/docx-engine";
 import { prisma } from "@/lib/prisma";
 import { evaluateFieldFormula } from "@/lib/report/field-calc";
-import { loadFieldFormulas, saveFieldFormulas } from "@/lib/report/field-formulas";
 import { loadState } from "@/lib/report/fs-store";
 import { runBuildAndValidate } from "@/lib/report/pipeline-client";
 import { valuesRecordSchema, type ValuesRecord } from "@/lib/report/values-schema";
 import { parseFieldCatalogJson } from "./_shared";
+import {
+  masterAndLoanFromMappingInstance,
+  masterIdFromLoan,
+} from "./master-source";
 import { masterTemplateService } from "./master-template.service";
 import { valuesService } from "./values.service";
 
@@ -35,54 +35,57 @@ async function loadFlatDraftWithBuildFallback(): Promise<Record<string, unknown>
   }
 }
 
-async function resolveScopedStorage(mappingInstanceId?: string): Promise<{
+type ResolvedScope = {
   fieldCatalog: Awaited<ReturnType<typeof loadState>>["field_catalog"];
-  fieldFormulasPath?: string;
   loanId: string | null;
   masterTemplateId: string | null;
-}> {
-  if (!mappingInstanceId) {
+};
+
+async function resolveScope(input: {
+  loanId?: string;
+  masterTemplateId?: string;
+  mappingInstanceId?: string;
+}): Promise<ResolvedScope> {
+  let loanId: string | null = input.loanId ?? null;
+  let masterTemplateId: string | null = input.masterTemplateId ?? null;
+
+  if (input.mappingInstanceId && (!loanId || !masterTemplateId)) {
+    const t = await masterAndLoanFromMappingInstance(input.mappingInstanceId);
+    loanId = loanId ?? t.loanId;
+    masterTemplateId = masterTemplateId ?? t.masterTemplateId;
+  }
+
+  if (!masterTemplateId && loanId) {
+    masterTemplateId = await masterIdFromLoan(loanId);
+  }
+
+  if (!masterTemplateId) {
     const state = await loadState();
-    return { fieldCatalog: state.field_catalog, loanId: null, masterTemplateId: null };
+    return { fieldCatalog: state.field_catalog, loanId, masterTemplateId: null };
   }
 
-  const instance = await prisma.mappingInstance.findUnique({
-    where: { id: mappingInstanceId },
-    select: { mappingJsonPath: true, fieldCatalogJson: true, loanId: true, masterId: true },
+  const master = await prisma.masterTemplate.findUnique({
+    where: { id: masterTemplateId },
+    select: { fieldCatalogJson: true },
   });
-  if (!instance) {
-    throw new ValidationError("Mapping instance not found.");
+  if (!master) {
+    throw new ValidationError(`Master template ${masterTemplateId} not found.`);
   }
-
-  const basePath = instance.mappingJsonPath.replace(/\.mapping\.json$/i, "");
-  const fallbackBase = path.join(
-    path.dirname(instance.mappingJsonPath),
-    path.basename(instance.mappingJsonPath, path.extname(instance.mappingJsonPath)),
-  );
-  const stem = basePath === instance.mappingJsonPath ? fallbackBase : basePath;
   return {
-    fieldCatalog: parseFieldCatalogJson(instance.fieldCatalogJson),
-    fieldFormulasPath: `${stem}.field_formulas.json`,
-    loanId: instance.loanId,
-    masterTemplateId: instance.masterId,
+    fieldCatalog: parseFieldCatalogJson(master.fieldCatalogJson),
+    loanId,
+    masterTemplateId,
   };
 }
 
-/** Read formulas: prefer MasterTemplate.formulasJson when populated,
- *  fall back to FS file (legacy per-instance path) otherwise. */
-async function readFormulas(
-  masterTemplateId: string | null,
-  fsPath: string | undefined,
-): Promise<Record<string, string>> {
-  if (masterTemplateId) {
-    try {
-      const fromMaster = await masterTemplateService.getFormulasForTemplate(masterTemplateId);
-      if (Object.keys(fromMaster).length > 0) return fromMaster;
-    } catch (e) {
-      if (!(e instanceof NotFoundError)) throw e;
-    }
+async function readFormulasForMaster(masterTemplateId: string | null): Promise<Record<string, string>> {
+  if (!masterTemplateId) return {};
+  try {
+    return await masterTemplateService.getFormulasForTemplate(masterTemplateId);
+  } catch (e) {
+    if (e instanceof NotFoundError) return {};
+    throw e;
   }
-  return await loadFieldFormulas(fsPath);
 }
 
 async function readDossierValues(loanId: string | null): Promise<ValuesRecord> {
@@ -99,12 +102,16 @@ async function readDossierValues(loanId: string | null): Promise<ValuesRecord> {
 }
 
 export const fieldValuesService = {
-  async getFieldValues(params?: { mappingInstanceId?: string }) {
-    const scope = await resolveScopedStorage(params?.mappingInstanceId);
+  async getFieldValues(params?: {
+    loanId?: string;
+    masterTemplateId?: string;
+    mappingInstanceId?: string;
+  }) {
+    const scope = await resolveScope(params ?? {});
     const [flatValues, manualValues, fieldFormulas] = await Promise.all([
       loadFlatDraftWithBuildFallback(),
       readDossierValues(scope.loanId),
-      readFormulas(scope.masterTemplateId, scope.fieldFormulasPath),
+      readFormulasForMaster(scope.masterTemplateId),
     ]);
     return {
       field_catalog: scope.fieldCatalog,
@@ -118,13 +125,26 @@ export const fieldValuesService = {
   async saveFieldValues(input: {
     manualValues?: ValuesRecord;
     fieldFormulas?: Record<string, string>;
+    loanId?: string;
+    masterTemplateId?: string;
     mappingInstanceId?: string;
   }) {
     if (!input.manualValues || typeof input.manualValues !== "object") {
       throw new ValidationError("manual_values is required.");
     }
 
-    const scope = await resolveScopedStorage(input.mappingInstanceId);
+    const scope = await resolveScope({
+      loanId: input.loanId,
+      masterTemplateId: input.masterTemplateId,
+      mappingInstanceId: input.mappingInstanceId,
+    });
+
+    if (!scope.loanId) {
+      throw new ValidationError(
+        "Cannot save manual values without a linked loan. Provide loan_id (or relink the mapping instance).",
+      );
+    }
+
     const flat = await loadFlatDraftWithBuildFallback();
     const fieldCatalog = scope.fieldCatalog ?? [];
     const fieldTypeMap = new Map(fieldCatalog.map((f) => [f.field_key, f.type]));
@@ -139,27 +159,21 @@ export const fieldValuesService = {
       }
     }
 
-    if (!scope.loanId) {
-      throw new ValidationError(
-        "Mapping instance is not linked to a loan. Run the backfill script or link the instance before saving.",
-      );
-    }
-
-    // Formulas write: master-first when available, FS otherwise (Phase 7 drops FS).
     const writeFormulas = async (): Promise<Record<string, string>> => {
       if (!input.fieldFormulas || typeof input.fieldFormulas !== "object") return {};
-      if (scope.masterTemplateId) {
-        await masterTemplateService.setFormulasForTemplate(scope.masterTemplateId, input.fieldFormulas);
+      if (!scope.masterTemplateId) {
+        // No master to write to; silently skip — values still persist on the loan.
+        console.warn(`${LOG_PREFIX} loan ${scope.loanId} has no master template, formulas not persisted.`);
         return input.fieldFormulas;
       }
-      return await saveFieldFormulas(input.fieldFormulas, scope.fieldFormulasPath);
+      await masterTemplateService.setFormulasForTemplate(scope.masterTemplateId, input.fieldFormulas);
+      return input.fieldFormulas;
     };
+
     const [, savedFormulas] = await Promise.all([
       valuesService.saveDossierValues(scope.loanId, toSave),
       writeFormulas(),
     ]);
-    // Echo the canonical parsed values so callers see what the DB will see
-    // (Zod may strip invalid keys / coerce types).
     const canonical = valuesRecordSchema.parse(toSave);
     return { manual_values: canonical, field_formulas: savedFormulas };
   },

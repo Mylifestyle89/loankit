@@ -13,7 +13,9 @@ export async function GET(req: NextRequest) {
   try {
     await requireSession();
     const mappingInstanceId = req.nextUrl.searchParams.get("mapping_instance_id") ?? undefined;
-    const result = await reportService.getFieldValues({ mappingInstanceId });
+    const loanId = req.nextUrl.searchParams.get("loan_id") ?? undefined;
+    const masterTemplateId = req.nextUrl.searchParams.get("master_template_id") ?? undefined;
+    const result = await reportService.getFieldValues({ loanId, masterTemplateId, mappingInstanceId });
     return NextResponse.json({
       ok: true,
       ...result,
@@ -39,6 +41,8 @@ const valuesPutSchema = z.object({
   manual_values: z.record(z.string(), scalarOrArray).optional(),
   field_formulas: z.record(z.string(), z.string()).optional(),
   mapping_instance_id: z.string().optional(),
+  loan_id: z.string().optional(),
+  master_template_id: z.string().optional(),
 });
 
 export const PUT = withErrorHandling(
@@ -47,6 +51,8 @@ export const PUT = withErrorHandling(
     const result = await reportService.saveFieldValues({
       manualValues: body.manual_values,
       fieldFormulas: body.field_formulas,
+      loanId: body.loan_id,
+      masterTemplateId: body.master_template_id,
       mappingInstanceId: body.mapping_instance_id,
     });
     return NextResponse.json({

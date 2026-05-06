@@ -1,12 +1,14 @@
 /**
- * Mapping service — read, draft & publish mapping versions.
+ * Mapping service — read & save mapping/alias config.
  *
- * Phase 6 transition: reads prefer MasterTemplate.{defaultMappingJson,
- * defaultAliasJson}. MappingInstance + FS remain as fallback while the
- * cascade is in progress; saveMappingDraft dual-writes to keep both in sync.
+ * Phase 6: MasterTemplate is the canonical store. Reads/writes target
+ * `defaultMappingJson` + `defaultAliasJson`. Legacy `mappingInstanceId`
+ * is translated to `masterTemplateId` at the boundary (back-compat for
+ * the mapping page UI until Commit 3 swaps it). Unscoped calls fall
+ * through to the legacy FS active-version path; that path retires
+ * with `fs-store.ts` in Phase 6e.
  */
 import { NotFoundError, ValidationError } from "@/core/errors/app-error";
-import { docxEngine } from "@/lib/docx-engine";
 import { prisma } from "@/lib/prisma";
 import {
   fieldCatalogItemSchema,
@@ -23,53 +25,56 @@ import {
   readMappingFile,
 } from "@/lib/report/fs-store";
 
-import { ensureMasterInstanceMigration, resolveMappingSource } from "./_migration-internals";
+import { masterAndLoanFromMappingInstance } from "./master-source";
 
-const isEmptyJson = (s: string | null | undefined): boolean =>
-  !s || s.trim() === "" || s.trim() === "{}";
+async function resolveMasterIdFromScope(scope: {
+  masterTemplateId?: string;
+  mappingInstanceId?: string;
+}): Promise<string | null> {
+  if (scope.masterTemplateId) return scope.masterTemplateId;
+  if (scope.mappingInstanceId) {
+    const t = await masterAndLoanFromMappingInstance(scope.mappingInstanceId);
+    return t.masterTemplateId;
+  }
+  return null;
+}
 
 // ---------------------------------------------------------------------------
 // Mapping Service
 // ---------------------------------------------------------------------------
 
 export const mappingService = {
-  async getMapping(params?: { mappingInstanceId?: string }) {
+  async getMapping(params?: { masterTemplateId?: string; mappingInstanceId?: string }) {
     const state = await loadState();
-    const source = await resolveMappingSource(params?.mappingInstanceId);
+    const masterId = await resolveMasterIdFromScope(params ?? {});
 
-    // Phase 6: master-first reads. Empty master rows fall through to instance / FS.
-    let masterMapping: string | null = null;
-    let masterAlias: string | null = null;
-    if (source.mode === "instance" && params?.mappingInstanceId) {
-      const instance = await prisma.mappingInstance.findUnique({
-        where: { id: params.mappingInstanceId },
-        select: { masterId: true },
+    if (masterId) {
+      const master = await prisma.masterTemplate.findUnique({
+        where: { id: masterId },
+        select: { id: true, defaultMappingJson: true, defaultAliasJson: true },
       });
-      if (instance?.masterId) {
-        const master = await prisma.masterTemplate.findUnique({
-          where: { id: instance.masterId },
-          select: { defaultMappingJson: true, defaultAliasJson: true },
-        });
-        if (master) {
-          if (!isEmptyJson(master.defaultMappingJson)) masterMapping = master.defaultMappingJson;
-          if (!isEmptyJson(master.defaultAliasJson)) masterAlias = master.defaultAliasJson;
-        }
+      if (master) {
+        const mapping = parseMappingJson(master.defaultMappingJson);
+        const aliasMap = parseAliasJson(master.defaultAliasJson);
+        return {
+          active_version_id: master.id,
+          versions: state.mapping_versions,
+          mapping,
+          alias_map: aliasMap,
+        };
       }
     }
 
-    const mapping = masterMapping
-      ? parseMappingJson(masterMapping)
-      : source.mode === "instance" && source.mappingJson
-        ? parseMappingJson(source.mappingJson)
-        : await readMappingFile(source.mappingPath);
-    const aliasMap = masterAlias
-      ? parseAliasJson(masterAlias)
-      : source.mode === "instance" && source.aliasJson
-        ? parseAliasJson(source.aliasJson)
-        : await readAliasFile(source.aliasPath);
-
+    // Legacy FS path — global active version (no per-customer scope).
+    const activeVersion = state.mapping_versions.find((v) => v.id === state.active_mapping_version_id)
+      ?? state.mapping_versions[0];
+    if (!activeVersion) {
+      throw new NotFoundError("No active mapping version available.");
+    }
+    const mapping = await readMappingFile(activeVersion.mapping_json_path);
+    const aliasMap = await readAliasFile(activeVersion.alias_json_path);
     return {
-      active_version_id: source.mode === "legacy" ? source.versionId : source.instanceId,
+      active_version_id: activeVersion.id,
       versions: state.mapping_versions,
       mapping,
       alias_map: aliasMap,
@@ -82,6 +87,7 @@ export const mappingService = {
     mapping?: unknown;
     aliasMap?: unknown;
     fieldCatalog?: unknown[];
+    masterTemplateId?: string;
     mappingInstanceId?: string;
   }) {
     const mapping = mappingMasterSchema.parse(input.mapping);
@@ -89,58 +95,39 @@ export const mappingService = {
     const fieldCatalog = Array.isArray(input.fieldCatalog)
       ? input.fieldCatalog.map((item) => fieldCatalogItemSchema.parse(item))
       : undefined;
-    if (input.mappingInstanceId) {
-      await ensureMasterInstanceMigration();
-      const instance = await prisma.mappingInstance.findUnique({
-        where: { id: input.mappingInstanceId },
-      });
-      if (!instance) throw new NotFoundError("Mapping instance not found.");
 
+    const masterId = await resolveMasterIdFromScope({
+      masterTemplateId: input.masterTemplateId,
+      mappingInstanceId: input.mappingInstanceId,
+    });
+
+    if (masterId) {
       const mappingJsonStr = JSON.stringify(mapping);
       const aliasJsonStr = JSON.stringify(aliasMap);
-
-      // Write to filesystem (best-effort — skipped on Vercel read-only FS)
-      try {
-        await Promise.all([
-          docxEngine.writeJson(instance.mappingJsonPath, mapping),
-          docxEngine.writeJson(instance.aliasJsonPath, aliasMap),
-        ]);
-      } catch (err) {
-        const code = (err as NodeJS.ErrnoException).code;
-        if (code !== "EROFS" && code !== "EPERM" && code !== "ENOENT") throw err;
-      }
-
-      // Always store JSON in DB columns (works on Vercel)
-      const dbUpdateData: Record<string, string> = {
-        mappingJson: mappingJsonStr,
-        aliasJson: aliasJsonStr,
-      };
-      if (fieldCatalog) {
-        const serializedCatalog = JSON.stringify(fieldCatalog);
-        dbUpdateData.fieldCatalogJson = serializedCatalog;
-      }
-
-      // Phase 6: dual-write — keep MasterTemplate canonical and MappingInstance in
-      // sync until the cascade drops the instance table.
-      await prisma.$transaction(async (tx) => {
-        if (instance.masterId) {
-          await tx.masterTemplate.update({
-            where: { id: instance.masterId },
-            data: {
-              defaultMappingJson: mappingJsonStr,
-              defaultAliasJson: aliasJsonStr,
-              ...(fieldCatalog ? { fieldCatalogJson: JSON.stringify(fieldCatalog) } : {}),
-            },
-          });
-        }
-        await tx.mappingInstance.update({
-          where: { id: instance.id },
-          data: dbUpdateData,
-        });
+      const updated = await prisma.masterTemplate.update({
+        where: { id: masterId },
+        data: {
+          defaultMappingJson: mappingJsonStr,
+          defaultAliasJson: aliasJsonStr,
+          ...(fieldCatalog ? { fieldCatalogJson: JSON.stringify(fieldCatalog) } : {}),
+        },
+        select: { id: true, updatedAt: true },
       });
-
-      return { version: { id: instance.id, status: "draft", created_at: instance.updatedAt.toISOString() }, activeVersionId: instance.id };
+      return {
+        version: { id: updated.id, status: "draft", created_at: updated.updatedAt.toISOString() },
+        activeVersionId: updated.id,
+      };
     }
+
+    if (input.mappingInstanceId) {
+      // Boundary translator returned null masterId — surface clearly so the
+      // UI prompts the operator to relink the instance.
+      throw new ValidationError(
+        "Mapping instance is not linked to a master template. Run the backfill or relink before saving.",
+      );
+    }
+
+    // Legacy FS draft (no scope provided).
     const { state, version } = await createMappingDraft({
       createdBy: input.createdBy ?? "web-user",
       notes: input.notes,
