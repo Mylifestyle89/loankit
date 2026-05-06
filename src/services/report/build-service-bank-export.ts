@@ -10,7 +10,6 @@ import { groupDataByField } from "@/core/use-cases/grouping-engine";
 import { docxEngine } from "@/lib/docx-engine";
 import { REPORT_MERGED_FLAT_FILE } from "@/lib/report/constants";
 import { getActiveTemplateProfile, loadState } from "@/lib/report/fs-store";
-import { mergeFlatWithManualValues } from "@/lib/report/manual-values";
 import { logRun, runBuildAndValidate } from "@/lib/report/pipeline-client";
 
 import { resolveParentFromGroupedRecord, sanitizeFilePart } from "./_shared";
@@ -78,7 +77,7 @@ export async function processBankReportExport(input?: BankExportInput): Promise<
     resolveValuesForLoan(resolvedLoanId),
   ]);
   const aliasMap = aliasMapRaw as Record<string, unknown>;
-  const mergedFlat = mergeFlatWithManualValues(baseFlat, manualValues);
+  const mergedFlat = { ...baseFlat, ...manualValues };
   addLabelViAliases(mergedFlat, state.field_catalog);
   await safeWriteJson(REPORT_MERGED_FLAT_FILE, mergedFlat);
 

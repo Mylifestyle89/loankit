@@ -6,7 +6,6 @@ import { validateReportPayload } from "@/core/use-cases/report-validation";
 import { docxEngine } from "@/lib/docx-engine";
 import { REPORT_MERGED_FLAT_FILE } from "@/lib/report/constants";
 import { getActiveTemplateProfile, loadState } from "@/lib/report/fs-store";
-import { mergeFlatWithManualValues } from "@/lib/report/manual-values";
 import { logRun, runBuildAndValidate } from "@/lib/report/pipeline-client";
 
 import { mapDocxError, sourceIdFromResolved, type MappingSource } from "./_shared";
@@ -85,7 +84,7 @@ export const buildService = {
     const aliasMap = await docxEngine.readJson<Record<string, unknown>>(source.aliasPath);
     // Phase 4: DB-first via valuesService(loanId), FS fallback gated by REPORT_LEGACY_FALLBACK
     const manualValues = await resolveValuesForLoan(resolvedLoanId);
-    const mergedFlat = mergeFlatWithManualValues(baseFlat, manualValues);
+    const mergedFlat = { ...baseFlat, ...manualValues };
     addLabelViAliases(mergedFlat, state.field_catalog);
     await safeWriteJson(REPORT_MERGED_FLAT_FILE, mergedFlat);
 

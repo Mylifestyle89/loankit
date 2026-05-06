@@ -4,7 +4,6 @@
  */
 import { docxEngine } from "@/lib/docx-engine";
 import { REPORT_MERGED_FLAT_FILE } from "@/lib/report/constants";
-import { mergeFlatWithManualValues } from "@/lib/report/manual-values";
 
 import { safeWriteJson, slugifyVi } from "./build-service-helpers";
 import { resolveValuesForLoan } from "./values-resolver";
@@ -176,7 +175,7 @@ export async function produceMergedFlat(
     const baseFlat = await docxEngine.readJson<Record<string, unknown>>("report_assets/generated/report_draft_flat.json");
     // Phase 4: DB-first via valuesService(loanId) when available, FS fallback gated.
     const manualValues = await resolveValuesForLoan(loanId ?? null);
-    const mergedFlat = mergeFlatWithManualValues(baseFlat, manualValues);
+    const mergedFlat = { ...baseFlat, ...manualValues };
     addLabelViAliases(mergedFlat, fieldCatalog);
     await safeWriteJson(REPORT_MERGED_FLAT_FILE, mergedFlat);
   } catch (e) {

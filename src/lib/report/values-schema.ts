@@ -14,7 +14,7 @@ import { z } from "zod";
 export const scalarValueSchema = z.union([z.string(), z.number(), z.boolean(), z.null()]);
 
 /** One row in a repeater group: arbitrary key→value record.
- *  NOTE: repeater item values not validated — free-form by design (legacy parity với manual-values).
+ *  NOTE: repeater item values not validated — free-form by design.
  *  Top-level keys ARE validated by valuesRecordSchema below. */
 export const repeaterItemSchema = z.record(z.string(), z.unknown());
 
