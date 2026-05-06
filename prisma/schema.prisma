@@ -424,6 +424,11 @@ model MasterTemplate {
   /// Differs from fieldCatalogJson which holds field metadata (label_vi, group, type).
   placeholderSchemaJson String @default("[]")
 
+  /// Phase 6: master-centric config (replaces per-customer MappingInstance.mappingJson/aliasJson).
+  defaultMappingJson String @default("{}")
+  defaultAliasJson   String @default("{}")
+  formulasJson       String @default("{}")
+
   mapping_instances MappingInstance[]
   loans             Loan[]
 

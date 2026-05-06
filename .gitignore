@@ -62,6 +62,8 @@ __pycache__/
 /migration-summary.json
 /migration-completed.json
 /migration-loanid-backfill-*.json
+/migration-conflicts-mapping.json
+/migration-mapping-config-*.json
 /backup-*.sql
 /dev.db.bak-*
 

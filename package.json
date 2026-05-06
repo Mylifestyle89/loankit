@@ -19,7 +19,8 @@
     "seed:admin": "npx tsx prisma/seed-admin.ts",
     "validate:khcn": "npx tsx scripts/validate-khcn-templates.ts",
     "migrate:report-data": "tsx scripts/migrate-report-data.ts",
-    "backfill:loanid": "tsx scripts/backfill-mapping-instance-loanid.ts"
+    "backfill:loanid": "tsx scripts/backfill-mapping-instance-loanid.ts",
+    "migrate:mapping-config": "tsx scripts/migrate-mapping-config.ts"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
