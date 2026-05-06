@@ -9,14 +9,7 @@ const bodySchema = z.object({
   masterTemplateId: z.string().min(1),
 });
 
-/**
- * POST /api/customers/[customerId]/loans/assign-master
- *
- * Broadcasts a master template to ALL loans of the customer (Q4-a).
- * Sets loan.masterTemplateId = masterTemplateId for every loan belonging to customerId.
- *
- * Returns { ok: true, count } where count = number of loans updated.
- */
+/** Broadcasts a master template to ALL loans of the customer; returns updated count. */
 export async function POST(
   req: NextRequest,
   { params }: { params: { customerId: string } },

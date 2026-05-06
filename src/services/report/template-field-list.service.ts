@@ -1,12 +1,10 @@
 /**
- * Field-template list/query operations — read-only queries for field templates.
- * Phase 6h: dropped ensureMasterInstanceMigration, mappingInstance.count/groupBy.
- * Usage count now derived from loans.masterTemplateId (master-centric).
+ * Field-template list/query — read-only master template queries with usage count.
+ * Usage count = number of loans referencing each master template.
  */
 import { prisma } from "@/lib/prisma";
-import { loadState } from "@/lib/report/fs-store";
 
-import { mapMasterTemplateRecordToSummary, parseCustomerDataJson } from "./_shared";
+import { mapMasterTemplateRecordToSummary } from "./_shared";
 
 export async function listFieldTemplates(params: {
   customerId?: string;
@@ -27,68 +25,35 @@ export async function listFieldTemplates(params: {
     prisma.masterTemplate.count(),
   ]);
 
-  if (total > 0) {
-    const usageMap = new Map<string, number>();
-    if (params.withUsage || params.customerId) {
-      // Derive usage from loans.masterTemplateId (Q1-b, master-centric)
-      const masterIds = masters.map((m) => m.id);
-      const loanCounts = await prisma.loan.groupBy({
-        by: ["masterTemplateId"],
-        where: {
-          masterTemplateId: { in: masterIds },
-          ...(params.customerId ? { customerId: params.customerId } : {}),
-        },
-        _count: { id: true },
-      });
-      for (const row of loanCounts) {
-        if (!row.masterTemplateId) continue;
-        usageMap.set(row.masterTemplateId, row._count.id);
-      }
-    }
-
-    const items = masters.map((master) => ({
-      ...mapMasterTemplateRecordToSummary(master),
-      assigned_customer_count: usageMap.get(master.id) ?? 0,
-    }));
-
-    const data = params.customerId
-      ? items.filter((item) => (item.assigned_customer_count ?? 0) > 0)
-      : items;
-
-    return { data, total, page, limit };
+  if (total === 0) {
+    return { data: [], total: 0, page, limit };
   }
 
-  // ── Legacy FS-store path (survives until Phase 6e drops fs-store) ──
-  const state = await loadState();
-  const allTemplates = state.field_templates ?? [];
-
-  if (!params.customerId) {
-    if (!params.withUsage) {
-      const pageSlice = allTemplates.slice(skip, skip + limit);
-      return { data: pageSlice, total: allTemplates.length, page, limit };
+  const usageMap = new Map<string, number>();
+  if (params.withUsage || params.customerId) {
+    const masterIds = masters.map((m) => m.id);
+    const loanCounts = await prisma.loan.groupBy({
+      by: ["masterTemplateId"],
+      where: {
+        masterTemplateId: { in: masterIds },
+        ...(params.customerId ? { customerId: params.customerId } : {}),
+      },
+      _count: { id: true },
+    });
+    for (const row of loanCounts) {
+      if (!row.masterTemplateId) continue;
+      usageMap.set(row.masterTemplateId, row._count.id);
     }
-    const customers = await prisma.customer.findMany({ select: { data_json: true } });
-    const legacyUsageMap = new Map<string, number>();
-    for (const customer of customers) {
-      const dataJson = parseCustomerDataJson(customer.data_json);
-      const assignedIdsRaw = dataJson.__field_template_ids;
-      const assignedIds = Array.isArray(assignedIdsRaw) ? assignedIdsRaw.map(String) : [];
-      for (const id of assignedIds) legacyUsageMap.set(id, (legacyUsageMap.get(id) ?? 0) + 1);
-    }
-    const withUsageTemplates = allTemplates.map((template) => ({
-      ...template,
-      assigned_customer_count: legacyUsageMap.get(template.id) ?? 0,
-    }));
-    const pageSlice = withUsageTemplates.slice(skip, skip + limit);
-    return { data: pageSlice, total: allTemplates.length, page, limit };
   }
 
-  const customer = await prisma.customer.findUnique({ where: { id: params.customerId } });
-  if (!customer) return { data: [], total: 0, page, limit };
-  const dataJson = parseCustomerDataJson(customer.data_json);
-  const assignedIdsRaw = dataJson.__field_template_ids;
-  const assignedIds = Array.isArray(assignedIdsRaw) ? assignedIdsRaw.map(String) : [];
-  const filtered = allTemplates.filter((template) => assignedIds.includes(template.id));
-  const pageSlice = filtered.slice(skip, skip + limit);
-  return { data: pageSlice, total: filtered.length, page, limit };
+  const items = masters.map((master) => ({
+    ...mapMasterTemplateRecordToSummary(master),
+    assigned_customer_count: usageMap.get(master.id) ?? 0,
+  }));
+
+  const data = params.customerId
+    ? items.filter((item) => (item.assigned_customer_count ?? 0) > 0)
+    : items;
+
+  return { data, total, page, limit };
 }

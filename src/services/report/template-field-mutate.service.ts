@@ -1,7 +1,6 @@
 /**
  * Field-template mutation operations — create, update, attach for field templates.
- * Phase 6h: removed _migration-internals, MappingInstance creation, FS legacy branches.
- * Always DB mode now. attachTemplateToCustomer broadcasts via loan.masterTemplateId.
+ * attachTemplateToCustomer broadcasts the master to all customer loans.
  */
 import { NotFoundError, ValidationError } from "@/core/errors/app-error";
 import { prisma } from "@/lib/prisma";

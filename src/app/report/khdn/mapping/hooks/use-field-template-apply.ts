@@ -24,10 +24,7 @@ export function useFieldTemplateApply({
       ft.setEditingFieldTemplateName("");
       return;
     }
-    // All templates are master templates now — check allFieldTemplates (global lib) first, then fieldTemplates (customer-scoped derived list)
-    const template =
-      ft.allFieldTemplates.find((i) => i.id === templateId) ??
-      ft.fieldTemplates.find((i) => i.id === templateId);
+    const template = ft.allFieldTemplates.find((i) => i.id === templateId);
     if (!template) return;
 
     const normalizedCatalog = normalizeFieldCatalogForSchema(template.field_catalog ?? []);
@@ -39,7 +36,6 @@ export function useFieldTemplateApply({
     let diskManual: Record<string, string | number | boolean | null> = prevManual;
     let diskFormulas = prevFormulas;
     try {
-      // Load values scoped to this master template
       const query = `?master_template_id=${encodeURIComponent(templateId)}`;
       const res = await fetch(`/api/report/values${query}`, { cache: "no-store" });
       const data = (await res.json()) as {

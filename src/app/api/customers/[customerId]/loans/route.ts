@@ -4,15 +4,7 @@ import { requireSession, handleAuthError } from "@/lib/auth-guard";
 
 export const runtime = "nodejs";
 
-/**
- * GET /api/customers/[customerId]/loans
- *
- * Returns all loans for a customer, with associated master template info.
- * Used by the mapping UI to:
- *   - Derive customer-scoped template list (Q1-b: distinct masterTemplateId)
- *   - Resolve newest-active loan heuristic (Q3-b)
- *   - Show loan count in assign-master confirm dialog (Q4-a)
- */
+/** Returns all loans for a customer with associated master template (id + name + fieldCatalogJson). */
 export async function GET(
   _req: NextRequest,
   { params }: { params: { customerId: string } },

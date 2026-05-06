@@ -32,11 +32,6 @@ import { useMappingModalState } from "./use-mapping-modal-state";
 /**
  * Aggregates all state, computed values, and handlers for the Mapping page.
  * The page component consumes this hook and only handles JSX rendering.
- *
- * Phase 6g: master-centric selection (Q1–Q4 locked).
- * - selectedMappingInstanceId removed; replaced by selectedMasterTemplateId + selectedLoanId
- * - promotingToMaster / handlePromoteToMasterTemplate removed (Q2-a)
- * - multiActiveLoansWarning added (Q3-b)
  */
 export function useMappingPageLogic() {
   const { t } = useLanguage();
@@ -69,6 +64,7 @@ export function useMappingPageLogic() {
   const formulas = useMappingDataStore((s) => s.formulas);
   const storedMasterTemplateId = useMappingDataStore((s) => s.selectedMasterTemplateId);
   const storedLoanId = useMappingDataStore((s) => s.selectedLoanId);
+  const multiActiveLoansWarning = useMappingDataStore((s) => s.multiActiveLoansWarning);
 
   const ocrProcessing = useOcrStore((s) => s.ocrProcessing);
   const ocrSuggestionsByField = useOcrStore((s) => s.ocrSuggestionsByField);
@@ -127,18 +123,8 @@ export function useMappingPageLogic() {
   const undoHistory = useUndoStore((s) => s.undoHistory);
   const openModal = useModalStore((s) => s.openModal);
 
-  // ── Master-centric selection (Q1/Q3) ──────────────────────────────────────
-  // selectedMasterTemplateId: derived from store (set by applySelectedFieldTemplate)
-  // or falls back to editingFieldTemplateId (all templates are masters now)
-  const selectedMasterTemplateId = useMemo(() => {
-    if (storedMasterTemplateId) return storedMasterTemplateId;
-    const candidateId = selectedFieldTemplateId || editingFieldTemplateId;
-    if (!candidateId) return undefined;
-    // All candidates are master IDs post-cascade
-    return candidateId || undefined;
-  }, [storedMasterTemplateId, selectedFieldTemplateId, editingFieldTemplateId]);
-
-  // selectedLoanId: use stored value (resolved by heuristic newest-active in effects)
+  const selectedMasterTemplateId =
+    storedMasterTemplateId || selectedFieldTemplateId || editingFieldTemplateId || undefined;
   const selectedLoanId = storedLoanId || undefined;
 
   // ── Dispatches ─────────────────────────────────────────────────────────────
@@ -309,41 +295,6 @@ export function useMappingPageLogic() {
     ocrLogEndRef,
   });
 
-  // ── Resolve loans when customer changes: heuristic newest-active + warning (Q3-b) ──
-  const [activeLoansWarning, setActiveLoansWarning] = useState("");
-
-  useEffect(() => {
-    if (!selectedCustomerId) {
-      useMappingDataStore.getState().setSelectedLoanId("");
-      setActiveLoansWarning("");
-      return;
-    }
-    void (async () => {
-      try {
-        const res = await fetch(`/api/customers/${encodeURIComponent(selectedCustomerId)}/loans`, {
-          cache: "no-store",
-        });
-        const data = (await res.json()) as {
-          ok: boolean;
-          loans?: Array<{ id: string; status: string }>;
-        };
-        if (!data.ok || !data.loans) return;
-        const activeLoans = data.loans.filter((l) => l.status === "active");
-        if (activeLoans.length === 0) return;
-        // Heuristic: pick last (newest) active loan
-        const newestLoan = activeLoans[activeLoans.length - 1];
-        useMappingDataStore.getState().setSelectedLoanId(newestLoan.id);
-        if (activeLoans.length >= 2) {
-          setActiveLoansWarning(
-            `Khách hàng có ${activeLoans.length} hồ sơ vay đang hoạt động. Đang lưu vào hồ sơ mới nhất.`,
-          );
-        } else {
-          setActiveLoansWarning("");
-        }
-      } catch { /* best-effort */ }
-    })();
-  }, [selectedCustomerId]);
-
   const fetchFieldUsage = useFieldUsageStore((s) => s.fetchUsage);
   useEffect(() => { void fetchFieldUsage(); }, [fetchFieldUsage]);
 
@@ -440,10 +391,9 @@ export function useMappingPageLogic() {
     selectedFieldTemplateId, editingFieldTemplatePicker,
     editPickerTemplateId, editingFieldTemplateId, editingFieldTemplateName,
     savingEditedTemplate,
-    // Master-centric selection (Q1/Q3)
     selectedMasterTemplateId,
     selectedLoanId,
-    multiActiveLoansWarning: activeLoansWarning,
+    multiActiveLoansWarning,
     // Group UI
     editingGroup, editingGroupValue, editingGroupError, customGroups,
     changingFieldGroup, changingFieldGroupValue, changingFieldGroupNewName,

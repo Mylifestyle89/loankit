@@ -8,7 +8,7 @@ import { useFieldTemplateApply } from "./use-field-template-apply";
 /**
  * Assign and save field templates (write/mutation operations).
  * Apply/switch operations are in use-field-template-apply.ts.
- * promoteToMasterTemplate has been removed (Q2-a: concept dies with MappingInstance).
+ * promoteToMasterTemplate retired with MappingInstance.
  */
 export function useFieldTemplateCrud({
   t,
@@ -28,7 +28,7 @@ export function useFieldTemplateCrud({
   const apply = useFieldTemplateApply({ t, closeEditFieldTemplatePicker });
 
   /**
-   * Assigns the selected master template to ALL loans of the customer (Q4-a).
+   * Assigns the selected master template to ALL loans of the customer.
    * Calls POST /api/customers/[customerId]/loans/assign-master with confirm dialog.
    */
   async function assignSelectedFieldTemplate() {
@@ -91,7 +91,7 @@ export function useFieldTemplateCrud({
 
   /**
    * Saves edits to the master template being edited.
-   * Instance branch removed (Q2-a) — all writes go to master via /api/report/master-templates.
+   * All writes go to master via /api/report/master-templates.
    */
   async function saveEditedFieldTemplate() {
     const ft = useFieldTemplateStore.getState();
