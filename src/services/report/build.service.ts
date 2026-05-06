@@ -82,7 +82,6 @@ export const buildService = {
       "report_assets/generated/report_draft_flat.json",
     );
     const aliasMap = await docxEngine.readJson<Record<string, unknown>>(source.aliasPath);
-    // Phase 4: DB-first via valuesService(loanId), FS fallback gated by REPORT_LEGACY_FALLBACK
     const manualValues = await resolveValuesForLoan(resolvedLoanId);
     const mergedFlat = { ...baseFlat, ...manualValues };
     addLabelViAliases(mergedFlat, state.field_catalog);

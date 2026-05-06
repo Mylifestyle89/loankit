@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronsDown, History, FileText, ChevronDown, ChevronUp } from "lucide-react";
+import { ChevronsDown, FileText, ChevronDown, ChevronUp } from "lucide-react";
 import { useLanguage } from "@/components/language-provider";
 
 type SidebarToolsSectionProps = {

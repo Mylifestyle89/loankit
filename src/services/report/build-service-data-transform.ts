@@ -173,7 +173,6 @@ export async function produceMergedFlat(
 ): Promise<void> {
   try {
     const baseFlat = await docxEngine.readJson<Record<string, unknown>>("report_assets/generated/report_draft_flat.json");
-    // Phase 4: DB-first via valuesService(loanId) when available, FS fallback gated.
     const manualValues = await resolveValuesForLoan(loanId ?? null);
     const mergedFlat = { ...baseFlat, ...manualValues };
     addLabelViAliases(mergedFlat, fieldCatalog);
