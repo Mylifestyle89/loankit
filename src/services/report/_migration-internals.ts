@@ -1,13 +1,7 @@
 /**
- * _migration-internals.ts
- * Thin orchestrator + re-export barrel for migration sub-modules.
- * Sub-modules: migration-state.ts (DB sentinel), migration-runner.ts (data migration steps).
- *
- * Phase 6 cascade in progress: resolveMappingSource + relPathExists removed
- * (build/mapping flows now use ./master-source + ./build-source). What
- * remains here is the legacy migration bootstrap + per-instance draft file
- * helper still consumed by template-field-mutate / mapping-instance services
- * pending Commit 3 follow-up.
+ * _migration-internals.ts — legacy migration bootstrap + per-instance draft
+ * file helper. Consumed by template-field-mutate + mapping-instance services
+ * pending their retirement.
  */
 import { docxEngine } from "@/lib/docx-engine";
 import { prisma } from "@/lib/prisma";

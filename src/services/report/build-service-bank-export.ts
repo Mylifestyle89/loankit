@@ -17,10 +17,9 @@ import {
   loadAliasMapFromBuildSource,
   loanIdFromBuildSource,
   resolveBuildSource,
-  type BuildScope,
 } from "./build-source";
 import { safeWriteJson, writeBuildMeta } from "./build-service-helpers";
-import { getBuildFreshnessStatus } from "./build-service-freshness";
+import { getBuildFreshnessFromSource } from "./build-service-freshness";
 import { addLabelViAliases } from "./build-service-data-transform";
 import { resolveValuesForLoan } from "./values-resolver";
 
@@ -58,11 +57,10 @@ export type BankExportResult = {
 export async function processBankReportExport(input?: BankExportInput): Promise<BankExportResult> {
   const start = Date.now();
   const state = await loadState();
-  const scope: BuildScope = {
+  const source = await resolveBuildSource({
     loanId: input?.loanId,
     mappingInstanceId: input?.mappingInstanceId,
-  };
-  const source = await resolveBuildSource(scope);
+  });
   const activeTemplate = await getActiveTemplateProfile(state);
 
   const templatePath = input?.templatePath ?? activeTemplate.docx_path;
@@ -72,7 +70,7 @@ export async function processBankReportExport(input?: BankExportInput): Promise<
   const repeatKey = input?.repeatKey?.trim() || "items";
   const customerNameKey = input?.customerNameKey?.trim() || "TÊN KH";
 
-  const stale = await getBuildFreshnessStatus(scope);
+  const stale = await getBuildFreshnessFromSource(source);
   let autoBuildTriggered = false;
   if (stale.is_stale) {
     await runBuildAndValidate();

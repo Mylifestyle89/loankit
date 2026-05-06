@@ -9,7 +9,7 @@ import { docxEngine } from "@/lib/docx-engine";
 import { REPORT_BUILD_META_FILE } from "@/lib/report/constants";
 
 import { type BuildMeta } from "./_shared";
-import { type BuildSource } from "./build-source";
+import { buildSourceId, type BuildSource } from "./build-source";
 
 // ---------------------------------------------------------------------------
 // FS helpers
@@ -46,7 +46,7 @@ export async function writeBuildMeta(params: {
   const next: BuildMeta = {
     built_at: new Date().toISOString(),
     mapping_source_mode: params.source.mode,
-    mapping_source_id: params.source.sourceId,
+    mapping_source_id: buildSourceId(params.source),
     mapping_source_updated_at: params.source.sourceUpdatedAt,
     template_profile_id: params.templateProfileId,
   };

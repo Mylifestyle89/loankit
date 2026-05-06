@@ -2,11 +2,9 @@
  * Build service — build, validate, export DOCX reports.
  * Sub-module: build-service-bank-export.ts (grouped bank DOCX export).
  *
- * Phase 6: scope is master-template-aware. Methods accept `loanId` (preferred)
- * or `mappingInstanceId` (back-compat — translated to loan internally). When
- * a scope resolves to a master, alias map is read from `MasterTemplate.defaultAliasJson`
- * (DB) instead of the legacy FS path. Unscoped calls keep the legacy FS path
- * until Phase 6e retires `fs-store.ts`.
+ * Scope is master-template-aware. Methods accept `loanId` (preferred) or
+ * `mappingInstanceId` (back-compat — translated to loan internally). Unscoped
+ * calls use the legacy FS active mapping version.
  */
 import { validateReportPayload } from "@/core/use-cases/report-validation";
 import { docxEngine } from "@/lib/docx-engine";
@@ -16,13 +14,14 @@ import { logRun, runBuildAndValidate } from "@/lib/report/pipeline-client";
 
 import { mapDocxError } from "./_shared";
 import {
+  buildSourceId,
   loadAliasMapFromBuildSource,
   loanIdFromBuildSource,
   resolveBuildSource,
   type BuildScope,
 } from "./build-source";
 import { safeWriteJson, writeBuildMeta } from "./build-service-helpers";
-import { getBuildFreshnessStatus } from "./build-service-freshness";
+import { getBuildFreshnessFromSource, getBuildFreshnessStatus } from "./build-service-freshness";
 import { addLabelViAliases, produceMergedFlat } from "./build-service-data-transform";
 import { processBankReportExport } from "./build-service-bank-export";
 import { resolveValuesForLoan } from "./values-resolver";
@@ -73,18 +72,17 @@ export const buildService = {
   }) {
     const start = Date.now();
     const state = await loadState();
-    const scope: BuildScope = {
+    const source = await resolveBuildSource({
       loanId: input.loanId,
       mappingInstanceId: input.mappingInstanceId,
-    };
-    const source = await resolveBuildSource(scope);
+    });
     const activeTemplate = await getActiveTemplateProfile(state);
     const resolvedLoanId = loanIdFromBuildSource(source);
 
     const outputPath = input.outputPath ?? "report_assets/report_preview.docx";
     const reportPath = input.reportPath ?? "report_assets/template_export_report.json";
     const templatePath = input.templatePath ?? activeTemplate.docx_path;
-    const stale = await getBuildFreshnessStatus(scope);
+    const stale = await getBuildFreshnessFromSource(source);
     let autoBuildTriggered = false;
     if (stale.is_stale) {
       await runBuildAndValidate();
@@ -120,7 +118,7 @@ export const buildService = {
         step: "export_docx",
         auto_build_triggered: autoBuildTriggered,
         stale_reasons: stale.reasons,
-        mapping_source_id: source.sourceId,
+        mapping_source_id: buildSourceId(source),
         loan_id: resolvedLoanId,
         report,
       },
@@ -148,8 +146,10 @@ export const buildService = {
   async validateReport(input: { runBuild?: boolean; loanId?: string; mappingInstanceId?: string }) {
     const state = await loadState();
     const activeTemplate = await getActiveTemplateProfile(state);
-    const scope: BuildScope = { loanId: input.loanId, mappingInstanceId: input.mappingInstanceId };
-    const source = await resolveBuildSource(scope);
+    const source = await resolveBuildSource({
+      loanId: input.loanId,
+      mappingInstanceId: input.mappingInstanceId,
+    });
     const aliasPathHint = source.mode === "legacy" ? source.aliasPath : `master:${source.masterTemplateId}`;
 
     if (input.runBuild) {

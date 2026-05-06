@@ -1,12 +1,8 @@
 /**
  * Field-values service — auto/manual field values & formulas.
- *
- * Phase 6: scope is master/loan-driven. Caller supplies `loanId` (preferred)
- * or legacy `mappingInstanceId` (translated). Field catalog comes from
- * `MasterTemplate.fieldCatalogJson` when a master is resolved; otherwise
- * the legacy global `state.field_catalog`. Manual values + formulas live
- * exclusively in DB (valuesService for dossier values, MasterTemplate.formulasJson
- * for formulas). Per-instance FS overrides are gone.
+ * Manual values come from valuesService (per-loan); formulas from
+ * MasterTemplate.formulasJson. Caller scope: loanId | masterTemplateId |
+ * mappingInstanceId (back-compat).
  */
 import { NotFoundError, ValidationError } from "@/core/errors/app-error";
 import { enrichContextWithLabels } from "@/core/use-cases/formula-processor";

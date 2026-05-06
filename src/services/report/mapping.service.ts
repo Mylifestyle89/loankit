@@ -1,12 +1,8 @@
 /**
  * Mapping service — read & save mapping/alias config.
- *
- * Phase 6: MasterTemplate is the canonical store. Reads/writes target
- * `defaultMappingJson` + `defaultAliasJson`. Legacy `mappingInstanceId`
- * is translated to `masterTemplateId` at the boundary (back-compat for
- * the mapping page UI until Commit 3 swaps it). Unscoped calls fall
- * through to the legacy FS active-version path; that path retires
- * with `fs-store.ts` in Phase 6e.
+ * MasterTemplate is canonical; legacy `mappingInstanceId` is translated to
+ * `masterTemplateId` at the boundary. Unscoped calls fall through to FS
+ * active version (retires with fs-store.ts).
  */
 import { NotFoundError, ValidationError } from "@/core/errors/app-error";
 import { prisma } from "@/lib/prisma";
@@ -18,14 +14,12 @@ import {
 import {
   createMappingDraft,
   loadState,
-  parseAliasJson,
-  parseMappingJson,
   publishMappingVersion as fsPublishMappingVersion,
   readAliasFile,
   readMappingFile,
 } from "@/lib/report/fs-store";
 
-import { masterAndLoanFromMappingInstance } from "./master-source";
+import { masterAndLoanFromMappingInstance, resolveMasterSourceById } from "./master-source";
 
 async function resolveMasterIdFromScope(scope: {
   masterTemplateId?: string;
@@ -49,23 +43,15 @@ export const mappingService = {
     const masterId = await resolveMasterIdFromScope(params ?? {});
 
     if (masterId) {
-      const master = await prisma.masterTemplate.findUnique({
-        where: { id: masterId },
-        select: { id: true, defaultMappingJson: true, defaultAliasJson: true },
-      });
-      if (master) {
-        const mapping = parseMappingJson(master.defaultMappingJson);
-        const aliasMap = parseAliasJson(master.defaultAliasJson);
-        return {
-          active_version_id: master.id,
-          versions: state.mapping_versions,
-          mapping,
-          alias_map: aliasMap,
-        };
-      }
+      const ms = await resolveMasterSourceById(masterId);
+      return {
+        active_version_id: ms.masterTemplateId,
+        versions: state.mapping_versions,
+        mapping: ms.mapping,
+        alias_map: ms.aliasMap,
+      };
     }
 
-    // Legacy FS path — global active version (no per-customer scope).
     const activeVersion = state.mapping_versions.find((v) => v.id === state.active_mapping_version_id)
       ?? state.mapping_versions[0];
     if (!activeVersion) {
@@ -102,13 +88,11 @@ export const mappingService = {
     });
 
     if (masterId) {
-      const mappingJsonStr = JSON.stringify(mapping);
-      const aliasJsonStr = JSON.stringify(aliasMap);
       const updated = await prisma.masterTemplate.update({
         where: { id: masterId },
         data: {
-          defaultMappingJson: mappingJsonStr,
-          defaultAliasJson: aliasJsonStr,
+          defaultMappingJson: JSON.stringify(mapping),
+          defaultAliasJson: JSON.stringify(aliasMap),
           ...(fieldCatalog ? { fieldCatalogJson: JSON.stringify(fieldCatalog) } : {}),
         },
         select: { id: true, updatedAt: true },
@@ -120,14 +104,12 @@ export const mappingService = {
     }
 
     if (input.mappingInstanceId) {
-      // Boundary translator returned null masterId — surface clearly so the
-      // UI prompts the operator to relink the instance.
+      // Unlinked instance — surface clearly so the UI prompts a relink.
       throw new ValidationError(
         "Mapping instance is not linked to a master template. Run the backfill or relink before saving.",
       );
     }
 
-    // Legacy FS draft (no scope provided).
     const { state, version } = await createMappingDraft({
       createdBy: input.createdBy ?? "web-user",
       notes: input.notes,
