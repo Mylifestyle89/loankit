@@ -4,18 +4,20 @@
  */
 import { validateReportPayload } from "@/core/use-cases/report-validation";
 import { docxEngine } from "@/lib/docx-engine";
-import { prisma } from "@/lib/prisma";
 import { REPORT_MERGED_FLAT_FILE } from "@/lib/report/constants";
 import { getActiveTemplateProfile, loadState } from "@/lib/report/fs-store";
-import { loadManualValues, mergeFlatWithManualValues } from "@/lib/report/manual-values";
+import { mergeFlatWithManualValues } from "@/lib/report/manual-values";
 import { logRun, runBuildAndValidate } from "@/lib/report/pipeline-client";
 
-import { mapDocxError, sourceIdFromResolved } from "./_shared";
+import { mapDocxError, sourceIdFromResolved, type MappingSource } from "./_shared";
 import { resolveMappingSource } from "./_migration-internals";
 import { safeWriteJson, writeBuildMeta } from "./build-service-helpers";
 import { getBuildFreshnessStatus } from "./build-service-freshness";
 import { addLabelViAliases, produceMergedFlat } from "./build-service-data-transform";
 import { processBankReportExport } from "./build-service-bank-export";
+import { resolveValuesForLoan } from "./values-resolver";
+
+const loanIdFrom = (s: MappingSource): string | null => (s.mode === "instance" ? s.loanId : null);
 
 export { processBankReportExport } from "./build-service-bank-export";
 
@@ -64,15 +66,7 @@ export const buildService = {
     const state = await loadState();
     const source = await resolveMappingSource(input.mappingInstanceId);
     const activeTemplate = await getActiveTemplateProfile(state);
-
-    // Phase 3.5: resolve loanId from mapping instance for upcoming valuesService swap (Phase 4 full).
-    // Currently unused in build pipeline — stored for diagnostics + future wiring.
-    const resolvedLoanId = input.mappingInstanceId
-      ? (await prisma.mappingInstance.findUnique({
-          where: { id: input.mappingInstanceId },
-          select: { loanId: true },
-        }))?.loanId ?? null
-      : null;
+    const resolvedLoanId = loanIdFrom(source);
 
     const outputPath = input.outputPath ?? "report_assets/report_preview.docx";
     const reportPath = input.reportPath ?? "report_assets/template_export_report.json";
@@ -89,7 +83,8 @@ export const buildService = {
       "report_assets/generated/report_draft_flat.json",
     );
     const aliasMap = await docxEngine.readJson<Record<string, unknown>>(source.aliasPath);
-    const manualValues = await loadManualValues();
+    // Phase 4: DB-first via valuesService(loanId), FS fallback gated by REPORT_LEGACY_FALLBACK
+    const manualValues = await resolveValuesForLoan(resolvedLoanId);
     const mergedFlat = mergeFlatWithManualValues(baseFlat, manualValues);
     addLabelViAliases(mergedFlat, state.field_catalog);
     await safeWriteJson(REPORT_MERGED_FLAT_FILE, mergedFlat);
@@ -149,7 +144,7 @@ export const buildService = {
         source,
         templateProfileId: state.active_template_id ?? activeTemplate.id,
       });
-      await produceMergedFlat(state.field_catalog);
+      await produceMergedFlat(state.field_catalog, loanIdFrom(source));
       const final = validateReportPayload({
         validation: result.validation,
         templatePath: activeTemplate.docx_path,

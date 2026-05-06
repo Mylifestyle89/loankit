@@ -4,9 +4,10 @@
  */
 import { docxEngine } from "@/lib/docx-engine";
 import { REPORT_MERGED_FLAT_FILE } from "@/lib/report/constants";
-import { loadManualValues, mergeFlatWithManualValues } from "@/lib/report/manual-values";
+import { mergeFlatWithManualValues } from "@/lib/report/manual-values";
 
 import { safeWriteJson, slugifyVi } from "./build-service-helpers";
+import { resolveValuesForLoan } from "./values-resolver";
 
 // ---------------------------------------------------------------------------
 // Asset property flattening
@@ -167,10 +168,14 @@ export function addLabelViAliases(
  * user-entered data (including repeater arrays) is never lost.
  * The merged result is written to report_merged_flat.json.
  */
-export async function produceMergedFlat(fieldCatalog: Array<{ field_key: string; label_vi: string; group: string }>): Promise<void> {
+export async function produceMergedFlat(
+  fieldCatalog: Array<{ field_key: string; label_vi: string; group: string }>,
+  loanId?: string | null,
+): Promise<void> {
   try {
     const baseFlat = await docxEngine.readJson<Record<string, unknown>>("report_assets/generated/report_draft_flat.json");
-    const manualValues = await loadManualValues();
+    // Phase 4: DB-first via valuesService(loanId) when available, FS fallback gated.
+    const manualValues = await resolveValuesForLoan(loanId ?? null);
     const mergedFlat = mergeFlatWithManualValues(baseFlat, manualValues);
     addLabelViAliases(mergedFlat, fieldCatalog);
     await safeWriteJson(REPORT_MERGED_FLAT_FILE, mergedFlat);

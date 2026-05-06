@@ -152,6 +152,7 @@ export async function resolveMappingSource(
           mappingUpdatedAt: instance.updatedAt.toISOString(),
           mappingJson: instance.mappingJson,
           aliasJson: instance.aliasJson,
+          loanId: instance.loanId,
         };
       }
     }

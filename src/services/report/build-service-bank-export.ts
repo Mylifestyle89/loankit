@@ -10,7 +10,7 @@ import { groupDataByField } from "@/core/use-cases/grouping-engine";
 import { docxEngine } from "@/lib/docx-engine";
 import { REPORT_MERGED_FLAT_FILE } from "@/lib/report/constants";
 import { getActiveTemplateProfile, loadState } from "@/lib/report/fs-store";
-import { loadManualValues, mergeFlatWithManualValues } from "@/lib/report/manual-values";
+import { mergeFlatWithManualValues } from "@/lib/report/manual-values";
 import { logRun, runBuildAndValidate } from "@/lib/report/pipeline-client";
 
 import { resolveParentFromGroupedRecord, sanitizeFilePart } from "./_shared";
@@ -18,6 +18,7 @@ import { resolveMappingSource } from "./_migration-internals";
 import { safeWriteJson, writeBuildMeta } from "./build-service-helpers";
 import { getBuildFreshnessStatus } from "./build-service-freshness";
 import { addLabelViAliases } from "./build-service-data-transform";
+import { resolveValuesForLoan } from "./values-resolver";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -70,10 +71,11 @@ export async function processBankReportExport(input?: BankExportInput): Promise<
     autoBuildTriggered = true;
   }
 
+  const resolvedLoanId = source.mode === "instance" ? source.loanId : null;
   const [baseFlat, aliasMapRaw, manualValues] = await Promise.all([
     docxEngine.readJson<Record<string, unknown>>("report_assets/generated/report_draft_flat.json"),
     docxEngine.readJson<Record<string, unknown>>(source.aliasPath),
-    loadManualValues(),
+    resolveValuesForLoan(resolvedLoanId),
   ]);
   const aliasMap = aliasMapRaw as Record<string, unknown>;
   const mergedFlat = mergeFlatWithManualValues(baseFlat, manualValues);
