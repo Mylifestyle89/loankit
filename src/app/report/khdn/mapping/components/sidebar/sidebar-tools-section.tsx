@@ -7,7 +7,6 @@ import { useLanguage } from "@/components/language-provider";
 type SidebarToolsSectionProps = {
   openMergeGroupsModal: () => void;
   onOpenDocxMerge: () => void;
-  onOpenSnapshotRestore: () => void;
   onCloseSidebar: () => void;
 };
 
@@ -17,7 +16,6 @@ const BTN_CLASS =
 export function SidebarToolsSection({
   openMergeGroupsModal,
   onOpenDocxMerge,
-  onOpenSnapshotRestore,
   onCloseSidebar,
 }: SidebarToolsSectionProps) {
   const { t } = useLanguage();
@@ -46,16 +44,6 @@ export function SidebarToolsSection({
           >
             <ChevronsDown className="h-4 w-4 text-slate-600 dark:text-slate-300" />
             {t("mapping.mergeGroups")}
-          </button>
-
-          {/* Backup / restore */}
-          <button
-            type="button"
-            onClick={() => { onCloseSidebar(); onOpenSnapshotRestore(); }}
-            className={BTN_CLASS}
-          >
-            <History className="h-4 w-4 text-slate-600 dark:text-slate-300" />
-            Backup / Khôi phục
           </button>
 
           {/* DOCX merge */}

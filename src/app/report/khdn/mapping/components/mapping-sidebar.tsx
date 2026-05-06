@@ -13,13 +13,11 @@ export type MappingSidebarProps = {
     e: React.ChangeEvent<HTMLInputElement>,
     options?: { mode?: "append" | "overwrite"; templateName?: string | null },
   ) => void;
-  onOpenSnapshotRestore: () => void;
 };
 
 export function MappingSidebar({
   openMergeGroupsModal,
   handleImportFieldFile,
-  onOpenSnapshotRestore,
 }: MappingSidebarProps) {
   const isOpen = useUiStore((s) => s.sidebarOpen);
   const setSidebarOpen = useUiStore((s) => s.setSidebarOpen);
@@ -97,7 +95,6 @@ export function MappingSidebar({
                     <SidebarToolsSection
                       openMergeGroupsModal={openMergeGroupsModal}
                       onOpenDocxMerge={() => setDocxMergeOpen(true)}
-                      onOpenSnapshotRestore={onOpenSnapshotRestore}
                       onCloseSidebar={closeSidebar}
                     />
 

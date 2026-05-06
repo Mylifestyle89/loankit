@@ -22,7 +22,6 @@ import { TemplatePickerModal } from "./modals/template-picker-modal";
 import { DeleteConfirmModal } from "./modals/delete-confirm-modal";
 import { ImportGroupPromptModal } from "./modals/import-group-prompt-modal";
 import { OcrReviewModal } from "./modals/ocr-review-modal";
-import { SnapshotRestoreModal } from "./modals/snapshot-restore-modal";
 import { SystemLogCard } from "./system-log-card";
 import { FinancialAnalysisModal } from "@/components/financial-analysis/financial-analysis-modal";
 import { useCustomerStore } from "../stores/use-customer-store";
@@ -34,7 +33,6 @@ export function MappingPageContent() {
   const {
     t,
     financialAnalysisOpen, setFinancialAnalysisOpen,
-    snapshotRestoreOpen, setSnapshotRestoreOpen,
     customerPickerOpen, setCustomerPickerOpen,
     templatePickerOpen, setTemplatePickerOpen,
     toolbarUploadRef,
@@ -321,11 +319,6 @@ export function MappingPageContent() {
         onApply={handleApplyFinancialValues}
       />
 
-      <SnapshotRestoreModal
-        open={snapshotRestoreOpen}
-        onClose={() => setSnapshotRestoreOpen(false)}
-      />
-
       <CustomerPickerModal
         isOpen={customerPickerOpen}
         onClose={() => setCustomerPickerOpen(false)}
@@ -362,7 +355,6 @@ export function MappingPageContent() {
       <MappingSidebar
         openMergeGroupsModal={openMergeGroupsModal}
         handleImportFieldFile={handleImportFieldFile}
-        onOpenSnapshotRestore={() => setSnapshotRestoreOpen(true)}
       />
     </section>
   );

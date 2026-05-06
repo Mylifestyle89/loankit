@@ -16,7 +16,6 @@ import { useUndoStore } from "../stores/use-undo-store";
 import { useFieldUsageStore } from "../stores/use-field-usage-store";
 
 // ── Feature hooks ─────────────────────────────────────────────────────────────
-import { useAutoSaveSnapshot } from "./useAutoSaveSnapshot";
 import { useFieldCatalogImport } from "./useFieldCatalogImport";
 import { useFieldTemplates } from "./useFieldTemplates";
 import { useGroupManagement } from "./useGroupManagement";
@@ -41,7 +40,6 @@ export function useMappingPageLogic() {
   // ── Modal state (local UI) ─────────────────────────────────────────────────
   const {
     financialAnalysisOpen, setFinancialAnalysisOpen,
-    snapshotRestoreOpen, setSnapshotRestoreOpen,
     customerPickerOpen, setCustomerPickerOpen,
     templatePickerOpen, setTemplatePickerOpen,
     toolbarUploadRef,
@@ -51,8 +49,6 @@ export function useMappingPageLogic() {
     handleAcceptOcrSuggestion,
     handleDeclineOcrSuggestion,
   } = useMappingModalState();
-
-  useAutoSaveSnapshot();
 
   // ── Store subscriptions ────────────────────────────────────────────────────
   const sidebarOpen = useUiStore((s) => s.sidebarOpen);
@@ -374,7 +370,6 @@ export function useMappingPageLogic() {
     t,
     // UI state
     financialAnalysisOpen, setFinancialAnalysisOpen,
-    snapshotRestoreOpen, setSnapshotRestoreOpen,
     customerPickerOpen, setCustomerPickerOpen,
     templatePickerOpen, setTemplatePickerOpen,
     toolbarUploadRef,

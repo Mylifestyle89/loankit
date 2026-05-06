@@ -10,7 +10,6 @@ import { useUiStore } from "../stores/use-ui-store";
  */
 export function useMappingModalState() {
   const [financialAnalysisOpen, setFinancialAnalysisOpen] = useState(false);
-  const [snapshotRestoreOpen, setSnapshotRestoreOpen] = useState(false);
   const [customerPickerOpen, setCustomerPickerOpen] = useState(false);
   const [templatePickerOpen, setTemplatePickerOpen] = useState(false);
 
@@ -36,7 +35,6 @@ export function useMappingModalState() {
 
   return {
     financialAnalysisOpen, setFinancialAnalysisOpen,
-    snapshotRestoreOpen, setSnapshotRestoreOpen,
     customerPickerOpen, setCustomerPickerOpen,
     templatePickerOpen, setTemplatePickerOpen,
     toolbarUploadRef,
