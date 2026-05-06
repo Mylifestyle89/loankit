@@ -1,28 +1,29 @@
 /**
  * Field-values service — auto/manual field values & formulas.
  *
- * Phase 4 full: reads/writes route through valuesService (DB) when loanId
- * is resolved from MappingInstance.loanId (added Phase 3.5). FS fallback
- * gated by REPORT_LEGACY_FALLBACK flag — flipped off in Phase 5.
+ * Reads/writes dossier values via valuesService (DB) using the loanId
+ * resolved from MappingInstance.loanId. Instances without a loanId (orphans
+ * from Phase 2 migration) cannot persist manual values — caller must resolve
+ * the FK first via the backfill script or by linking the instance to a loan.
+ *
+ * Field formulas remain on the filesystem per-instance (fieldFormulasPath) —
+ * separate concern from manual values, retired together with MappingInstance
+ * in Phase 6.
  */
 import path from "node:path";
 import { NotFoundError, ValidationError } from "@/core/errors/app-error";
 import { enrichContextWithLabels } from "@/core/use-cases/formula-processor";
 import { docxEngine } from "@/lib/docx-engine";
 import { prisma } from "@/lib/prisma";
-import { isLegacyFallbackEnabled } from "@/lib/report/constants";
 import { evaluateFieldFormula } from "@/lib/report/field-calc";
 import { loadFieldFormulas, saveFieldFormulas } from "@/lib/report/field-formulas";
 import { loadState } from "@/lib/report/fs-store";
-import { loadManualValues, saveManualValues } from "@/lib/report/manual-values";
 import { runBuildAndValidate } from "@/lib/report/pipeline-client";
 import type { ValuesRecord } from "@/lib/report/values-schema";
 import { parseFieldCatalogJson } from "./_shared";
 import { valuesService } from "./values.service";
 
-// ---------------------------------------------------------------------------
-// Internal helpers
-// ---------------------------------------------------------------------------
+const LOG_PREFIX = "[report-values]";
 
 async function loadFlatDraftWithBuildFallback(): Promise<Record<string, unknown>> {
   try {
@@ -35,9 +36,8 @@ async function loadFlatDraftWithBuildFallback(): Promise<Record<string, unknown>
 
 async function resolveScopedStorage(mappingInstanceId?: string): Promise<{
   fieldCatalog: Awaited<ReturnType<typeof loadState>>["field_catalog"];
-  manualValuesPath?: string;
   fieldFormulasPath?: string;
-  loanId?: string | null;
+  loanId: string | null;
 }> {
   if (!mappingInstanceId) {
     const state = await loadState();
@@ -60,64 +60,30 @@ async function resolveScopedStorage(mappingInstanceId?: string): Promise<{
   const stem = basePath === instance.mappingJsonPath ? fallbackBase : basePath;
   return {
     fieldCatalog: parseFieldCatalogJson(instance.fieldCatalogJson),
-    manualValuesPath: `${stem}.manual_values.json`,
     fieldFormulasPath: `${stem}.field_formulas.json`,
     loanId: instance.loanId,
   };
 }
 
-const LOG_PREFIX = "[report-values]";
-
-/** Read dossier values for an instance.
- *  loanId present → DB only (stale FK falls through to {}).
- *  loanId null + flag on → instance-scoped FS file (per-instance, not global).
- *  loanId null + flag off → {}. */
-async function readScopedManualValues(
-  loanId: string | null | undefined,
-  fsPath: string | undefined,
-): Promise<ValuesRecord> {
-  if (loanId) {
-    try {
-      return await valuesService.getDossierValues(loanId);
-    } catch (e) {
-      if (e instanceof NotFoundError) {
-        console.warn(`${LOG_PREFIX} loan ${loanId} not found, treating dossier as empty.`);
-        return {};
-      }
-      throw e;
+async function readDossierValues(loanId: string | null): Promise<ValuesRecord> {
+  if (!loanId) return {};
+  try {
+    return await valuesService.getDossierValues(loanId);
+  } catch (e) {
+    if (e instanceof NotFoundError) {
+      console.warn(`${LOG_PREFIX} loan ${loanId} not found, treating dossier as empty.`);
+      return {};
     }
+    throw e;
   }
-  if (!isLegacyFallbackEnabled()) return {};
-  console.warn(`${LOG_PREFIX} FS fallback used (instance has no loanId).`);
-  return await loadManualValues(fsPath);
 }
-
-/** Write dossier values. DB authoritative when loanId present; instance-scoped
- *  FS shim mirrors writes while flag enabled (Phase 5 removes the FS branch). */
-async function writeScopedManualValues(
-  loanId: string | null | undefined,
-  values: ValuesRecord,
-  fsPath: string | undefined,
-): Promise<ValuesRecord> {
-  if (loanId) {
-    await valuesService.saveDossierValues(loanId, values);
-  }
-  if (isLegacyFallbackEnabled()) {
-    return await saveManualValues(values, fsPath);
-  }
-  return values;
-}
-
-// ---------------------------------------------------------------------------
-// Field-values Service
-// ---------------------------------------------------------------------------
 
 export const fieldValuesService = {
   async getFieldValues(params?: { mappingInstanceId?: string }) {
     const scope = await resolveScopedStorage(params?.mappingInstanceId);
     const [flatValues, manualValues, fieldFormulas] = await Promise.all([
       loadFlatDraftWithBuildFallback(),
-      readScopedManualValues(scope.loanId, scope.manualValuesPath),
+      readDossierValues(scope.loanId),
       loadFieldFormulas(scope.fieldFormulasPath),
     ]);
     return {
@@ -153,12 +119,15 @@ export const fieldValuesService = {
       }
     }
 
-    const [savedManual, savedFormulas] = await Promise.all([
-      writeScopedManualValues(scope.loanId, toSave, scope.manualValuesPath),
+    if (scope.loanId) {
+      await valuesService.saveDossierValues(scope.loanId, toSave);
+    } else {
+      console.warn(`${LOG_PREFIX} skipping dossier save — instance has no loanId.`);
+    }
+    const savedFormulas =
       input.fieldFormulas && typeof input.fieldFormulas === "object"
-        ? saveFieldFormulas(input.fieldFormulas, scope.fieldFormulasPath)
-        : Promise.resolve({}),
-    ]);
-    return { manual_values: savedManual, field_formulas: savedFormulas };
+        ? await saveFieldFormulas(input.fieldFormulas, scope.fieldFormulasPath)
+        : {};
+    return { manual_values: toSave, field_formulas: savedFormulas };
   },
 };

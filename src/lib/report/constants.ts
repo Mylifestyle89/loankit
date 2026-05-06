@@ -1,11 +1,5 @@
 import path from "node:path";
 
-/** Phase 4 feature flag — when true, services may fall back to manual_values.json
- *  if DB returns empty. Flip false in Phase 5 after dual-read window closes.
- *  Env var, not constant — ops can flip without redeploy. */
-export const isLegacyFallbackEnabled = (): boolean =>
-  process.env.REPORT_LEGACY_FALLBACK !== "false";
-
 export const REPORT_ASSETS_DIR = path.join(process.cwd(), "report_assets");
 export const REPORT_CONFIG_DIR = path.join(REPORT_ASSETS_DIR, "config");
 export const REPORT_STATE_FILE = path.join(REPORT_CONFIG_DIR, "framework_state.json");
