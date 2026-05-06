@@ -3,28 +3,21 @@
  * Thin orchestrator + re-export barrel for migration sub-modules.
  * Sub-modules: migration-state.ts (DB sentinel), migration-runner.ts (data migration steps).
  *
- * Not part of the public API — used by template, mapping, mapping-instance,
- * and master-template services.
+ * Phase 6 cascade in progress: resolveMappingSource + relPathExists removed
+ * (build/mapping flows now use ./master-source + ./build-source). What
+ * remains here is the legacy migration bootstrap + per-instance draft file
+ * helper still consumed by template-field-mutate / mapping-instance services
+ * pending Commit 3 follow-up.
  */
-import fs from "node:fs/promises";
-import path from "node:path";
-
 import { docxEngine } from "@/lib/docx-engine";
 import { prisma } from "@/lib/prisma";
 import {
   aliasMapSchema,
   mappingMasterSchema,
 } from "@/lib/report/config-schema";
-import {
-  getActiveMappingVersion,
-  loadState,
-  saveState,
-} from "@/lib/report/fs-store";
+import { loadState, saveState } from "@/lib/report/fs-store";
 
-import {
-  type MappingSource,
-  LEGACY_MIGRATION_VERSION,
-} from "./_shared";
+import { LEGACY_MIGRATION_VERSION } from "./_shared";
 import {
   ensurePrismaModelsExist,
   acquireMigrationSlot,
@@ -109,62 +102,4 @@ export async function ensureMasterInstanceMigration(): Promise<void> {
 export async function isDbTemplateModeEnabled(): Promise<boolean> {
   const state = await loadState();
   return (state.data_migration_version ?? 0) >= LEGACY_MIGRATION_VERSION;
-}
-
-// ---------------------------------------------------------------------------
-// Path helpers
-// ---------------------------------------------------------------------------
-
-export async function relPathExists(relPath: string): Promise<boolean> {
-  try {
-    await fs.access(path.join(process.cwd(), relPath));
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-// ---------------------------------------------------------------------------
-// Mapping source resolution
-// ---------------------------------------------------------------------------
-
-export async function resolveMappingSource(
-  mappingInstanceId?: string,
-): Promise<MappingSource> {
-  await ensureMasterInstanceMigration();
-
-  if (mappingInstanceId) {
-    const instance = await prisma.mappingInstance.findUnique({
-      where: { id: mappingInstanceId },
-    });
-    if (instance) {
-      const hasDbJson = !!instance.mappingJson && !!instance.aliasJson;
-      const hasFiles = hasDbJson || (
-        (await relPathExists(instance.mappingJsonPath)) &&
-        (await relPathExists(instance.aliasJsonPath))
-      );
-      if (hasDbJson || hasFiles) {
-        return {
-          mode: "instance",
-          mappingPath: instance.mappingJsonPath,
-          aliasPath: instance.aliasJsonPath,
-          instanceId: instance.id,
-          mappingUpdatedAt: instance.updatedAt.toISOString(),
-          mappingJson: instance.mappingJson,
-          aliasJson: instance.aliasJson,
-          loanId: instance.loanId,
-        };
-      }
-    }
-  }
-
-  const state = await loadState();
-  const activeVersion = await getActiveMappingVersion(state);
-  return {
-    mode: "legacy",
-    mappingPath: activeVersion.mapping_json_path,
-    aliasPath: activeVersion.alias_json_path,
-    versionId: activeVersion.id,
-    mappingUpdatedAt: activeVersion.created_at,
-  };
 }

@@ -39,7 +39,9 @@ created: 2026-05-05
 | 03 | [phase-03-create-values-service.md](phase-03-create-values-service.md) — `values.service.ts` CRUD profile/dossier | [x] Done | 0.5d |
 | 3.5 | [phase-3.5-reconcile-mapping-instance-to-loan.md](phase-3.5-reconcile-mapping-instance-to-loan.md) — add `MappingInstance.loanId` FK + backfill, propagate loanId qua 3 consumer (unblock Phase 4 full) | [ ] Not started | 2-3d |
 | 04 | [phase-04-remove-dual-write.md](phase-04-remove-dual-write.md) — bỏ FS write + swap consumers (REDUCED: chỉ flag helper + shim deprecation; full swap defer sau Phase 3.5) | [~] Reduced (done partial) | 1d |
-| 05 | [phase-05-dual-read-cleanup.md](phase-05-dual-read-cleanup.md) — dual-read 1 tuần, drop `MappingInstance`+legacy files | [ ] Not started | 1d |
+| 05 | [phase-05-dual-read-cleanup.md](phase-05-dual-read-cleanup.md) — dual-read 1 tuần, drop `MappingInstance`+legacy files | [~] Done partial (5a closed: flag removed) | 1d |
+| 5b | [phase-5b-snapshot-refactor.md](phase-5b-snapshot-refactor.md) — drop snapshot service + retire manual-values shim + FS legacy cleanup (Option B) | [x] Done | 2-3h |
+| 06 | [phase-06-drop-mapping-instance.md](phase-06-drop-mapping-instance.md) — migrate mapping/alias/formulas to MasterTemplate, drop MappingInstance + FS legacy (6a→6e) | [ ] Not started | 3-5d |
 
 ## Out of scope (Phase 2+ riêng)
 
