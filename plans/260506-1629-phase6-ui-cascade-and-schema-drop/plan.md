@@ -1,13 +1,17 @@
 ---
 title: "Phase 6 UI cascade + MappingInstance schema drop"
 description: "Final cascade: refactor mapping page UI semantic away from MappingInstance, retire 4 legacy services, drop MappingInstance table, FS cleanup."
-status: ready
+status: 6g+6h+6i shipped · 6e pending
 priority: P1
 effort: 3-5d
 branch: main
 parent: plans/260505-1007-phase1-migrate-report-data-layer/phase-06-drop-mapping-instance.md
 created: 2026-05-06
 decisions_locked: 2026-05-06
+shipped:
+  - "6g UI master-centric: 2736c15"
+  - "6h service deletions: 80f148c"
+  - "6i schema drop: 0fe318a"
 ---
 
 # Phase 6 UI cascade + schema drop
