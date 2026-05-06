@@ -1,19 +1,20 @@
 ---
 title: "Phase 6 UI cascade + MappingInstance schema drop"
 description: "Final cascade: refactor mapping page UI semantic away from MappingInstance, retire 4 legacy services, drop MappingInstance table, FS cleanup."
-status: pending-decisions
+status: ready
 priority: P1
-effort: 3-5d (after UX decisions)
+effort: 3-5d
 branch: main
 parent: plans/260505-1007-phase1-migrate-report-data-layer/phase-06-drop-mapping-instance.md
 created: 2026-05-06
+decisions_locked: 2026-05-06
 ---
 
 # Phase 6 UI cascade + schema drop
 
 ## Status
 
-**BLOCKED on UX decisions** (see § Unresolved Questions). Backend work from prior session done:
+**READY** — UX decisions locked (§ Locked Decisions). Backend work from prior session done:
 - Commits `a4cd957` · `fe36444` · `d2fb9e9` · `5594a8b`
 - Services + API routes accept `master_template_id`/`loan_id`; legacy `mapping_instance_id` translated at boundary
 - 4 legacy files (`mapping-instance.service`, `_migration-internals`, `migration-runner`, `migration-state`) still alive — UI is the binding constraint to retire them.
@@ -28,24 +29,30 @@ Mapping page (`src/app/report/khdn/mapping/`) currently treats "field template" 
 
 Phase 6 endgame removes MappingInstance entirely. The above 3 workflows need redesign.
 
+## Locked Decisions (Phase 6f)
+
+| Q | Choice | Rationale |
+|---|---|---|
+| Q1 Customer↔Master | **B — derive from loans** | No schema change; UI shows `customer.loans.distinct(masterTemplateId)`. Simpler than (C), keeps "what does this customer have" UX from (A) |
+| Q2 promoteToMasterTemplate | **a — delete workflow** | Per-customer tweak concept dies with MappingInstance; "duplicate master" is a separate feature, defer until requested |
+| Q3 Loan selector | **b — heuristic newest-active + warning banner** | Most customers have 1 active loan; banner surfaces ambiguity when ≥2 active. Full selector deferred to Phase 7 |
+| Q4 assignSelectedFieldTemplate | **a — apply to all loans + confirm dialog** | Closest to current UX; confirm prevents accidental override of loans with explicit masters |
+
 ## Phases
 
-### Phase 6f — UX decisions (this plan, blocking)
-Decide:
-- Q1: Customer ↔ Master assignment model (A/B/C below)
-- Q2: Keep `promoteToMasterTemplate`?
-- Q3: Add loan selector to mapping page?
-- Q4: `assignSelectedFieldTemplate` semantics post-cascade?
-
 ### Phase 6g — Store + hook refactor
-Once Q1-Q4 answered:
 - `use-field-template-store`: drop instance polymorphism; `selectedFieldTemplateId` is master-only
-- `use-mapping-data-store`: split selection into `selectedMasterTemplateId` + `selectedLoanId`
+- `use-mapping-data-store`: split selection into `selectedMasterTemplateId` + `selectedLoanId` (loanId resolved via heuristic — Q3-b)
 - `useMappingApi.loadData/loadFieldValues`: query by `master_template_id` (mapping) + `loan_id` (values)
 - `use-mapping-api-mutations.saveDraft`: PUT `master_template_id` + `loan_id`
 - `use-field-template-apply.applySelectedFieldTemplate`: drop `mapping_instance_id` query param
-- `use-field-template-crud`: rewrite `assignSelectedFieldTemplate`, simplify `saveEditedFieldTemplate` (single branch — master only), delete or rewrite `promoteToMasterTemplate`
+- `use-field-template-crud`:
+  - Rewrite `assignSelectedFieldTemplate` per Q4-a — broadcast to all `customer.loans`, confirm dialog showing count
+  - Simplify `saveEditedFieldTemplate` to single master-only branch
+  - **Delete** `promoteToMasterTemplate` per Q2-a (and remove UI button)
 - `use-mapping-page-logic`: wire new selection state
+- Customer-scoped template list (Q1-b): query `customer.loans` with `masterTemplate` include → distinct list. Affects `loadFieldTemplates(customerId)` source
+- Add multi-loan-active warning banner per Q3-b: when `customer.loans.filter(active).length > 1`, show "Đang lưu vào: [loan name/code]"
 - Smoke test mapping page: load → edit → save → export
 
 ### Phase 6h — Service deletions
@@ -98,32 +105,4 @@ After UI no longer references them:
 
 ## Unresolved questions
 
-### Q1 — Customer ↔ Master assignment
-
-**Context:** `MappingInstance.customerId` linked customer to a per-customer-tweaked master. After drop:
-- **(A) No customer-master assignment** — only `Loan.masterTemplateId` matters. Customer page lists masters via `customer.loans.map(l => l.masterTemplate)`. Simplest, but loses "customer's preferred default template" concept.
-- **(B) Derive from loans** — customer has implicit set of masters = union of their loans' masters. UI shows aggregated list. No new schema.
-- **(C) `Customer.preferredMasterId`** — add a single FK on Customer for "default template". Loan-level still overrides. Most expressive but adds schema.
-
-### Q2 — `promoteToMasterTemplate`
-
-Current: clones an instance's tweaked config into a brand-new master, retains old instance with original master link.
-
-Post-cascade (no instances): there's no per-customer tweak to clone-up. Options:
-- **(a)** Delete the workflow — every edit is to a master directly, "promote" makes no sense
-- **(b)** Repurpose as "Duplicate master template" — clone master → master, name = "X (copy)"
-
-### Q3 — Loan selector in mapping page
-
-Mapping/values now scope by `loan_id`. Currently UI scopes by customer + (implicit) selected template. To save values to a specific loan:
-- **(a)** Add explicit loan selector on mapping page (list customer's loans, default to newest active)
-- **(b)** Keep heuristic newest-active-loan (current Phase 3.5 behavior); selector deferred to Phase 7
-
-### Q4 — `assignSelectedFieldTemplate` rewrite
-
-Current: `POST /api/report/mapping-instances` with `customer_id` + `master_id`.
-
-Post-cascade options:
-- **(a)** "Assign master to all of customer's loans": iterate `customer.loans`, set `masterTemplateId` on each. UI: pick master, click "Apply", confirms count
-- **(b)** "Assign master to specific loan": after Q3-(a), select loan + master, set `loan.masterTemplateId`. One-loan-at-a-time
-- **(c)** Drop the workflow entirely; assignment happens at loan creation/edit page, not mapping page
+None — Q1-Q4 locked above. Re-open if Phase 6g implementation surfaces blockers.
