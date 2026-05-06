@@ -20,8 +20,6 @@ type MappingVisualSectionProps = {
   openImportGroupModal: () => void;
   openDeleteGenericTemplateModal: () => void;
   isEditingMaster: boolean;
-  promoteToMasterTemplate: () => void;
-  promotingToMaster: boolean;
   sensors: SensorDescriptor<SensorOptions>[];
   handleDragEnd: (event: DragEndEvent) => void;
   groupedFieldTree: GroupedTreeNode[];
@@ -71,8 +69,6 @@ export const MappingVisualSection = memo(function MappingVisualSection({
   openImportGroupModal,
   openDeleteGenericTemplateModal,
   isEditingMaster,
-  promoteToMasterTemplate,
-  promotingToMaster,
   sensors,
   handleDragEnd,
   groupedFieldTree,
@@ -119,8 +115,6 @@ export const MappingVisualSection = memo(function MappingVisualSection({
         openImportGroupModal={openImportGroupModal}
         openDeleteGenericTemplateModal={openDeleteGenericTemplateModal}
         isEditingMaster={isEditingMaster}
-        promoteToMasterTemplate={promoteToMasterTemplate}
-        promotingToMaster={promotingToMaster}
       />
 
       <FieldCatalogBoard

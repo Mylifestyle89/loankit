@@ -16,6 +16,10 @@ type MappingDataState = {
   values: Record<string, unknown>;
   manualValues: Record<string, string | number | boolean | null>;
   formulas: Record<string, string>;
+  /** Master template ID selected for the current session (master-centric, Q1). */
+  selectedMasterTemplateId: string;
+  /** Loan ID resolved via heuristic newest-active (Q3-b). */
+  selectedLoanId: string;
   setMappingText: (text: string | ((prev: string) => string)) => void;
   setAliasText: (text: string) => void;
   setValidation: (
@@ -50,6 +54,8 @@ type MappingDataState = {
     values: Record<string, unknown>,
     manualValues: Record<string, string | number | boolean | null>,
   ) => void;
+  setSelectedMasterTemplateId: (id: string) => void;
+  setSelectedLoanId: (id: string) => void;
   /** True once Zustand has finished reading from localStorage (Next.js SSR-safe). */
   _hasHydrated: boolean;
   _setHasHydrated: (v: boolean) => void;
@@ -68,6 +74,8 @@ export const useMappingDataStore = create<MappingDataState>()(
       values: {},
       manualValues: {},
       formulas: {},
+      selectedMasterTemplateId: "",
+      selectedLoanId: "",
       _hasHydrated: false,
       setMappingText: (text) =>
         set((s) => ({ mappingText: typeof text === "function" ? text(s.mappingText) : text })),
@@ -90,6 +98,8 @@ export const useMappingDataStore = create<MappingDataState>()(
       setFormulas: (formulas) =>
         set((s) => ({ formulas: typeof formulas === "function" ? formulas(s.formulas) : formulas })),
       setTemplateData: (catalog, values, manualValues) => set({ fieldCatalog: catalog, values, manualValues }),
+      setSelectedMasterTemplateId: (selectedMasterTemplateId) => set({ selectedMasterTemplateId }),
+      setSelectedLoanId: (selectedLoanId) => set({ selectedLoanId }),
       _setHasHydrated: (v) => set({ _hasHydrated: v }),
     }),
     {

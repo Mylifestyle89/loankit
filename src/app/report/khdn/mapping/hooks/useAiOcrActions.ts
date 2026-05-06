@@ -209,14 +209,8 @@ export function useAiOcrActions({
             const form = new FormData();
             form.set("file", file);
 
-            const ft = useFieldTemplateStore.getState();
-            const isMappingInstance = ft.fieldTemplates.some((t) => t.id === tplId);
-
-            if (isMappingInstance) {
-                form.set("mappingInstanceId", tplId);
-            } else {
-                form.set("fieldTemplateId", tplId);
-            }
+            // All templates are master templates now (MappingInstance removed Q2-a)
+            form.set("fieldTemplateId", tplId);
             let res = await fetch("/api/report/mapping/extract-process", { method: "POST", body: form });
             let data = (await res.json()) as OcrProcessResponse;
 

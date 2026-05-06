@@ -9,8 +9,6 @@ type EditingTemplateBannerProps = {
   openImportGroupModal: () => void;
   openDeleteGenericTemplateModal: () => void;
   isEditingMaster: boolean;
-  promoteToMasterTemplate: () => void;
-  promotingToMaster: boolean;
 };
 
 export function EditingTemplateBanner({
@@ -24,8 +22,6 @@ export function EditingTemplateBanner({
   openImportGroupModal,
   openDeleteGenericTemplateModal,
   isEditingMaster,
-  promoteToMasterTemplate,
-  promotingToMaster,
 }: EditingTemplateBannerProps) {
   if (!editingFieldTemplateId) return null;
   const secondaryActionClass =
@@ -37,9 +33,9 @@ export function EditingTemplateBanner({
         <span className="rounded-xl bg-brand-100 dark:bg-brand-500/10 px-2.5 py-1 text-sm font-semibold text-brand-600 dark:text-brand-400">
           {t("mapping.fieldTemplate.editing")}
         </span>
-        {!isEditingMaster && (
+        {isEditingMaster && (
           <span className="rounded-lg bg-brand-100 dark:bg-brand-500/10 px-2 py-0.5 text-xs font-medium text-brand-600 dark:text-brand-400">
-            Khách hàng
+            Template mẫu
           </span>
         )}
         <input
@@ -60,16 +56,6 @@ export function EditingTemplateBanner({
         >
           {savingEditedTemplate ? t("mapping.fieldTemplate.saving") : t("mapping.fieldTemplate.update")}
         </button>
-        {!isEditingMaster && (
-          <button
-            type="button"
-            onClick={promoteToMasterTemplate}
-            disabled={promotingToMaster}
-            className="rounded-xl border border-emerald-500 bg-emerald-500 px-3 py-2 text-sm font-semibold text-white shadow-[0_2px_8px_rgba(16,185,129,0.35)] transition-all hover:bg-emerald-600 hover:shadow-[0_4px_12px_rgba(16,185,129,0.4)] active:scale-95 disabled:pointer-events-none disabled:opacity-50 dark:border-emerald-500 dark:shadow-[0_2px_8px_rgba(16,185,129,0.25)] dark:hover:bg-emerald-600"
-          >
-            {promotingToMaster ? "Đang lưu..." : "Lưu thành template mẫu"}
-          </button>
-        )}
         <button type="button" onClick={openImportGroupModal} className={secondaryActionClass}>
           Thêm nhóm dữ liệu
         </button>

@@ -7,14 +7,15 @@ import { useMappingApiMutations } from "./use-mapping-api-mutations";
 
 type UseMappingApiParams = {
   t: (key: string) => string;
-  selectedMappingInstanceId?: string;
+  selectedMasterTemplateId?: string;
+  selectedLoanId?: string;
 };
 
 /**
  * Main mapping API hook — composes query functions + mutation sub-hook.
  * Re-exports all functions under the original API surface for backward compat.
  */
-export function useMappingApi({ t, selectedMappingInstanceId }: UseMappingApiParams) {
+export function useMappingApi({ t, selectedMasterTemplateId, selectedLoanId }: UseMappingApiParams) {
   const updateStatus = (
     updates: Parameters<ReturnType<typeof useUiStore.getState>["setStatus"]>[0],
   ) => useUiStore.getState().setStatus(updates);
@@ -72,9 +73,10 @@ export function useMappingApi({ t, selectedMappingInstanceId }: UseMappingApiPar
 
   const loadFieldValues = useCallback(async () => {
     const md = useMappingDataStore.getState();
-    const query = selectedMappingInstanceId
-      ? `?mapping_instance_id=${encodeURIComponent(selectedMappingInstanceId)}`
-      : "";
+    const params = new URLSearchParams();
+    if (selectedLoanId) params.set("loan_id", selectedLoanId);
+    else if (selectedMasterTemplateId) params.set("master_template_id", selectedMasterTemplateId);
+    const query = params.toString() ? `?${params.toString()}` : "";
     const res = await fetch(`/api/report/values${query}`, { cache: "no-store" });
     const data = (await res.json()) as ValuesResponse;
     if (!data.ok) {
@@ -85,15 +87,15 @@ export function useMappingApi({ t, selectedMappingInstanceId }: UseMappingApiPar
     md.setValues(data.values ?? {});
     md.setManualValues(data.manual_values ?? {});
     md.setFormulas(data.field_formulas ?? {});
-  }, [selectedMappingInstanceId, t]);
+  }, [selectedMasterTemplateId, selectedLoanId, t]);
 
   const loadData = useCallback(async () => {
     const md = useMappingDataStore.getState();
     updateStatus({ loading: true, error: "" });
     try {
-      const query = selectedMappingInstanceId
-        ? `?mapping_instance_id=${encodeURIComponent(selectedMappingInstanceId)}`
-        : "";
+      const params = new URLSearchParams();
+      if (selectedMasterTemplateId) params.set("master_template_id", selectedMasterTemplateId);
+      const query = params.toString() ? `?${params.toString()}` : "";
       const res = await fetch(`/api/report/mapping${query}`, { cache: "no-store" });
       const data = (await res.json()) as MappingApiResponse;
       if (!data.ok) {
@@ -110,7 +112,7 @@ export function useMappingApi({ t, selectedMappingInstanceId }: UseMappingApiPar
     } finally {
       updateStatus({ loading: false });
     }
-  }, [selectedMappingInstanceId, t, loadFieldValues]);
+  }, [selectedMasterTemplateId, t, loadFieldValues]);
 
   const loadCustomers = useCallback(async () => {
     const { setCustomers, setLoadingCustomers } = useCustomerStore.getState();
@@ -130,7 +132,7 @@ export function useMappingApi({ t, selectedMappingInstanceId }: UseMappingApiPar
     }
   }, [t]);
 
-  const mutations = useMappingApiMutations({ t, selectedMappingInstanceId, loadData });
+  const mutations = useMappingApiMutations({ t, selectedMasterTemplateId, selectedLoanId, loadData });
 
   return {
     loadData,

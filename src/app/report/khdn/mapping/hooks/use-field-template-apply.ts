@@ -18,16 +18,16 @@ export function useFieldTemplateApply({
   async function applySelectedFieldTemplate(templateId: string) {
     const ft = useFieldTemplateStore.getState();
     const md = useMappingDataStore.getState();
-    const { selectedCustomerId } = useCustomerStore.getState();
     if (!templateId) {
       ft.setSelectedFieldTemplateId("");
       ft.setEditingFieldTemplateId("");
       ft.setEditingFieldTemplateName("");
       return;
     }
+    // All templates are master templates now — check allFieldTemplates (global lib) first, then fieldTemplates (customer-scoped derived list)
     const template =
-      ft.fieldTemplates.find((i) => i.id === templateId) ??
-      ft.allFieldTemplates.find((i) => i.id === templateId);
+      ft.allFieldTemplates.find((i) => i.id === templateId) ??
+      ft.fieldTemplates.find((i) => i.id === templateId);
     if (!template) return;
 
     const normalizedCatalog = normalizeFieldCatalogForSchema(template.field_catalog ?? []);
@@ -39,9 +39,8 @@ export function useFieldTemplateApply({
     let diskManual: Record<string, string | number | boolean | null> = prevManual;
     let diskFormulas = prevFormulas;
     try {
-      const query = selectedCustomerId
-        ? `?mapping_instance_id=${encodeURIComponent(templateId)}`
-        : "";
+      // Load values scoped to this master template
+      const query = `?master_template_id=${encodeURIComponent(templateId)}`;
       const res = await fetch(`/api/report/values${query}`, { cache: "no-store" });
       const data = (await res.json()) as {
         ok: boolean;
@@ -58,9 +57,11 @@ export function useFieldTemplateApply({
 
     md.setTemplateData(normalizedCatalog, diskValues, diskManual);
     md.setFormulas(diskFormulas);
+    // Track selection in both field-template store and mapping-data store
     ft.setSelectedFieldTemplateId(templateId);
     ft.setEditingFieldTemplateId(templateId);
     ft.setEditingFieldTemplateName(template.name);
+    md.setSelectedMasterTemplateId(templateId);
   }
 
   async function startEditingExistingTemplate(templateId: string) {
@@ -105,6 +106,7 @@ export function useFieldTemplateApply({
     md.setFormulas(diskFormulas);
     ft.setEditingFieldTemplateId(template.id);
     ft.setEditingFieldTemplateName(template.name);
+    md.setSelectedMasterTemplateId(template.id);
     useUiStore
       .getState()
       .setStatus({ message: t("mapping.msg.templateEditing").replace("{name}", template.name) });
@@ -113,8 +115,9 @@ export function useFieldTemplateApply({
 
   async function stopEditingFieldTemplate() {
     const ft = useFieldTemplateStore.getState();
-    const { selectedCustomerId } = useCustomerStore.getState();
     const md = useMappingDataStore.getState();
+    const masterTemplateId = md.selectedMasterTemplateId || ft.selectedFieldTemplateId || ft.editingFieldTemplateId || undefined;
+    const loanId = md.selectedLoanId || undefined;
 
     try {
       const repeaterData: Record<string, unknown> = {};
@@ -124,20 +127,14 @@ export function useFieldTemplateApply({
       const hasData =
         Object.keys(md.manualValues).length > 0 || Object.keys(repeaterData).length > 0;
       if (hasData) {
-        const candidateId = ft.selectedFieldTemplateId || ft.editingFieldTemplateId;
-        const mappingInstanceId =
-          selectedCustomerId &&
-          candidateId &&
-          ft.fieldTemplates.some((template) => template.id === candidateId)
-            ? candidateId
-            : undefined;
         await fetch("/api/report/values", {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             manual_values: { ...md.manualValues, ...repeaterData },
             field_formulas: md.formulas,
-            mapping_instance_id: mappingInstanceId,
+            master_template_id: masterTemplateId,
+            loan_id: loanId,
           }),
         });
       }
@@ -146,6 +143,9 @@ export function useFieldTemplateApply({
     ft.setEditingFieldTemplateId("");
     ft.setEditingFieldTemplateName("");
     ft.setSelectedFieldTemplateId("");
+    md.setSelectedMasterTemplateId("");
+    md.setSelectedLoanId("");
+    const { selectedCustomerId } = useCustomerStore.getState();
     if (!selectedCustomerId) {
       md.setFieldCatalog([]);
     }

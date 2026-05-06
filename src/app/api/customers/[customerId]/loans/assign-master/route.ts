@@ -1,0 +1,72 @@
+import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
+import { prisma } from "@/lib/prisma";
+import { requireEditorOrAdmin, handleAuthError } from "@/lib/auth-guard";
+
+export const runtime = "nodejs";
+
+const bodySchema = z.object({
+  masterTemplateId: z.string().min(1),
+});
+
+/**
+ * POST /api/customers/[customerId]/loans/assign-master
+ *
+ * Broadcasts a master template to ALL loans of the customer (Q4-a).
+ * Sets loan.masterTemplateId = masterTemplateId for every loan belonging to customerId.
+ *
+ * Returns { ok: true, count } where count = number of loans updated.
+ */
+export async function POST(
+  req: NextRequest,
+  { params }: { params: { customerId: string } },
+) {
+  try {
+    await requireEditorOrAdmin();
+  } catch (e) {
+    return handleAuthError(e);
+  }
+
+  const { customerId } = params;
+  if (!customerId) {
+    return NextResponse.json({ ok: false, error: "customerId required" }, { status: 400 });
+  }
+
+  let body: z.infer<typeof bodySchema>;
+  try {
+    body = bodySchema.parse(await req.json());
+  } catch (e) {
+    return NextResponse.json(
+      { ok: false, error: e instanceof Error ? e.message : "Invalid request body" },
+      { status: 400 },
+    );
+  }
+
+  try {
+    // Verify master template exists
+    const master = await prisma.masterTemplate.findUnique({
+      where: { id: body.masterTemplateId },
+      select: { id: true, name: true },
+    });
+    if (!master) {
+      return NextResponse.json(
+        { ok: false, error: `Master template "${body.masterTemplateId}" not found` },
+        { status: 404 },
+      );
+    }
+
+    // Broadcast to all customer loans
+    const result = await prisma.loan.updateMany({
+      where: { customerId },
+      data: { masterTemplateId: body.masterTemplateId },
+    });
+
+    return NextResponse.json({ ok: true, count: result.count });
+  } catch (e) {
+    console.error("[POST /api/customers/[customerId]/loans/assign-master]", e);
+    return NextResponse.json(
+      { ok: false, error: e instanceof Error ? e.message : "Internal error" },
+      { status: 500 },
+    );
+  }
+}

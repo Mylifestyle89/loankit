@@ -50,7 +50,8 @@ export function MappingPageContent() {
     selectedCustomerId,
     allFieldTemplates, editingFieldTemplatePicker,
     editPickerTemplateId, editingFieldTemplateId, editingFieldTemplateName,
-    savingEditedTemplate, promotingToMaster,
+    savingEditedTemplate,
+    multiActiveLoansWarning,
     editingGroup, editingGroupValue, editingGroupError,
     changingFieldGroup, changingFieldGroupValue, changingFieldGroupNewName,
     mergingGroups, mergeSourceGroups, mergeTargetGroup,
@@ -89,7 +90,7 @@ export function MappingPageContent() {
     handleOpenCustomerPicker, handleOpenTemplatePicker,
     handleUploadDocument, handleOpenFinancialAnalysis,
     handleOpenOcrReview, handleSaveEditedFieldTemplate,
-    handlePromoteToMasterTemplate, handleOpenFormulaModal,
+    handleOpenFormulaModal,
     handleAcceptOcrSuggestion, handleDeclineOcrSuggestion,
     isEditingMaster, mappedFieldCount,
   } = useMappingPageLogic();
@@ -148,6 +149,11 @@ export function MappingPageContent() {
         />
         {message ? <p className="text-sm text-emerald-700">{message}</p> : null}
         {error ? <p className="text-sm text-rose-700">{error}</p> : null}
+        {multiActiveLoansWarning ? (
+          <p className="text-sm text-amber-700 dark:text-amber-400 rounded-lg bg-amber-50 dark:bg-amber-900/20 px-3 py-2 border border-amber-200 dark:border-amber-700/40">
+            ⚠ {multiActiveLoansWarning}
+          </p>
+        ) : null}
 
         <MappingStatusBar
           undoLastAction={undoLastAction}
@@ -176,8 +182,6 @@ export function MappingPageContent() {
         openImportGroupModal={openImportGroupModal}
         openDeleteGenericTemplateModal={openDeleteGenericTemplateModal}
         isEditingMaster={isEditingMaster}
-        promoteToMasterTemplate={handlePromoteToMasterTemplate}
-        promotingToMaster={promotingToMaster}
         sensors={sensors}
         handleDragEnd={handleDragEnd}
         groupedFieldTree={groupedFieldTree}

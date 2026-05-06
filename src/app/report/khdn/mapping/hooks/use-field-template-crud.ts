@@ -6,9 +6,9 @@ import { useUiStore } from "../stores/use-ui-store";
 import { useFieldTemplateApply } from "./use-field-template-apply";
 
 /**
- * Assign, save and promote field templates (write/mutation operations).
+ * Assign and save field templates (write/mutation operations).
  * Apply/switch operations are in use-field-template-apply.ts.
- * Extracted from useFieldTemplates to keep that file under 300 lines.
+ * promoteToMasterTemplate has been removed (Q2-a: concept dies with MappingInstance).
  */
 export function useFieldTemplateCrud({
   t,
@@ -27,6 +27,10 @@ export function useFieldTemplateCrud({
 
   const apply = useFieldTemplateApply({ t, closeEditFieldTemplatePicker });
 
+  /**
+   * Assigns the selected master template to ALL loans of the customer (Q4-a).
+   * Calls POST /api/customers/[customerId]/loans/assign-master with confirm dialog.
+   */
   async function assignSelectedFieldTemplate() {
     const ft = useFieldTemplateStore.getState();
     const { selectedCustomerId } = useCustomerStore.getState();
@@ -42,30 +46,53 @@ export function useFieldTemplateCrud({
     if (!selectedMaster)
       return useUiStore
         .getState()
-        .setStatus({ error: "Vui lòng chọn template mẫu (generic) từ thư viện để áp dụng." });
+        .setStatus({ error: "Vui lòng chọn template mẫu từ thư viện để áp dụng." });
 
     useUiStore.getState().setStatus({ error: "" });
     try {
-      const res = await fetch("/api/report/mapping-instances", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          customer_id: selectedCustomerId,
-          master_id: selectedMaster.id,
-          name: `instance-${Date.now()}`,
-        }),
+      // First fetch count of loans for the confirm dialog
+      const loansRes = await fetch(`/api/customers/${encodeURIComponent(selectedCustomerId)}/loans`, {
+        cache: "no-store",
       });
-      const data = (await res.json()) as { ok: boolean; error?: string };
+      const loansData = (await loansRes.json()) as {
+        ok: boolean;
+        loans?: Array<{ id: string; code: string; status: string }>;
+        error?: string;
+      };
+      if (!loansData.ok) throw new Error(loansData.error ?? "Không thể tải danh sách hồ sơ vay.");
+
+      const loanCount = loansData.loans?.length ?? 0;
+      const confirmed = window.confirm(
+        `Áp dụng template "${selectedMaster.name}" cho ${loanCount} hồ sơ vay của khách hàng?`,
+      );
+      if (!confirmed) return;
+
+      const res = await fetch(
+        `/api/customers/${encodeURIComponent(selectedCustomerId)}/loans/assign-master`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ masterTemplateId: selectedMaster.id }),
+        },
+      );
+      const data = (await res.json()) as { ok: boolean; count?: number; error?: string };
       if (!data.ok) throw new Error(data.error ?? t("mapping.fieldTemplate.errAttach"));
+
       useUiStore
         .getState()
-        .setStatus({ message: `Đã áp dụng mẫu "${selectedMaster.name}" cho khách hàng này.` });
+        .setStatus({
+          message: `Đã áp dụng mẫu "${selectedMaster.name}" cho ${data.count ?? loanCount} hồ sơ vay.`,
+        });
       await loadFieldTemplates(selectedCustomerId);
     } catch (e) {
       handleApiError(e, "mapping.fieldTemplate.errAttach");
     }
   }
 
+  /**
+   * Saves edits to the master template being edited.
+   * Instance branch removed (Q2-a) — all writes go to master via /api/report/master-templates.
+   */
   async function saveEditedFieldTemplate() {
     const ft = useFieldTemplateStore.getState();
     const md = useMappingDataStore.getState();
@@ -76,13 +103,13 @@ export function useFieldTemplateCrud({
     if (!nextName)
       return useUiStore.getState().setStatus({ error: t("mapping.fieldTemplate.errName") });
 
-    const isMaster = ft.allFieldTemplates.some((tmpl) => tmpl.id === ft.editingFieldTemplateId);
     ft.setSavingEditedTemplate(true);
     useUiStore.getState().setStatus({ error: "" });
     try {
       const normalizedCatalog = normalizeFieldCatalogForSchema(md.fieldCatalog);
-      const mappingInstanceId = isMaster ? undefined : ft.editingFieldTemplateId;
+      const masterTemplateId = ft.editingFieldTemplateId;
 
+      // Save mapping + values scoped to master
       await Promise.all([
         fetch("/api/report/mapping", {
           method: "PUT",
@@ -93,7 +120,7 @@ export function useFieldTemplateCrud({
             mapping: JSON.parse(md.mappingText || "{}"),
             alias_map: JSON.parse(md.aliasText || "{}"),
             field_catalog: normalizedCatalog,
-            mapping_instance_id: mappingInstanceId,
+            master_template_id: masterTemplateId,
           }),
         }),
         fetch("/api/report/values", {
@@ -105,32 +132,23 @@ export function useFieldTemplateCrud({
               ...Object.fromEntries(Object.entries(md.values).filter(([, v]) => Array.isArray(v))),
             },
             field_formulas: md.formulas,
-            mapping_instance_id: mappingInstanceId,
+            master_template_id: masterTemplateId,
           }),
         }),
       ]);
 
-      if (isMaster) {
-        const res = await fetch("/api/report/master-templates", {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            master_id: ft.editingFieldTemplateId,
-            name: nextName,
-            field_catalog: normalizedCatalog,
-          }),
-        });
-        const data = (await res.json()) as { ok: boolean; error?: string };
-        if (!data.ok) throw new Error(data.error ?? t("mapping.fieldTemplate.errSave"));
-      } else {
-        const res = await fetch(`/api/report/mapping-instances/${ft.editingFieldTemplateId}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name: nextName, field_catalog: normalizedCatalog }),
-        });
-        const data = (await res.json()) as { ok: boolean; error?: string };
-        if (!data.ok) throw new Error(data.error ?? t("mapping.fieldTemplate.errSave"));
-      }
+      // Update master template name + catalog
+      const res = await fetch("/api/report/master-templates", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          master_id: masterTemplateId,
+          name: nextName,
+          field_catalog: normalizedCatalog,
+        }),
+      });
+      const data = (await res.json()) as { ok: boolean; error?: string };
+      if (!data.ok) throw new Error(data.error ?? t("mapping.fieldTemplate.errSave"));
 
       await Promise.all([
         loadAllFieldTemplates(),
@@ -146,94 +164,11 @@ export function useFieldTemplateCrud({
     }
   }
 
-  async function promoteToMasterTemplate(newName?: string) {
-    const ft = useFieldTemplateStore.getState();
-    const md = useMappingDataStore.getState();
-
-    const isMaster = ft.allFieldTemplates.some((i) => i.id === ft.editingFieldTemplateId);
-    if (isMaster) {
-      useUiStore.getState().setStatus({ error: "Template này đã là template mẫu." });
-      return;
-    }
-
-    const name = (newName ?? ft.editingFieldTemplateName).trim();
-    if (!name) {
-      useUiStore.getState().setStatus({ error: t("mapping.fieldTemplate.errName") });
-      return;
-    }
-
-    ft.setPromotingToMaster(true);
-    useUiStore.getState().setStatus({ error: "" });
-    try {
-      const normalizedCatalog = normalizeFieldCatalogForSchema(md.fieldCatalog);
-
-      await Promise.all([
-        fetch("/api/report/mapping", {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            created_by: "web-user",
-            notes: "Auto-saved before promote to master",
-            mapping: JSON.parse(md.mappingText || "{}"),
-            alias_map: JSON.parse(md.aliasText || "{}"),
-            field_catalog: normalizedCatalog,
-            mapping_instance_id: ft.editingFieldTemplateId,
-          }),
-        }),
-        fetch("/api/report/values", {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            manual_values: {
-              ...md.manualValues,
-              ...Object.fromEntries(Object.entries(md.values).filter(([, v]) => Array.isArray(v))),
-            },
-            field_formulas: md.formulas,
-            mapping_instance_id: ft.editingFieldTemplateId,
-          }),
-        }),
-      ]);
-
-      const res = await fetch("/api/report/master-templates", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name,
-          description: `Tạo từ template khách hàng`,
-          field_catalog: normalizedCatalog,
-        }),
-      });
-      const data = (await res.json()) as { ok: boolean; error?: string };
-      if (!data.ok) throw new Error(data.error ?? "Không thể tạo template mẫu.");
-
-      await fetch(`/api/report/mapping-instances/${ft.editingFieldTemplateId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: ft.editingFieldTemplateName.trim(),
-          field_catalog: normalizedCatalog,
-        }),
-      });
-
-      const { selectedCustomerId } = useCustomerStore.getState();
-      await Promise.all([
-        loadAllFieldTemplates(),
-        selectedCustomerId ? loadFieldTemplates(selectedCustomerId) : Promise.resolve(),
-      ]);
-      useUiStore.getState().setStatus({ message: `Đã lưu template mẫu: "${name}"` });
-    } catch (e) {
-      handleApiError(e, "mapping.fieldTemplate.errSave");
-    } finally {
-      useFieldTemplateStore.getState().setPromotingToMaster(false);
-    }
-  }
-
   return {
     applySelectedFieldTemplate: apply.applySelectedFieldTemplate,
     startEditingExistingTemplate: apply.startEditingExistingTemplate,
     stopEditingFieldTemplate: apply.stopEditingFieldTemplate,
     assignSelectedFieldTemplate,
     saveEditedFieldTemplate,
-    promoteToMasterTemplate,
   };
 }

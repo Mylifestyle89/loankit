@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useLanguage } from "@/components/language-provider";
 import { useModalStore } from "@/lib/report/use-modal-store";
@@ -32,6 +32,11 @@ import { useMappingModalState } from "./use-mapping-modal-state";
 /**
  * Aggregates all state, computed values, and handlers for the Mapping page.
  * The page component consumes this hook and only handles JSX rendering.
+ *
+ * Phase 6g: master-centric selection (Q1–Q4 locked).
+ * - selectedMappingInstanceId removed; replaced by selectedMasterTemplateId + selectedLoanId
+ * - promotingToMaster / handlePromoteToMasterTemplate removed (Q2-a)
+ * - multiActiveLoansWarning added (Q3-b)
  */
 export function useMappingPageLogic() {
   const { t } = useLanguage();
@@ -62,6 +67,8 @@ export function useMappingPageLogic() {
   const fieldCatalog = useMappingDataStore((s) => s.fieldCatalog);
   const values = useMappingDataStore((s) => s.values);
   const formulas = useMappingDataStore((s) => s.formulas);
+  const storedMasterTemplateId = useMappingDataStore((s) => s.selectedMasterTemplateId);
+  const storedLoanId = useMappingDataStore((s) => s.selectedLoanId);
 
   const ocrProcessing = useOcrStore((s) => s.ocrProcessing);
   const ocrSuggestionsByField = useOcrStore((s) => s.ocrSuggestionsByField);
@@ -102,7 +109,6 @@ export function useMappingPageLogic() {
   const editingFieldTemplateId = useFieldTemplateStore((s) => s.editingFieldTemplateId);
   const editingFieldTemplateName = useFieldTemplateStore((s) => s.editingFieldTemplateName);
   const savingEditedTemplate = useFieldTemplateStore((s) => s.savingEditedTemplate);
-  const promotingToMaster = useFieldTemplateStore((s) => s.promotingToMaster);
 
   const editingGroup = useGroupUiStore((s) => s.editingGroup);
   const editingGroupValue = useGroupUiStore((s) => s.editingGroupValue);
@@ -120,6 +126,20 @@ export function useMappingPageLogic() {
 
   const undoHistory = useUndoStore((s) => s.undoHistory);
   const openModal = useModalStore((s) => s.openModal);
+
+  // ── Master-centric selection (Q1/Q3) ──────────────────────────────────────
+  // selectedMasterTemplateId: derived from store (set by applySelectedFieldTemplate)
+  // or falls back to editingFieldTemplateId (all templates are masters now)
+  const selectedMasterTemplateId = useMemo(() => {
+    if (storedMasterTemplateId) return storedMasterTemplateId;
+    const candidateId = selectedFieldTemplateId || editingFieldTemplateId;
+    if (!candidateId) return undefined;
+    // All candidates are master IDs post-cascade
+    return candidateId || undefined;
+  }, [storedMasterTemplateId, selectedFieldTemplateId, editingFieldTemplateId]);
+
+  // selectedLoanId: use stored value (resolved by heuristic newest-active in effects)
+  const selectedLoanId = storedLoanId || undefined;
 
   // ── Dispatches ─────────────────────────────────────────────────────────────
   const {
@@ -146,13 +166,6 @@ export function useMappingPageLogic() {
     setShowUnmappedOnly,
   } = useMappingDispatches();
 
-  const selectedMappingInstanceId = useMemo(() => {
-    if (!selectedCustomerId) return undefined;
-    const candidateId = selectedFieldTemplateId || editingFieldTemplateId;
-    if (!candidateId) return undefined;
-    return fieldTemplates.some((template) => template.id === candidateId) ? candidateId : undefined;
-  }, [editingFieldTemplateId, fieldTemplates, selectedCustomerId, selectedFieldTemplateId]);
-
   // ── Feature hooks ──────────────────────────────────────────────────────────
   const {
     loadData,
@@ -162,7 +175,7 @@ export function useMappingPageLogic() {
     uploadAutoProcessFile,
     runSmartAutoBatch,
     openAutoProcessOutputFolder,
-  } = useMappingApi({ t, selectedMappingInstanceId });
+  } = useMappingApi({ t, selectedMasterTemplateId, selectedLoanId });
 
   const {
     loadFieldTemplates,
@@ -174,7 +187,6 @@ export function useMappingPageLogic() {
     stopEditingFieldTemplate,
     assignSelectedFieldTemplate,
     saveEditedFieldTemplate,
-    promoteToMasterTemplate,
   } = useFieldTemplates({ t });
 
   const {
@@ -297,6 +309,41 @@ export function useMappingPageLogic() {
     ocrLogEndRef,
   });
 
+  // ── Resolve loans when customer changes: heuristic newest-active + warning (Q3-b) ──
+  const [activeLoansWarning, setActiveLoansWarning] = useState("");
+
+  useEffect(() => {
+    if (!selectedCustomerId) {
+      useMappingDataStore.getState().setSelectedLoanId("");
+      setActiveLoansWarning("");
+      return;
+    }
+    void (async () => {
+      try {
+        const res = await fetch(`/api/customers/${encodeURIComponent(selectedCustomerId)}/loans`, {
+          cache: "no-store",
+        });
+        const data = (await res.json()) as {
+          ok: boolean;
+          loans?: Array<{ id: string; status: string }>;
+        };
+        if (!data.ok || !data.loans) return;
+        const activeLoans = data.loans.filter((l) => l.status === "active");
+        if (activeLoans.length === 0) return;
+        // Heuristic: pick last (newest) active loan
+        const newestLoan = activeLoans[activeLoans.length - 1];
+        useMappingDataStore.getState().setSelectedLoanId(newestLoan.id);
+        if (activeLoans.length >= 2) {
+          setActiveLoansWarning(
+            `Khách hàng có ${activeLoans.length} hồ sơ vay đang hoạt động. Đang lưu vào hồ sơ mới nhất.`,
+          );
+        } else {
+          setActiveLoansWarning("");
+        }
+      } catch { /* best-effort */ }
+    })();
+  }, [selectedCustomerId]);
+
   const fetchFieldUsage = useFieldUsageStore((s) => s.fetchUsage);
   useEffect(() => { void fetchFieldUsage(); }, [fetchFieldUsage]);
 
@@ -342,10 +389,6 @@ export function useMappingPageLogic() {
   const handleSaveEditedFieldTemplate = useCallback(
     () => void saveEditedFieldTemplate(),
     [saveEditedFieldTemplate],
-  );
-  const handlePromoteToMasterTemplate = useCallback(
-    () => void promoteToMasterTemplate(),
-    [promoteToMasterTemplate],
   );
   const handleOpenFormulaModal = useCallback(
     (fieldKey: string) => useUiStore.getState().setContext({ formulaFieldKey: fieldKey }),
@@ -396,7 +439,11 @@ export function useMappingPageLogic() {
     fieldTemplates, allFieldTemplates, loadingFieldTemplates,
     selectedFieldTemplateId, editingFieldTemplatePicker,
     editPickerTemplateId, editingFieldTemplateId, editingFieldTemplateName,
-    savingEditedTemplate, promotingToMaster,
+    savingEditedTemplate,
+    // Master-centric selection (Q1/Q3)
+    selectedMasterTemplateId,
+    selectedLoanId,
+    multiActiveLoansWarning: activeLoansWarning,
     // Group UI
     editingGroup, editingGroupValue, editingGroupError, customGroups,
     changingFieldGroup, changingFieldGroupValue, changingFieldGroupNewName,
@@ -449,7 +496,7 @@ export function useMappingPageLogic() {
     handleOpenCustomerPicker, handleOpenTemplatePicker,
     handleUploadDocument, handleOpenFinancialAnalysis,
     handleOpenOcrReview, handleSaveEditedFieldTemplate,
-    handlePromoteToMasterTemplate, handleOpenFormulaModal,
+    handleOpenFormulaModal,
     handleAcceptOcrSuggestion, handleDeclineOcrSuggestion,
     // Derived
     isEditingMaster, mappedFieldCount,

@@ -30,11 +30,13 @@ type UploadKind = "data" | "template";
  */
 export function useMappingApiMutations({
   t,
-  selectedMappingInstanceId,
+  selectedMasterTemplateId,
+  selectedLoanId,
   loadData,
 }: {
   t: (key: string) => string;
-  selectedMappingInstanceId?: string;
+  selectedMasterTemplateId?: string;
+  selectedLoanId?: string;
   loadData: () => Promise<void>;
 }) {
   const updateStatus = (
@@ -68,6 +70,9 @@ export function useMappingApiMutations({
 
       const normalizedCatalog = normalizeFieldCatalogForSchema(md.fieldCatalog);
 
+      // Resolve effective master id: prefer store value, fall back to selectedFieldTemplateId
+      const effectiveMasterId = selectedMasterTemplateId || selectedFieldTemplateId || undefined;
+
       const [mappingRes] = await Promise.all([
         fetch("/api/report/mapping", {
           method: "PUT",
@@ -78,15 +83,16 @@ export function useMappingApiMutations({
             mapping: JSON.parse(md.mappingText),
             alias_map: aliasMap,
             field_catalog: normalizedCatalog,
-            mapping_instance_id: selectedMappingInstanceId || undefined,
+            master_template_id: effectiveMasterId,
+            loan_id: selectedLoanId || undefined,
           }),
         }),
-        selectedCustomerId && selectedFieldTemplateId
+        selectedCustomerId && effectiveMasterId
           ? fetch("/api/report/master-templates", {
               method: "PUT",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
-                master_id: selectedFieldTemplateId,
+                master_id: effectiveMasterId,
                 field_catalog: normalizedCatalog,
               }),
             })
@@ -106,7 +112,8 @@ export function useMappingApiMutations({
         body: JSON.stringify({
           manual_values: { ...md.manualValues, ...repeaterData },
           field_formulas: md.formulas,
-          mapping_instance_id: selectedMappingInstanceId || undefined,
+          master_template_id: effectiveMasterId,
+          loan_id: selectedLoanId || undefined,
         }),
       });
       const valuesData = (await valuesRes.json()) as { ok?: boolean; error?: string };
@@ -154,7 +161,8 @@ export function useMappingApiMutations({
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             run_build: true,
-            mapping_instance_id: selectedMappingInstanceId || undefined,
+            master_template_id: effectiveMasterId,
+            loan_id: selectedLoanId || undefined,
           }),
         })
           .then(async (res) => {
@@ -176,7 +184,7 @@ export function useMappingApiMutations({
     } finally {
       updateStatus({ saving: false });
     }
-  }, [selectedMappingInstanceId, t, loadData]);
+  }, [selectedMasterTemplateId, selectedLoanId, t, loadData]);
 
   const getAutoProcessAssets = useCallback(async () => {
     const res = await fetch("/api/report/auto-process/assets", { cache: "no-store" });

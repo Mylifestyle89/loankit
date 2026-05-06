@@ -37,6 +37,6 @@ export function useFieldTemplates({ t }: { t: (key: string) => string }) {
     stopEditingFieldTemplate: crud.stopEditingFieldTemplate,
     assignSelectedFieldTemplate: crud.assignSelectedFieldTemplate,
     saveEditedFieldTemplate: crud.saveEditedFieldTemplate,
-    promoteToMasterTemplate: crud.promoteToMasterTemplate,
+    // promoteToMasterTemplate removed (Q2-a: MappingInstance concept deleted)
   };
 }
