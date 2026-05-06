@@ -9,7 +9,6 @@ type ExtractKind = "ocr" | "docx";
 
 export type ExtractRequestContext = {
   file: File;
-  mappingInstanceId: string;
   fieldTemplateId: string;
 };
 
@@ -18,12 +17,12 @@ export async function parseExtractRequestForm(form: FormData): Promise<ExtractRe
   if (!(file instanceof File)) {
     throw new ValidationError("file is required.");
   }
-  const mappingInstanceId = String(form.get("mappingInstanceId") ?? "").trim();
+  // Phase 6g: UI always sends fieldTemplateId (master id); mappingInstanceId removed.
   const fieldTemplateId = String(form.get("fieldTemplateId") ?? "").trim();
-  if (!mappingInstanceId && !fieldTemplateId) {
-    throw new ValidationError("mappingInstanceId or fieldTemplateId is required.");
+  if (!fieldTemplateId) {
+    throw new ValidationError("fieldTemplateId is required.");
   }
-  return { file, mappingInstanceId, fieldTemplateId };
+  return { file, fieldTemplateId };
 }
 
 export function validateOcrFile(file: File): void {
@@ -49,17 +48,9 @@ export function validateDocxFile(file: File): void {
   }
 }
 
-async function resolveFieldCatalog(input: {
-  mappingInstanceId: string;
-  fieldTemplateId: string;
-}) {
-  if (input.mappingInstanceId) {
-    const mappingInstance = await reportService.getMappingInstance(input.mappingInstanceId);
-    return mappingInstance.field_catalog;
-  }
-
+async function resolveFieldCatalog(fieldTemplateId: string) {
   const { data: masters } = await reportService.listMasterTemplates({ withUsage: false, limit: 500 });
-  const selected = masters.find((item: { id: string }) => item.id === input.fieldTemplateId);
+  const selected = masters.find((item: { id: string }) => item.id === fieldTemplateId);
   if (!selected) throw new ValidationError("fieldTemplateId not found.");
   return selected.field_catalog;
 }
@@ -69,10 +60,7 @@ export async function runExtractProcess(input: {
   preferredKind?: ExtractKind;
 }) {
   const { context, preferredKind } = input;
-  const fieldCatalog = await resolveFieldCatalog({
-    mappingInstanceId: context.mappingInstanceId,
-    fieldTemplateId: context.fieldTemplateId,
-  });
+  const fieldCatalog = await resolveFieldCatalog(context.fieldTemplateId);
   const buffer = Buffer.from(await context.file.arrayBuffer());
   return extractFieldsFromReport({
     buffer,
@@ -82,4 +70,3 @@ export async function runExtractProcess(input: {
     preferredKind,
   });
 }
-

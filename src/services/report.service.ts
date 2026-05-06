@@ -6,7 +6,6 @@ import { templateService } from "./report/template.service";
 import { fieldValuesService } from "./report/field-values.service";
 import { mappingService } from "./report/mapping.service";
 import { masterTemplateService } from "./report/master-template.service";
-import { mappingInstanceService } from "./report/mapping-instance.service";
 import { buildService } from "./report/build.service";
 import { dataIoService } from "./report/data-io.service";
 
@@ -19,7 +18,6 @@ export const reportService = {
   ...fieldValuesService,
   ...mappingService,
   ...masterTemplateService,
-  ...mappingInstanceService,
   ...buildService,
   ...dataIoService,
 };

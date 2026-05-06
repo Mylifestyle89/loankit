@@ -1,8 +1,7 @@
 /**
  * Field-values service — auto/manual field values & formulas.
  * Manual values come from valuesService (per-loan); formulas from
- * MasterTemplate.formulasJson. Caller scope: loanId | masterTemplateId |
- * mappingInstanceId (back-compat).
+ * MasterTemplate.formulasJson. Caller scope: loanId | masterTemplateId.
  */
 import { NotFoundError, ValidationError } from "@/core/errors/app-error";
 import { enrichContextWithLabels } from "@/core/use-cases/formula-processor";
@@ -13,10 +12,7 @@ import { loadState } from "@/lib/report/fs-store";
 import { runBuildAndValidate } from "@/lib/report/pipeline-client";
 import { valuesRecordSchema, type ValuesRecord } from "@/lib/report/values-schema";
 import { parseFieldCatalogJson } from "./_shared";
-import {
-  masterAndLoanFromMappingInstance,
-  masterIdFromLoan,
-} from "./master-source";
+import { masterIdFromLoan } from "./master-source";
 import { masterTemplateService } from "./master-template.service";
 import { valuesService } from "./values.service";
 
@@ -40,16 +36,9 @@ type ResolvedScope = {
 async function resolveScope(input: {
   loanId?: string;
   masterTemplateId?: string;
-  mappingInstanceId?: string;
 }): Promise<ResolvedScope> {
-  let loanId: string | null = input.loanId ?? null;
+  const loanId: string | null = input.loanId ?? null;
   let masterTemplateId: string | null = input.masterTemplateId ?? null;
-
-  if (input.mappingInstanceId && (!loanId || !masterTemplateId)) {
-    const t = await masterAndLoanFromMappingInstance(input.mappingInstanceId);
-    loanId = loanId ?? t.loanId;
-    masterTemplateId = masterTemplateId ?? t.masterTemplateId;
-  }
 
   if (!masterTemplateId && loanId) {
     masterTemplateId = await masterIdFromLoan(loanId);
@@ -101,7 +90,6 @@ export const fieldValuesService = {
   async getFieldValues(params?: {
     loanId?: string;
     masterTemplateId?: string;
-    mappingInstanceId?: string;
   }) {
     const scope = await resolveScope(params ?? {});
     const [flatValues, manualValues, fieldFormulas] = await Promise.all([
@@ -123,7 +111,6 @@ export const fieldValuesService = {
     fieldFormulas?: Record<string, string>;
     loanId?: string;
     masterTemplateId?: string;
-    mappingInstanceId?: string;
   }) {
     if (!input.manualValues || typeof input.manualValues !== "object") {
       throw new ValidationError("manual_values is required.");
@@ -132,12 +119,11 @@ export const fieldValuesService = {
     const scope = await resolveScope({
       loanId: input.loanId,
       masterTemplateId: input.masterTemplateId,
-      mappingInstanceId: input.mappingInstanceId,
     });
 
     if (!scope.loanId) {
       throw new ValidationError(
-        "Cannot save manual values without a linked loan. Provide loan_id (or relink the mapping instance).",
+        "Cannot save manual values without a linked loan. Provide loan_id.",
       );
     }
 
@@ -158,7 +144,6 @@ export const fieldValuesService = {
     const writeFormulas = async (): Promise<Record<string, string>> => {
       if (!input.fieldFormulas || typeof input.fieldFormulas !== "object") return {};
       if (!scope.masterTemplateId) {
-        // No master to write to; silently skip — values still persist on the loan.
         console.warn(`${LOG_PREFIX} loan ${scope.loanId} has no master template, formulas not persisted.`);
         return input.fieldFormulas;
       }

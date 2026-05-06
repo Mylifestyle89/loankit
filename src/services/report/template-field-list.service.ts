@@ -1,12 +1,12 @@
 /**
  * Field-template list/query operations — read-only queries for field templates.
- * Extracted from template-field-operations.service.ts for file-size compliance.
+ * Phase 6h: dropped ensureMasterInstanceMigration, mappingInstance.count/groupBy.
+ * Usage count now derived from loans.masterTemplateId (master-centric).
  */
 import { prisma } from "@/lib/prisma";
 import { loadState } from "@/lib/report/fs-store";
 
 import { mapMasterTemplateRecordToSummary, parseCustomerDataJson } from "./_shared";
-import { ensureMasterInstanceMigration } from "./_migration-internals";
 
 export async function listFieldTemplates(params: {
   customerId?: string;
@@ -14,41 +14,35 @@ export async function listFieldTemplates(params: {
   page?: number;
   limit?: number;
 }) {
-  await ensureMasterInstanceMigration();
-
   const page = Math.max(1, params.page ?? 1);
   const limit = Math.min(500, Math.max(1, params.limit ?? 100));
   const skip = (page - 1) * limit;
 
-  const [masters, total, instanceCount] = await prisma.$transaction([
+  const [masters, total] = await prisma.$transaction([
     prisma.masterTemplate.findMany({
       orderBy: { createdAt: "desc" },
       skip,
       take: limit,
     }),
     prisma.masterTemplate.count(),
-    prisma.mappingInstance.count(),
   ]);
 
-  const hasDbMasterData = total > 0;
-  const hasDbInstanceData = instanceCount > 0;
-
-  if (hasDbMasterData || hasDbInstanceData) {
+  if (total > 0) {
     const usageMap = new Map<string, number>();
     if (params.withUsage || params.customerId) {
-      // Scoped _count aggregate — avoids full-table groupBy scan
+      // Derive usage from loans.masterTemplateId (Q1-b, master-centric)
       const masterIds = masters.map((m) => m.id);
-      const instanceCounts = await prisma.mappingInstance.groupBy({
-        by: ["masterId"],
+      const loanCounts = await prisma.loan.groupBy({
+        by: ["masterTemplateId"],
         where: {
-          masterId: { in: masterIds },
+          masterTemplateId: { in: masterIds },
           ...(params.customerId ? { customerId: params.customerId } : {}),
         },
-        _count: { customerId: true },
+        _count: { id: true },
       });
-      for (const row of instanceCounts) {
-        if (!row.masterId) continue;
-        usageMap.set(row.masterId, row._count.customerId);
+      for (const row of loanCounts) {
+        if (!row.masterTemplateId) continue;
+        usageMap.set(row.masterTemplateId, row._count.id);
       }
     }
 
@@ -64,7 +58,7 @@ export async function listFieldTemplates(params: {
     return { data, total, page, limit };
   }
 
-  // ── Legacy FS-store path ──
+  // ── Legacy FS-store path (survives until Phase 6e drops fs-store) ──
   const state = await loadState();
   const allTemplates = state.field_templates ?? [];
 

@@ -68,13 +68,11 @@ export const buildService = {
     reportPath?: string;
     templatePath?: string;
     loanId?: string;
-    mappingInstanceId?: string;
   }) {
     const start = Date.now();
     const state = await loadState();
     const source = await resolveBuildSource({
       loanId: input.loanId,
-      mappingInstanceId: input.mappingInstanceId,
     });
     const activeTemplate = await getActiveTemplateProfile(state);
     const resolvedLoanId = loanIdFromBuildSource(source);
@@ -143,12 +141,11 @@ export const buildService = {
     return processBankReportExport(input);
   },
 
-  async validateReport(input: { runBuild?: boolean; loanId?: string; mappingInstanceId?: string }) {
+  async validateReport(input: { runBuild?: boolean; loanId?: string }) {
     const state = await loadState();
     const activeTemplate = await getActiveTemplateProfile(state);
     const source = await resolveBuildSource({
       loanId: input.loanId,
-      mappingInstanceId: input.mappingInstanceId,
     });
     const aliasPathHint = source.mode === "legacy" ? source.aliasPath : `master:${source.masterTemplateId}`;
 

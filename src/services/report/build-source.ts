@@ -1,13 +1,13 @@
 /**
  * build-source.ts — unified scope resolver for build/export/validate flow.
- * Returns DB-backed master source when caller supplies loanId/mappingInstanceId;
+ * Returns DB-backed master source when caller supplies loanId;
  * falls back to FS active mapping version when unscoped.
  */
 import { docxEngine } from "@/lib/docx-engine";
 import type { AliasMap } from "@/lib/report/config-schema";
 import { getActiveMappingVersion, loadState } from "@/lib/report/fs-store";
 
-import { masterAndLoanFromMappingInstance, resolveMasterSourceByLoan } from "./master-source";
+import { resolveMasterSourceByLoan } from "./master-source";
 
 export type BuildSource =
   | {
@@ -27,7 +27,6 @@ export type BuildSource =
 
 export type BuildScope = {
   loanId?: string | null;
-  mappingInstanceId?: string | null;
 };
 
 /** Source ID for freshness/build-meta — masterTemplateId for master, versionId for legacy. */
@@ -36,11 +35,7 @@ export function buildSourceId(source: BuildSource): string {
 }
 
 export async function resolveBuildSource(scope: BuildScope = {}): Promise<BuildSource> {
-  let loanId = scope.loanId ?? null;
-  if (!loanId && scope.mappingInstanceId) {
-    const t = await masterAndLoanFromMappingInstance(scope.mappingInstanceId);
-    loanId = t.loanId;
-  }
+  const loanId = scope.loanId ?? null;
   if (loanId) {
     const ms = await resolveMasterSourceByLoan(loanId);
     return {

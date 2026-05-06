@@ -11,13 +11,12 @@ export async function POST(req: NextRequest) {
     await requireSession();
     const body = (await req.json().catch(() => ({}))) as {
       run_build?: boolean;
-      mapping_instance_id?: string;
       loan_id?: string;
+      master_template_id?: string;
     };
     const result = await reportService.validateReport({
       runBuild: body.run_build === true,
       loanId: body.loan_id,
-      mappingInstanceId: body.mapping_instance_id,
     });
     return NextResponse.json({
       ok: true,

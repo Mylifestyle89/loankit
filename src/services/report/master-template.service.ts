@@ -1,12 +1,12 @@
 /**
  * Master-template service — CRUD for master field-template definitions.
+ * Phase 6h: removed ensureMasterInstanceMigration + mappingInstance.count/groupBy.
  */
 import { NotFoundError, ValidationError } from "@/core/errors/app-error";
 import { prisma } from "@/lib/prisma";
 import { fieldCatalogItemSchema } from "@/lib/report/config-schema";
 
 import { mapMasterTemplateRecordToSummary } from "./_shared";
-import { ensureMasterInstanceMigration } from "./_migration-internals";
 
 // ---------------------------------------------------------------------------
 // Master-template Service
@@ -14,7 +14,6 @@ import { ensureMasterInstanceMigration } from "./_migration-internals";
 
 export const masterTemplateService = {
   async listMasterTemplates(params?: { withUsage?: boolean; page?: number; limit?: number }) {
-    await ensureMasterInstanceMigration();
     const page = Math.max(1, params?.page ?? 1);
     const limit = Math.min(500, Math.max(1, params?.limit ?? 100));
     const skip = (page - 1) * limit;
@@ -28,23 +27,21 @@ export const masterTemplateService = {
       prisma.masterTemplate.count(),
     ]);
 
-    const hasDbMasterData = total > 0;
-    const hasDbInstanceData = (await prisma.mappingInstance.count()) > 0;
-    if (!hasDbMasterData && !hasDbInstanceData) {
-      return { data: [], total: 0, page, limit };
-    }
     if (!params?.withUsage) {
       return { data: masters.map((item) => mapMasterTemplateRecordToSummary(item)), total, page, limit };
     }
-    // Replace full-table groupBy: use _count aggregate scoped per master in current page
+
+    // Usage = number of loans using each master template
     const masterIds = masters.map((m) => m.id);
-    const instanceCounts = await prisma.mappingInstance.groupBy({
-      by: ["masterId"],
-      where: { masterId: { in: masterIds } },
-      _count: { customerId: true },
+    const loanCounts = await prisma.loan.groupBy({
+      by: ["masterTemplateId"],
+      where: { masterTemplateId: { in: masterIds } },
+      _count: { id: true },
     });
     const usageMap = new Map<string, number>(
-      instanceCounts.map((row) => [row.masterId ?? "", row._count.customerId]),
+      loanCounts
+        .filter((row) => row.masterTemplateId != null)
+        .map((row) => [row.masterTemplateId!, row._count.id]),
     );
     return {
       data: masters.map((item) => ({
@@ -62,7 +59,6 @@ export const masterTemplateService = {
     if (!name) throw new ValidationError("name is required.");
     if (!Array.isArray(input.fieldCatalog)) throw new ValidationError("field_catalog must be an array.");
     const fieldCatalog = input.fieldCatalog.map((item) => fieldCatalogItemSchema.parse(item));
-    await ensureMasterInstanceMigration();
     const created = await prisma.masterTemplate.create({
       data: {
         name,
@@ -78,7 +74,6 @@ export const masterTemplateService = {
   async updateMasterTemplate(input: { masterId: string; name?: string; description?: string; fieldCatalog?: unknown[]; status?: "active" | "archived" }) {
     const masterId = input.masterId.trim();
     if (!masterId) throw new ValidationError("master_id is required.");
-    await ensureMasterInstanceMigration();
     const existing = await prisma.masterTemplate.findUnique({ where: { id: masterId } });
     if (!existing) throw new NotFoundError("Master template not found.");
     const fieldCatalog = Array.isArray(input.fieldCatalog)
@@ -99,14 +94,11 @@ export const masterTemplateService = {
   async deleteMasterTemplate(masterId: string) {
     const id = masterId.trim();
     if (!id) throw new ValidationError("master_id is required.");
-    await ensureMasterInstanceMigration();
     const existing = await prisma.masterTemplate.findUnique({ where: { id } });
     if (!existing) throw new NotFoundError("Master template not found.");
     await prisma.masterTemplate.delete({ where: { id } });
     return { id };
   },
-
-  // Per-master mapping/alias accessors removed — callers use ./master-source.
 
   async getFormulasForTemplate(masterId: string): Promise<Record<string, string>> {
     const row = await prisma.masterTemplate.findUnique({

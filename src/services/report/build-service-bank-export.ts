@@ -35,7 +35,6 @@ export type BankExportInput = {
   repeatKey?: string;
   customerNameKey?: string;
   loanId?: string;
-  mappingInstanceId?: string;
 };
 
 export type BankExportResult = {
@@ -59,7 +58,6 @@ export async function processBankReportExport(input?: BankExportInput): Promise<
   const state = await loadState();
   const source = await resolveBuildSource({
     loanId: input?.loanId,
-    mappingInstanceId: input?.mappingInstanceId,
   });
   const activeTemplate = await getActiveTemplateProfile(state);
 

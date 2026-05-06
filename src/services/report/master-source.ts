@@ -83,23 +83,6 @@ export async function resolveMasterSourceByLoan(loanId: string): Promise<MasterS
   };
 }
 
-/**
- * Boundary helper: translate `mappingInstanceId` to both `masterTemplateId`
- * and `loanId`. Either field may be null on orphan rows.
- */
-export async function masterAndLoanFromMappingInstance(
-  mappingInstanceId: string,
-): Promise<{ masterTemplateId: string | null; loanId: string | null }> {
-  const inst = await prisma.mappingInstance.findUnique({
-    where: { id: mappingInstanceId },
-    select: { masterId: true, loanId: true },
-  });
-  return {
-    masterTemplateId: inst?.masterId ?? null,
-    loanId: inst?.loanId ?? null,
-  };
-}
-
 /** Resolve the master template id from a loan (null if loan or assignment missing). */
 export async function masterIdFromLoan(loanId: string): Promise<string | null> {
   const loan = await prisma.loan.findUnique({
