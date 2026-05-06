@@ -162,7 +162,6 @@ model Customer {
   createdBy   User?           @relation("CustomerOwner", fields: [createdById], references: [id], onDelete: SetNull)
   grants      CustomerGrant[]
 
-  mapping_instances MappingInstance[]
   loans             Loan[]
   loan_plans        LoanPlan[]
   collaterals       Collateral[]
@@ -260,7 +259,6 @@ model Loan {
   disbursements    Disbursement[]
   beneficiaries    Beneficiary[]
   reportExports    LoanReportExport[]
-  mappingInstances MappingInstance[]
 
   @@index([contractNumber])
   @@index([customerId])
@@ -429,45 +427,11 @@ model MasterTemplate {
   defaultAliasJson   String @default("{}")
   formulasJson       String @default("{}")
 
-  mapping_instances MappingInstance[]
   loans             Loan[]
 
   @@index([status])
   @@index([companyType, reportKind])
   @@map("field_template_masters")
-}
-
-model MappingInstance {
-  id                 String    @id @default(cuid())
-  createdAt          DateTime  @default(now())
-  updatedAt          DateTime  @updatedAt
-  name               String
-  status             String    @default("draft")
-  createdBy          String    @default("web-user")
-  publishedAt        DateTime?
-  mappingJsonPath    String
-  aliasJsonPath      String
-  masterSnapshotName String    @default("")
-  fieldCatalogJson   String    @default("[]")
-
-  /// JSON content stored directly — avoids filesystem writes on Vercel (EROFS)
-  mappingJson String?
-  aliasJson   String?
-
-  masterId   String?
-  customerId String
-  // Phase 3.5: link to Loan (nullable, backfill, NOT NULL Phase 5).
-  // SetNull = config tái dùng, không cascade khi xóa loan.
-  loanId     String?
-  master     MasterTemplate? @relation(fields: [masterId], references: [id], onDelete: SetNull)
-  customer   Customer        @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  loan       Loan?           @relation(fields: [loanId], references: [id], onDelete: SetNull)
-
-  @@index([loanId])
-  @@index([masterId])
-  @@index([customerId])
-  @@index([customerId, masterId, status])
-  @@map("mapping_instances")
 }
 
 // ─── Report Config (replaces filesystem framework_state.json) ────

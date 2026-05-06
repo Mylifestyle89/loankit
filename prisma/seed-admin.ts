@@ -45,15 +45,10 @@ async function seed() {
   await migrateCreatedBy(result.user.id);
 }
 
-/** Update legacy MappingInstance.createdBy from "web-user" to real admin ID */
-async function migrateCreatedBy(adminId: string) {
-  const updated = await prisma.mappingInstance.updateMany({
-    where: { createdBy: "web-user" },
-    data: { createdBy: adminId },
-  });
-  if (updated.count > 0) {
-    console.log(`Migrated ${updated.count} MappingInstance records (createdBy → ${adminId})`);
-  }
+/** No-op: MappingInstance table dropped in Phase 6i — nothing to migrate. */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+async function migrateCreatedBy(_adminId: string) {
+  // MappingInstance table removed; this migration step is obsolete.
 }
 
 seed()

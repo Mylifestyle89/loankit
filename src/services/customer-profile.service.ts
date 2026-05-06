@@ -23,7 +23,6 @@ export async function getFullProfile(id: string) {
       createdBy: { select: { id: true, name: true } },
       co_borrowers: { select: { id: true } },
       collaterals: { select: { id: true, total_value: true, obligation: true } },
-      mapping_instances: { orderBy: { updatedAt: "desc" }, include: { master: true } },
     },
   });
   if (!customer) throw new NotFoundError("Customer not found.");
@@ -67,7 +66,6 @@ export async function getFullProfile(id: string) {
     totalInvoices,
     totalInvoiceAmount,
     overdueInvoices,
-    totalMappingInstances: customer.mapping_instances.length,
     debtGroup: debtGroups[0] ?? null,
     nearestMaturity: nearestEndDate?.toISOString() ?? null,
     coBorrowerCount: customer.co_borrowers.length,
