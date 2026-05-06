@@ -1,12 +1,10 @@
 /**
- * values-resolver.ts — DB-only loader for report module consumers.
+ * values-resolver.ts — load merged report values for a loan.
  *
- * Phase 5a: dual-read window closed. No FS fallback — all values come from
- * Loan.dossierValuesJson + Customer.customerProfileValuesJson via valuesService.
- * Stale loan FK degrades gracefully (NotFoundError → empty values, no throw).
- *
- * Callers without a loanId (legacy/orphan paths) receive {} and must handle
- * empty state in their UI.
+ * DB is the only source of truth. A stale loan FK degrades to empty values
+ * rather than throwing so callers (export, validation) don't crash on rows
+ * pointing at a deleted loan. Callers without a loanId receive {} and must
+ * handle empty state in their UI.
  */
 import { NotFoundError } from "@/core/errors/app-error";
 import type { ValuesRecord } from "@/lib/report/values-schema";

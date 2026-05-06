@@ -2,13 +2,13 @@
  * Field-values service — auto/manual field values & formulas.
  *
  * Reads/writes dossier values via valuesService (DB) using the loanId
- * resolved from MappingInstance.loanId. Instances without a loanId (orphans
- * from Phase 2 migration) cannot persist manual values — caller must resolve
- * the FK first via the backfill script or by linking the instance to a loan.
+ * resolved from MappingInstance.loanId. Instances without a loanId cannot
+ * persist manual values — saveFieldValues throws so the UI surfaces the
+ * link-the-loan fix rather than silently dropping the user's edits.
  *
- * Field formulas remain on the filesystem per-instance (fieldFormulasPath) —
- * separate concern from manual values, retired together with MappingInstance
- * in Phase 6.
+ * Field formulas remain on the filesystem per-instance (fieldFormulasPath)
+ * — separate concern from manual values, retired together with the
+ * MappingInstance table in a later phase.
  */
 import path from "node:path";
 import { NotFoundError, ValidationError } from "@/core/errors/app-error";
@@ -19,7 +19,7 @@ import { evaluateFieldFormula } from "@/lib/report/field-calc";
 import { loadFieldFormulas, saveFieldFormulas } from "@/lib/report/field-formulas";
 import { loadState } from "@/lib/report/fs-store";
 import { runBuildAndValidate } from "@/lib/report/pipeline-client";
-import type { ValuesRecord } from "@/lib/report/values-schema";
+import { valuesRecordSchema, type ValuesRecord } from "@/lib/report/values-schema";
 import { parseFieldCatalogJson } from "./_shared";
 import { valuesService } from "./values.service";
 
@@ -119,15 +119,21 @@ export const fieldValuesService = {
       }
     }
 
-    if (scope.loanId) {
-      await valuesService.saveDossierValues(scope.loanId, toSave);
-    } else {
-      console.warn(`${LOG_PREFIX} skipping dossier save — instance has no loanId.`);
+    if (!scope.loanId) {
+      throw new ValidationError(
+        "Mapping instance is not linked to a loan. Run the backfill script or link the instance before saving.",
+      );
     }
-    const savedFormulas =
+
+    const [, savedFormulas] = await Promise.all([
+      valuesService.saveDossierValues(scope.loanId, toSave),
       input.fieldFormulas && typeof input.fieldFormulas === "object"
-        ? await saveFieldFormulas(input.fieldFormulas, scope.fieldFormulasPath)
-        : {};
-    return { manual_values: toSave, field_formulas: savedFormulas };
+        ? saveFieldFormulas(input.fieldFormulas, scope.fieldFormulasPath)
+        : Promise.resolve({}),
+    ]);
+    // Echo the canonical parsed values so callers see what the DB will see
+    // (Zod may strip invalid keys / coerce types).
+    const canonical = valuesRecordSchema.parse(toSave);
+    return { manual_values: canonical, field_formulas: savedFormulas };
   },
 };
