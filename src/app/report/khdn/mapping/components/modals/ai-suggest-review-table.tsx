@@ -45,7 +45,7 @@ const DEFAULT_GROUP_LABELS: Record<string, string> = {
 };
 
 const inputCls =
-  "w-full rounded border border-slate-200 bg-white/80 px-2 py-1 text-xs outline-none focus:border-brand-400 dark:border-white/10 dark:bg-white/5 dark:text-slate-200";
+  "w-full rounded border border-slate-200 bg-white/80 px-2 py-1 text-xs outline-none focus:border-primary-400 dark:border-white/10 dark:bg-white/5 dark:text-slate-200";
 
 export function AiSuggestReviewTable({ items, onConfirm, onCancel }: Props) {
   // Check/uncheck mỗi field
@@ -125,7 +125,7 @@ export function AiSuggestReviewTable({ items, onConfirm, onCancel }: Props) {
       {/* Header */}
       <div className="flex items-center justify-between">
         <p className="text-xs text-slate-500 dark:text-slate-400">
-          Đã tìm thấy <span className="font-semibold text-brand-500">{items.length}</span> trường
+          Đã tìm thấy <span className="font-semibold text-primary-500">{items.length}</span> trường
           phù hợp. Chọn trường cần áp dụng vào field template:
         </p>
         <div className="flex gap-1.5">
@@ -171,7 +171,7 @@ export function AiSuggestReviewTable({ items, onConfirm, onCancel }: Props) {
                   type="checkbox"
                   checked={allGroupChecked}
                   onChange={() => toggleGroup(groupKey)}
-                  className="h-3.5 w-3.5 accent-brand-500"
+                  className="h-3.5 w-3.5 accent-primary-500"
                 />
                 {editingGroup === groupKey ? (
                   <input
@@ -191,7 +191,7 @@ export function AiSuggestReviewTable({ items, onConfirm, onCancel }: Props) {
                 )}
                 <button
                   onClick={() => setEditingGroup(editingGroup === groupKey ? null : groupKey)}
-                  className="text-slate-400 hover:text-brand-500"
+                  className="text-slate-400 hover:text-primary-500"
                   title="Đổi tên nhóm"
                 >
                   <Pencil className="h-3 w-3" />
@@ -207,13 +207,13 @@ export function AiSuggestReviewTable({ items, onConfirm, onCancel }: Props) {
                   {groupItems.map((item) => (
                     <label
                       key={item.fieldKey}
-                      className="flex cursor-pointer items-center gap-3 px-4 py-1.5 hover:bg-brand-50/40 dark:hover:bg-brand-500/5"
+                      className="flex cursor-pointer items-center gap-3 px-4 py-1.5 hover:bg-primary-50/40 dark:hover:bg-primary-500/5"
                     >
                       <input
                         type="checkbox"
                         checked={checked[item.fieldKey] ?? false}
                         onChange={() => toggleField(item.fieldKey)}
-                        className="h-3.5 w-3.5 accent-brand-500"
+                        className="h-3.5 w-3.5 accent-primary-500"
                       />
                       <div className="min-w-0 flex-1">
                         <span className="text-xs text-slate-700 dark:text-slate-300">
@@ -248,7 +248,7 @@ export function AiSuggestReviewTable({ items, onConfirm, onCancel }: Props) {
           <button
             onClick={handleConfirm}
             disabled={selectedCount === 0}
-            className="flex items-center gap-1.5 rounded-lg bg-brand-500 px-3 py-1.5 text-xs font-medium text-white shadow-sm hover:bg-brand-600 disabled:opacity-40"
+            className="flex items-center gap-1.5 rounded-lg bg-primary-500 px-3 py-1.5 text-xs font-medium text-white shadow-sm hover:bg-primary-600 disabled:opacity-40"
           >
             <Check className="h-3.5 w-3.5" />
             Áp dụng {selectedCount} trường

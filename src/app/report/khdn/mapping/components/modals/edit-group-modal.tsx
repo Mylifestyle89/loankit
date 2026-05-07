@@ -50,7 +50,7 @@ export function EditGroupModal({
                     <button
                         type="button"
                         onClick={onClose}
-                        className="flex items-center gap-1.5 rounded-md border border-zinc-200 dark:border-white/[0.09] dark:text-slate-200 px-3 py-1.5 text-xs hover:bg-brand-50/30 dark:hover:bg-white/[0.06]"
+                        className="flex items-center gap-1.5 rounded-md border border-zinc-200 dark:border-white/[0.09] dark:text-slate-200 px-3 py-1.5 text-xs hover:bg-primary-50/30 dark:hover:bg-white/[0.06]"
                     >
                         <X className="h-3.5 w-3.5" />
                         {t("mapping.editGroup.cancel")}
@@ -58,7 +58,7 @@ export function EditGroupModal({
                     <button
                         type="button"
                         onClick={applyEditGroup}
-                        className="flex items-center gap-1.5 rounded-md bg-brand-500 px-3 py-1.5 text-xs text-white"
+                        className="flex items-center gap-1.5 rounded-md bg-primary-500 px-3 py-1.5 text-xs text-white"
                     >
                         <Save className="h-3.5 w-3.5" />
                         {t("mapping.editGroup.save")}

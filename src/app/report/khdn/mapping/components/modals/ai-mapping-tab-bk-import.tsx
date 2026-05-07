@@ -57,7 +57,7 @@ export function BkImportTab({
   return (
     <div className="space-y-4 px-4 py-4">
       {/* Header info + upload button */}
-      <div className="rounded-xl border border-blue-200/60 bg-gradient-to-br from-blue-50/80 via-blue-50/40 to-brand-50/40 p-3 dark:border-blue-500/25 dark:from-blue-500/10 dark:via-blue-500/5 dark:to-brand-500/5">
+      <div className="rounded-xl border border-blue-200/60 bg-gradient-to-br from-blue-50/80 via-blue-50/40 to-primary-50/40 p-3 dark:border-blue-500/25 dark:from-blue-500/10 dark:via-blue-500/5 dark:to-primary-500/5">
         <div className="flex items-center gap-3">
           <Database className="h-5 w-5 flex-shrink-0 text-blue-600 dark:text-blue-400" />
           <div className="flex-1">
@@ -147,7 +147,7 @@ export function BkImportTab({
               <label
                 className={`flex cursor-pointer items-start gap-2.5 rounded-lg border px-3 py-2.5 transition-colors ${
                   bkMode === "data-only"
-                    ? "border-brand-300 bg-brand-50/40 dark:border-brand-500/30 dark:bg-brand-500/10"
+                    ? "border-primary-300 bg-primary-50/40 dark:border-primary-500/30 dark:bg-primary-500/10"
                     : "border-slate-200/60 bg-transparent hover:bg-slate-50/50 dark:border-white/[0.07] dark:hover:bg-white/[0.03]"
                 }`}
               >
@@ -157,7 +157,7 @@ export function BkImportTab({
                   value="data-only"
                   checked={bkMode === "data-only"}
                   onChange={() => setBkMode("data-only")}
-                  className="mt-0.5 h-3.5 w-3.5 text-brand-500 focus:ring-brand-500"
+                  className="mt-0.5 h-3.5 w-3.5 text-primary-500 focus:ring-primary-500"
                 />
                 <div>
                   <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">Chỉ import dữ liệu</span>
@@ -169,7 +169,7 @@ export function BkImportTab({
               <label
                 className={`flex cursor-pointer items-start gap-2.5 rounded-lg border px-3 py-2.5 transition-colors ${
                   bkMode === "template-and-data"
-                    ? "border-brand-300 bg-brand-50/40 dark:border-brand-500/30 dark:bg-brand-500/10"
+                    ? "border-primary-300 bg-primary-50/40 dark:border-primary-500/30 dark:bg-primary-500/10"
                     : "border-slate-200/60 bg-transparent hover:bg-slate-50/50 dark:border-white/[0.07] dark:hover:bg-white/[0.03]"
                 }`}
               >
@@ -179,7 +179,7 @@ export function BkImportTab({
                   value="template-and-data"
                   checked={bkMode === "template-and-data"}
                   onChange={() => setBkMode("template-and-data")}
-                  className="mt-0.5 h-3.5 w-3.5 text-brand-500 focus:ring-brand-500"
+                  className="mt-0.5 h-3.5 w-3.5 text-primary-500 focus:ring-primary-500"
                 />
                 <div className="flex-1">
                   <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">Tạo template mới + dữ liệu</span>
@@ -192,7 +192,7 @@ export function BkImportTab({
                       value={bkTemplateName}
                       onChange={(e) => setBkTemplateName(e.target.value)}
                       placeholder="Nhập tên template..."
-                      className="mt-2 h-8 w-full rounded-lg border border-brand-200/80 bg-white/80 px-2.5 text-xs text-slate-800 placeholder:text-slate-400 focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-400/20 dark:border-brand-500/30 dark:bg-white/[0.05] dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:ring-brand-400/20"
+                      className="mt-2 h-8 w-full rounded-lg border border-primary-200/80 bg-white/80 px-2.5 text-xs text-slate-800 placeholder:text-slate-400 focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-400/20 dark:border-primary-500/30 dark:bg-white/[0.05] dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:ring-primary-400/20"
                     />
                   )}
                 </div>
@@ -210,7 +210,7 @@ export function BkImportTab({
               type="button"
               onClick={handleBkApplySelected}
               disabled={bkSelectedCount === 0 || !onApplyBkImport}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-blue-600 to-brand-500 px-4 py-2 text-sm font-medium text-white shadow-sm transition-all hover:from-blue-700 hover:to-brand-600 disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-blue-600 to-primary-500 px-4 py-2 text-sm font-medium text-white shadow-sm transition-all hover:from-blue-700 hover:to-primary-600 disabled:opacity-50"
             >
               <Check className="h-4 w-4" />
               {bkMode === "template-and-data"

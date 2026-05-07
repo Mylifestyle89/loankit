@@ -77,7 +77,7 @@ export function ValidationResultPanel({ t, validation }: ValidationResultPanelPr
                 item.level === "ok"
                   ? "border-emerald-200 bg-emerald-50 text-emerald-800"
                   : item.level === "warn"
-                    ? "border-brand-200 bg-brand-50 text-brand-700"
+                    ? "border-primary-200 bg-primary-50 text-primary-700"
                     : "border-rose-200 bg-rose-50 text-rose-800"
               }`}
             >

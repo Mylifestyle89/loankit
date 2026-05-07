@@ -79,7 +79,7 @@ export function ImportTemplateGroupModal({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-md border border-zinc-200 dark:border-white/[0.09] dark:text-slate-200 px-3 py-1.5 text-xs hover:bg-brand-50/30 dark:hover:bg-white/[0.06]"
+            className="rounded-md border border-zinc-200 dark:border-white/[0.09] dark:text-slate-200 px-3 py-1.5 text-xs hover:bg-primary-50/30 dark:hover:bg-white/[0.06]"
           >
             Hủy
           </button>
@@ -87,7 +87,7 @@ export function ImportTemplateGroupModal({
             type="button"
             onClick={onApply}
             disabled={!selectedSourceTemplateId || !selectedGroupPath}
-            className="rounded-md bg-brand-500 px-3 py-1.5 text-xs text-white disabled:opacity-50"
+            className="rounded-md bg-primary-500 px-3 py-1.5 text-xs text-white disabled:opacity-50"
           >
             Thêm nhóm dữ liệu
           </button>

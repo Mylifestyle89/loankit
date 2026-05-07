@@ -83,7 +83,7 @@ export function CreateMasterTemplateModal() {
             type="button"
             onClick={() => void onSave()}
             disabled={saving}
-            className="rounded-xl bg-brand-500 px-3 py-2 text-sm font-medium text-white transition-all hover:brightness-110 active:scale-95 disabled:opacity-60"
+            className="rounded-xl bg-primary-500 px-3 py-2 text-sm font-medium text-white transition-all hover:brightness-110 active:scale-95 disabled:opacity-60"
           >
             {saving ? "Đang lưu..." : "Tạo mẫu"}
           </button>
@@ -98,7 +98,7 @@ export function CreateMasterTemplateModal() {
         value={effectiveName}
         onChange={(e) => setName(e.target.value)}
         placeholder="Nhập tên mẫu dữ liệu"
-        className="mt-2 h-10 w-full rounded-xl border border-slate-200/60 bg-slate-50/50 px-3 text-sm text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 dark:border-white/[0.08] dark:bg-white/[0.04] dark:text-slate-100"
+        className="mt-2 h-10 w-full rounded-xl border border-slate-200/60 bg-slate-50/50 px-3 text-sm text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 dark:border-white/[0.08] dark:bg-white/[0.04] dark:text-slate-100"
         autoFocus
       />
       {error ? <p className="mt-2 text-xs text-rose-600">{error}</p> : null}

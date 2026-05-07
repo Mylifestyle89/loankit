@@ -73,7 +73,7 @@ export function MappingSidebar({
                 {/* Header */}
                 <div className="flex shrink-0 items-center justify-between border-b border-slate-200/60 dark:border-white/[0.07] px-4 py-3">
                   <div className="flex items-center gap-2">
-                    <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-brand-300/50 bg-gradient-to-br from-brand-500 to-brand-500 text-white shadow-sm shadow-brand-500/25">
+                    <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-primary-300/50 bg-gradient-to-br from-primary-500 to-primary-500 text-white shadow-sm shadow-primary-500/25">
                       <Settings className="h-4 w-4" />
                     </span>
                     <h2 className="text-base font-semibold text-slate-800 dark:text-slate-200">Tùy chọn khác</h2>
@@ -83,7 +83,7 @@ export function MappingSidebar({
                     onClick={closeSidebar}
                     aria-label="Đóng sidebar"
                     title="Đóng"
-                    className="rounded-lg p-2 text-slate-600 dark:text-slate-300 transition-all duration-200 hover:bg-slate-100/50 dark:hover:bg-white/[0.07] hover:text-brand-500 dark:hover:text-brand-400"
+                    className="rounded-lg p-2 text-slate-600 dark:text-slate-300 transition-all duration-200 hover:bg-slate-100/50 dark:hover:bg-white/[0.07] hover:text-primary-500 dark:hover:text-primary-400"
                   >
                     <X className="h-5 w-5" />
                   </button>

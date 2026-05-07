@@ -45,8 +45,8 @@ export function OcrReviewFieldList({
       {/* Repeater suggestions section */}
       {repeaterEntries.length > 0 && (
         <div className="border-b border-slate-200/60 dark:border-white/[0.07]">
-          <div className="px-4 py-2.5 bg-brand-50/50 dark:bg-brand-500/5">
-            <p className="text-xs font-semibold text-brand-600 dark:text-brand-400">
+          <div className="px-4 py-2.5 bg-primary-50/50 dark:bg-primary-500/5">
+            <p className="text-xs font-semibold text-primary-600 dark:text-primary-400">
               Repeater suggestions ({repeaterEntries.filter((e) => e.status === "pending").length} pending / {repeaterEntries.length} groups)
             </p>
           </div>
@@ -59,7 +59,7 @@ export function OcrReviewFieldList({
                   key={item.groupPath}
                   className={`rounded-xl border px-3 py-2 ${
                     isPending
-                      ? "border-brand-200/70 bg-brand-50/40 dark:border-brand-500/30 dark:bg-brand-500/10"
+                      ? "border-primary-200/70 bg-primary-50/40 dark:border-primary-500/30 dark:bg-primary-500/10"
                       : isAccepted
                         ? "border-emerald-200/70 bg-emerald-50/40 dark:border-emerald-500/30 dark:bg-emerald-500/10"
                         : "border-slate-200/70 bg-slate-50/40 dark:border-white/[0.08] dark:bg-white/[0.04] opacity-60"
@@ -133,7 +133,7 @@ export function OcrReviewFieldList({
                   key={item.fieldKey}
                   className={`border-t border-slate-100 dark:border-white/[0.05] transition-colors ${
                     isPending
-                      ? "bg-brand-50/50 dark:bg-brand-500/5"
+                      ? "bg-primary-50/50 dark:bg-primary-500/5"
                       : isAccepted
                       ? "bg-emerald-50/30 dark:bg-emerald-500/5"
                       : "opacity-40"
@@ -149,7 +149,7 @@ export function OcrReviewFieldList({
                     <span
                       className={`inline-flex rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${
                         item.source === "docx_ai"
-                          ? "bg-brand-100 dark:bg-brand-500/10 text-brand-600 dark:text-brand-400"
+                          ? "bg-primary-100 dark:bg-primary-500/10 text-primary-600 dark:text-primary-400"
                           : "bg-sky-100 dark:bg-sky-500/10 text-sky-700 dark:text-sky-400"
                       }`}
                     >
@@ -161,7 +161,7 @@ export function OcrReviewFieldList({
                       confPct >= 80
                         ? "bg-emerald-100 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
                         : confPct >= 60
-                        ? "bg-brand-100 dark:bg-brand-500/10 text-brand-600 dark:text-brand-400"
+                        ? "bg-primary-100 dark:bg-primary-500/10 text-primary-600 dark:text-primary-400"
                         : "bg-rose-100 dark:bg-rose-500/10 text-rose-700 dark:text-rose-400"
                     }`}>
                       {confPct}%

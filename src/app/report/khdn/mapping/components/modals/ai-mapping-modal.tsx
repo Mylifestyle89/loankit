@@ -458,7 +458,7 @@ export function AiMappingModal({
             {/* Header */}
             <div className="flex items-center justify-between border-b border-slate-200/50 px-4 py-3 dark:border-white/[0.07]">
               <h3 className="flex items-center gap-2 text-sm font-semibold text-slate-800 dark:text-slate-200">
-                <Sparkles className="h-4 w-4 text-brand-500" />
+                <Sparkles className="h-4 w-4 text-primary-500" />
                 {t("mapping.aiSuggest.modalTitle")}
               </h3>
               <button
@@ -480,7 +480,7 @@ export function AiMappingModal({
                   onClick={() => setActiveSection(tab)}
                   className={`relative px-3 py-2.5 text-xs font-medium transition-colors ${
                     activeSection === tab
-                      ? "text-brand-600 dark:text-brand-400"
+                      ? "text-primary-600 dark:text-primary-400"
                       : "text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
                   }`}
                 >
@@ -488,7 +488,7 @@ export function AiMappingModal({
                   {activeSection === tab && (
                     <motion.div
                       layoutId="tab-indicator"
-                      className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full bg-brand-500"
+                      className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full bg-primary-500"
                     />
                   )}
                 </button>

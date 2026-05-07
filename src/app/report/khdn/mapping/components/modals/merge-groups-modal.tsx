@@ -93,7 +93,7 @@ export function MergeGroupsModal({
                         <span>{t("mapping.merge.order.alpha")}</span>
                     </label>
                 </div>
-                <div className="rounded-md border border-zinc-200 dark:border-white/[0.07] bg-brand-50/30 dark:bg-white/[0.04] p-2 text-xs text-zinc-700 dark:text-slate-300">
+                <div className="rounded-md border border-zinc-200 dark:border-white/[0.07] bg-primary-50/30 dark:bg-white/[0.04] p-2 text-xs text-zinc-700 dark:text-slate-300">
                     <p>{t("mapping.merge.preview.groups").replace("{count}", String(mergePreview.groupCount))}</p>
                     <p>{t("mapping.merge.preview.fields").replace("{count}", String(mergePreview.fieldCount))}</p>
                     <p>{t("mapping.merge.preview.target").replace("{name}", mergePreview.targetGroup || "—")}</p>
@@ -102,7 +102,7 @@ export function MergeGroupsModal({
                     <button
                         type="button"
                         onClick={onClose}
-                        className="flex items-center gap-1.5 rounded-md border border-zinc-200 dark:border-white/[0.09] dark:text-slate-200 px-3 py-1.5 text-xs hover:bg-brand-50/30 dark:hover:bg-white/[0.06]"
+                        className="flex items-center gap-1.5 rounded-md border border-zinc-200 dark:border-white/[0.09] dark:text-slate-200 px-3 py-1.5 text-xs hover:bg-primary-50/30 dark:hover:bg-white/[0.06]"
                     >
                         <X className="h-3.5 w-3.5" />
                         {t("mapping.merge.cancel")}
@@ -110,7 +110,7 @@ export function MergeGroupsModal({
                     <button
                         type="button"
                         onClick={applyMergeGroups}
-                        className="flex items-center gap-1.5 rounded-md bg-brand-500 px-3 py-1.5 text-xs text-white"
+                        className="flex items-center gap-1.5 rounded-md bg-primary-500 px-3 py-1.5 text-xs text-white"
                     >
                         <Save className="h-3.5 w-3.5" />
                         {t("mapping.merge.save")}

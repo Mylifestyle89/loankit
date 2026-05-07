@@ -44,7 +44,7 @@ export function MappingStatusBar({
           type="button"
           onClick={undoLastAction}
           disabled={undoHistoryLength === 0}
-          className="inline-flex items-center gap-1.5 rounded-md border border-zinc-200 dark:border-white/[0.10] bg-white dark:bg-white/[0.05] px-2.5 py-1.5 font-medium text-zinc-700 dark:text-slate-200 transition-colors hover:bg-zinc-50 dark:hover:bg-white/[0.06] focus-visible:ring-2 focus-visible:ring-brand-500/40 disabled:opacity-40"
+          className="inline-flex items-center gap-1.5 rounded-md border border-zinc-200 dark:border-white/[0.10] bg-white dark:bg-white/[0.05] px-2.5 py-1.5 font-medium text-zinc-700 dark:text-slate-200 transition-colors hover:bg-zinc-50 dark:hover:bg-white/[0.06] focus-visible:ring-2 focus-visible:ring-primary-500/40 disabled:opacity-40"
         >
           <Undo2 className="h-3.5 w-3.5" />
           {t("mapping.undo")} ({undoHistoryLength}/5)
@@ -57,7 +57,7 @@ export function MappingStatusBar({
           <button
             type="button"
             onClick={onOpenOcrReview}
-            className="inline-flex items-center gap-1.5 rounded-full border border-brand-300 dark:border-brand-500/30 bg-brand-100 dark:bg-brand-500/10 px-2.5 py-1 font-semibold text-brand-600 dark:text-brand-400 transition-colors hover:bg-brand-100 dark:hover:bg-brand-500/20"
+            className="inline-flex items-center gap-1.5 rounded-full border border-primary-300 dark:border-primary-500/30 bg-primary-100 dark:bg-primary-500/10 px-2.5 py-1 font-semibold text-primary-600 dark:text-primary-400 transition-colors hover:bg-primary-100 dark:hover:bg-primary-500/20"
           >
             {pendingOcrCount} chờ review
           </button>
@@ -75,7 +75,7 @@ export function MappingStatusBar({
         )}
         <span className="text-slate-400 dark:text-slate-500">|</span>
         <div className="flex items-center gap-1.5">
-          <span className="font-semibold text-brand-500 dark:text-brand-400">{mappedFieldCount}</span>
+          <span className="font-semibold text-primary-500 dark:text-primary-400">{mappedFieldCount}</span>
           <span>/</span>
           <span>{fieldCount}</span>
           <span className="text-slate-500 dark:text-slate-400">mapped</span>

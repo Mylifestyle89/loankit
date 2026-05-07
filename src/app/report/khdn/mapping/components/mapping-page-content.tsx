@@ -100,7 +100,7 @@ export function MappingPageContent() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-16">
-        <div className="h-6 w-6 animate-spin rounded-full border-2 border-brand-200 border-t-brand-500 dark:border-brand-700 dark:border-t-brand-400" />
+        <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary-200 border-t-primary-500 dark:border-primary-700 dark:border-t-primary-400" />
       </div>
     );
   }

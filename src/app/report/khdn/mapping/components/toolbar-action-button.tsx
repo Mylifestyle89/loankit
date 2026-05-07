@@ -11,11 +11,11 @@ type ToolbarActionButtonProps = {
 };
 
 const BASE =
-  "flex items-center gap-1.5 rounded-lg px-2.5 py-2 border transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40";
+  "flex items-center gap-1.5 rounded-lg px-2.5 py-2 border transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40";
 const IDLE =
-  "border-brand-200 dark:border-brand-500/20 bg-brand-100 dark:bg-brand-500/10 text-brand-500 dark:text-brand-400 hover:bg-brand-100 dark:hover:bg-brand-500/20 hover:text-brand-600 dark:hover:text-brand-300";
+  "border-primary-200 dark:border-primary-500/20 bg-primary-100 dark:bg-primary-500/10 text-primary-500 dark:text-primary-400 hover:bg-primary-100 dark:hover:bg-primary-500/20 hover:text-primary-600 dark:hover:text-primary-300";
 const ACTIVE =
-  "border-brand-400 dark:border-brand-400/40 bg-brand-500 dark:bg-brand-500 text-white shadow-sm shadow-brand-500/25 hover:brightness-110";
+  "border-primary-400 dark:border-primary-400/40 bg-primary-500 dark:bg-primary-500 text-white shadow-sm shadow-primary-500/25 hover:brightness-110";
 const DISABLED = "opacity-40 cursor-not-allowed";
 
 export function ToolbarActionButton({

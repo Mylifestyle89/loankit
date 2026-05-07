@@ -47,7 +47,7 @@ export function FieldRowDisplay({
           onKeyDown={(e) => navigateField(e, "label")}
           data-field-col="label"
           aria-label="Tên hiển thị field"
-          className="w-full truncate rounded border border-transparent bg-transparent px-2 py-1 text-sm font-medium text-zinc-800 dark:text-slate-200 transition-colors hover:border-zinc-200 focus:border-brand-500 focus:bg-white dark:focus:bg-white/[0.06] focus:outline-none focus:ring-1 focus:ring-brand-500"
+          className="w-full truncate rounded border border-transparent bg-transparent px-2 py-1 text-sm font-medium text-zinc-800 dark:text-slate-200 transition-colors hover:border-zinc-200 focus:border-primary-500 focus:bg-white dark:focus:bg-white/[0.06] focus:outline-none focus:ring-1 focus:ring-primary-500"
           title={field.label_vi}
         />
         {showTechnicalKeys && (
@@ -61,7 +61,7 @@ export function FieldRowDisplay({
           </p>
           {templateUsage && templateUsage.length > 0 && (
             <span
-              className="inline-flex flex-shrink-0 items-center gap-0.5 rounded-full bg-brand-100 dark:bg-brand-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-brand-600 dark:text-brand-400"
+              className="inline-flex flex-shrink-0 items-center gap-0.5 rounded-full bg-primary-100 dark:bg-primary-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-primary-600 dark:text-primary-400"
               title={`Dùng trong: ${templateUsage.join(", ")}`}
             >
               <FileText className="h-2.5 w-2.5" />
@@ -73,7 +73,7 @@ export function FieldRowDisplay({
               confidenceScore >= 90
                 ? "bg-emerald-100 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
                 : confidenceScore >= 60
-                  ? "bg-brand-100 dark:bg-brand-500/10 text-brand-600 dark:text-brand-400"
+                  ? "bg-primary-100 dark:bg-primary-500/10 text-primary-600 dark:text-primary-400"
                   : "bg-rose-100 dark:bg-rose-500/10 text-rose-700 dark:text-rose-400"
             }`}
             title="Confidence Score (heuristic)"
@@ -85,20 +85,20 @@ export function FieldRowDisplay({
         {/* OCR pending review badge */}
         {hasPendingOcr && (
           <div className="mt-1 flex flex-wrap items-center gap-1.5 px-1">
-            <span className="rounded-full border border-brand-200 dark:border-brand-500/30 bg-brand-100 dark:bg-brand-500/10 px-2 py-0.5 text-[10px] font-semibold text-brand-600 dark:text-brand-400">
+            <span className="rounded-full border border-primary-200 dark:border-primary-500/30 bg-primary-100 dark:bg-primary-500/10 px-2 py-0.5 text-[10px] font-semibold text-primary-600 dark:text-primary-400">
               Pending Review ({Math.round((ocrSuggestion?.confidenceScore ?? 0) * 100)}%)
             </span>
             <span
               className={`rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${
                 ocrSuggestion?.source === "docx_ai"
-                  ? "bg-brand-100 dark:bg-brand-500/10 text-brand-600 dark:text-brand-400"
+                  ? "bg-primary-100 dark:bg-primary-500/10 text-primary-600 dark:text-primary-400"
                   : "bg-sky-100 dark:bg-sky-500/10 text-sky-700 dark:text-sky-400"
               }`}
             >
               {ocrSuggestion?.source === "docx_ai" ? "DOCX" : "OCR"}
             </span>
             <p
-              className="text-[10px] text-brand-600 dark:text-brand-400 px-1 truncate max-w-[200px]"
+              className="text-[10px] text-primary-600 dark:text-primary-400 px-1 truncate max-w-[200px]"
               title={ocrSuggestion?.proposedValue}
             >
               → {ocrSuggestion?.proposedValue}

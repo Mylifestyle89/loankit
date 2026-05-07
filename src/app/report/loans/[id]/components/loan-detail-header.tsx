@@ -68,15 +68,15 @@ export function LoanDetailHeader({ loan, onEditLoan, onOpenBeneficiaryModal, onS
   const currentStatus = STATUS_OPTIONS.find((s) => s.value === loan.status) ?? STATUS_OPTIONS[0];
 
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-brand-100 dark:border-brand-500/10 bg-gradient-to-br from-brand-50 via-white to-brand-100 dark:from-brand-950/30 dark:via-[#242220] dark:to-brand-900/20 p-5">
-      <div className="absolute -right-12 -top-12 h-40 w-40 rounded-full bg-brand-200/30 blur-3xl dark:bg-brand-500/10" />
+    <div className="relative overflow-hidden rounded-2xl border border-primary-100 dark:border-primary-500/10 bg-gradient-to-br from-primary-50 via-white to-primary-100 dark:from-primary-950/30 dark:via-[#242220] dark:to-primary-900/20 p-5">
+      <div className="absolute -right-12 -top-12 h-40 w-40 rounded-full bg-primary-200/30 blur-3xl dark:bg-primary-500/10" />
       <div className="relative">
         {/* Top row: back + title + actions */}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
           <div className="flex items-start gap-3 min-w-0">
             <Link
               href={loan.customer?.id ? `/report/customers/${loan.customer.id}?tab=loans` : "/report/loans"}
-              className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/80 dark:bg-white/[0.06] border border-zinc-200 dark:border-white/[0.08] text-zinc-500 dark:text-slate-400 transition-colors hover:bg-brand-50 dark:hover:bg-brand-500/10 hover:text-brand-500 dark:hover:text-brand-400"
+              className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/80 dark:bg-white/[0.06] border border-zinc-200 dark:border-white/[0.08] text-zinc-500 dark:text-slate-400 transition-colors hover:bg-primary-50 dark:hover:bg-primary-500/10 hover:text-primary-500 dark:hover:text-primary-400"
             >
               <ArrowLeft className="h-4 w-4" />
             </Link>
@@ -92,13 +92,13 @@ export function LoanDetailHeader({ loan, onEditLoan, onOpenBeneficiaryModal, onS
                       if (e.key === "Enter") commitContract();
                       if (e.key === "Escape") { setContractDraft(loan.contractNumber); setEditingContract(false); }
                     }}
-                    className="text-xl font-bold tracking-tight text-brand-600 dark:text-brand-400 bg-transparent border-b-2 border-brand-500 outline-none min-w-[120px] max-w-[320px]"
+                    className="text-xl font-bold tracking-tight text-primary-600 dark:text-primary-400 bg-transparent border-b-2 border-primary-500 outline-none min-w-[120px] max-w-[320px]"
                   />
                 ) : (
                   <button
                     type="button"
                     onClick={() => { setContractDraft(loan.contractNumber); setEditingContract(true); }}
-                    className="group flex items-center gap-1.5 truncate text-xl font-bold tracking-tight text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 transition-colors"
+                    className="group flex items-center gap-1.5 truncate text-xl font-bold tracking-tight text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 transition-colors"
                     title="Nhấn để sửa số hợp đồng"
                   >
                     {loan.contractNumber}
@@ -145,7 +145,7 @@ export function LoanDetailHeader({ loan, onEditLoan, onOpenBeneficiaryModal, onS
             <button
               type="button"
               onClick={onEditLoan}
-              className="rounded-lg bg-brand-500 px-4 py-1.5 text-xs font-medium text-white shadow-sm shadow-brand-500/25 transition-all hover:shadow-md hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40"
+              className="rounded-lg bg-primary-500 px-4 py-1.5 text-xs font-medium text-white shadow-sm shadow-primary-500/25 transition-all hover:shadow-md hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40"
             >
               Thông tin hợp đồng tín dụng
             </button>
@@ -153,7 +153,7 @@ export function LoanDetailHeader({ loan, onEditLoan, onOpenBeneficiaryModal, onS
               <button
                 type="button"
                 onClick={onOpenBeneficiaryModal}
-                className="rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-white/80 dark:bg-white/[0.05] px-3 py-1.5 text-xs font-medium text-zinc-600 dark:text-slate-300 transition-colors hover:bg-brand-50 dark:hover:bg-brand-500/10 hover:text-brand-600 dark:hover:text-brand-400"
+                className="rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-white/80 dark:bg-white/[0.05] px-3 py-1.5 text-xs font-medium text-zinc-600 dark:text-slate-300 transition-colors hover:bg-primary-50 dark:hover:bg-primary-500/10 hover:text-primary-600 dark:hover:text-primary-400"
               >
                 {t("beneficiaries.title") ?? "Đơn vị thụ hưởng"}
               </button>

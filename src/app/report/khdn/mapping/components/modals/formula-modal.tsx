@@ -55,7 +55,7 @@ export function FormulaModal({
           <button
             type="button"
             onClick={onClose}
-            className="rounded p-1.5 text-zinc-500 dark:text-slate-300 hover:bg-brand-50/50 dark:hover:bg-white/[0.07]"
+            className="rounded p-1.5 text-zinc-500 dark:text-slate-300 hover:bg-primary-50/50 dark:hover:bg-white/[0.07]"
             aria-label="Đóng"
           >
             <X className="h-5 w-5" />
@@ -69,14 +69,14 @@ export function FormulaModal({
             Với field text: hỗ trợ DOCSO và DOCSOCODONVI (ví dụ `DOCSOCODONVI(TSBD.Gia_tri_tai_san,{'\"'}đồng{'\"'})`).
           </p>
           <label className="block">
-            <span className="text-sm font-medium text-brand-700 dark:text-slate-200">Biểu thức</span>
+            <span className="text-sm font-medium text-primary-700 dark:text-slate-200">Biểu thức</span>
             <input
               key={`${field.field_key}:${currentFormula}`}
               ref={inputRef}
               type="text"
               defaultValue={currentFormula}
               placeholder="Ví dụ: Doanh_thu - Chi_phí"
-              className="mt-1 w-full rounded border border-zinc-200 dark:border-white/[0.09] dark:bg-white/[0.05] dark:text-slate-100 px-3 py-2 text-sm font-sans placeholder:text-zinc-400 dark:placeholder:text-slate-500 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+              className="mt-1 w-full rounded border border-zinc-200 dark:border-white/[0.09] dark:bg-white/[0.05] dark:text-slate-100 px-3 py-2 text-sm font-sans placeholder:text-zinc-400 dark:placeholder:text-slate-500 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
             />
           </label>
           {error ? <p className="text-sm text-red-600">{error}</p> : null}
@@ -97,14 +97,14 @@ export function FormulaModal({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-md border border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-white/[0.05] dark:text-slate-200 px-3 py-1.5 text-sm text-brand-600 hover:bg-brand-50/30 dark:hover:bg-white/[0.06]"
+            className="rounded-md border border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-white/[0.05] dark:text-slate-200 px-3 py-1.5 text-sm text-primary-600 hover:bg-primary-50/30 dark:hover:bg-white/[0.06]"
           >
             Hủy
           </button>
           <button
             type="button"
             onClick={handleSave}
-            className="rounded-md bg-brand-500 px-3 py-1.5 text-sm text-white hover:brightness-110"
+            className="rounded-md bg-primary-500 px-3 py-1.5 text-sm text-white hover:brightness-110"
           >
             Áp dụng
           </button>

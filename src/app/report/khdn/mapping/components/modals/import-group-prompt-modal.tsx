@@ -24,21 +24,21 @@ export function ImportGroupPromptModal({ prompt, onResolve }: ImportGroupPromptM
           <button
             type="button"
             onClick={() => onResolve("stop")}
-            className="rounded-md border border-zinc-200 dark:border-white/[0.09] dark:text-slate-200 px-3 py-1.5 text-sm hover:bg-brand-50/30 dark:hover:bg-white/[0.06]"
+            className="rounded-md border border-zinc-200 dark:border-white/[0.09] dark:text-slate-200 px-3 py-1.5 text-sm hover:bg-primary-50/30 dark:hover:bg-white/[0.06]"
           >
             Dừng import
           </button>
           <button
             type="button"
             onClick={() => onResolve("create_once")}
-            className="rounded-md border border-zinc-200 dark:border-white/[0.09] dark:text-slate-200 px-3 py-1.5 text-sm hover:bg-brand-50/30 dark:hover:bg-white/[0.06]"
+            className="rounded-md border border-zinc-200 dark:border-white/[0.09] dark:text-slate-200 px-3 py-1.5 text-sm hover:bg-primary-50/30 dark:hover:bg-white/[0.06]"
           >
             Tạo dòng này
           </button>
           <button
             type="button"
             onClick={() => onResolve("create_all")}
-            className="rounded-md bg-brand-500 px-3 py-1.5 text-sm text-white hover:brightness-110"
+            className="rounded-md bg-primary-500 px-3 py-1.5 text-sm text-white hover:brightness-110"
           >
             Tạo tất cả còn lại
           </button>
