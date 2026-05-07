@@ -18,6 +18,7 @@
     "snapshot:export": "node scripts/export-turso-snapshot.js",
     "snapshot:import": "node scripts/import-snapshot-to-sqlite.js",
     "snapshot:compare": "node scripts/compare-turso-vps-counts.js",
+    "snapshot:refresh": "node scripts/refresh-local-from-turso.js",
     "extract:placeholders": "node scripts/extract_placeholders_to_csv.js \"Placeholder Prototype.docx\"",
     "seed:admin": "npx tsx prisma/seed-admin.ts",
     "validate:khcn": "npx tsx scripts/validate-khcn-templates.ts",
