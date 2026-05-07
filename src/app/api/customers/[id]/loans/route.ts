@@ -7,7 +7,7 @@ export const runtime = "nodejs";
 /** Returns all loans for a customer with associated master template (id + name + fieldCatalogJson). */
 export async function GET(
   _req: NextRequest,
-  { params }: { params: Promise<{ customerId: string }> },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     await requireSession();
@@ -17,9 +17,9 @@ export async function GET(
     throw e;
   }
 
-  const { customerId } = await params;
+  const { id: customerId } = await params;
   if (!customerId) {
-    return NextResponse.json({ ok: false, error: "customerId required" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "customer id required" }, { status: 400 });
   }
 
   try {
@@ -64,7 +64,7 @@ export async function GET(
       })),
     });
   } catch (e) {
-    console.error("[GET /api/customers/[customerId]/loans]", e);
+    console.error("[GET /api/customers/[id]/loans]", e);
     return NextResponse.json(
       { ok: false, error: e instanceof Error ? e.message : "Internal error" },
       { status: 500 },

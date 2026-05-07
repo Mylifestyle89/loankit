@@ -12,7 +12,7 @@ const bodySchema = z.object({
 /** Broadcasts a master template to ALL loans of the customer; returns updated count. */
 export async function POST(
   req: NextRequest,
-  { params }: { params: Promise<{ customerId: string }> },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     await requireEditorOrAdmin();
@@ -22,9 +22,9 @@ export async function POST(
     throw e;
   }
 
-  const { customerId } = await params;
+  const { id: customerId } = await params;
   if (!customerId) {
-    return NextResponse.json({ ok: false, error: "customerId required" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "customer id required" }, { status: 400 });
   }
 
   let body: z.infer<typeof bodySchema>;
@@ -58,7 +58,7 @@ export async function POST(
 
     return NextResponse.json({ ok: true, count: result.count });
   } catch (e) {
-    console.error("[POST /api/customers/[customerId]/loans/assign-master]", e);
+    console.error("[POST /api/customers/[id]/loans/assign-master]", e);
     return NextResponse.json(
       { ok: false, error: e instanceof Error ? e.message : "Internal error" },
       { status: 500 },
