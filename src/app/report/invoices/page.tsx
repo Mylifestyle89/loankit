@@ -143,11 +143,11 @@ export default function InvoicesOverviewPage() {
   return (
     <section className="space-y-5">
       {/* Header with gradient accent */}
-      <div className="relative overflow-hidden rounded-2xl border border-brand-100 dark:border-brand-500/10 bg-gradient-to-br from-brand-50 via-white to-brand-100 dark:from-brand-950/30 dark:via-[#242220] dark:to-brand-900/20 p-5">
-        <div className="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-brand-200/30 blur-2xl dark:bg-brand-500/10" />
+      <div className="relative overflow-hidden rounded-2xl border border-primary-100 dark:border-primary-500/10 bg-gradient-to-br from-primary-50 via-white to-primary-100 dark:from-primary-950/30 dark:via-[#242220] dark:to-primary-900/20 p-5">
+        <div className="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-primary-200/30 blur-2xl dark:bg-primary-500/10" />
         <div className="relative flex items-start justify-between gap-3">
           <div>
-            <h2 className="text-xl font-bold tracking-tight text-brand-600 dark:text-brand-400">
+            <h2 className="text-xl font-bold tracking-tight text-primary-600 dark:text-primary-400">
               {t("invoices.title")}
             </h2>
             <p className="mt-1 text-sm text-zinc-500 dark:text-slate-400">{t("invoices.desc")}</p>
@@ -156,14 +156,14 @@ export default function InvoicesOverviewPage() {
             <button
               onClick={() => setShowExportModal(true)}
               disabled={totalOverdue + totalNeedsSupplement + totalPending === 0}
-              className="cursor-pointer flex items-center gap-2 rounded-xl border border-brand-200/60 dark:border-brand-500/20 bg-white/70 dark:bg-white/[0.05] px-3 py-2 text-xs font-medium text-brand-600 dark:text-brand-400 hover:bg-brand-50 dark:hover:bg-brand-500/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="cursor-pointer flex items-center gap-2 rounded-xl border border-primary-200/60 dark:border-primary-500/20 bg-white/70 dark:bg-white/[0.05] px-3 py-2 text-xs font-medium text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-500/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Download className="h-3.5 w-3.5" />
               Tải danh sách nợ
             </button>
             <button
               onClick={() => setShowNotifications(true)}
-              className="relative cursor-pointer flex items-center gap-2 rounded-xl border border-brand-200/60 dark:border-brand-500/20 bg-white/70 dark:bg-white/[0.05] px-3 py-2 text-xs font-medium text-brand-600 dark:text-brand-400 hover:bg-brand-50 dark:hover:bg-brand-500/10 transition-colors"
+              className="relative cursor-pointer flex items-center gap-2 rounded-xl border border-primary-200/60 dark:border-primary-500/20 bg-white/70 dark:bg-white/[0.05] px-3 py-2 text-xs font-medium text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-500/10 transition-colors"
             >
               <Bell className="h-3.5 w-3.5" />
               Thông báo đến hạn
@@ -179,19 +179,19 @@ export default function InvoicesOverviewPage() {
         {/* Summary stats */}
         <div className="relative mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
           {totalNeedsSupplement > 0 && (
-            <div className="flex items-center gap-2.5 rounded-xl border border-brand-200/60 dark:border-brand-500/15 bg-white/60 dark:bg-white/[0.04] p-3">
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-100 dark:bg-brand-500/15">
-                <AlertTriangle className="h-4 w-4 text-brand-500 dark:text-brand-400" />
+            <div className="flex items-center gap-2.5 rounded-xl border border-primary-200/60 dark:border-primary-500/15 bg-white/60 dark:bg-white/[0.04] p-3">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary-100 dark:bg-primary-500/15">
+                <AlertTriangle className="h-4 w-4 text-primary-500 dark:text-primary-400" />
               </div>
               <div>
                 <p className="text-xs text-zinc-400 dark:text-slate-500">{t("invoices.needsSupplement")}</p>
-                <p className="font-semibold tabular-nums text-brand-600 dark:text-brand-300">{totalNeedsSupplement}</p>
+                <p className="font-semibold tabular-nums text-primary-600 dark:text-primary-300">{totalNeedsSupplement}</p>
               </div>
             </div>
           )}
-          <div className="flex items-center gap-2.5 rounded-xl border border-brand-200/60 dark:border-brand-500/15 bg-white/60 dark:bg-white/[0.04] p-3">
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-100 dark:bg-brand-500/15">
-              <Clock className="h-4 w-4 text-brand-500 dark:text-brand-400" />
+          <div className="flex items-center gap-2.5 rounded-xl border border-primary-200/60 dark:border-primary-500/15 bg-white/60 dark:bg-white/[0.04] p-3">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary-100 dark:bg-primary-500/15">
+              <Clock className="h-4 w-4 text-primary-500 dark:text-primary-400" />
             </div>
             <div>
               <p className="text-xs text-zinc-400 dark:text-slate-500">{t("invoices.totalPending")}</p>
@@ -207,13 +207,13 @@ export default function InvoicesOverviewPage() {
               <p className="font-semibold tabular-nums text-red-700 dark:text-red-300">{totalOverdue}</p>
             </div>
           </div>
-          <div className="flex items-center gap-2.5 rounded-xl border border-brand-200/60 dark:border-brand-500/15 bg-white/60 dark:bg-white/[0.04] p-3">
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-100 dark:bg-brand-500/15">
-              <Banknote className="h-4 w-4 text-brand-500 dark:text-brand-400" />
+          <div className="flex items-center gap-2.5 rounded-xl border border-primary-200/60 dark:border-primary-500/15 bg-white/60 dark:bg-white/[0.04] p-3">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary-100 dark:bg-primary-500/15">
+              <Banknote className="h-4 w-4 text-primary-500 dark:text-primary-400" />
             </div>
             <div>
               <p className="text-xs text-zinc-400 dark:text-slate-500">{t("invoices.totalAmount")}</p>
-              <p className="font-semibold tabular-nums text-brand-600 dark:text-brand-400">{fmt(totalAmount)} VND</p>
+              <p className="font-semibold tabular-nums text-primary-600 dark:text-primary-400">{fmt(totalAmount)} VND</p>
             </div>
           </div>
         </div>
@@ -244,7 +244,7 @@ export default function InvoicesOverviewPage() {
       {loading ? (
         <div className="rounded-2xl border border-zinc-200 dark:border-white/[0.07] bg-white dark:bg-[#161616] shadow-sm overflow-hidden">
           <div className="flex items-center justify-center py-12">
-            <div className="h-6 w-6 animate-spin rounded-full border-2 border-brand-200 border-t-brand-500 dark:border-brand-700 dark:border-t-brand-400" />
+            <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary-200 border-t-primary-500 dark:border-primary-700 dark:border-t-primary-400" />
           </div>
         </div>
       ) : groupBy === "disbursement" ? (

@@ -73,7 +73,7 @@ function CustomerSearchInput({
 
   return (
     <div ref={containerRef} className="relative">
-      <div className="flex items-center gap-1.5 rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] px-3 py-2 shadow-sm focus-within:border-brand-400 focus-within:ring-1 focus-within:ring-brand-500/40 transition-all">
+      <div className="flex items-center gap-1.5 rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] px-3 py-2 shadow-sm focus-within:border-primary-400 focus-within:ring-1 focus-within:ring-primary-500/40 transition-all">
         <Search className="h-3.5 w-3.5 shrink-0 text-zinc-400 dark:text-slate-500" />
         <input
           type="text"
@@ -98,7 +98,7 @@ function CustomerSearchInput({
                 type="button"
                 onMouseDown={(e) => { e.preventDefault(); select(c); }}
                 className={`flex w-full cursor-pointer items-center px-3 py-2 text-left text-sm transition-colors hover:bg-zinc-50 dark:hover:bg-white/[0.05] ${
-                  c.id === selectedId ? "font-medium text-brand-600 dark:text-brand-400" : "text-zinc-700 dark:text-slate-300"
+                  c.id === selectedId ? "font-medium text-primary-600 dark:text-primary-400" : "text-zinc-700 dark:text-slate-300"
                 }`}
               >
                 {c.customer_name}
@@ -129,7 +129,7 @@ export function InvoiceFiltersBar({
         <select
           value={statusFilter}
           onChange={(e) => onStatusFilterChange(e.target.value)}
-          className="cursor-pointer rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] px-3 py-2 text-sm shadow-sm transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40"
+          className="cursor-pointer rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] px-3 py-2 text-sm shadow-sm transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40"
         >
           <option value="">{t("invoices.all")}</option>
           <option value="needs_supplement">{t("invoices.status.needs_supplement")}</option>
@@ -144,10 +144,10 @@ export function InvoiceFiltersBar({
         <button
           type="button"
           onClick={onToggleGroupBy}
-          className={`cursor-pointer inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40 ${
+          className={`cursor-pointer inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 ${
             groupBy === "disbursement"
-              ? "border-brand-300 dark:border-brand-500/30 bg-brand-100 dark:bg-brand-500/10 text-brand-600 dark:text-brand-400"
-              : "border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] text-zinc-600 dark:text-slate-400 hover:border-brand-200 dark:hover:border-brand-500/20"
+              ? "border-primary-300 dark:border-primary-500/30 bg-primary-100 dark:bg-primary-500/10 text-primary-600 dark:text-primary-400"
+              : "border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] text-zinc-600 dark:text-slate-400 hover:border-primary-200 dark:hover:border-primary-500/20"
           }`}
         >
           <Layers className="h-4 w-4" />
