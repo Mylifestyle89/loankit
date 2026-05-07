@@ -2,6 +2,13 @@ const { createClient } = require("@libsql/client");
 const fs = require("fs");
 const path = require("path");
 
+// Explicit opt-out for environments that have Turso creds for read-only purposes
+// (e.g. VPS pulling snapshots) but should NOT push schema upstream.
+if (process.env.SKIP_TURSO_SYNC === "1") {
+  console.log("SKIP_TURSO_SYNC=1 — skipping Turso schema push (local SQLite mode).");
+  process.exit(0);
+}
+
 // Resolve Turso credentials: env vars first (Vercel), fallback to .env.local (local dev)
 let url = process.env.TURSO_DATABASE_URL;
 let authToken = process.env.TURSO_AUTH_TOKEN;
