@@ -4,21 +4,22 @@
 /* ── Dark mode: apply when <html> has class="dark" ── */
 @custom-variant dark (&:is(.dark *));
 
-/* ── Semantic design tokens (Claude-inspired warm palette) ── */
+/* ── Semantic design tokens — Hybrid (Q1=C): emerald primary + brand accent ── */
 :root {
-  --bg-base: #FAF8F5;
+  /* Light mode bg neutralized — was warm cream #FAF8F5, now cool slate (banking professional) */
+  --bg-base: #F8FAFC;
   --surface: #ffffff;
-  --surface-2: #F7F5F0;
-  --surface-3: #F0EDE6;
+  --surface-2: #F1F5F9;
+  --surface-3: #E2E8F0;
   --surface-overlay: rgb(255 255 255 / 0.85);
-  --surface-inset: #F4F1EB;
-  --border-sub: rgb(196 186 168 / 0.35);
-  --border-str: rgb(196 186 168 / 0.50);
-  --border-strong: rgb(196 186 168 / 0.70);
-  --text-1: #1a1a1a;
-  --text-2: #78716c;
-  --glow: 0 0 20px rgb(218 119 86 / 0.15);
-  --glow-lg: 0 0 32px rgb(218 119 86 / 0.20);
+  --surface-inset: #F1F5F9;
+  --border-sub: rgb(148 163 184 / 0.25);
+  --border-str: rgb(148 163 184 / 0.40);
+  --border-strong: rgb(148 163 184 / 0.60);
+  --text-1: #0F172A;
+  --text-2: #475569;
+  --glow: 0 0 20px rgb(5 150 105 / 0.15);
+  --glow-lg: 0 0 32px rgb(5 150 105 / 0.20);
 
   /* Type scale (14px base for SaaS UI) */
   --text-xs: 0.75rem;
@@ -47,7 +48,7 @@
 
 html.dark {
   color-scheme: dark;
-  /* Warm dark — Claude-inspired (bg matches claude.ai) */
+  /* Warm dark kept — was already approved aesthetic (Claude-style) */
   --bg-base: #262624;
   --surface: #2E2D2B;
   --surface-2: #363533;
@@ -59,8 +60,8 @@ html.dark {
   --border-strong: rgb(255 248 240 / 0.18);
   --text-1: #F4F1EB;
   --text-2: #A8A29E;
-  --glow: 0 0 12px rgb(218 119 86 / 0.18);
-  --glow-lg: 0 0 20px rgb(218 119 86 / 0.25);
+  --glow: 0 0 12px rgb(5 150 105 / 0.18);
+  --glow-lg: 0 0 20px rgb(5 150 105 / 0.25);
 }
 
 @theme inline {
@@ -70,18 +71,31 @@ html.dark {
   --font-heading: var(--font-geist-sans, var(--font-inter));
   --font-mono: var(--font-geist-mono);
 
-  /* ── Brand: Claude-inspired pastel terracotta scale ── */
-  --color-brand-50: #FAF8F5;   /* page bg */
-  --color-brand-100: #F4F1EB;  /* surface/card bg (Pampas) */
-  --color-brand-200: #E8E1D6;  /* hover bg, input bg */
-  --color-brand-300: #D4C9B5;  /* light borders */
-  --color-brand-400: #B1A592;  /* muted text, placeholders (Cloudy) */
-  --color-brand-500: #DA7756;  /* primary accent (Terra Cotta) */
-  --color-brand-600: #C15F3C;  /* hover/pressed (Crail) */
-  --color-brand-700: #A34E30;  /* active/focus */
-  --color-brand-800: #7A3A23;  /* dark accent */
-  --color-brand-900: #4A2316;  /* dark heading */
-  --color-brand-950: #2D150D;  /* deep dark */
+  /* ── Brand (cam) — accent role: special CTAs, AI features, Claude-style highlights ── */
+  --color-brand-50: #FAF8F5;
+  --color-brand-100: #F4F1EB;
+  --color-brand-200: #E8E1D6;
+  --color-brand-300: #D4C9B5;
+  --color-brand-400: #B1A592;
+  --color-brand-500: #DA7756;  /* Terra Cotta accent */
+  --color-brand-600: #C15F3C;
+  --color-brand-700: #A34E30;
+  --color-brand-800: #7A3A23;
+  --color-brand-900: #4A2316;
+  --color-brand-950: #2D150D;
+
+  /* ── Primary (emerald) — banking trust signal: navigation, active states, links, primary buttons ── */
+  --color-primary-50: #ECFDF5;
+  --color-primary-100: #D1FAE5;
+  --color-primary-200: #A7F3D0;
+  --color-primary-300: #6EE7B7;
+  --color-primary-400: #34D399;
+  --color-primary-500: #10B981;
+  --color-primary-600: #059669;  /* canonical primary */
+  --color-primary-700: #047857;
+  --color-primary-800: #065F46;
+  --color-primary-900: #064E3B;
+  --color-primary-950: #022C22;
 
   /* ── Warm neutrals (stone scale) — replaces cool zinc/slate gradually ── */
   --color-stone-50: #FAF8F5;

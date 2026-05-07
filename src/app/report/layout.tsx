@@ -81,7 +81,7 @@ const [hovered, setHovered] = useState(false);
   const labelCls = `${labelTransitionBase} ${expanded ? labelVisible : labelHidden}`;
 
   return (
-    <div className="min-h-screen bg-zinc-50 text-zinc-900 dark:bg-[#0a0a0a] dark:text-slate-100">
+    <div className="min-h-screen bg-slate-50 text-slate-900 dark:bg-[#0a0a0a] dark:text-slate-100">
 
       {/* ── Mobile hamburger button — visible only below md ── */}
       <button
@@ -129,7 +129,7 @@ const [hovered, setHovered] = useState(false);
 
         {/* ── Brand + mobile close ── */}
         <div className="relative flex h-11 shrink-0 items-center overflow-hidden px-2.5">
-          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br bg-brand-500 shadow-sm">
+          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br bg-primary-600 shadow-sm">
             <ChevronRight className="h-3.5 w-3.5 text-white" />
           </div>
           <div className={`ml-2.5 min-w-0 ${labelTransitionBase} ${expanded ? labelVisible : labelHidden}`}>
@@ -176,18 +176,18 @@ const [hovered, setHovered] = useState(false);
                   expanded ? "gap-2.5 px-2.5 justify-start" : "justify-center px-0"
                 } ${
                   isActive
-                    ? "bg-brand-100/80 text-brand-600 dark:bg-brand-500/10 dark:text-brand-400"
+                    ? "bg-primary-100 text-primary-700 dark:bg-primary-500/15 dark:text-primary-300"
                     : "text-zinc-500 hover:bg-zinc-50 hover:text-zinc-800 dark:text-slate-400 dark:hover:bg-white/[0.04] dark:hover:text-slate-200"
                 }`}
               >
                 {/* Active pill indicator */}
                 {isActive && (
-                  <span className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-[3px] rounded-full bg-brand-500 dark:bg-brand-400" />
+                  <span className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-[3px] rounded-full bg-primary-600 dark:bg-primary-400" />
                 )}
                 <Icon
                   className={`h-[17px] w-[17px] shrink-0 ${
                     isActive
-                      ? "text-brand-500 dark:text-brand-400"
+                      ? "text-primary-600 dark:text-primary-400"
                       : "text-zinc-400 group-hover:text-zinc-600 dark:text-slate-500 dark:group-hover:text-slate-300"
                   }`}
                 />
