@@ -413,7 +413,7 @@ export function useMappingPageLogic() {
     setImportGroupPath, setEditingFieldTemplateName,
     setShowTechnicalKeys, setSearchTerm, setShowUnmappedOnly,
     // API
-    saveDraft,
+    saveDraft, loadData,
     // Field templates actions
     applySelectedFieldTemplate, openEditFieldTemplatePicker,
     closeEditFieldTemplatePicker, startEditingExistingTemplate,

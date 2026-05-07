@@ -171,6 +171,7 @@ const [hovered, setHovered] = useState(false);
                 key={link.href}
                 href={link.href}
                 title={!expanded ? link.label : undefined}
+                aria-label={link.label}
                 className={`group relative flex items-center rounded-lg py-2 max-md:py-3 text-sm font-medium transition-all duration-150 ${
                   expanded ? "gap-2.5 px-2.5 justify-start" : "justify-center px-0"
                 } ${

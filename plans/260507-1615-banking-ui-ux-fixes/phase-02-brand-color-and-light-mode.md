@@ -1,17 +1,22 @@
 ---
 phase: 2
 title: "Brand color decision + light mode neutralize"
-status: pending — blocked on UX decision Q1
+status: ready (Q1 = C locked)
 priority: P1
-effort: 1-2d (depends on Q1)
+effort: 1-2d
 blocks: phase-04
+decision: "Q1 = C (Hybrid) locked 2026-05-07"
 ---
 
 # Phase 2 — Brand color + light mode
 
-## Strategic question — needs decision before implementation
+## Locked decision — Q1 = C (Hybrid)
 
-**Q1 — Primary brand color cho banking tool?**
+- **Primary** (navigation, active states, links, primary buttons CTA general): **emerald-600 `#059669`** (banking trust + nhóm 1 signal)
+- **Accent** (special actions: Tạo BCĐX, Tải báo cáo, AI features): cam **`#E8453C`** (Claude personality preserved)
+- **Danger/Error** (destructive actions, errors): red-600 `#DC2626` (separate from accent cam — avoid confusion)
+
+## Original Q1 options (for reference)
 
 | Option | Primary | Accent | Trust signal | Effort | Notes |
 |---|---|---|---|---|---|

@@ -2,6 +2,8 @@
 
 import { Banknote, FileText, Shield, Wallet } from "lucide-react";
 
+import { formatVnd as fmtVND } from "@/lib/format-vnd-number";
+
 type KhcnProfileCardProps = {
   customer: {
     customer_name: string;
@@ -21,10 +23,6 @@ type KhcnProfileCardProps = {
     totalObligation: number;
   };
 };
-
-function fmtVND(n: number): string {
-  return new Intl.NumberFormat("vi-VN").format(n) + "đ";
-}
 
 function debtGroupStyle(group: string | null) {
   const n = Number(group);

@@ -24,3 +24,15 @@ export function parseVndNumber(str: string | number | null | undefined): number 
   const digits = String(str).replace(/\D/g, "");
   return digits ? Number(digits) : 0;
 }
+
+/**
+ * Format a VND value for display with currency suffix. Returns "—" (em dash)
+ * for null/undefined/NaN/non-finite — banking-safe placeholder, never shows
+ * "NaNđ" or empty string in summary fields.
+ */
+export function formatVnd(val: number | string | null | undefined): string {
+  if (val === null || val === undefined || val === "") return "—";
+  const n = typeof val === "string" ? parseVndNumber(val) : val;
+  if (!Number.isFinite(n)) return "—";
+  return VND_FORMATTER.format(n) + "đ";
+}

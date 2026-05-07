@@ -17,7 +17,7 @@ type LoanPlan = {
   createdAt: string;
 };
 
-import { fmtDisplay } from "@/lib/invoice-tracking-format-helpers";
+import { formatVnd } from "@/lib/format-vnd-number";
 import { METHOD_LABELS } from "@/lib/loan-plan/loan-plan-constants";
 
 type Financials = { totalCost: number; revenue: number; profit: number; loanAmount: number };
@@ -27,7 +27,7 @@ const STATUS_STYLES: Record<string, string> = {
   approved: "bg-emerald-50 text-emerald-700 ring-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-400",
 };
 
-function fmtVND(n: number) { return fmtDisplay(n) + "đ"; }
+const fmtVND = formatVnd;
 
 export default function LoanPlansListPage() {
   const { id: customerId } = useParams() as { id: string };
