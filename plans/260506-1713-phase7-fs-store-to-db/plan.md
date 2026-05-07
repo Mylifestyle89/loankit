@@ -1,12 +1,14 @@
 ---
 title: "Phase 7 — FS-store retirement (TemplateProfile + FrameworkState → DB)"
 description: "Final FS cleanup beyond MappingInstance: migrate TemplateProfile + FrameworkState from JSON files to DB; remove fs-store + file-lock + sub-modules."
-status: pending
+status: deferred
 priority: P2
 effort: 2-3d
 branch: main
 parent: plans/260506-1629-phase6-ui-cascade-and-schema-drop/plan.md
 created: 2026-05-06
+deferred: 2026-05-07
+defer_reason: "Big plan (260505-1007) goal đã đạt với Phase 6 cascade. Phase 7 là internal refactor không user-facing, P2. Pick lại khi có time/priority cụ thể hoặc khi fs-store thực sự cản trở thay đổi mới."
 ---
 
 # Phase 7 — FS-store retirement
