@@ -48,6 +48,11 @@ __pycache__/
 
 # local databases
 *.db
+*.db-shm
+*.db-wal
+
+# claude code worktrees (embedded repos, not submodules)
+.claude/worktrees/
 
 # local data sources (do not commit)
 *.xlsx
