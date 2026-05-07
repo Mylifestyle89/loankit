@@ -34,7 +34,7 @@ export default function DashboardPage() {
     <div className="mx-auto max-w-3xl px-4 py-10 space-y-8">
       {/* Hero greeting */}
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-brand-600 dark:text-brand-400">
+        <h1 className="text-2xl font-bold tracking-tight text-primary-600 dark:text-primary-400">
           Xin chào, {userName}
         </h1>
         <p className="mt-1 text-sm text-zinc-500 dark:text-slate-400 capitalize">{today}</p>
@@ -53,17 +53,17 @@ export default function DashboardPage() {
           <Link
             key={m.href}
             href={m.href}
-            className="group relative overflow-hidden rounded-2xl border border-brand-100 dark:border-brand-500/10 bg-gradient-to-br from-brand-50/80 via-white to-brand-50/60 dark:from-brand-900/30 dark:via-[#161616] dark:to-brand-900/20 p-5 transition-all duration-200 hover:shadow-lg hover:shadow-brand-500/10 hover:border-brand-200 dark:hover:border-brand-500/20 cursor-pointer"
+            className="group relative overflow-hidden rounded-2xl border border-primary-100 dark:border-primary-500/10 bg-gradient-to-br from-primary-50/80 via-white to-primary-50/60 dark:from-primary-900/30 dark:via-[#161616] dark:to-primary-900/20 p-5 transition-all duration-200 hover:shadow-lg hover:shadow-primary-500/10 hover:border-primary-200 dark:hover:border-primary-500/20 cursor-pointer"
           >
             <div className="flex items-center gap-4">
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-brand-500 text-white shadow-sm shadow-brand-500/25">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary-500 to-primary-500 text-white shadow-sm shadow-primary-500/25">
                 <m.icon className="h-5 w-5" />
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold text-zinc-900 dark:text-slate-100">{m.label}</p>
                 <p className="text-xs text-zinc-500 dark:text-slate-400">{m.desc}</p>
               </div>
-              <ArrowRight className="h-4 w-4 text-zinc-300 dark:text-slate-600 transition-transform duration-200 group-hover:translate-x-1 group-hover:text-brand-500" />
+              <ArrowRight className="h-4 w-4 text-zinc-300 dark:text-slate-600 transition-transform duration-200 group-hover:translate-x-1 group-hover:text-primary-500" />
             </div>
           </Link>
         ))}
@@ -79,8 +79,8 @@ export default function DashboardPage() {
 
 function StatCard({ label, value }: { label: string; value?: number }) {
   return (
-    <div className="rounded-2xl border border-brand-100 dark:border-white/[0.07] bg-white dark:bg-[#161616] p-5 text-center shadow-sm">
-      <p className="text-3xl font-bold tracking-tight text-brand-600 dark:text-brand-400">
+    <div className="rounded-2xl border border-primary-100 dark:border-white/[0.07] bg-white dark:bg-[#161616] p-5 text-center shadow-sm">
+      <p className="text-3xl font-bold tracking-tight text-primary-600 dark:text-primary-400">
         {value !== undefined ? value : "–"}
       </p>
       <p className="mt-1 text-xs text-zinc-500 dark:text-slate-400">{label}</p>

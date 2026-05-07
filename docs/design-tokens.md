@@ -6,15 +6,17 @@ created: 2026-05-07
 
 # Design tokens
 
-## Color philosophy — Hybrid (locked 2026-05-07)
+## Color philosophy — Hybrid (locked 2026-05-07, refined)
 
 | Role | Color | Use cases |
 |---|---|---|
-| **Primary** (emerald) | `#059669` (primary-600) | Sidebar active, links, navigation, primary buttons, trust signals, badges nhóm 1 |
-| **Brand/Accent** (cam) | `#DA7756` (brand-500) | Special actions: Tạo BCĐX, AI features, Claude-style highlights, branded CTAs |
+| **Primary** (emerald) | `#059669` (primary-600) | Sidebar active, navigation, links, **all standard CRUD primaries** (Thêm/Sửa/Lưu/Cập nhật), entry cards, page hero gradients, default focus rings, trust signals, badges nhóm 1 |
+| **Brand/Accent** (cam) | `#DA7756` (brand-500) | **Strictly limited**: AI features (AI Suggest, Auto-tagging, Smart Auto-Batch), Export báo cáo (Tạo BCĐX, Tải báo cáo DOCX), brand identity moments (logo on splash) |
 | **Danger** | `#DC2626` (red-600) | Destructive actions, errors, debt group 5 (NPL severe) |
 | **Warning** | `#D97706` (amber-600) | Pending states, debt group 2-4 |
 | **Success** | `#10B981` (primary-500) | Confirmations, debt group 1 (matches primary spectrum) |
+
+**Decision rule (when stuck):** if user clicks this 5+ times per session for routine work → primary (emerald). If it's a "moment" feature (AI, export, special) → brand (cam). Default to primary.
 
 ## Token definitions
 

@@ -95,15 +95,15 @@ function NewLoanForm() {
     }
   }
 
-  const inputCls = "mt-1 w-full rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] px-3 py-2 text-sm shadow-sm transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40";
+  const inputCls = "mt-1 w-full rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] px-3 py-2 text-sm shadow-sm transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40";
   const labelCls = "text-xs font-medium text-zinc-600 dark:text-slate-400";
 
   return (
     <section className="max-w-xl space-y-5">
-      <div className="relative overflow-hidden rounded-2xl border border-brand-100 dark:border-brand-500/10 bg-gradient-to-br from-brand-50 via-white to-brand-100 dark:from-brand-950/30 dark:via-[#242220] dark:to-brand-900/20 p-5">
-        <div className="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-brand-200/30 blur-2xl dark:bg-brand-500/10" />
+      <div className="relative overflow-hidden rounded-2xl border border-primary-100 dark:border-primary-500/10 bg-gradient-to-br from-primary-50 via-white to-primary-100 dark:from-primary-950/30 dark:via-[#242220] dark:to-primary-900/20 p-5">
+        <div className="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-primary-200/30 blur-2xl dark:bg-primary-500/10" />
         <div className="relative">
-          <h2 className="text-xl font-bold tracking-tight text-brand-600 dark:text-brand-400">{t("loans.add")}</h2>
+          <h2 className="text-xl font-bold tracking-tight text-primary-600 dark:text-primary-400">{t("loans.add")}</h2>
           {error && <p className="mt-2 text-sm text-red-600 dark:text-red-400">{error}</p>}
         </div>
       </div>
@@ -112,8 +112,8 @@ function NewLoanForm() {
       {!loanType && (
         <div className="grid grid-cols-2 gap-4">
           <button type="button" onClick={() => setLoanType("normal")}
-            className="flex flex-col items-center gap-3 rounded-2xl border-2 border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#161616] p-6 transition-all hover:border-brand-400 hover:shadow-md">
-            <Landmark className="h-8 w-8 text-brand-500" />
+            className="flex flex-col items-center gap-3 rounded-2xl border-2 border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#161616] p-6 transition-all hover:border-primary-400 hover:shadow-md">
+            <Landmark className="h-8 w-8 text-primary-500" />
             <span className="text-sm font-semibold">Khoản vay thông thường</span>
             <span className="text-xs text-zinc-400">SXKD, tiêu dùng, trung dài hạn...</span>
           </button>
@@ -131,10 +131,10 @@ function NewLoanForm() {
         {/* Type indicator */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-xs text-zinc-500">
-            {isCard ? <CreditCard className="h-4 w-4 text-amber-500" /> : <Landmark className="h-4 w-4 text-brand-500" />}
+            {isCard ? <CreditCard className="h-4 w-4 text-amber-500" /> : <Landmark className="h-4 w-4 text-primary-500" />}
             <span className="font-medium">{isCard ? "Thẻ tín dụng Lộc Việt" : "Khoản vay thông thường"}</span>
           </div>
-          <button type="button" onClick={() => setLoanType(null)} className="text-xs text-brand-500 hover:underline">Đổi loại</button>
+          <button type="button" onClick={() => setLoanType(null)} className="text-xs text-primary-500 hover:underline">Đổi loại</button>
         </div>
 
         <label className="block">
@@ -210,10 +210,10 @@ function NewLoanForm() {
           </label>
         )}
         <div className="flex justify-end gap-3 pt-2">
-          <button type="button" onClick={() => router.back()} className="cursor-pointer rounded-lg border border-zinc-200 dark:border-white/[0.09] px-4 py-2 text-sm text-zinc-600 dark:text-slate-400 shadow-sm transition-all duration-150 hover:border-brand-200 dark:hover:border-brand-500/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40">
+          <button type="button" onClick={() => router.back()} className="cursor-pointer rounded-lg border border-zinc-200 dark:border-white/[0.09] px-4 py-2 text-sm text-zinc-600 dark:text-slate-400 shadow-sm transition-all duration-150 hover:border-primary-200 dark:hover:border-primary-500/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40">
             {t("common.cancel")}
           </button>
-          <button type="submit" disabled={saving} className="cursor-pointer rounded-lg bg-brand-500 px-5 py-2 text-sm font-medium text-white shadow-sm shadow-brand-500/25 transition-all duration-200 hover:shadow-md hover:shadow-brand-500/30 hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/50">
+          <button type="submit" disabled={saving} className="cursor-pointer rounded-lg bg-primary-500 px-5 py-2 text-sm font-medium text-white shadow-sm shadow-primary-500/25 transition-all duration-200 hover:shadow-md hover:shadow-primary-500/30 hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/50">
             {saving ? t("loans.loading") : t("common.save")}
           </button>
         </div>

@@ -35,7 +35,7 @@ function CustomerTypeBadge({ type }: { type?: string }) {
     <span className={`mt-0.5 inline-block rounded px-1.5 py-0.5 text-[10px] font-medium ${
       type === "individual"
         ? "bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400"
-        : "bg-brand-50 text-brand-500 dark:bg-brand-500/10 dark:text-brand-400"
+        : "bg-primary-50 text-primary-500 dark:bg-primary-500/10 dark:text-primary-400"
     }`}>
       {type === "individual" ? "CN" : "DN"}
     </span>
@@ -45,13 +45,13 @@ function CustomerTypeBadge({ type }: { type?: string }) {
 function SortIcon({ col, sortBy, sortOrder }: { col: SortKey; sortBy: SortKey; sortOrder: "asc" | "desc" }) {
   if (sortBy !== col) return <ArrowUpDown className="h-3 w-3 opacity-40" />;
   return sortOrder === "asc"
-    ? <ChevronUp className="h-3 w-3 text-brand-500 dark:text-brand-400" />
-    : <ChevronDown className="h-3 w-3 text-brand-500 dark:text-brand-400" />;
+    ? <ChevronUp className="h-3 w-3 text-primary-500 dark:text-primary-400" />
+    : <ChevronDown className="h-3 w-3 text-primary-500 dark:text-primary-400" />;
 }
 
 export function LoanListTable({ loans, viewMode, sortBy, sortOrder, onSort, onDelete }: Props) {
   const { t } = useLanguage();
-  const thCls = "px-4 py-3 text-left font-medium cursor-pointer select-none hover:text-brand-500 dark:hover:text-brand-400 transition-colors";
+  const thCls = "px-4 py-3 text-left font-medium cursor-pointer select-none hover:text-primary-500 dark:hover:text-primary-400 transition-colors";
 
   if (viewMode === "table") {
     return (
@@ -81,9 +81,9 @@ export function LoanListTable({ loans, viewMode, sortBy, sortOrder, onSort, onDe
           </thead>
           <tbody>
             {loans.map((loan) => (
-              <tr key={loan.id} className="border-b border-zinc-50 dark:border-white/[0.03] hover:bg-brand-50/30 dark:hover:bg-brand-500/5 transition-colors">
+              <tr key={loan.id} className="border-b border-zinc-50 dark:border-white/[0.03] hover:bg-primary-50/30 dark:hover:bg-primary-500/5 transition-colors">
                 <td className="px-4 py-3 font-medium">
-                  <Link href={`/report/loans/${loan.id}`} className="text-brand-500 dark:text-brand-400 hover:underline">
+                  <Link href={`/report/loans/${loan.id}`} className="text-primary-500 dark:text-primary-400 hover:underline">
                     {loan.contractNumber}
                   </Link>
                 </td>
@@ -119,7 +119,7 @@ export function LoanListTable({ loans, viewMode, sortBy, sortOrder, onSort, onDe
       {loans.map((loan) => (
         <div
           key={loan.id}
-          className="group relative rounded-xl border border-zinc-200 dark:border-white/[0.07] bg-white dark:bg-[#161616] p-4 shadow-sm transition-all duration-200 hover:shadow-md hover:border-brand-200 dark:hover:border-brand-500/20"
+          className="group relative rounded-xl border border-zinc-200 dark:border-white/[0.07] bg-white dark:bg-[#161616] p-4 shadow-sm transition-all duration-200 hover:shadow-md hover:border-primary-200 dark:hover:border-primary-500/20"
         >
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0 flex-1">
@@ -131,7 +131,7 @@ export function LoanListTable({ loans, viewMode, sortBy, sortOrder, onSort, onDe
               <p className="mt-0.5 text-sm text-zinc-500 dark:text-slate-400">{loan.customer.customer_name}</p>
             </div>
             <div className="text-right shrink-0">
-              <p className="text-lg font-bold tabular-nums text-brand-600 dark:text-brand-400">
+              <p className="text-lg font-bold tabular-nums text-primary-600 dark:text-primary-400">
                 {fmt(loan.loanAmount)}
               </p>
               <p className="text-xs text-zinc-400 dark:text-slate-500">VND</p>
@@ -149,7 +149,7 @@ export function LoanListTable({ loans, viewMode, sortBy, sortOrder, onSort, onDe
           <div className="mt-3 flex items-center gap-2 border-t border-zinc-100 dark:border-white/[0.05] pt-3">
             <Link
               href={`/report/loans/${loan.id}`}
-              className="inline-flex items-center gap-1 rounded-lg bg-brand-100 dark:bg-brand-500/10 px-3 py-1.5 text-xs font-medium text-brand-600 dark:text-brand-400 transition-colors duration-150 hover:bg-brand-100 dark:hover:bg-brand-500/20"
+              className="inline-flex items-center gap-1 rounded-lg bg-primary-100 dark:bg-primary-500/10 px-3 py-1.5 text-xs font-medium text-primary-600 dark:text-primary-400 transition-colors duration-150 hover:bg-primary-100 dark:hover:bg-primary-500/20"
             >
               {t("common.view")}<ArrowRight className="h-3 w-3" />
             </Link>
