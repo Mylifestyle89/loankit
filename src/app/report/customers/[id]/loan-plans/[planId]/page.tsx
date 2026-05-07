@@ -282,7 +282,7 @@ export default function LoanPlanEditorPage() {
 
   if (loading) return (
     <div className="flex justify-center py-16">
-      <div className="h-6 w-6 animate-spin rounded-full border-2 border-brand-200 border-t-brand-500" />
+      <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary-200 border-t-primary-500" />
     </div>
   );
 
@@ -291,8 +291,8 @@ export default function LoanPlanEditorPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Link href={`/report/customers/${customerId}/loan-plans`} className="inline-flex items-center gap-1 text-sm text-brand-500 dark:text-brand-400 hover:underline"><ArrowLeft className="h-3.5 w-3.5" />Danh sách PA</Link>
-          <h2 className="text-lg font-bold text-brand-600 dark:text-brand-400">
+          <Link href={`/report/customers/${customerId}/loan-plans`} className="inline-flex items-center gap-1 text-sm text-primary-500 dark:text-primary-400 hover:underline"><ArrowLeft className="h-3.5 w-3.5" />Danh sách PA</Link>
+          <h2 className="text-lg font-bold text-primary-600 dark:text-primary-400">
             {name || "Phương án"}
           </h2>
           <select
@@ -326,7 +326,7 @@ export default function LoanPlanEditorPage() {
             type="button"
             onClick={handleSave}
             disabled={saving}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-brand-500 px-4 py-2 text-sm font-medium text-white shadow-sm shadow-brand-500/25 hover:brightness-110 disabled:opacity-60"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-primary-500 px-4 py-2 text-sm font-medium text-white shadow-sm shadow-primary-500/25 hover:brightness-110 disabled:opacity-60"
           >
             <Save className="h-4 w-4" /> {saving ? "..." : "Lưu"}
           </button>
@@ -441,7 +441,7 @@ export default function LoanPlanEditorPage() {
           onPaste={(e) => { e.preventDefault(); const parsed = parseTsvToRevenueItems(e.clipboardData.getData("text/plain")); if (parsed.length > 0) setRevenueItems(parsed); }}
           readOnly
           rows={2}
-          className="w-full mb-3 rounded-lg border border-dashed border-zinc-300 dark:border-white/10 bg-zinc-50 dark:bg-white/[0.02] px-3 py-2 text-xs text-zinc-400 resize-none focus:outline-none focus:border-brand-400"
+          className="w-full mb-3 rounded-lg border border-dashed border-zinc-300 dark:border-white/10 bg-zinc-50 dark:bg-white/[0.02] px-3 py-2 text-xs text-zinc-400 resize-none focus:outline-none focus:border-primary-400"
           placeholder="Click vào đây rồi Ctrl+V để dán bảng từ Excel / Google Sheets"
         />
         <div className="overflow-x-auto">
@@ -458,7 +458,7 @@ export default function LoanPlanEditorPage() {
             </thead>
             <tbody>
               {revenueItems.map((r, idx) => (
-                <tr key={idx} className="hover:bg-brand-50/30 dark:hover:bg-brand-500/5">
+                <tr key={idx} className="hover:bg-primary-50/30 dark:hover:bg-primary-500/5">
                   <td className="px-2 py-1.5 border border-zinc-200 dark:border-white/[0.07]">
                     <input className="w-full bg-transparent outline-none text-sm" value={r.description} onChange={(e) => updateRevenue(idx, "description", e.target.value)} placeholder="Mô tả" />
                   </td>
@@ -491,7 +491,7 @@ export default function LoanPlanEditorPage() {
             </tfoot>
           </table>
           <button type="button" onClick={() => setRevenueItems([...revenueItems, { description: "", unit: "đ", qty: 0, unitPrice: 0, amount: 0 }])}
-            className="mt-2 inline-flex items-center gap-1 rounded-lg border border-dashed border-zinc-300 dark:border-white/[0.1] px-3 py-1.5 text-xs text-zinc-500 hover:border-brand-300 hover:text-brand-500">
+            className="mt-2 inline-flex items-center gap-1 rounded-lg border border-dashed border-zinc-300 dark:border-white/[0.1] px-3 py-1.5 text-xs text-zinc-500 hover:border-primary-300 hover:text-primary-500">
             <Plus className="h-3 w-3" /> Thêm dòng doanh thu
           </button>
         </div>
@@ -500,7 +500,7 @@ export default function LoanPlanEditorPage() {
 
       {/* Financial summary — hide for tieu_dung (uses its own preview card) */}
       {financials && loanMethod !== "tieu_dung" && (
-        <div className="rounded-2xl border border-brand-200 dark:border-brand-500/20 bg-gradient-to-br from-brand-50 to-brand-50 dark:from-brand-900/20 dark:to-brand-900/10 p-5 shadow-sm">
+        <div className="rounded-2xl border border-primary-200 dark:border-primary-500/20 bg-gradient-to-br from-primary-50 to-primary-50 dark:from-primary-900/20 dark:to-primary-900/10 p-5 shadow-sm">
           <h3 className="text-sm font-semibold mb-3">Tổng hợp tài chính</h3>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 text-sm">
             <Stat label="Tổng chi phí trực tiếp" value={fmtVND(financials.totalDirectCost)} />
@@ -562,7 +562,7 @@ export default function LoanPlanEditorPage() {
 
       {/* ── Bảng trả nợ theo năm (trung dài hạn) ── */}
       {loanMethod === "trung_dai" && termMonths > 12 && loanAmount > 0 && financials && (
-        <div className="rounded-2xl border border-brand-200 dark:border-brand-500/20 bg-white dark:bg-[#161616] p-5 shadow-sm">
+        <div className="rounded-2xl border border-primary-200 dark:border-primary-500/20 bg-white dark:bg-[#161616] p-5 shadow-sm">
           <RepaymentScheduleTable
             loanAmount={loanAmount} termMonths={termMonths}
             standardRate={interestRate} preferentialRate={preferentialRate || interestRate}

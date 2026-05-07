@@ -70,7 +70,7 @@ export function CustomerCollateralSection({ customerId }: { customerId: string }
   if (loading) {
     return (
       <div className="flex justify-center py-8">
-        <div className="h-5 w-5 animate-spin rounded-full border-2 border-brand-200 border-t-brand-500" />
+        <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary-200 border-t-primary-500" />
       </div>
     );
   }
@@ -86,7 +86,7 @@ export function CustomerCollateralSection({ customerId }: { customerId: string }
               📷 Scan giấy tờ TS
             </button>
             <button type="button" onClick={() => { setScanPrefill(undefined); setShowForm(true); }}
-              className={`${btnCls} inline-flex items-center gap-1.5 bg-brand-500 text-white shadow-sm shadow-brand-500/25 hover:brightness-110`}>
+              className={`${btnCls} inline-flex items-center gap-1.5 bg-primary-500 text-white shadow-sm shadow-primary-500/25 hover:brightness-110`}>
               <Plus className="h-3.5 w-3.5" /> Thêm TSBĐ
             </button>
           </div>

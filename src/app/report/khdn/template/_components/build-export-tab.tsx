@@ -156,7 +156,7 @@ export function BuildExportTab({ templates, activeTemplateId, onMessage, onError
           coverage.coveragePercent >= 80
             ? "border-emerald-300/70 bg-emerald-50/80 text-emerald-800 dark:border-emerald-400/40 dark:bg-emerald-500/10 dark:text-emerald-200"
             : coverage.coveragePercent >= 50
-              ? "border-brand-300/70 bg-brand-50/80 text-brand-700 dark:border-brand-400/40 dark:bg-brand-500/10 dark:text-brand-200"
+              ? "border-primary-300/70 bg-primary-50/80 text-primary-700 dark:border-primary-400/40 dark:bg-primary-500/10 dark:text-primary-200"
               : "border-red-300/70 bg-red-50/80 text-red-800 dark:border-red-400/40 dark:bg-red-500/10 dark:text-red-200"
         }`}>
           <CoverageProgressBar filled={coverage.filled} total={coverage.total} barWidth="w-24" />
@@ -170,7 +170,7 @@ export function BuildExportTab({ templates, activeTemplateId, onMessage, onError
 
       {/* Freshness status */}
       {freshness?.is_stale ? (
-        <div className="rounded-xl border border-brand-300/70 bg-brand-50/80 px-3 py-2 text-sm text-brand-700 dark:border-brand-400/40 dark:bg-brand-500/10 dark:text-brand-200">
+        <div className="rounded-xl border border-primary-300/70 bg-primary-50/80 px-3 py-2 text-sm text-primary-700 dark:border-primary-400/40 dark:bg-primary-500/10 dark:text-primary-200">
           <p className="font-medium">Dữ liệu build có thể cũ so với Mapping hiện tại.</p>
           <p className="mt-1 text-xs">
             Lý do: {freshness.reasons.join(", ")}
@@ -190,7 +190,7 @@ export function BuildExportTab({ templates, activeTemplateId, onMessage, onError
           <select
             value={selectedTemplateId}
             onChange={(e) => setSelectedTemplateId(e.target.value)}
-            className="rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] px-3 py-2 text-sm shadow-sm transition-all duration-150 focus:border-brand-300 dark:focus:border-brand-500/30 focus:ring-2 focus:ring-brand-500/20 outline-none"
+            className="rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] px-3 py-2 text-sm shadow-sm transition-all duration-150 focus:border-primary-300 dark:focus:border-primary-500/30 focus:ring-2 focus:ring-primary-500/20 outline-none"
           >
             {templates.map((tp) => (
               <option key={tp.id} value={tp.id}>{tp.template_name}</option>
@@ -202,18 +202,18 @@ export function BuildExportTab({ templates, activeTemplateId, onMessage, onError
       {/* Action toolbar */}
       <div className="flex flex-wrap gap-3">
         <button onClick={runBuildValidate} disabled={runningBuild}
-          className="inline-flex items-center gap-2 rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] px-4 py-2 text-sm font-medium shadow-sm transition-all duration-150 hover:border-brand-200 dark:hover:border-brand-500/20 disabled:opacity-60">
+          className="inline-flex items-center gap-2 rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] px-4 py-2 text-sm font-medium shadow-sm transition-all duration-150 hover:border-primary-200 dark:hover:border-primary-500/20 disabled:opacity-60">
           <Play className="h-4 w-4" />
           {runningBuild ? t("runs.running") : "Chạy Build Dữ Liệu"}
         </button>
         <button onClick={runExportPreview} disabled={runningExport || runningBuild}
-          className="inline-flex items-center gap-2 rounded-lg bg-brand-500 px-5 py-2 text-sm font-medium text-white shadow-sm shadow-brand-500/25 transition-all duration-200 hover:shadow-md hover:shadow-brand-500/30 hover:brightness-110 disabled:opacity-60">
+          className="inline-flex items-center gap-2 rounded-lg bg-primary-500 px-5 py-2 text-sm font-medium text-white shadow-sm shadow-primary-500/25 transition-all duration-200 hover:shadow-md hover:shadow-primary-500/30 hover:brightness-110 disabled:opacity-60">
           <Eye className="h-4 w-4" />
           {runningExport ? "Đang tạo báo cáo..." : "Tạo & Tải Báo Cáo"}
         </button>
         {exportedDocxPath && (
           <button onClick={handleDownloadDocx}
-            className="inline-flex items-center gap-2 rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] px-4 py-2 text-sm font-medium shadow-sm transition-all duration-150 hover:border-brand-200 dark:hover:border-brand-500/20">
+            className="inline-flex items-center gap-2 rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] px-4 py-2 text-sm font-medium shadow-sm transition-all duration-150 hover:border-primary-200 dark:hover:border-primary-500/20">
             <Download className="h-4 w-4" /> Tải về DOCX
           </button>
         )}
@@ -235,12 +235,12 @@ export function BuildExportTab({ templates, activeTemplateId, onMessage, onError
         <h3 className="text-sm font-semibold">{t("runs.logs")}</h3>
         {loading && (
           <div className="mt-3 flex items-center justify-center py-6">
-            <div className="h-5 w-5 animate-spin rounded-full border-2 border-brand-200 border-t-brand-500 dark:border-brand-700 dark:border-t-brand-400" />
+            <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary-200 border-t-primary-500 dark:border-primary-700 dark:border-t-primary-400" />
           </div>
         )}
         <ul className="mt-2 space-y-2">
           {runs.map((run) => (
-            <li key={run.run_id} className="rounded-xl border border-zinc-200 dark:border-white/[0.07] p-3 text-sm transition-colors duration-150 hover:border-brand-200 dark:hover:border-brand-500/20">
+            <li key={run.run_id} className="rounded-xl border border-zinc-200 dark:border-white/[0.07] p-3 text-sm transition-colors duration-150 hover:border-primary-200 dark:hover:border-primary-500/20">
               <p className="font-medium">{run.run_id}</p>
               <p className="text-xs text-zinc-500 dark:text-slate-400">
                 {t("runs.meta.mapping")}: {run.mapping_version_id} | {t("runs.meta.template")}: {run.template_profile_id}
@@ -252,7 +252,7 @@ export function BuildExportTab({ templates, activeTemplateId, onMessage, onError
                 {run.output_paths.map((p) => (
                   <button key={p}
                     onClick={async () => { try { const url = await getSignedFileUrl(p, true); window.open(url, "_blank", "noopener,noreferrer"); } catch { onError("Failed to download file."); } }}
-                    className="inline-flex items-center gap-1 rounded-lg bg-brand-100 dark:bg-brand-500/10 px-2 py-1 text-[11px] font-mono text-brand-700 dark:text-brand-300 hover:bg-brand-100 dark:hover:bg-brand-500/20 transition-colors"
+                    className="inline-flex items-center gap-1 rounded-lg bg-primary-100 dark:bg-primary-500/10 px-2 py-1 text-[11px] font-mono text-primary-700 dark:text-primary-300 hover:bg-primary-100 dark:hover:bg-primary-500/20 transition-colors"
                     title="Tải về">
                     <Download className="h-3 w-3" /> {p.split("/").pop()}
                   </button>

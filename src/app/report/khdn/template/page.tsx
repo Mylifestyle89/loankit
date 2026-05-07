@@ -156,17 +156,17 @@ function TemplatePageInner() {
   }
 
   if (loading) {
-    return <div className="flex items-center justify-center py-16"><div className="h-6 w-6 animate-spin rounded-full border-2 border-brand-200 border-t-brand-500 dark:border-brand-700 dark:border-t-brand-400" /></div>;
+    return <div className="flex items-center justify-center py-16"><div className="h-6 w-6 animate-spin rounded-full border-2 border-primary-200 border-t-primary-500 dark:border-primary-700 dark:border-t-primary-400" /></div>;
   }
 
   return (
     <section className="space-y-5">
       {/* Header */}
-      <div className="relative overflow-hidden rounded-2xl border border-brand-100 dark:border-brand-500/10 bg-gradient-to-br from-brand-50 via-white to-brand-100 dark:from-brand-950/30 dark:via-[#242220] dark:to-brand-900/20 p-5">
-        <div className="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-brand-200/30 blur-2xl dark:bg-brand-500/10" />
+      <div className="relative overflow-hidden rounded-2xl border border-primary-100 dark:border-primary-500/10 bg-gradient-to-br from-primary-50 via-white to-primary-100 dark:from-primary-950/30 dark:via-[#242220] dark:to-primary-900/20 p-5">
+        <div className="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-primary-200/30 blur-2xl dark:bg-primary-500/10" />
         <div className="relative flex items-start justify-between">
           <div>
-            <h2 className="text-xl font-bold tracking-tight text-brand-600 dark:text-brand-400">{t("nav.template")}</h2>
+            <h2 className="text-xl font-bold tracking-tight text-primary-600 dark:text-primary-400">{t("nav.template")}</h2>
             <p className="mt-1 text-sm text-zinc-500 dark:text-slate-400">{t("template.desc")}</p>
             {message && <p className="mt-2 text-sm text-emerald-600 dark:text-emerald-400">{message}</p>}
             {error && <p className="mt-2 text-sm text-red-600 dark:text-red-400">{error}</p>}
@@ -178,7 +178,7 @@ function TemplatePageInner() {
       <div className="flex gap-1 rounded-xl bg-zinc-100 dark:bg-white/[0.05] p-1">
         {VALID_TABS.map((tab) => (
           <button key={tab} type="button" onClick={() => setActiveTab(tab)}
-            className={`flex-1 rounded-lg px-4 py-2 text-sm font-medium transition-all ${activeTab === tab ? "bg-white dark:bg-[#1e1e1e] shadow-sm text-brand-600 dark:text-brand-400" : "text-zinc-500 dark:text-slate-400 hover:text-zinc-700 dark:hover:text-slate-300"}`}>
+            className={`flex-1 rounded-lg px-4 py-2 text-sm font-medium transition-all ${activeTab === tab ? "bg-white dark:bg-[#1e1e1e] shadow-sm text-primary-600 dark:text-primary-400" : "text-zinc-500 dark:text-slate-400 hover:text-zinc-700 dark:hover:text-slate-300"}`}>
             {TAB_LABELS[tab]}
           </button>
         ))}
@@ -206,8 +206,8 @@ function TemplatePageInner() {
           <FieldReferencePanel fieldTemplates={fi.fieldTemplates} selectedFieldTemplateId={fi.selectedFieldTemplateId} onFieldTemplateChange={fi.setSelectedFieldTemplateId}
             fieldsByGroup={fi.fieldsByGroup} groups={fi.groups} onCopyField={fi.injectField} copyFeedback={fi.copyFeedback} />
           {validation.validating && (
-            <div className="flex items-center gap-2 rounded-lg border border-brand-200 dark:border-brand-500/20 bg-brand-50 dark:bg-brand-900/30 px-4 py-3 text-sm text-brand-600 dark:text-brand-400">
-              <div className="h-4 w-4 animate-spin rounded-full border-2 border-brand-200 border-t-brand-500" /> Đang kiểm tra {validation.fileName}...
+            <div className="flex items-center gap-2 rounded-lg border border-primary-200 dark:border-primary-500/20 bg-primary-50 dark:bg-primary-900/30 px-4 py-3 text-sm text-primary-600 dark:text-primary-400">
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary-200 border-t-primary-500" /> Đang kiểm tra {validation.fileName}...
             </div>
           )}
           {validation.error && <p className="text-sm text-red-600 dark:text-red-400">{validation.error}</p>}
@@ -239,7 +239,7 @@ function TemplatePageInner() {
 // Wrap with Suspense for useSearchParams (required by Next.js App Router)
 export default function TemplatePage() {
   return (
-    <Suspense fallback={<div className="flex items-center justify-center py-16"><div className="h-6 w-6 animate-spin rounded-full border-2 border-brand-200 border-t-brand-500 dark:border-brand-700 dark:border-t-brand-400" /></div>}>
+    <Suspense fallback={<div className="flex items-center justify-center py-16"><div className="h-6 w-6 animate-spin rounded-full border-2 border-primary-200 border-t-primary-500 dark:border-primary-700 dark:border-t-primary-400" /></div>}>
       <TemplatePageInner />
     </Suspense>
   );

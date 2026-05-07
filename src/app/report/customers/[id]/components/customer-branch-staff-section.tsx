@@ -39,14 +39,14 @@ export function CustomerBranchStaffSection() {
   if (loading) {
     return (
       <div className="flex justify-center py-8">
-        <div className="h-5 w-5 animate-spin rounded-full border-2 border-brand-200 border-t-brand-500" />
+        <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary-200 border-t-primary-500" />
       </div>
     );
   }
 
   return (
     <div className="space-y-4">
-      <p className="text-xs text-brand-500 dark:text-brand-400 bg-brand-100 dark:bg-brand-500/10 rounded-lg px-3 py-2">
+      <p className="text-xs text-primary-500 dark:text-primary-400 bg-primary-100 dark:bg-primary-500/10 rounded-lg px-3 py-2">
         Thay đổi ở đây sẽ áp dụng cho tất cả khách hàng.
       </p>
       <div className="flex gap-1">
@@ -60,7 +60,7 @@ export function CustomerBranchStaffSection() {
             onClick={() => setSubTab(st.key)}
             className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
               subTab === st.key
-                ? "bg-brand-100 text-brand-600 dark:bg-brand-500/15 dark:text-brand-400"
+                ? "bg-primary-100 text-primary-600 dark:bg-primary-500/15 dark:text-primary-400"
                 : "text-zinc-500 dark:text-slate-400 hover:bg-zinc-100 dark:hover:bg-white/[0.05]"
             }`}
           >

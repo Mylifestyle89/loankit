@@ -56,7 +56,7 @@ export function CostItemsTable({
         onPaste={handlePaste}
         readOnly
         rows={2}
-        className="w-full rounded-lg border border-dashed border-zinc-300 dark:border-white/10 bg-zinc-50 dark:bg-white/[0.02] px-3 py-2 text-xs text-zinc-400 resize-none focus:outline-none focus:border-brand-400"
+        className="w-full rounded-lg border border-dashed border-zinc-300 dark:border-white/10 bg-zinc-50 dark:bg-white/[0.02] px-3 py-2 text-xs text-zinc-400 resize-none focus:outline-none focus:border-primary-400"
         placeholder="Click vào đây rồi Ctrl+V để dán bảng từ Excel / Google Sheets"
       />
     <div className="overflow-x-auto">
@@ -73,7 +73,7 @@ export function CostItemsTable({
         </thead>
         <tbody>
           {items.map((item, idx) => (
-            <tr key={idx} className="hover:bg-brand-50/30 dark:hover:bg-brand-500/5">
+            <tr key={idx} className="hover:bg-primary-50/30 dark:hover:bg-primary-500/5">
               <td className={cellCls}>
                 <input className="w-full bg-transparent outline-none" value={item.name} onChange={(e) => updateItem(idx, "name", e.target.value)} placeholder="Tên hạng mục" />
               </td>
@@ -108,7 +108,7 @@ export function CostItemsTable({
       <button
         type="button"
         onClick={addRow}
-        className="mt-2 inline-flex items-center gap-1 rounded-lg border border-dashed border-zinc-300 dark:border-white/[0.1] px-3 py-1.5 text-xs text-zinc-500 hover:border-brand-300 hover:text-brand-500"
+        className="mt-2 inline-flex items-center gap-1 rounded-lg border border-dashed border-zinc-300 dark:border-white/[0.1] px-3 py-1.5 text-xs text-zinc-500 hover:border-primary-300 hover:text-primary-500"
       >
         <Plus className="h-3 w-3" /> Thêm hạng mục
       </button>

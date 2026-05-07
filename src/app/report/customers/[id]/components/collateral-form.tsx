@@ -223,7 +223,7 @@ export function CollateralForm({ customerId, initial, onSaved, onCancel }: {
   );
 
   return (
-    <div className="rounded-xl border border-brand-200 dark:border-brand-500/20 bg-brand-50/30 dark:bg-brand-500/5 p-4 space-y-3">
+    <div className="rounded-xl border border-primary-200 dark:border-primary-500/20 bg-primary-50/30 dark:bg-primary-500/5 p-4 space-y-3">
       {/* AI paste extractor */}
       <AiPasteExtractor
         entityType="collateral"
@@ -303,7 +303,7 @@ export function CollateralForm({ customerId, initial, onSaved, onCancel }: {
             <SectionHeader title="Tài sản gắn liền với đất">
               <label className="flex items-center gap-1.5 cursor-pointer">
                 <input type="checkbox" checked={hasAssetOnLand} onChange={(e) => setHasAssetOnLand(e.target.checked)}
-                  className="rounded border-zinc-300 text-brand-500 focus:ring-brand-500/30 h-3.5 w-3.5" />
+                  className="rounded border-zinc-300 text-primary-500 focus:ring-primary-500/30 h-3.5 w-3.5" />
                 <span className="text-[11px] text-zinc-500">Có tài sản trên đất</span>
               </label>
             </SectionHeader>
@@ -332,8 +332,8 @@ export function CollateralForm({ customerId, initial, onSaved, onCancel }: {
                           }}
                           className={`px-2.5 py-1 text-[10px] font-medium transition-colors ${
                             (props.house_rounding ?? "0") === o.value
-                              ? "bg-brand-500 text-white"
-                              : "bg-white dark:bg-[#1a1a1a] text-zinc-500 dark:text-zinc-400 hover:bg-brand-50 dark:hover:bg-brand-500/10"
+                              ? "bg-primary-500 text-white"
+                              : "bg-white dark:bg-[#1a1a1a] text-zinc-500 dark:text-zinc-400 hover:bg-primary-50 dark:hover:bg-primary-500/10"
                           }`}
                         >
                           {o.label}
@@ -481,7 +481,7 @@ export function CollateralForm({ customerId, initial, onSaved, onCancel }: {
                 <input type="radio" name="tk_subtype" value={st.value}
                   checked={(props._subtype || "ttk") === st.value}
                   onChange={() => setProps((p) => ({ ...p, _subtype: st.value }))}
-                  className="h-3.5 w-3.5 border-zinc-300 text-brand-500 focus:ring-brand-500/30" />
+                  className="h-3.5 w-3.5 border-zinc-300 text-primary-500 focus:ring-primary-500/30" />
                 <span className="text-sm text-zinc-700 dark:text-zinc-300">{st.label}</span>
               </label>
             ))}
@@ -521,7 +521,7 @@ export function CollateralForm({ customerId, initial, onSaved, onCancel }: {
       {/* Save/Cancel */}
       <div className="flex gap-2 pt-1">
         <button type="button" onClick={handleSave} disabled={saving}
-          className={`${btnCls} bg-brand-500 text-white shadow-sm`}>
+          className={`${btnCls} bg-primary-500 text-white shadow-sm`}>
           {saving ? "..." : initial ? "Cập nhật" : "Thêm"}
         </button>
         <button type="button" onClick={onCancel} className={`${btnCls} border border-zinc-200 dark:border-white/[0.09]`}>

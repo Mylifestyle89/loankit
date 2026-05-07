@@ -40,7 +40,7 @@ export function CustomerTemplatesSection({ instances }: { instances: MappingInst
               <td className="py-2 px-3 font-medium">{inst.name}</td>
               <td className="py-2 px-3 text-zinc-500 dark:text-slate-400">{inst.master?.name ?? "—"}</td>
               <td className="py-2 px-3">
-                <span className="inline-flex items-center rounded-full bg-brand-100 dark:bg-brand-500/10 px-2 py-0.5 text-xs font-medium text-brand-600 dark:text-brand-400">
+                <span className="inline-flex items-center rounded-full bg-primary-100 dark:bg-primary-500/10 px-2 py-0.5 text-xs font-medium text-primary-600 dark:text-primary-400">
                   {statusLabels[inst.status] ?? inst.status}
                 </span>
               </td>

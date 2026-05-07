@@ -75,7 +75,7 @@ export function XlsxImportPreviewModal({ open, onClose, parseResult, isSaving, o
           Hủy
         </button>
         <button type="button" onClick={handleConfirm} disabled={isSaving || costItems.length === 0}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-brand-500 px-4 py-2 text-sm font-medium text-white shadow-sm hover:brightness-110 disabled:opacity-50">
+          className="inline-flex items-center gap-1.5 rounded-lg bg-primary-500 px-4 py-2 text-sm font-medium text-white shadow-sm hover:brightness-110 disabled:opacity-50">
           {isSaving ? <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/30 border-t-white" /> : <CheckCircle className="h-3.5 w-3.5" />}
           Xác nhận tạo PA
         </button>
@@ -87,7 +87,7 @@ export function XlsxImportPreviewModal({ open, onClose, parseResult, isSaving, o
     <BaseModal open={open} onClose={onClose} title="Xem trước phương án từ XLSX" footer={footer} maxWidthClassName="max-w-4xl">
       {/* Warnings */}
       {parseResult.warnings.length > 0 && (
-        <div className="mb-4 rounded-lg bg-brand-100 dark:bg-brand-500/10 p-3 text-xs text-brand-600 dark:text-brand-400">
+        <div className="mb-4 rounded-lg bg-primary-100 dark:bg-primary-500/10 p-3 text-xs text-primary-600 dark:text-primary-400">
           <AlertTriangle className="inline h-3.5 w-3.5 mr-1" />
           {parseResult.warnings.join("; ")}
         </div>
@@ -161,9 +161,9 @@ export function XlsxImportPreviewModal({ open, onClose, parseResult, isSaving, o
 /** Upload button trigger for XLSX import */
 export function XlsxImportButton({ onFileSelect, isUploading }: { onFileSelect: (file: File) => void; isUploading: boolean }) {
   return (
-    <label className="inline-flex items-center gap-1.5 rounded-lg border border-brand-200 dark:border-brand-500/30 bg-brand-100 dark:bg-brand-500/10 px-4 py-2 text-sm font-medium text-brand-600 dark:text-brand-400 hover:bg-brand-100 dark:hover:bg-brand-500/20 cursor-pointer transition-colors">
+    <label className="inline-flex items-center gap-1.5 rounded-lg border border-primary-200 dark:border-primary-500/30 bg-primary-100 dark:bg-primary-500/10 px-4 py-2 text-sm font-medium text-primary-600 dark:text-primary-400 hover:bg-primary-100 dark:hover:bg-primary-500/20 cursor-pointer transition-colors">
       {isUploading ? (
-        <div className="h-4 w-4 animate-spin rounded-full border-2 border-brand-300 border-t-brand-500" />
+        <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary-300 border-t-primary-500" />
       ) : (
         <Upload className="h-4 w-4" />
       )}

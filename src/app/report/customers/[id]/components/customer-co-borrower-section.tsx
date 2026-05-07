@@ -91,7 +91,7 @@ function CoBorrowerForm({
   }
 
   return (
-    <div className="rounded-xl border border-brand-200 dark:border-brand-500/20 bg-brand-50/30 dark:bg-brand-500/5 p-4 space-y-3">
+    <div className="rounded-xl border border-primary-200 dark:border-primary-500/20 bg-primary-50/30 dark:bg-primary-500/5 p-4 space-y-3">
       <AiPasteExtractor
         entityType="co_borrower"
         onExtracted={(data: Partial<ExtractedCoBorrower> | Partial<ExtractedCoBorrower>[]) => {
@@ -125,7 +125,7 @@ function CoBorrowerForm({
       </div>
       {error && <p className="text-xs text-red-600 dark:text-red-400">{error}</p>}
       <div className="flex gap-2 pt-1">
-        <button type="button" onClick={handleSave} disabled={saving} className={`${btnCls} bg-brand-500 text-white shadow-sm`}>
+        <button type="button" onClick={handleSave} disabled={saving} className={`${btnCls} bg-primary-500 text-white shadow-sm`}>
           {saving ? "..." : initial ? "Cập nhật" : "Thêm"}
         </button>
         <button type="button" onClick={onCancel} className={`${btnCls} border border-zinc-200 dark:border-white/[0.09]`}>
@@ -206,7 +206,7 @@ function CoBorrowerRow({
       {/* Header: Name + actions */}
       <div className="flex items-center justify-between px-4 py-3 bg-zinc-50/80 dark:bg-white/[0.02]">
         <div className="flex items-center gap-3">
-          <div className="flex items-center justify-center w-8 h-8 rounded-full bg-brand-100 dark:bg-brand-500/15 text-brand-500 dark:text-brand-400 text-xs font-bold">
+          <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary-100 dark:bg-primary-500/15 text-primary-500 dark:text-primary-400 text-xs font-bold">
             {item.full_name?.charAt(0)?.toUpperCase() ?? "?"}
           </div>
           <div>
@@ -261,7 +261,7 @@ export function CustomerCoBorrowerSection({ customerId }: { customerId: string }
   if (loading) {
     return (
       <div className="flex justify-center py-8">
-        <div className="h-5 w-5 animate-spin rounded-full border-2 border-brand-200 border-t-brand-500" />
+        <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary-200 border-t-primary-500" />
       </div>
     );
   }
@@ -273,11 +273,11 @@ export function CustomerCoBorrowerSection({ customerId }: { customerId: string }
         <h3 className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">Người đồng vay ({items.length})</h3>
         <div className="flex gap-2">
           <button type="button" onClick={() => setScannerOpen(true)}
-            className={`${btnCls} inline-flex items-center gap-1.5 border border-brand-200 dark:border-brand-500/30 bg-brand-100 dark:bg-brand-500/10 text-brand-600 dark:text-brand-400 hover:bg-brand-100`}>
+            className={`${btnCls} inline-flex items-center gap-1.5 border border-primary-200 dark:border-primary-500/30 bg-primary-100 dark:bg-primary-500/10 text-primary-600 dark:text-primary-400 hover:bg-primary-100`}>
             📷 Scan CCCD
           </button>
           <button type="button" onClick={() => { setScanPrefill(undefined); setShowForm(true); }}
-            className={`${btnCls} inline-flex items-center gap-1.5 bg-brand-500 text-white shadow-sm shadow-brand-500/25 hover:brightness-110`}>
+            className={`${btnCls} inline-flex items-center gap-1.5 bg-primary-500 text-white shadow-sm shadow-primary-500/25 hover:brightness-110`}>
             <Plus className="h-3.5 w-3.5" /> Thêm
           </button>
         </div>

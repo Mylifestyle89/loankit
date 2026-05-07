@@ -208,7 +208,7 @@ export function CustomerDocxImportModal({ open, onClose, onSuccess, basePath }: 
                 e.preventDefault();
                 addFiles(e.dataTransfer.files);
               }}
-              className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-zinc-300 p-8 transition-colors hover:border-brand-400 dark:border-white/15"
+              className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-zinc-300 p-8 transition-colors hover:border-primary-400 dark:border-white/15"
             >
               <Upload className="h-8 w-8 text-zinc-400" />
               <span className="text-sm text-zinc-500">
@@ -236,7 +236,7 @@ export function CustomerDocxImportModal({ open, onClose, onSuccess, basePath }: 
                       key={i}
                       className="flex items-center gap-2 rounded-lg border border-zinc-200 px-3 py-1.5 text-xs dark:border-white/10"
                     >
-                      <FileText className="h-3.5 w-3.5 text-brand-500" />
+                      <FileText className="h-3.5 w-3.5 text-primary-500" />
                       <span className="max-w-[200px] truncate">{f.name}</span>
                       <button
                         type="button"
@@ -251,7 +251,7 @@ export function CustomerDocxImportModal({ open, onClose, onSuccess, basePath }: 
                 <button
                   type="button"
                   onClick={handleExtract}
-                  className="w-full rounded-lg bg-brand-500 px-5 py-2.5 text-sm font-medium text-white shadow-sm hover:brightness-110"
+                  className="w-full rounded-lg bg-primary-500 px-5 py-2.5 text-sm font-medium text-white shadow-sm hover:brightness-110"
                 >
                   Trích xuất thông tin ({files.length} file)
                 </button>
@@ -264,7 +264,7 @@ export function CustomerDocxImportModal({ open, onClose, onSuccess, basePath }: 
 
         {step === "processing" && (
           <div className="flex flex-col items-center gap-3 py-10">
-            <Loader2 className="h-8 w-8 animate-spin text-brand-500" />
+            <Loader2 className="h-8 w-8 animate-spin text-primary-500" />
             <span className="text-sm text-zinc-500">AI đang trích xuất từ {files.length} file...</span>
             <span className="text-xs text-zinc-400">Có thể mất 10-30 giây</span>
           </div>

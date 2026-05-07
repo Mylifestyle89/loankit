@@ -81,7 +81,7 @@ export function CreditAssessmentSection({
           type="button"
           onClick={handleAiFill}
           disabled={aiLoading}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-brand-500 px-3 py-1.5 text-xs font-medium text-white shadow-sm hover:shadow-md transition-all disabled:opacity-50"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-primary-500 px-3 py-1.5 text-xs font-medium text-white shadow-sm hover:shadow-md transition-all disabled:opacity-50"
         >
           <Sparkles className="h-3.5 w-3.5" />
           {aiLoading ? "Đang phân tích..." : "Phân tích bằng AI"}
@@ -100,7 +100,7 @@ export function CreditAssessmentSection({
               onChange={(e) => f.set(e.target.value)}
               rows={2}
               placeholder={f.placeholder}
-              className="w-full rounded-lg border border-zinc-200 dark:border-white/10 bg-zinc-50 dark:bg-zinc-900 px-3 py-2 text-sm resize-y focus:outline-none focus:ring-2 focus:ring-brand-500/30"
+              className="w-full rounded-lg border border-zinc-200 dark:border-white/10 bg-zinc-50 dark:bg-zinc-900 px-3 py-2 text-sm resize-y focus:outline-none focus:ring-2 focus:ring-primary-500/30"
             />
           </label>
         ))}

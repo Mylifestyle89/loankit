@@ -96,7 +96,7 @@ export function LoanPlanTieuDungSection(props: Props) {
   const insufficientIncome = available > 0 && perPeriod > available;
 
   return (
-    <div className="rounded-2xl border border-brand-200 dark:border-brand-500/20 bg-brand-50/50 dark:bg-brand-900/10 p-5 shadow-sm space-y-4">
+    <div className="rounded-2xl border border-primary-200 dark:border-primary-500/20 bg-primary-50/50 dark:bg-primary-900/10 p-5 shadow-sm space-y-4">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold">Phương án vay tiêu dùng</h3>
         <label className="text-xs text-zinc-500">
@@ -141,7 +141,7 @@ export function LoanPlanTieuDungSection(props: Props) {
       </div>
 
       {/* ── Người trả nợ 2 (vợ/chồng — tùy chọn) ── */}
-      <div className="space-y-2 pt-2 border-t border-brand-200/40 dark:border-brand-700/20">
+      <div className="space-y-2 pt-2 border-t border-primary-200/40 dark:border-primary-700/20">
         <p className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">Người trả nợ 2 (vợ/chồng — tùy chọn)</p>
         <div className="grid gap-3 sm:grid-cols-4">
           <label className="block">
@@ -167,7 +167,7 @@ export function LoanPlanTieuDungSection(props: Props) {
       </div>
 
       {/* ── Chi phí dynamic theo kỳ ── */}
-      <div className="space-y-2 pt-2 border-t border-brand-200/40 dark:border-brand-700/20">
+      <div className="space-y-2 pt-2 border-t border-primary-200/40 dark:border-primary-700/20">
         <p className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">
           Chi phí bình quân {periodLabel}
         </p>
@@ -208,7 +208,7 @@ export function LoanPlanTieuDungSection(props: Props) {
 
       {/* ── Preview card ── */}
       {(earner1Income > 0 || earner2Income > 0) && (
-        <div className="pt-3 border-t border-brand-200/40 dark:border-brand-700/20">
+        <div className="pt-3 border-t border-primary-200/40 dark:border-primary-700/20">
           <p className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider mb-2">
             Tính toán khả năng trả nợ ({periodLabel})
           </p>

@@ -55,7 +55,7 @@ const statusColors: Record<string, string> = {
   active: "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400",
   completed: "bg-zinc-100 text-zinc-600 dark:bg-zinc-500/10 dark:text-zinc-400",
   cancelled: "bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-400",
-  pending: "bg-brand-50 text-brand-600 dark:bg-brand-500/10 dark:text-brand-400",
+  pending: "bg-primary-50 text-primary-600 dark:bg-primary-500/10 dark:text-primary-400",
   paid: "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400",
   overdue: "bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-400",
 };
@@ -74,18 +74,18 @@ function LoanRow({ loan }: { loan: Loan }) {
   return (
     <div className={`rounded-xl border-2 overflow-hidden transition-all duration-200 ${
       expanded
-        ? "border-brand-300 dark:border-brand-500/30 shadow-md shadow-brand-500/5"
-        : "border-zinc-200 dark:border-white/[0.07] hover:border-brand-200 dark:hover:border-brand-500/20"
+        ? "border-primary-300 dark:border-primary-500/30 shadow-md shadow-primary-500/5"
+        : "border-zinc-200 dark:border-white/[0.07] hover:border-primary-200 dark:hover:border-primary-500/20"
     }`}>
       {/* Loan header */}
       <button
         type="button"
         onClick={() => setExpanded(!expanded)}
         className={`w-full flex items-center gap-3 px-4 py-3.5 text-left cursor-pointer transition-colors ${
-          expanded ? "bg-brand-50/50 dark:bg-brand-500/5" : "hover:bg-zinc-50 dark:hover:bg-white/[0.03]"
+          expanded ? "bg-primary-50/50 dark:bg-primary-500/5" : "hover:bg-zinc-50 dark:hover:bg-white/[0.03]"
         }`}
       >
-        {expanded ? <ChevronDown className="h-4 w-4 text-brand-500 shrink-0" /> : <ChevronRight className="h-4 w-4 text-zinc-400 shrink-0" />}
+        {expanded ? <ChevronDown className="h-4 w-4 text-primary-500 shrink-0" /> : <ChevronRight className="h-4 w-4 text-zinc-400 shrink-0" />}
         <div className="flex-1 min-w-0 grid grid-cols-5 gap-2 items-center text-sm">
           <span className="font-semibold truncate text-zinc-800 dark:text-slate-200">{loan.contractNumber}</span>
           <span className="tabular-nums font-medium">{formatVND(loan.loanAmount)} đ</span>
@@ -160,7 +160,7 @@ function LoanRow({ loan }: { loan: Loan }) {
           <div className="flex items-center gap-4 pt-1">
             <Link
               href={`/report/loans/${loan.id}`}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-brand-500 px-4 py-2 text-sm font-medium text-white shadow-sm shadow-brand-500/25 hover:brightness-110 transition-all cursor-pointer"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-primary-500 px-4 py-2 text-sm font-medium text-white shadow-sm shadow-primary-500/25 hover:brightness-110 transition-all cursor-pointer"
             >
               Xem chi tiết khoản vay →
             </Link>
@@ -184,7 +184,7 @@ export function CustomerLoansSection({ loans, customerId }: { loans: Loan[]; cus
           type="button"
           onClick={() => setShowPlanSelector(true)}
           disabled={!customerId}
-          className="rounded-lg px-4 py-2 text-sm font-medium inline-flex items-center gap-1.5 bg-brand-500 text-white shadow-sm shadow-brand-500/25 hover:brightness-110 transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="rounded-lg px-4 py-2 text-sm font-medium inline-flex items-center gap-1.5 bg-primary-500 text-white shadow-sm shadow-primary-500/25 hover:brightness-110 transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <Plus className="h-3.5 w-3.5" /> Thêm khoản vay
         </button>

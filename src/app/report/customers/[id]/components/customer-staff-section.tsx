@@ -91,7 +91,7 @@ export function StaffSection({ initial }: { initial: StaffData }) {
       </div>
 
       <div className="flex items-center gap-3 pt-1">
-        <button type="button" onClick={handleSave} disabled={saving} className={`${btnCls} bg-brand-500 text-white shadow-sm`}>
+        <button type="button" onClick={handleSave} disabled={saving} className={`${btnCls} bg-primary-500 text-white shadow-sm`}>
           {saving ? "..." : "Lưu"}
         </button>
         {saved && <span className="text-xs text-emerald-600 dark:text-emerald-400">Đã lưu</span>}

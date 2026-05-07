@@ -219,7 +219,7 @@ export function LoanPlanTrungDaiSection({
   constructionContractDate, onConstructionContractDateChange,
 }: TrungDaiProps) {
   return (
-    <div className="rounded-2xl border border-brand-200 dark:border-brand-500/20 bg-brand-50/50 dark:bg-brand-900/10 p-5 shadow-sm space-y-4">
+    <div className="rounded-2xl border border-primary-200 dark:border-primary-500/20 bg-primary-50/50 dark:bg-primary-900/10 p-5 shadow-sm space-y-4">
       <h3 className="text-sm font-semibold">Khấu hao &amp; Tài sản đầu tư</h3>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <label className="block">
@@ -239,7 +239,7 @@ export function LoanPlanTrungDaiSection({
       </div>
 
       {assetUnitPrice > 0 && landAreaSau > 0 && (
-        <div className="grid grid-cols-2 gap-3 text-sm bg-brand-100/50 dark:bg-brand-800/10 rounded-lg p-3">
+        <div className="grid grid-cols-2 gap-3 text-sm bg-primary-100/50 dark:bg-primary-800/10 rounded-lg p-3">
           <div>
             <span className="text-zinc-500 text-xs">Tổng giá trị tài sản</span>
             <p className="font-semibold tabular-nums">{fmtVND(assetUnitPrice * landAreaSau)}</p>
@@ -253,7 +253,7 @@ export function LoanPlanTrungDaiSection({
         </div>
       )}
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 pt-2 border-t border-brand-200/50 dark:border-brand-700/20">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 pt-2 border-t border-primary-200/50 dark:border-primary-700/20">
         <label className="block">
           <span className="text-xs font-medium text-zinc-500">Thời hạn vay (tháng)</span>
           <input

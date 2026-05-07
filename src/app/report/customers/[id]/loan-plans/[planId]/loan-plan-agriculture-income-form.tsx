@@ -130,7 +130,7 @@ export function LoanPlanAgricultureIncomeForm({
           onPaste={handlePaste}
           readOnly
           rows={2}
-          className="w-full rounded-lg border border-dashed border-zinc-300 dark:border-white/10 bg-zinc-50 dark:bg-white/[0.02] px-3 py-2 text-xs text-zinc-400 placeholder:text-zinc-300 resize-none focus:outline-none focus:border-brand-400"
+          className="w-full rounded-lg border border-dashed border-zinc-300 dark:border-white/10 bg-zinc-50 dark:bg-white/[0.02] px-3 py-2 text-xs text-zinc-400 placeholder:text-zinc-300 resize-none focus:outline-none focus:border-primary-400"
           placeholder="Click vào đây rồi Ctrl+V để dán bảng từ Excel / Google Sheets"
         />
       </div>
@@ -200,7 +200,7 @@ export function LoanPlanAgricultureIncomeForm({
       </div>
       <div className="flex gap-2">
         <button onClick={() => addAgriRow(false)} className="text-xs px-3 py-1.5 rounded-lg border border-zinc-200 dark:border-white/[0.07] hover:bg-zinc-50 dark:hover:bg-white/[0.04]">+ Thêm dòng</button>
-        <button onClick={() => addAgriRow(true)} className="text-xs px-3 py-1.5 rounded-lg border border-brand-200 text-brand-600 dark:border-brand-500/30 dark:text-brand-400 hover:bg-brand-50 dark:hover:bg-brand-500/10">+ Thêm nhóm (I/II...)</button>
+        <button onClick={() => addAgriRow(true)} className="text-xs px-3 py-1.5 rounded-lg border border-primary-200 text-primary-600 dark:border-primary-500/30 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-500/10">+ Thêm nhóm (I/II...)</button>
       </div>
 
       {/* ── Phần tính toán nguồn trả nợ ── */}
@@ -233,7 +233,7 @@ export function LoanPlanAgricultureIncomeForm({
             ))}
             <button
               onClick={addExpenseRow}
-              className="text-xs px-3 py-1 rounded border border-dashed border-zinc-300 dark:border-white/10 text-zinc-500 hover:border-brand-300 hover:text-brand-600"
+              className="text-xs px-3 py-1 rounded border border-dashed border-zinc-300 dark:border-white/10 text-zinc-500 hover:border-primary-300 hover:text-primary-600"
             >
               + Thêm khoản chi phí
             </button>

@@ -45,7 +45,7 @@ export function RepaymentScheduleTable({
       <div className="overflow-x-auto">
         <table className="w-full text-sm border-collapse">
           <thead>
-            <tr className="bg-brand-50 dark:bg-brand-800/20 text-xs text-zinc-600 dark:text-zinc-400">
+            <tr className="bg-primary-50 dark:bg-primary-800/20 text-xs text-zinc-600 dark:text-zinc-400">
               <th className="px-3 py-2 text-left font-medium">Năm</th>
               <th className="px-3 py-2 text-right font-medium">Thu nhập trả nợ</th>
               <th className="px-3 py-2 text-right font-medium">Dư nợ đầu kỳ</th>
@@ -76,7 +76,7 @@ export function RepaymentScheduleTable({
             ))}
           </tbody>
           <tfoot>
-            <tr className="border-t-2 border-brand-300 dark:border-brand-600 bg-brand-50/50 dark:bg-brand-800/10 font-semibold text-sm">
+            <tr className="border-t-2 border-primary-300 dark:border-primary-600 bg-primary-50/50 dark:bg-primary-800/10 font-semibold text-sm">
               <td className="px-3 py-2">Cộng</td>
               <td className="px-3 py-2"></td>
               <td className="px-3 py-2"></td>

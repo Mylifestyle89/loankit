@@ -86,7 +86,7 @@ function FieldSectionImpl({
                     : e.target.value;
                   onSectionChange(sectionKind, sectionIndex, key, next);
                 }}
-                className="flex-1 rounded-md border border-zinc-200 bg-white px-3 py-1.5 text-sm outline-none focus:border-brand-300 dark:border-white/10 dark:bg-[#1a1a1a] dark:focus:border-brand-500/30"
+                className="flex-1 rounded-md border border-zinc-200 bg-white px-3 py-1.5 text-sm outline-none focus:border-primary-300 dark:border-white/10 dark:bg-[#1a1a1a] dark:focus:border-primary-500/30"
               />
             </label>
           );

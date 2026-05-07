@@ -108,7 +108,7 @@ export function LoanPlanReview36Section({
                     {pctStr(actualCost, plannedCost)}
                   </td>
                 </tr>
-                <tr className="bg-brand-50/30 dark:bg-brand-500/5">
+                <tr className="bg-primary-50/30 dark:bg-primary-500/5">
                   <td className="px-3 py-2 border border-zinc-200 dark:border-white/[0.07] font-medium">
                     Lợi nhuận
                     <span className="ml-1 text-xs text-zinc-400">(tự tính)</span>

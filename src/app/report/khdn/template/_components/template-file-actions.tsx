@@ -126,7 +126,7 @@ export function TemplateFileActions({ filePath, fileName, onRefresh, onOpenEdito
 
       {onRegisterTemplate && !showRegisterInput && (
         <button type="button" disabled={registering} title="Đăng ký mẫu" onClick={openRegisterInput}
-          className="rounded-md bg-brand-500 px-2 py-1 text-xs font-medium text-white hover:bg-brand-600 disabled:opacity-50 transition-all">
+          className="rounded-md bg-primary-500 px-2 py-1 text-xs font-medium text-white hover:bg-primary-600 disabled:opacity-50 transition-all">
           <BookmarkPlus className="h-3.5 w-3.5" />
         </button>
       )}
@@ -137,10 +137,10 @@ export function TemplateFileActions({ filePath, fileName, onRefresh, onOpenEdito
             type="text" value={registerName} onChange={(e) => setRegisterName(e.target.value)}
             onKeyDown={(e) => { if (e.key === "Enter") void submitRegister(); if (e.key === "Escape") setShowRegisterInput(false); }}
             placeholder="Tên mẫu" autoFocus
-            className="w-32 rounded-md border border-zinc-300 dark:border-white/10 bg-white dark:bg-[#1a1a1a] px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-brand-500"
+            className="w-32 rounded-md border border-zinc-300 dark:border-white/10 bg-white dark:bg-[#1a1a1a] px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-primary-500"
           />
           <button type="button" onClick={() => void submitRegister()} disabled={registering || !registerName.trim()} title="Xác nhận"
-            className="rounded-md bg-brand-500 p-1 text-white hover:bg-brand-600 disabled:opacity-50 transition-all">
+            className="rounded-md bg-primary-500 p-1 text-white hover:bg-primary-600 disabled:opacity-50 transition-all">
             {registering ? "..." : <Check className="h-3 w-3" />}
           </button>
           <button type="button" onClick={() => setShowRegisterInput(false)} title="Hủy"

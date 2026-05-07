@@ -60,7 +60,7 @@ export function CustomerTable({
   onToggleType?: (id: string, currentType: string) => void;
   t: (k: string) => string;
 }) {
-  const thCls = "cursor-pointer select-none px-4 py-3 text-left text-xs font-semibold text-zinc-500 dark:text-slate-400 transition-colors hover:text-brand-500 dark:hover:text-brand-400";
+  const thCls = "cursor-pointer select-none px-4 py-3 text-left text-xs font-semibold text-zinc-500 dark:text-slate-400 transition-colors hover:text-primary-500 dark:hover:text-primary-400";
   const tdCls = "px-4 py-3 text-sm";
 
   return (
@@ -90,12 +90,12 @@ export function CustomerTable({
                   key={c.id}
                   className={`transition-colors duration-150 ${
                     isSelected
-                      ? "bg-brand-50/50 dark:bg-brand-500/5"
+                      ? "bg-primary-50/50 dark:bg-primary-500/5"
                       : "hover:bg-zinc-50 dark:hover:bg-white/[0.02]"
                   }`}
                 >
                   <td className={tdCls}>
-                    <Link href={`${basePath}/${c.id}`} className="font-medium text-zinc-900 dark:text-white hover:text-brand-500 dark:hover:text-brand-400 transition-colors">
+                    <Link href={`${basePath}/${c.id}`} className="font-medium text-zinc-900 dark:text-white hover:text-primary-500 dark:hover:text-primary-400 transition-colors">
                       {c.customer_name}
                     </Link>
                   </td>
@@ -128,8 +128,8 @@ export function CustomerTable({
                           onClick={() => onSelect(c.id)}
                           className={`cursor-pointer inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-medium transition-colors duration-150 ${
                             isSelected
-                              ? "bg-brand-500 text-white hover:bg-brand-600"
-                              : "text-zinc-500 dark:text-slate-400 hover:bg-brand-50 dark:hover:bg-brand-500/10 hover:text-brand-600 dark:hover:text-brand-400"
+                              ? "bg-primary-500 text-white hover:bg-primary-600"
+                              : "text-zinc-500 dark:text-slate-400 hover:bg-primary-50 dark:hover:bg-primary-500/10 hover:text-primary-600 dark:hover:text-primary-400"
                           }`}
                         >
                           {isSelected ? <><Check className="h-3 w-3" /> Chọn</> : "Chọn"}
@@ -139,7 +139,7 @@ export function CustomerTable({
                         <button
                           type="button"
                           onClick={() => onToggleType(c.id, c.customer_type)}
-                          className="cursor-pointer rounded-lg px-2 py-1 text-xs font-medium text-zinc-500 dark:text-slate-400 transition-colors hover:bg-brand-50 hover:text-brand-600 dark:hover:bg-brand-500/10 dark:hover:text-brand-400"
+                          className="cursor-pointer rounded-lg px-2 py-1 text-xs font-medium text-zinc-500 dark:text-slate-400 transition-colors hover:bg-primary-50 hover:text-primary-600 dark:hover:bg-primary-500/10 dark:hover:text-primary-400"
                           title={c.customer_type === "individual" ? "Chuyển sang Doanh nghiệp" : "Chuyển sang Cá nhân"}
                         >
                           <RefreshCw className="h-3.5 w-3.5" />

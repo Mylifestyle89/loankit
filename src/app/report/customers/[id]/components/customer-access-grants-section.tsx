@@ -82,7 +82,7 @@ export function CustomerAccessGrantsSection({
   return (
     <div className="rounded-xl border border-zinc-200 dark:border-white/[0.07] bg-white dark:bg-[#161616] p-4 space-y-3">
       <div className="flex items-center gap-2">
-        <Shield className="h-4 w-4 text-brand-500 dark:text-brand-400" />
+        <Shield className="h-4 w-4 text-primary-500 dark:text-primary-400" />
         <h3 className="text-sm font-semibold text-zinc-700 dark:text-slate-300">Quản lý quyền truy cập</h3>
       </div>
 
@@ -133,7 +133,7 @@ export function CustomerAccessGrantsSection({
         <select
           value={selectedUserId}
           onChange={(e) => setSelectedUserId(e.target.value)}
-          className="flex-1 min-w-0 rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] px-2.5 py-1.5 text-xs text-zinc-700 dark:text-slate-300 focus:outline-none focus:ring-1 focus:ring-brand-500/40"
+          className="flex-1 min-w-0 rounded-lg border border-zinc-200 dark:border-white/[0.09] bg-white dark:bg-[#1a1a1a] px-2.5 py-1.5 text-xs text-zinc-700 dark:text-slate-300 focus:outline-none focus:ring-1 focus:ring-primary-500/40"
         >
           <option value="">Chọn user để cấp quyền...</option>
           {availableUsers.map((u) => (
@@ -144,7 +144,7 @@ export function CustomerAccessGrantsSection({
           type="button"
           onClick={handleGrant}
           disabled={!selectedUserId}
-          className="cursor-pointer inline-flex items-center gap-1 rounded-lg bg-brand-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-brand-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          className="cursor-pointer inline-flex items-center gap-1 rounded-lg bg-primary-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-primary-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
         >
           <UserPlus className="h-3 w-3" /> Cấp quyền
         </button>

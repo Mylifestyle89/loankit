@@ -169,7 +169,7 @@ export function CustomerDocxImportReviewStep(props: Props) {
           type="button"
           onClick={onSubmit}
           disabled={submitting}
-          className="flex-1 inline-flex items-center justify-center gap-2 rounded-lg bg-brand-500 px-5 py-2 text-sm font-medium text-white shadow-sm hover:brightness-110 disabled:opacity-50"
+          className="flex-1 inline-flex items-center justify-center gap-2 rounded-lg bg-primary-500 px-5 py-2 text-sm font-medium text-white shadow-sm hover:brightness-110 disabled:opacity-50"
         >
           {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
           {submitting ? "Đang tạo..." : "Tạo khách hàng"}

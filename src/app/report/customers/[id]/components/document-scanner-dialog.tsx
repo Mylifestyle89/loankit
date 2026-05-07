@@ -137,7 +137,7 @@ export function DocumentScannerDialog({ open, onClose, onConfirm, allowedTypes }
               onClick={() => inputRef.current?.click()}
               onDragOver={(e) => e.preventDefault()}
               onDrop={(e) => { e.preventDefault(); addFiles(e.dataTransfer.files); }}
-              className="flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-zinc-300 dark:border-white/15 p-6 cursor-pointer hover:border-brand-400 transition-colors"
+              className="flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-zinc-300 dark:border-white/15 p-6 cursor-pointer hover:border-primary-400 transition-colors"
             >
               <span className="text-3xl">📷</span>
               <span className="text-sm text-zinc-500">Kéo thả hoặc nhấn để chọn ảnh/PDF (tối đa {MAX_FILES} file)</span>
@@ -167,7 +167,7 @@ export function DocumentScannerDialog({ open, onClose, onConfirm, allowedTypes }
                   </div>
                 )}
                 <button type="button" onClick={handleSubmit}
-                  className="w-full rounded-lg bg-brand-500 px-5 py-2 text-sm font-medium text-white shadow-sm hover:brightness-110">
+                  className="w-full rounded-lg bg-primary-500 px-5 py-2 text-sm font-medium text-white shadow-sm hover:brightness-110">
                   Trích xuất thông tin ({files.length} file)
                 </button>
               </div>
@@ -180,7 +180,7 @@ export function DocumentScannerDialog({ open, onClose, onConfirm, allowedTypes }
         {/* Step: Processing */}
         {step === "processing" && (
           <div className="flex flex-col items-center gap-3 py-8">
-            <div className="h-8 w-8 animate-spin rounded-full border-3 border-brand-500 border-t-transparent" />
+            <div className="h-8 w-8 animate-spin rounded-full border-3 border-primary-500 border-t-transparent" />
             <span className="text-sm text-zinc-500">Đang trích xuất từ {files.length} file...</span>
           </div>
         )}
@@ -208,7 +208,7 @@ export function DocumentScannerDialog({ open, onClose, onConfirm, allowedTypes }
                 Thử lại
               </button>
               <button onClick={handleConfirm}
-                className="rounded-lg bg-brand-500 px-5 py-2 text-sm font-medium text-white shadow-sm hover:brightness-110">
+                className="rounded-lg bg-primary-500 px-5 py-2 text-sm font-medium text-white shadow-sm hover:brightness-110">
                 Điền vào form
               </button>
             </div>

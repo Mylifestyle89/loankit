@@ -50,7 +50,7 @@ export function LoanPlanSelectorModal({ open, customerId, onClose, onSelect }: P
     <div className="flex gap-2">
       <button
         onClick={handleContinue}
-        className="flex-1 rounded-lg bg-brand-500 text-white text-sm font-medium py-2 hover:bg-brand-600 transition-colors"
+        className="flex-1 rounded-lg bg-primary-500 text-white text-sm font-medium py-2 hover:bg-primary-600 transition-colors"
       >
         {selected ? "Tiếp tục với phương án này" : "Tiếp tục không có phương án"}
       </button>
@@ -78,8 +78,8 @@ export function LoanPlanSelectorModal({ open, customerId, onClose, onSelect }: P
                 key={p.id}
                 className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
                   selected === p.id
-                    ? "border-brand-500 bg-brand-50 dark:bg-brand-500/10"
-                    : "border-zinc-200 dark:border-white/[0.08] hover:border-brand-300"
+                    ? "border-primary-500 bg-primary-50 dark:bg-primary-500/10"
+                    : "border-zinc-200 dark:border-white/[0.08] hover:border-primary-300"
                 }`}
               >
                 <input
@@ -88,7 +88,7 @@ export function LoanPlanSelectorModal({ open, customerId, onClose, onSelect }: P
                   value={p.id}
                   checked={selected === p.id}
                   onChange={() => setSelected(p.id)}
-                  className="h-4 w-4 text-brand-500"
+                  className="h-4 w-4 text-primary-500"
                 />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-zinc-800 dark:text-zinc-100 truncate">{p.name}</p>

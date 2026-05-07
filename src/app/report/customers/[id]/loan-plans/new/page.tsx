@@ -57,8 +57,8 @@ export default function NewLoanPlanPage() {
   return (
     <section className="space-y-5">
       <div className="flex items-center gap-3">
-        <Link href={`/report/customers/${customerId}/loan-plans`} className="inline-flex items-center gap-1 text-sm text-brand-500 dark:text-brand-400 hover:underline"><ArrowLeft className="h-3.5 w-3.5" />Danh sách PA</Link>
-        <h2 className="text-lg font-bold text-brand-600 dark:text-brand-400">
+        <Link href={`/report/customers/${customerId}/loan-plans`} className="inline-flex items-center gap-1 text-sm text-primary-500 dark:text-primary-400 hover:underline"><ArrowLeft className="h-3.5 w-3.5" />Danh sách PA</Link>
+        <h2 className="text-lg font-bold text-primary-600 dark:text-primary-400">
           Tạo phương án mới
         </h2>
       </div>
@@ -107,8 +107,8 @@ export default function NewLoanPlanPage() {
                         onClick={() => setSelectedTemplate(selectedTemplate === t.id ? "" : t.id)}
                         className={`rounded-lg border p-3 text-left text-sm transition-colors ${
                           selectedTemplate === t.id
-                            ? "border-brand-400 bg-brand-100 dark:bg-brand-500/10 dark:border-brand-500/40"
-                            : "border-zinc-200 dark:border-white/[0.07] hover:border-brand-200 dark:hover:border-brand-500/20"
+                            ? "border-primary-400 bg-primary-100 dark:bg-primary-500/10 dark:border-primary-500/40"
+                            : "border-zinc-200 dark:border-white/[0.07] hover:border-primary-200 dark:hover:border-primary-500/20"
                         }`}
                       >
                         <p className="font-medium">{t.name}</p>
@@ -126,7 +126,7 @@ export default function NewLoanPlanPage() {
           type="button"
           onClick={handleCreate}
           disabled={creating}
-          className="rounded-lg bg-brand-500 px-5 py-2 text-sm font-medium text-white shadow-sm shadow-brand-500/25 hover:brightness-110 disabled:opacity-60"
+          className="rounded-lg bg-primary-500 px-5 py-2 text-sm font-medium text-white shadow-sm shadow-primary-500/25 hover:brightness-110 disabled:opacity-60"
         >
           {creating ? "Đang tạo..." : "Tạo phương án"}
         </button>

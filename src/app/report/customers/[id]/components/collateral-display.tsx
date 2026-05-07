@@ -63,7 +63,7 @@ function PropertyGrid({ properties, collateralType }: { properties: Record<strin
       {/* Owners */}
       {parsedOwners.length > 0 && (
         <div className="border-b border-zinc-200/60 dark:border-white/[0.08] pb-6">
-          <h5 className="text-[12px] font-bold text-brand-600 dark:text-brand-400 uppercase tracking-wider mb-4">Chủ sở hữu tài sản</h5>
+          <h5 className="text-[12px] font-bold text-primary-600 dark:text-primary-400 uppercase tracking-wider mb-4">Chủ sở hữu tài sản</h5>
           <div className="space-y-3">
             {parsedOwners.map((o, i) => (
               <div key={i} className="grid grid-cols-2 gap-x-8 gap-y-2 rounded-lg bg-zinc-50/60 dark:bg-white/[0.02] p-3">
@@ -85,7 +85,7 @@ function PropertyGrid({ properties, collateralType }: { properties: Record<strin
       {/* Amendments */}
       {parsedAmendments.length > 0 && (
         <div className="border-b border-zinc-200/60 dark:border-white/[0.08] pb-6">
-          <h5 className="text-[12px] font-bold text-brand-600 dark:text-brand-400 uppercase tracking-wider mb-4">Văn bản sửa đổi, bổ sung</h5>
+          <h5 className="text-[12px] font-bold text-primary-600 dark:text-primary-400 uppercase tracking-wider mb-4">Văn bản sửa đổi, bổ sung</h5>
           <div className="space-y-2">
             {parsedAmendments.map((a, i) => (
               <div key={i} className="text-[13px] text-zinc-800 dark:text-zinc-200">
@@ -102,7 +102,7 @@ function PropertyGrid({ properties, collateralType }: { properties: Record<strin
         groupEntries.forEach(([k]) => usedKeys.add(k));
         return (
           <div key={group.label} className="border-b border-zinc-200/60 dark:border-white/[0.08] pb-6 last:border-0 last:pb-0">
-            <h5 className="text-[12px] font-bold text-brand-600 dark:text-brand-400 uppercase tracking-wider mb-4">{group.label}</h5>
+            <h5 className="text-[12px] font-bold text-primary-600 dark:text-primary-400 uppercase tracking-wider mb-4">{group.label}</h5>
             <div className="grid grid-cols-2 gap-x-8 gap-y-5">
               {groupEntries.map(([k, v]) => (
                 <div key={k} className="flex flex-col gap-1">
@@ -164,7 +164,7 @@ export function CollateralRow({ item, customerId, onRefresh }: {
       <div className="flex items-center gap-3 px-4 py-3 bg-zinc-50/60 dark:bg-white/[0.02]">
         <button type="button" onClick={() => setExpanded(!expanded)}
           className="flex items-center justify-center w-7 h-7 rounded-md hover:bg-zinc-200/60 dark:hover:bg-white/[0.06] transition-colors shrink-0">
-          {expanded ? <ChevronDown className="h-4 w-4 text-brand-500" /> : <ChevronRight className="h-4 w-4 text-zinc-400" />}
+          {expanded ? <ChevronDown className="h-4 w-4 text-primary-500" /> : <ChevronRight className="h-4 w-4 text-zinc-400" />}
         </button>
         <button type="button" onClick={() => setExpanded(!expanded)} className="flex-1 flex items-center gap-4 min-w-0 text-left">
           <div className="flex-1 min-w-0">
