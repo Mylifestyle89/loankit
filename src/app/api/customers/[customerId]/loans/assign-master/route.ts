@@ -12,7 +12,7 @@ const bodySchema = z.object({
 /** Broadcasts a master template to ALL loans of the customer; returns updated count. */
 export async function POST(
   req: NextRequest,
-  { params }: { params: { customerId: string } },
+  { params }: { params: Promise<{ customerId: string }> },
 ) {
   try {
     await requireEditorOrAdmin();
@@ -20,7 +20,7 @@ export async function POST(
     return handleAuthError(e);
   }
 
-  const { customerId } = params;
+  const { customerId } = await params;
   if (!customerId) {
     return NextResponse.json({ ok: false, error: "customerId required" }, { status: 400 });
   }
