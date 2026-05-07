@@ -18,8 +18,9 @@ One-way snapshot clone Turso prod → VPS offline. Per-session refresh, không m
 ## Files
 
 - `scripts/export-turso-snapshot.js` — dumps Turso → `.sql` file
-- `scripts/import-snapshot-to-sqlite.js` — restores `.sql` → local SQLite via better-sqlite3
-- (alt) `sqlite3 <target.db> < <snapshot.sql>` — nếu VPS có sqlite3 CLI
+- `scripts/compare-turso-vps-counts.js` — pre-import diagnostic: row count delta + unique-ID detection
+- `scripts/import-snapshot-to-sqlite.js` — restores `.sql` → local SQLite via better-sqlite3 (with safety guard)
+- (alt) `sqlite3 <target.db> < <snapshot.sql>` — nếu VPS có sqlite3 CLI (BYPASSES safety guard)
 
 ## Workflow
 
@@ -51,13 +52,27 @@ node scripts/export-turso-snapshot.js --tables customers,loans
 npx prisma migrate deploy
 ```
 
-**3b. Apply snapshot (chọn 1 cách):**
+**3b. Compare TRƯỚC import (mandatory check):**
+```powershell
+npm run snapshot:compare
+# Hoặc target khác: node scripts/compare-turso-vps-counts.js --target vps.db
+```
+Output sẽ list mỗi bảng có Turso count vs local count + cảnh báo nếu có rows local-only sẽ bị destroyed.
+
+**3c. Backup nếu có local-unique rows đáng giữ:**
+```powershell
+Copy-Item dev.db dev.db.backup-$(Get-Date -Format yyyyMMdd-HHmm)
+```
+
+**3d. Apply snapshot (chọn 1 cách):**
 
 ```powershell
-# Cách A: better-sqlite3 (Windows-friendly, không cần CLI)
-node scripts/import-snapshot-to-sqlite.js backups/turso-snapshot-...sql dev.db
+# Cách A: better-sqlite3 (KHUYẾN NGHỊ — có safety guard)
+npm run snapshot:import -- backups/turso-snapshot-...sql dev.db
+# Nếu có local-unique rows, script sẽ REFUSE. Override:
+npm run snapshot:import -- backups/turso-snapshot-...sql dev.db --force
 
-# Cách B: sqlite3 CLI (Linux VPS thường có sẵn)
+# Cách B: sqlite3 CLI (BYPASSES safety guard — chỉ dùng khi chắc chắn)
 sqlite3 dev.db < backups/turso-snapshot-....sql
 ```
 
