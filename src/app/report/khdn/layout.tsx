@@ -19,10 +19,10 @@ export default function KhdnLayout({ children }: { children: React.ReactNode }) 
   return (
     <section className="space-y-4 max-w-[1600px]">
       {/* Header with sub-tabs */}
-      <div className="relative overflow-hidden rounded-2xl border border-brand-100 dark:border-brand-500/10 bg-gradient-to-br from-brand-50 via-white to-brand-100 dark:from-brand-950/30 dark:via-[#242220] dark:to-brand-900/20 p-5">
-        <div className="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-brand-200/30 blur-2xl dark:bg-brand-500/10" />
+      <div className="relative overflow-hidden rounded-2xl border border-primary-100 dark:border-primary-500/10 bg-gradient-to-br from-primary-50 via-white to-primary-100 dark:from-primary-950/30 dark:via-[#242220] dark:to-primary-900/20 p-5">
+        <div className="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-primary-200/30 blur-2xl dark:bg-primary-500/10" />
         <div className="relative">
-          <h2 className="text-xl font-bold tracking-tight text-brand-600 dark:text-brand-400">
+          <h2 className="text-xl font-bold tracking-tight text-primary-600 dark:text-primary-400">
             Khách hàng doanh nghiệp
           </h2>
           <p className="mt-1 text-sm text-zinc-500 dark:text-slate-400">
@@ -31,7 +31,7 @@ export default function KhdnLayout({ children }: { children: React.ReactNode }) 
         </div>
 
         {/* Tab switcher */}
-        <div className="relative mt-4 flex flex-nowrap gap-1 overflow-x-auto rounded-lg bg-white/60 dark:bg-white/[0.04] p-1 border border-brand-100/60 dark:border-white/[0.06] max-w-full">
+        <div className="relative mt-4 flex flex-nowrap gap-1 overflow-x-auto rounded-lg bg-white/60 dark:bg-white/[0.04] p-1 border border-primary-100/60 dark:border-white/[0.06] max-w-full">
           {tabs.map((tab) => {
             const Icon = tab.icon;
             const isActive = pathname.startsWith(tab.href);
@@ -41,7 +41,7 @@ export default function KhdnLayout({ children }: { children: React.ReactNode }) 
                 href={tab.href}
                 className={`flex items-center gap-1.5 whitespace-nowrap rounded-md px-3 py-1.5 text-xs font-medium transition-all duration-150 ${
                   isActive
-                    ? "bg-white dark:bg-white/[0.08] text-brand-600 dark:text-brand-400 shadow-sm"
+                    ? "bg-white dark:bg-white/[0.08] text-primary-600 dark:text-primary-400 shadow-sm"
                     : "text-zinc-500 dark:text-slate-400 hover:text-zinc-700 dark:hover:text-slate-300"
                 }`}
               >
