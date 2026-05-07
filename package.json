@@ -15,6 +15,8 @@
     "db:status:turso": "node scripts/db-status-turso.js",
     "db:migrate:local": "node scripts/db-migrate-local.js",
     "db:migrate:turso": "node scripts/push-turso-schema.js",
+    "snapshot:export": "node scripts/export-turso-snapshot.js",
+    "snapshot:import": "node scripts/import-snapshot-to-sqlite.js",
     "extract:placeholders": "node scripts/extract_placeholders_to_csv.js \"Placeholder Prototype.docx\"",
     "seed:admin": "npx tsx prisma/seed-admin.ts",
     "validate:khcn": "npx tsx scripts/validate-khcn-templates.ts",
