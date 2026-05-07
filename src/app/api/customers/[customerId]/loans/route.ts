@@ -12,7 +12,9 @@ export async function GET(
   try {
     await requireSession();
   } catch (e) {
-    return handleAuthError(e);
+    const resp = handleAuthError(e);
+    if (resp) return resp;
+    throw e;
   }
 
   const { customerId } = await params;

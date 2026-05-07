@@ -17,7 +17,9 @@ export async function POST(
   try {
     await requireEditorOrAdmin();
   } catch (e) {
-    return handleAuthError(e);
+    const resp = handleAuthError(e);
+    if (resp) return resp;
+    throw e;
   }
 
   const { customerId } = await params;
